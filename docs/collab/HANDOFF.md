@@ -34,9 +34,27 @@ Respuesta punto por punto: `docs/reviews/M3A1_FASE_B2_AUDIT1.md` · salida real:
 ## Pregunta abierta (decisión de producto)
 H.264 10 bits / 4:4:4 pasa la política actual. ¿Exigir `yuv420p`?
 
-## Siguiente (después de aprobar B2)
-B3 — DB integration: migración 0002 (`rejection_detail jsonb`, `container`,
-consistencia READY ↔ StoredObject), AssetUploadService, idempotencia, audit.
+## Hoja de ruta hasta terminar M3A.1 (delegada por Fer el 2026-10-06)
+
+Fer delegó el proyecto completo. Cada fase = rama `fase/<id>` + PR + checkpoint
+auditado (`AUDIT: APROBADO`) antes de la siguiente. Alcance de cada fase: el
+brief maestro `docs/briefs/M3A1_MASTER.md` (§44) y, para B, `docs/briefs/M3A1_FASE_B.md` (§38–39).
+
+| # | Fase | Alcance | Estado |
+|---|---|---|---|
+| 1 | B2 | media inspection + validation | correcciones en re-auditoría |
+| 2 | B3 | AssetUploadService, DB integration (migración 0002: `rejection_detail jsonb`, `container`, READY ↔ StoredObject), audit, idempotencia | pendiente |
+| 3 | B4 | Fastify API, health/readiness, seguridad, E2E API → **gate Fase B** (§39) | pendiente |
+| 4 | C | auth (Argon2id), roles, approval (four-eyes) | pendiente |
+| 5 | D | integración del Builder con el repositorio, revisión offline/conflictos | pendiente |
+| 6 | E | E2E, hardening, docs → **cierre M3A.1** | pendiente |
+
+Reglas de la hoja de ruta:
+- No se salta ninguna fase ni se juntan dos en un PR.
+- Si el brief no alcanza para decidir algo que cambia el producto (precios,
+  hardware, política comercial, datos reales de clientes), se abre un issue
+  `decisión-producto` y se sigue con lo que no depende de eso.
+- Al cerrar E se abre un issue `decisión-producto`: "M3A.1 terminado — definir siguiente milestone".
 
 ## Historial
 - 2026-10-06 — ChatGPT: auditoría de f3b55461600246f324c427edef091967e74e4944 publicada: CAMBIOS, 2 hallazgos reproducidos. B3 pendiente.
