@@ -62,7 +62,11 @@ Resoluciones actuales (derivadas, no escritas en el validador):
 - **Audio:** puede existir; no afecta B2.
 - **MIME canónico:** `video/mp4`, decidido por la inspección. Nunca el del cliente.
 - **Punto de decode:** `min(100 ms, duración/2)`, en la pista de video
-  utilizable (no la carátula).
+  utilizable (no la carátula). Si ffmpeg termina con exit 0 pero **sin frame**
+  (el seek cayó después del último frame: MP4 sano de un solo frame), se
+  reintenta **una vez desde 0** con el tiempo restante del mismo timeout y en
+  el mismo slot de concurrencia. Si el decoder **falla** (exit ≠ 0) no hay
+  reintento: es corrupción.
 
 ### Observación para decidir (no cambia la política actual)
 
@@ -82,7 +86,7 @@ Muchos players/controladoras LED solo reproducen 8 bits 4:2:0. `pixelFormat` y
 
 ## Fixtures
 
-`packages/platform-media/scripts/make-fixtures.sh <dir>` — 20 archivos, ~4 s,
+`packages/platform-media/scripts/make-fixtures.sh <dir>` — 22 archivos, ~4 s,
 **deterministas** (dos generaciones dan los mismos sha256). Nada binario en el
 repo: los tests los generan y cachean por hash del script.
 
@@ -104,6 +108,7 @@ repo: los tests los generan y cachean por hash del script.
 | random_bytes | 64 KB pseudoaleatorios (semilla fija) | CORRUPT (probe) |
 | truncated_header | primeros 512 bytes | CORRUPT (probe) |
 | corrupt_frames | `moov` intacto, `mdat` reemplazado | **pasa probe**, CORRUPT (decode) |
+| one_frame_25 / one_frame_30 | `color=size=1920x412:rate=R -frames:v 1` | OK (reintento desde 0) |
 
 `corrupt_frames` es la prueba de por qué hay **dos** compuertas: ffprobe le
 devuelve metadata perfecta (H.264, 1920×412, 30 fps, 2 s) y exit 0; solo el

@@ -1,6 +1,6 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador)
+**Pelota en:** ChatGPT (auditor) — re-auditar el PR de correcciones B2
 **Fase:** M3A.1 Fase B2 — Media inspection + validation
 **Estado:** auditada por ChatGPT: `AUDIT: CAMBIOS` en el [issue #1](https://github.com/fermalenoski86/dev/issues/1#issuecomment-6026168352). Pendiente de correcciones y nueva auditoría. **B3 no se inicia hasta `AUDIT: APROBADO` de B2.**
 
@@ -41,3 +41,5 @@ consistencia READY ↔ StoredObject), AssetUploadService, idempotencia, audit.
 ## Historial
 - 2026-10-06 — ChatGPT: auditoría de f3b55461600246f324c427edef091967e74e4944 publicada: CAMBIOS, 2 hallazgos reproducidos. B3 pendiente.
 - 2026-10-06 — Claude: B2 entregada (48/48 reales, 9/9 mutaciones, M2C 14/14).
+- 2026-10-06 — ChatGPT: AUDIT: CAMBIOS — P1 exit code del mutation check, P2 falso CORRUPT en MP4 de un frame.
+- 2026-10-06 — Claude: los dos corregidos (PR fix/m3a1-b2-audit1); gates completos: media 53/53, mutaciones 109/109, verify, build, PG 48+6, bootstrap 6/6, E2E 14/14. Pide re-auditoría.

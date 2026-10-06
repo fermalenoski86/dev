@@ -48,6 +48,18 @@ npx playwright test e2e/experience.spec.ts e2e/builder.spec.ts   # M2C congelado
 Requisitos de entorno: Node 22, pnpm 12.5.1, PostgreSQL 16, ffmpeg/ffprobe ≥ 6,
 Chromium para Playwright.
 
+Preparación probada (Ubuntu 24.04):
+
+```bash
+apt-get install -y postgresql-16 ffmpeg          # crea el usuario postgres
+npm i -g pnpm@12.5.1 && pnpm install
+# Chromium para E2E si `playwright install` no descarga: cualquier Chromium
+# ≥ 120 sirve vía TRUST_CHROMIUM_PATH=/ruta/al/chromium (ver e2e/README.md).
+```
+
+Si un gate no se puede correr en tu entorno, se reporta "no ejecutado" con el
+motivo; el otro agente lo corre en el suyo y deja la salida real en el PR.
+
 ## Reglas que no se discuten
 
 - **No fingir ejecución.** Si un gate no se pudo correr (ej. S3 sin MinIO), se dice

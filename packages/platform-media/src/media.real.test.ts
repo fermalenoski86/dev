@@ -25,6 +25,8 @@ describe('CRITERIO: ffprobe + ffmpeg REALES — matriz completa', () => {
     ['valid_screen_a_25.mp4', 'screen_a', 'OK'],
     ['valid_horizontal_25_audio.mp4', 'horizontal', 'OK'],
     ['valid_with_cover_art.mp4', 'horizontal', 'OK'],
+    ['one_frame_25.mp4', 'horizontal', 'OK'],
+    ['one_frame_30.mp4', 'horizontal', 'OK'],
     ['bad_resolution.mp4', 'horizontal', 'ASSET_BAD_RESOLUTION'],
     ['valid_towers_ab_25.mp4', 'horizontal', 'ASSET_BAD_RESOLUTION'],
     ['bad_codec_hevc.mp4', 'horizontal', 'ASSET_BAD_CODEC'],
@@ -91,6 +93,40 @@ describe('CRITERIO: por qué hacen falta DOS compuertas (probe + decode)', () =>
   it('decode real de un video válido produce bytes', async () => {
     const r = await new FfmpegFrameDecoder(rt).decode(fx('valid_horizontal_30.mp4'), { streamIndex: 0, durationMs: 2000 });
     expect(r.ok && r.frameBytes).toBeGreaterThan(1000);
+  });
+  it('AUDIT B2 #1: MP4 sano de UN frame decodifica (el seek cae después del frame y se reintenta desde 0)', async () => {
+    for (const [archivo, durMs] of [['one_frame_25.mp4', 40], ['one_frame_30.mp4', 33]] as const) {
+      const p = await new FfprobeMediaInspector(rt).inspect(fx(archivo));
+      expect(p.ok && p.media.durationMs).toBe(durMs);
+      const r = await new FfmpegFrameDecoder(rt).decode(fx(archivo), { streamIndex: 0, durationMs: durMs });
+      expect(r.ok && r.frameBytes).toBeGreaterThan(0);
+    }
+  });
+  it('el reintento no rescata un archivo realmente corrupto', async () => {
+    const r = await new FfmpegFrameDecoder(rt).decode(fx('corrupt_frames.mp4'), { streamIndex: 0, durationMs: 40 });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatchObject({ code: 'ASSET_CORRUPT', details: { stage: 'decode' } });
+  });
+  it('política de reintento: solo tras exit 0 sin frame; nunca tras falla del decoder', async () => {
+    // Stub de ffmpeg SOLO para contar invocaciones de la política (el camino
+    // feliz y la corrupción real se prueban arriba con el binario real).
+    const dir = await fs.mkdtemp('/tmp/trust-ffstub-');
+    const stub = async (exitCode: number) => {
+      const bin = `${dir}/ff_${exitCode}.sh`;
+      await fs.writeFile(bin, `#!/bin/sh\necho x >> "${dir}/llamadas_${exitCode}"\nexit ${exitCode}\n`, { mode: 0o700 });
+      return bin;
+    };
+    const llamadas = async (c: number) => (await fs.readFile(`${dir}/llamadas_${c}`, 'utf8')).trim().split('\n').length;
+    try {
+      const falla = await new FfmpegFrameDecoder({ ...rt, ffmpegPath: await stub(69) }).decode(fx('valid_horizontal_30.mp4'), { streamIndex: 0, durationMs: 2000 });
+      expect(falla.ok).toBe(false);
+      expect(await llamadas(69)).toBe(1);
+      const vacio = await new FfmpegFrameDecoder({ ...rt, ffmpegPath: await stub(0) }).decode(fx('valid_horizontal_30.mp4'), { streamIndex: 0, durationMs: 2000 });
+      expect(vacio.ok).toBe(false);
+      expect(await llamadas(0)).toBe(2);
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
   });
   it('la carátula no confunde al decoder: se decodifica la pista de video real', async () => {
     const p = await new FfprobeMediaInspector(rt).inspect(fx('valid_with_cover_art.mp4'));

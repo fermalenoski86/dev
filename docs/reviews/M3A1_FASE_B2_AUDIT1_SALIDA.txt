@@ -1,0 +1,221 @@
+M3A.1 B2 — respuesta a auditoría #1 — salida real 2026-10-06T22:34:06Z, Node v22.22.0, ffmpeg version 6.1.1-3ubuntu5, psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)
+
+=== Hallazgo 1: demostración del gate ===
+$ MUTATION_TEST_CMD="printf 'Tests 1 passed\n'" python3 scripts/mutation-check.py --tanda 0:1
+tanda 0:1 — 1 de 107 reglas
+SOBREVIVE  STOP -> black                Tests 1 passed
+atrapadas 0 · sobreviven 1 · sin salida 0
+GATE FALLIDO: HAY MUTANTES VIVOS O SUITES SIN SALIDA
+exit=1
+
+$ MUTATION_TEST_CMD="true" python3 scripts/mutation-check.py --tanda 0:1
+tanda 0:1 — 1 de 107 reglas
+SIN SALIDA STOP -> black                
+atrapadas 0 · sobreviven 0 · sin salida 1
+GATE FALLIDO: HAY MUTANTES VIVOS O SUITES SIN SALIDA
+exit=1
+
+$ MUTATION_TEST_CMD="printf 'Tests 1 failed | 3 passed\n'" python3 scripts/mutation-check.py --tanda 0:1
+tanda 0:1 — 1 de 107 reglas
+ATRAPADA   STOP -> black                Tests 1 failed | 3 passed
+atrapadas 1 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+exit=0
+
+autoprueba OK
+
+=== Hallazgo 2: reproducción del auditor ANTES (ffmpeg directo, -ss 0.020) ===
+one_frame_25 -ss 0.020 → 0 bytes; -ss 0 → 4901 bytes
+
+=== Media real (ffprobe/ffmpeg) ===
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: timeout real mata el proceso y no deja zombie > ffprobe colgado ⇒ ASSET_INSPECTION_TIMEOUT {stage: probe}, proceso terminado 422ms
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: timeout real mata el proceso y no deja zombie > ffmpeg colgado ⇒ ASSET_INSPECTION_TIMEOUT {stage: decode}, proceso terminado 413ms
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: cancelación del llamador > abortar mata ffprobe en curso y lanza MediaAbortError
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: cancelación del llamador > señal ya abortada: no se lanza ningún proceso
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: concurrencia limitada con procesos reales > 8 inspecciones con límite 2: nunca más de 2 procesos vivos; el resto en cola 330ms
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: concurrencia limitada con procesos reales > 4 procesos colgados con límite 2: solo 2 existen; abortar libera todo 418ms
+ ✓ packages/platform-media/src/process.real.test.ts > límites de salida > salida de ffprobe por encima del límite: proceso terminado y ASSET_CORRUPT
+ ✓ packages/platform-media/src/process.real.test.ts > límites de salida > stderr queda acotado
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: nombres hostiles nunca llegan a un shell > el archivo se inspecciona igual y no se ejecuta nada 1393ms
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: temporal real de ObjectStorage → inspección (sin tocar storage final) > temporal válido ⇒ OK; el temporal sigue ahí (B2 no promueve) y no queda copia en scratch
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: temporal real de ObjectStorage → inspección (sin tocar storage final) > temporal inválido ⇒ rechazo con causa exacta, scratch limpio
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: temporal real de ObjectStorage → inspección (sin tocar storage final) > el inspector recibe un path interno (UUID), nunca un nombre de archivo
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: temporal real de ObjectStorage → inspección (sin tocar storage final) > si el temporal fue alterado, la copia no coincide: StorageIntegrityError y scratch limpio
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: temporal real de ObjectStorage → inspección (sin tocar storage final) > el directorio de trabajo queda 0700 aunque existiera 0777
+ ✓ packages/platform-media/src/process.real.test.ts > configuración > variables inválidas fallan al arrancar, no en el primer upload
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > valid_towers_ab_25.mp4 como towers_ab ⇒ OK
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > valid_horizontal_30.mp4 como horizontal ⇒ OK
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > valid_screen_a_25.mp4 como screen_a ⇒ OK
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > valid_horizontal_25_audio.mp4 como horizontal ⇒ OK
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > valid_with_cover_art.mp4 como horizontal ⇒ OK
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > one_frame_25.mp4 como horizontal ⇒ OK
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > one_frame_30.mp4 como horizontal ⇒ OK
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > bad_resolution.mp4 como horizontal ⇒ ASSET_BAD_RESOLUTION
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > valid_towers_ab_25.mp4 como horizontal ⇒ ASSET_BAD_RESOLUTION
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > bad_codec_hevc.mp4 como horizontal ⇒ ASSET_BAD_CODEC
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > bad_fps_2997.mp4 como horizontal ⇒ ASSET_BAD_FPS
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > bad_fps_23976.mp4 como horizontal ⇒ ASSET_BAD_FPS
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > bad_fps_50.mp4 como horizontal ⇒ ASSET_BAD_FPS
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > too_short.mp4 como horizontal (requerido 1000 ms) ⇒ ASSET_TOO_SHORT
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > bad_container_mkv.mp4 como horizontal ⇒ ASSET_BAD_CONTAINER
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > bad_container_avi.mp4 como horizontal ⇒ ASSET_BAD_CONTAINER
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > bad_container_mov.mp4 como horizontal ⇒ ASSET_BAD_CONTAINER
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > multiple_video_streams.mp4 como horizontal ⇒ ASSET_MULTIPLE_VIDEO_STREAMS
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > no_video_audio_only.mp4 como horizontal ⇒ ASSET_NO_VIDEO
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > empty.mp4 como horizontal ⇒ ASSET_EMPTY
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > random_bytes.mp4 como horizontal ⇒ ASSET_CORRUPT
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > truncated_header.mp4 como horizontal ⇒ ASSET_CORRUPT
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > corrupt_frames.mp4 como horizontal ⇒ ASSET_CORRUPT
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > too_short sin duración requerida pasa: la cobertura exacta se valida en Submit
+ ✓ packages/platform-media/src/media.real.test.ts > metadata normalizada desde el archivo real > towers_ab 25: contenedor, codec, dimensiones, fps racional, duración, mime
+ ✓ packages/platform-media/src/media.real.test.ts > metadata normalizada desde el archivo real > 29.97 se guarda como racional exacto 30000/1001
+ ✓ packages/platform-media/src/media.real.test.ts > metadata normalizada desde el archivo real > el detalle de BAD_RESOLUTION trae expected / actual / surfaceType
+ ✓ packages/platform-media/src/media.real.test.ts > metadata normalizada desde el archivo real > el MIME canónico lo decide la inspección: video/mp4, no lo que diga el cliente
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: por qué hacen falta DOS compuertas (probe + decode) > corrupt_frames PASA ffprobe con metadata perfecta…
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: por qué hacen falta DOS compuertas (probe + decode) > …y SOLO el decode lo detecta
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: por qué hacen falta DOS compuertas (probe + decode) > decode real de un video válido produce bytes
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: por qué hacen falta DOS compuertas (probe + decode) > AUDIT B2 #1: MP4 sano de UN frame decodifica (el seek cae después del frame y se reintenta desde 0) 322ms
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: por qué hacen falta DOS compuertas (probe + decode) > el reintento no rescata un archivo realmente corrupto
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: por qué hacen falta DOS compuertas (probe + decode) > política de reintento: solo tras exit 0 sin frame; nunca tras falla del decoder
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: por qué hacen falta DOS compuertas (probe + decode) > la carátula no confunde al decoder: se decodifica la pista de video real
+ ✓ packages/platform-media/src/media.real.test.ts > errores hacia el cliente: sin stderr crudo, sin paths > el rechazo no contiene el path ni el stderr de ffmpeg
+ ✓ packages/platform-media/src/media.real.test.ts > errores hacia el cliente: sin stderr crudo, sin paths > ffprobe ausente: excepción de infraestructura, no un rechazo del archivo
+ ✓ packages/platform-media/src/media.real.test.ts > errores hacia el cliente: sin stderr crudo, sin paths > LocalPathSource rechaza FIFOs, symlinks y paths relativos
+ Test Files  2 passed (2)
+      Tests  53 passed (53)
+
+=== Mutaciones completas (2 tandas) ===
+ATRAPADA   STOP -> black                ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   SAFE MODE -> black           ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   PAUSE -> hold                ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   uv x+w <= 1                  ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   uv w,h > 0                   ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   capacidad del edificio       ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   doble membresia              ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   aspecto del recorte          ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   guard de URLs                ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   ended en transporte          ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   retry: libera fallada activa ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   retry: recrea el video       ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   actuador obedece output      ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   simulador determinista       ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   flag simulated               ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   phase loss antes que UV      ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   umbrales configurables       ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   serie == lectura viva        ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   clip caido se reporta        ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   logico != salud              ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   offline != safe mode         ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   contexto IA sin handles      ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   provenance simulada          ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   simulated no verificado      ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   verificado mira provenance   ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   stale degrada salud          ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   alarmas -> salud electrica   ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   preview no pisa al motor     ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   override off por defecto     ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   serie congelada en stale     ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   engine recarga si cambio     ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   revision por contenido       ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   canPreview corta BLOCKED     ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   canPreview mira exportable   ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   blocked suelta el motor      ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   scrub deja en pausa          ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   preset queda dirty           ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   storage valida con Zod       ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   hold no emite evento         ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   black emite media.stop       ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   namespace de assets          ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   ruta local en assets         ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   BLOCKED bloquea export       ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   experiencia: vista pura      ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   experiencia: assets locales  ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   experiencia: PLAY requiere ready ⎯⎯⎯⎯⎯⎯⎯ Fail
+ATRAPADA   experiencia: reset conoce estado ⎯⎯⎯⎯⎯⎯⎯ Fail
+ATRAPADA   pantalla A en su lugar       ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   pantalla B en su lugar       ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   client mode usa campaña      ⎯⎯⎯⎯⎯⎯⎯ Failed 
+ATRAPADA   precarga solo campaña        ⎯⎯⎯⎯⎯⎯⎯ Failed 
+ATRAPADA   titular ejecutivo            ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   WHY sin claims de luz        ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   segmentos reparten el uv     ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   segmento usa su indice       ⎯⎯⎯⎯⎯⎯⎯ Failed T
+atrapadas 55 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+exit=0
+ATRAPADA   black no muestra media       ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   contain entra entero         ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   fallo no cuenta cargado      ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   READY exige todo             ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   fallback debe estar cargado  ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   STOP nunca se bloquea        ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   signature con seek           ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   check requerido bloquea      ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   check sin ejecutar falla     ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   logger guarda la key         ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   serie corta en measuredAt    ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   ack emite evento             ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   ack no borra                 ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   ack all sincroniza log       ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   sin tarifa en la alarma      ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   alarma: ESCALATED            ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   alarma: DEESCALATED          ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   alarma: RESOLVED             ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   ack no borra la alarma       ⎯⎯⎯⎯⎯⎯ Failed Test
+ATRAPADA   escalar invalida el ack      ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   metric en la identidad       ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   freshness: STALE             ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   freshness: COMM_ERROR        ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   modo efectivo del estado     ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   modo: safe mode manda        ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   mes calendario real          ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   IA usa umbral configurado    ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   compiler: atMs acumulado     ⎯⎯⎯⎯⎯⎯ Failed Test
+ATRAPADA   compiler: A y B mismo cue    ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   compiler: cierre a identidad ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   compiler: escena existe      ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   compiler: uv por pixeles     ⎯⎯⎯⎯⎯⎯ Failed Test
+ATRAPADA   assets: namespace            ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   assets: unmanaged bloquea    ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   assets: aspecto              ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   validation: no exporta       ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   draft: duracion minima       ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   draft: duplicar id nuevo     ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   membresia por show           ⎯⎯⎯⎯⎯⎯ Failed Test
+ATRAPADA   storage: dedup solo por tamaño ⎯⎯⎯⎯⎯⎯⎯ Faile
+ATRAPADA   storage: shard≠hash aceptado ⎯⎯⎯⎯⎯⎯⎯ Failed
+ATRAPADA   storage: temporal huérfano pisado ⎯⎯⎯⎯⎯⎯⎯ Fa
+ATRAPADA   storage: permisos no endurecidos ⎯⎯⎯⎯⎯⎯⎯ Fail
+ATRAPADA   media: HEVC aceptado         ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   media: 29.97 aceptado (float) ⎯⎯⎯⎯⎯⎯⎯ Failed 
+ATRAPADA   media: resolución errada aceptada ⎯⎯⎯⎯⎯⎯⎯ Fa
+ATRAPADA   media: múltiples pistas aceptadas ⎯⎯⎯⎯⎯⎯⎯ Fa
+ATRAPADA   media: formato hardcodeado   ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   media: MOV pasa como MP4     ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   media: carátula cuenta como pista ⎯⎯⎯⎯⎯⎯⎯ Fa
+ATRAPADA   media: decode de frame omitido ⎯⎯⎯⎯⎯⎯⎯ Failed
+ATRAPADA   media: timeout omitido       ⎯⎯⎯⎯⎯⎯⎯ Failed T
+ATRAPADA   media: reintento de decode omitido ⎯⎯⎯⎯⎯⎯⎯ Fa
+ATRAPADA   media: reintento rescata corruptos ⎯⎯⎯⎯⎯⎯⎯ Fa
+atrapadas 54 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+exit=0
+
+=== pnpm verify ===
+✖ 11 problems (0 errors, 11 warnings)
+      Tests  596 passed | 1 skipped (597)
+verify=0
+
+=== pnpm build ===
+build=0
+apps/control build: 
+apps/control build: Done
+
+=== PostgreSQL 16 + bootstrap ===
+ Test Files  3 passed | 1 skipped (4)
+      Tests  48 passed | 6 skipped (54)
+      Tests  6 passed (6)
+bs=0
+
+=== M2C E2E ===
+  14 passed (1.5m)

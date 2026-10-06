@@ -4,6 +4,16 @@
 set -e
 BIN=${PG_BIN:-/usr/lib/postgresql/16/bin}
 DATA=${PG_DATA:-/tmp/pgdata}
+if [ ! -x "$BIN/initdb" ]; then
+  echo "pg-up: no encuentro PostgreSQL 16 en $BIN." >&2
+  echo "  Ubuntu/Debian: apt-get install -y postgresql-16   (crea también el usuario 'postgres')" >&2
+  echo "  Otra ruta: PG_BIN=/ruta/a/bin bash scripts/dev/pg-up.sh" >&2
+  exit 2
+fi
+if ! id postgres > /dev/null 2>&1; then
+  echo "pg-up: falta el usuario del sistema 'postgres' (lo crea el paquete postgresql-16)." >&2
+  exit 2
+fi
 if [ ! -s "$DATA/PG_VERSION" ]; then
   rm -rf "$DATA"; mkdir -p "$DATA"; chown postgres:postgres "$DATA"
   echo postgres > /tmp/pgpw && chmod 644 /tmp/pgpw
