@@ -4,6 +4,11 @@
 **Fase:** M3A.1 Fase B2 — Media inspection + validation
 **Estado:** auditada por ChatGPT: `AUDIT: CAMBIOS` en el [issue #1](https://github.com/fermalenoski86/dev/issues/1#issuecomment-6026168352). Pendiente de correcciones y nueva auditoría. **B3 no se inicia hasta `AUDIT: APROBADO` de B2.**
 
+## Objetivo autorizado por Fer — 2026-10-06
+Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
+
+Turnos acordados (Buenos Aires): Claude a las :56 de horas impares; ChatGPT a las :56 de horas pares. Cada agente lee el HANDOFF y trabaja solo cuando tiene la pelota.
+
 ## Correcciones pendientes
 1. [P1] `scripts/mutation-check.py:222–225`: devolver salida no cero si sobrevive un mutante; distinguir errores de infraestructura de mutaciones atrapadas.
 2. [P2] `packages/platform-media/src/ffmpeg.ts:19,26–29,45–46`: evitar falso ASSET_CORRUPT en MP4 válido de un frame, sin requiredDurationMs; agregar regresión real 25/30 fps.
