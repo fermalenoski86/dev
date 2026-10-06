@@ -1,0 +1,116 @@
+{
+  "id": "mcdonalds_takeover_15s",
+  "name": "Takeover Obelisco 15 s",
+  "version": 1,
+  "durationMs": 15000,
+  "media": {
+    "horizontal": "/demo/test_horizontal.mp4"
+  },
+  "mediaGroups": {
+    "towers": {
+      "source": "/demo/test_towers_master.mp4",
+      "canvas": {
+        "width": 2592,
+        "height": 576
+      },
+      "layout": {
+        "screen_a": {
+          "x": 0,
+          "y": 0,
+          "w": 0.4444444444444444,
+          "h": 1
+        },
+        "screen_b": {
+          "x": 0.4444444444444444,
+          "y": 0,
+          "w": 0.5555555555555556,
+          "h": 1
+        }
+      }
+    }
+  },
+  "initialState": {
+    "lightingScene": "trust_normal",
+    "clockState": "normal",
+    "camera": "hero_obelisco"
+  },
+  "timeline": [
+    {
+      "atMs": 0,
+      "type": "lighting.scene",
+      "value": "trust_normal"
+    },
+    {
+      "atMs": 0,
+      "type": "clock.state",
+      "value": "normal"
+    },
+    {
+      "atMs": 3000,
+      "type": "media.play",
+      "target": "screen_a",
+      "fromMs": 0
+    },
+    {
+      "atMs": 3000,
+      "type": "media.play",
+      "target": "screen_b",
+      "fromMs": 0
+    },
+    {
+      "atMs": 3000,
+      "type": "media.play",
+      "target": "horizontal",
+      "fromMs": 0
+    },
+    {
+      "atMs": 3000,
+      "type": "lighting.scene",
+      "value": "brand_accent",
+      "fadeMs": 1500
+    },
+    {
+      "atMs": 6000,
+      "type": "lighting.scene",
+      "value": "mcd_red_gold",
+      "fadeMs": 2000
+    },
+    {
+      "atMs": 6000,
+      "type": "clock.state",
+      "value": "accent"
+    },
+    {
+      "atMs": 12000,
+      "type": "lighting.scene",
+      "value": "iconic_signature",
+      "fadeMs": 1200
+    },
+    {
+      "atMs": 12000,
+      "type": "clock.state",
+      "value": "normal"
+    },
+    {
+      "atMs": 14000,
+      "type": "media.stop",
+      "target": "screen_a"
+    },
+    {
+      "atMs": 14000,
+      "type": "media.stop",
+      "target": "screen_b"
+    },
+    {
+      "atMs": 14000,
+      "type": "media.stop",
+      "target": "horizontal"
+    },
+    {
+      "atMs": 14000,
+      "type": "lighting.scene",
+      "value": "trust_normal",
+      "fadeMs": 800
+    }
+  ]
+}

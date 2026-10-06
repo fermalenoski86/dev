@@ -1,0 +1,145 @@
+M3A.1 FASE B2 — salida real 2026-10-06
+=== ffprobe/ffmpeg ===
+ffprobe version 6.1.1-3ubuntu5 Copyright (c) 2007-2023 the FFmpeg developers
+ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers
+
+=== B2 real (ffprobe/ffmpeg reales) ===
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: timeout real mata el proceso y no deja zombie > ffprobe colgado ⇒ ASSET_INSPECTION_TIMEOUT {stage: probe}, proceso terminado 420ms
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: timeout real mata el proceso y no deja zombie > ffmpeg colgado ⇒ ASSET_INSPECTION_TIMEOUT {stage: decode}, proceso terminado 413ms
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: cancelación del llamador > abortar mata ffprobe en curso y lanza MediaAbortError
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: cancelación del llamador > señal ya abortada: no se lanza ningún proceso
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: concurrencia limitada con procesos reales > 8 inspecciones con límite 2: nunca más de 2 procesos vivos; el resto en cola
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: concurrencia limitada con procesos reales > 4 procesos colgados con límite 2: solo 2 existen; abortar libera todo 420ms
+ ✓ packages/platform-media/src/process.real.test.ts > límites de salida > salida de ffprobe por encima del límite: proceso terminado y ASSET_CORRUPT
+ ✓ packages/platform-media/src/process.real.test.ts > límites de salida > stderr queda acotado
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: nombres hostiles nunca llegan a un shell > el archivo se inspecciona igual y no se ejecuta nada 1404ms
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: temporal real de ObjectStorage → inspección (sin tocar storage final) > temporal válido ⇒ OK; el temporal sigue ahí (B2 no promueve) y no queda copia en scratch
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: temporal real de ObjectStorage → inspección (sin tocar storage final) > temporal inválido ⇒ rechazo con causa exacta, scratch limpio
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: temporal real de ObjectStorage → inspección (sin tocar storage final) > el inspector recibe un path interno (UUID), nunca un nombre de archivo
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: temporal real de ObjectStorage → inspección (sin tocar storage final) > si el temporal fue alterado, la copia no coincide: StorageIntegrityError y scratch limpio
+ ✓ packages/platform-media/src/process.real.test.ts > CRITERIO: temporal real de ObjectStorage → inspección (sin tocar storage final) > el directorio de trabajo queda 0700 aunque existiera 0777
+ ✓ packages/platform-media/src/process.real.test.ts > configuración > variables inválidas fallan al arrancar, no en el primer upload
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > valid_towers_ab_25.mp4 como towers_ab ⇒ OK
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > valid_horizontal_30.mp4 como horizontal ⇒ OK
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > valid_screen_a_25.mp4 como screen_a ⇒ OK
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > valid_horizontal_25_audio.mp4 como horizontal ⇒ OK
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > valid_with_cover_art.mp4 como horizontal ⇒ OK
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > bad_resolution.mp4 como horizontal ⇒ ASSET_BAD_RESOLUTION
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > valid_towers_ab_25.mp4 como horizontal ⇒ ASSET_BAD_RESOLUTION
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > bad_codec_hevc.mp4 como horizontal ⇒ ASSET_BAD_CODEC
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > bad_fps_2997.mp4 como horizontal ⇒ ASSET_BAD_FPS
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > bad_fps_23976.mp4 como horizontal ⇒ ASSET_BAD_FPS
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > bad_fps_50.mp4 como horizontal ⇒ ASSET_BAD_FPS
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > too_short.mp4 como horizontal (requerido 1000 ms) ⇒ ASSET_TOO_SHORT
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > bad_container_mkv.mp4 como horizontal ⇒ ASSET_BAD_CONTAINER
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > bad_container_avi.mp4 como horizontal ⇒ ASSET_BAD_CONTAINER
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > bad_container_mov.mp4 como horizontal ⇒ ASSET_BAD_CONTAINER
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > multiple_video_streams.mp4 como horizontal ⇒ ASSET_MULTIPLE_VIDEO_STREAMS
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > no_video_audio_only.mp4 como horizontal ⇒ ASSET_NO_VIDEO
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > empty.mp4 como horizontal ⇒ ASSET_EMPTY
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > random_bytes.mp4 como horizontal ⇒ ASSET_CORRUPT
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > truncated_header.mp4 como horizontal ⇒ ASSET_CORRUPT
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > corrupt_frames.mp4 como horizontal ⇒ ASSET_CORRUPT
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: ffprobe + ffmpeg REALES — matriz completa > too_short sin duración requerida pasa: la cobertura exacta se valida en Submit
+ ✓ packages/platform-media/src/media.real.test.ts > metadata normalizada desde el archivo real > towers_ab 25: contenedor, codec, dimensiones, fps racional, duración, mime
+ ✓ packages/platform-media/src/media.real.test.ts > metadata normalizada desde el archivo real > 29.97 se guarda como racional exacto 30000/1001
+ ✓ packages/platform-media/src/media.real.test.ts > metadata normalizada desde el archivo real > el detalle de BAD_RESOLUTION trae expected / actual / surfaceType
+ ✓ packages/platform-media/src/media.real.test.ts > metadata normalizada desde el archivo real > el MIME canónico lo decide la inspección: video/mp4, no lo que diga el cliente
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: por qué hacen falta DOS compuertas (probe + decode) > corrupt_frames PASA ffprobe con metadata perfecta…
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: por qué hacen falta DOS compuertas (probe + decode) > …y SOLO el decode lo detecta
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: por qué hacen falta DOS compuertas (probe + decode) > decode real de un video válido produce bytes
+ ✓ packages/platform-media/src/media.real.test.ts > CRITERIO: por qué hacen falta DOS compuertas (probe + decode) > la carátula no confunde al decoder: se decodifica la pista de video real
+ ✓ packages/platform-media/src/media.real.test.ts > errores hacia el cliente: sin stderr crudo, sin paths > el rechazo no contiene el path ni el stderr de ffmpeg
+ ✓ packages/platform-media/src/media.real.test.ts > errores hacia el cliente: sin stderr crudo, sin paths > ffprobe ausente: excepción de infraestructura, no un rechazo del archivo
+ ✓ packages/platform-media/src/media.real.test.ts > errores hacia el cliente: sin stderr crudo, sin paths > LocalPathSource rechaza FIFOs, symlinks y paths relativos
+ Test Files  2 passed (2)
+      Tests  48 passed (48)
+
+=== B2 puro + B1 storage ===
+ ✓ packages/platform-storage/src/local-disk.test.ts > ObjectStorage contract — LocalDiskStorage (disco real) > putTemporary calcula sha256 y tamaño DURANTE la escritura; read y stat coinciden
+ ✓ packages/platform-storage/src/local-disk.test.ts > ObjectStorage contract — LocalDiskStorage (disco real) > límite superado: StorageLimitError y la reserva se libera
+ ✓ packages/platform-storage/src/local-disk.test.ts > ObjectStorage contract — LocalDiskStorage (disco real) > CRITERIO: dos uploads simultáneos con el MISMO tempId: uno gana, el otro STORAGE_CONFLICT
+ ✓ packages/platform-storage/src/local-disk.test.ts > ObjectStorage contract — LocalDiskStorage (disco real) > un tempId ya usado no se reutiliza (ni completo)
+ ✓ packages/platform-storage/src/local-disk.test.ts > ObjectStorage contract — LocalDiskStorage (disco real) > CRITERIO: estados parciales tras un crash no se pisan ni se toman por válidos
+ ✓ packages/platform-storage/src/local-disk.test.ts > ObjectStorage contract — LocalDiskStorage (disco real) > reintento tras un crash: con un tempId NUEVO funciona; el TTL limpia lo abandonado
+ ✓ packages/platform-storage/src/local-disk.test.ts > ObjectStorage contract — LocalDiskStorage (disco real) > ids y claves que no generó el servidor se rechazan
+ ✓ packages/platform-storage/src/local-disk.test.ts > ObjectStorage contract — LocalDiskStorage (disco real) > CRITERIO: clave canónica sin extensión: mismos bytes ⇒ UNA clave, venga de donde venga
+ ✓ packages/platform-storage/src/local-disk.test.ts > ObjectStorage contract — LocalDiskStorage (disco real) > CRITERIO P0: blob final existente con el MISMO tamaño y otros bytes ⇒ STORAGE_INTEGRITY; el temporal válido queda
+ ✓ packages/platform-storage/src/local-disk.test.ts > ObjectStorage contract — LocalDiskStorage (disco real) > blob final existente con OTRO tamaño ⇒ STORAGE_INTEGRITY
+ ✓ packages/platform-storage/src/local-disk.test.ts > ObjectStorage contract — LocalDiskStorage (disco real) > blob final existente con los bytes CORRECTOS ⇒ dedup (created=false) y se libera el temporal
+ ✓ packages/platform-storage/src/local-disk.test.ts > ObjectStorage contract — LocalDiskStorage (disco real) > putIfAbsent: nunca sobrescribe y rechaza contenido que no corresponde a la clave
+ ✓ packages/platform-storage/src/local-disk.test.ts > ObjectStorage contract — LocalDiskStorage (disco real) > concurrencia: seis commits simultáneos del mismo contenido terminan en UN blob
+ ✓ packages/platform-storage/src/local-disk.test.ts > ObjectStorage contract — LocalDiskStorage (disco real) > commit con un sha256 que no es el del temporal se rechaza
+ ✓ packages/platform-storage/src/local-disk.test.ts > ObjectStorage contract — LocalDiskStorage (disco real) > la limpieza borra temporales y NUNCA blobs finales
+ ✓ packages/platform-storage/src/local-disk.test.ts > LocalDiskStorage — defensas propias del disco > CRITERIO: arrancar sobre directorios preexistentes 0777 los endurece a 0700
+ ✓ packages/platform-storage/src/local-disk.test.ts > LocalDiskStorage — defensas propias del disco > permisos: temporal 0600, final 0440
+ ✓ packages/platform-storage/src/local-disk.test.ts > LocalDiskStorage — defensas propias del disco > metadata validada: tempId ajeno, sha inválido, tamaño negativo o fecha inválida ⇒ STORAGE_INTEGRITY
+ ✓ packages/platform-storage/src/local-disk.test.ts > LocalDiskStorage — defensas propias del disco > symlink intermedio: un shard sha256/ab que apunta afuera se rechaza
+ ✓ packages/platform-storage/src/local-disk.test.ts > LocalDiskStorage — defensas propias del disco > symlink como reserva o como datos: rechazado
+ ✓ packages/platform-storage/src/local-disk.test.ts > LocalDiskStorage — defensas propias del disco > un temporal alterado después de escrito no se promueve
+ ✓ packages/platform-storage/src/local-disk.test.ts > LocalDiskStorage — defensas propias del disco > el nombre original nunca define el path: solo existen tmp/ y sha256/ con claves canónicas
+ ✓ packages/platform-storage/src/local-disk.test.ts > LocalDiskStorage — defensas propias del disco > TTL: la limpieza borra solo reservas más viejas que el TTL
+ ✓ packages/platform-storage/src/local-disk.test.ts > LocalDiskStorage — defensas propias del disco > streaming: 96 MB pasan sin cargarse en memoria
+ ✓ packages/platform-media/src/validator.test.ts > CRITERIO: validator — matriz de rechazos > válido ⇒ OK (towers_ab y horizontal)
+ ✓ packages/platform-media/src/validator.test.ts > CRITERIO: validator — matriz de rechazos > contenedor
+ ✓ packages/platform-media/src/validator.test.ts > CRITERIO: validator — matriz de rechazos > pistas: 0 ⇒ NO_VIDEO, 2 ⇒ MULTIPLE
+ ✓ packages/platform-media/src/validator.test.ts > CRITERIO: validator — matriz de rechazos > codec: HEVC, MPEG4 y null ⇒ BAD_CODEC
+ ✓ packages/platform-media/src/validator.test.ts > CRITERIO: validator — matriz de rechazos > resolución: detalle con expected / actual / surfaceType
+ ✓ packages/platform-media/src/validator.test.ts > CRITERIO: validator — matriz de rechazos > CRITERIO: fps — solo 25/1 y 30/1 exactos
+ ✓ packages/platform-media/src/validator.test.ts > CRITERIO: validator — matriz de rechazos > duración: TOO_SHORT con requiredDurationMs; sin requerido alcanza con > 0; sin duración ⇒ CORRUPT
+ ✓ packages/platform-media/src/validator.test.ts > CRITERIO: validator — matriz de rechazos > surfaceType desconocido ⇒ error de entrada, no rechazo de media
+ ✓ packages/platform-media/src/validator.test.ts > CRITERIO: la resolución sale de EL_TRUST, no de constantes copiadas > si el modelo dice otra resolución, el validator espera la nueva
+ ✓ packages/platform-media/src/validator.test.ts > CRITERIO: la resolución sale de EL_TRUST, no de constantes copiadas > el lienzo A+B sigue a las torres: cambiar B cambia towers_ab
+ ✓ packages/platform-media/src/validator.test.ts > CRITERIO: la resolución sale de EL_TRUST, no de constantes copiadas > el validator no contiene ninguna dimensión del edificio escrita a mano
+ ✓ packages/platform-media/src/validator.test.ts > normalizeProbe (JSON de ffprobe → metadata) > MOV renombrado: mismo format_name que MP4, pero brand qt ⇒ no es MP4
+ ✓ packages/platform-media/src/validator.test.ts > normalizeProbe (JSON de ffprobe → metadata) > la carátula (attached_pic) no cuenta como pista de video
+ ✓ packages/platform-media/src/validator.test.ts > normalizeProbe (JSON de ffprobe → metadata) > duración: manda la pista de video; si falta, la del contenedor
+ ✓ packages/platform-media/src/validator.test.ts > normalizeProbe (JSON de ffprobe → metadata) > codec normalizado
+ ✓ packages/platform-media/src/limiter.test.ts > CRITERIO: limitador de concurrencia > nunca supera el máximo; el resto espera en cola FIFO
+ ✓ packages/platform-media/src/limiter.test.ts > CRITERIO: limitador de concurrencia > cancelar mientras espera: sale de la cola y NUNCA ejecuta
+ ✓ packages/platform-media/src/limiter.test.ts > CRITERIO: limitador de concurrencia > una tarea que falla libera su lugar
+ ✓ packages/platform-media/src/limiter.test.ts > CRITERIO: limitador de concurrencia > máximo inválido se rechaza
+ ✓ packages/platform-media/src/rational.test.ts > CRITERIO: fps como racional exacto > reduce y compara fracciones, no floats
+ ✓ packages/platform-media/src/rational.test.ts > CRITERIO: fps como racional exacto > inválidos ⇒ null: 0/0, x/0, negativos, decimales, basura
+ ✓ packages/platform-media/src/rational.test.ts > CRITERIO: fps como racional exacto > 29.97 no es 30: no hay tolerancia accidental
+ ✓ packages/platform-media/src/rational.test.ts > duración exacta, sin float > trunca a ms
+ ✓ packages/platform-media/src/rational.test.ts > duración exacta, sin float > inválidos ⇒ null
+ Test Files  4 passed | 1 skipped (5)
+      Tests  48 passed | 1 skipped (49)
+
+=== pnpm verify (default) ===
+  409:64  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  356:47  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+✖ 11 problems (0 errors, 11 warnings)
+ Test Files  28 passed | 1 skipped (29)
+      Tests  596 passed | 1 skipped (597)
+
+=== pnpm build ===
+apps/previs build: 
+apps/previs build: ○  (Static)  prerendered as static content
+apps/previs build: 
+apps/previs build: Done
+
+=== PostgreSQL ===
+ Tests  48 passed | 6 skipped (54)
+=== bootstrap smoke ===
+      Tests  6 passed (6)
+
+=== Mutaciones 98–106 ===
+      Tests  2 failed | 594 passed | 1 skipped (597)
+ATRAPADA   media: múltiples pistas aceptadas ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 595 passed | 1 skipped (597)
+ATRAPADA   media: formato hardcodeado   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 593 passed | 1 skipped (597)
+ATRAPADA   media: MOV pasa como MP4     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 595 passed | 1 skipped (597)
+ATRAPADA   media: carátula cuenta como pista ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 595 passed | 1 skipped (597)
+ATRAPADA   media: decode de frame omitido ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 46 passed (48)
+ATRAPADA   media: timeout omitido       ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 46 passed (48)
+TODAS ATRAPADAS
+
+=== M2C E2E ===
+  14 passed (1.3m)

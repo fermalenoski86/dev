@@ -1,0 +1,229 @@
+TRUST PLATFORM — M2A.1 — salida real de comandos
+fecha: 2026-09-25T01:11:06Z
+node v22.22.2 · pnpm 12.5.1
+lockfile: 3106 lineas · documentos YAML: 1
+node_modules borrados antes de empezar: si
+
+================================================================
+$ pnpm install --frozen-lockfile
+================================================================
+Scope: all 9 workspace projects
+✓ Lockfile passes supply-chain policies (verified 4h ago)
+Lockfile is up to date, resolution step is skipped
+Packages are hard linked from the content-addressable store to the virtual store.
+  Content-addressable store is at: /root/.local/share/pnpm/store/v11
+  Virtual store is at:             node_modules/.pnpm
+Packages: +271
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 271, reused 271, downloaded 0, added 271, done
+
+devDependencies:
++ @types/node 26.6.2
++ @typescript-eslint/eslint-plugin 8.70.0
++ @typescript-eslint/parser 8.70.0
++ eslint 8.57.1
++ prettier 3.9.8
++ typescript 5.9.3
++ vitest 2.1.9
++ zod 3.25.76
+
+Done in 331ms using pnpm v12.5.1
+[exit 0]
+
+================================================================
+$ pnpm verify
+================================================================
+$ pnpm lint && pnpm typecheck && pnpm test
+$ eslint "{packages,apps}/*/src/**/*.{ts,tsx}"
+$ pnpm -r typecheck
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ vitest run
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v2.1.9 /home/claude/trust-platform
+
+ ✓ packages/control-core/src/control-core.test.ts (46 tests) 60ms
+ ✓ packages/telemetry/src/lifecycle.test.ts (45 tests) 45ms
+ ✓ packages/show-engine/src/playback.test.ts (25 tests) 41ms
+ ✓ packages/show-engine/src/resolve.test.ts (32 tests) 22ms
+ ✓ packages/telemetry/src/telemetry.test.ts (38 tests) 118ms
+ ✓ packages/show-engine/src/groups.test.ts (23 tests) 27ms
+ ✓ packages/trust-3d/src/MediaTextureManager.test.ts (19 tests) 12ms
+ ✓ packages/show-engine/src/preflight.test.ts (17 tests) 29ms
+ ✓ packages/show-engine/src/fades.test.ts (11 tests) 133ms
+ ✓ packages/timeline/src/transport.test.ts (15 tests) 5ms
+ ✓ packages/show-engine/src/compile.test.ts (7 tests) 70ms
+ ✓ packages/show-engine/src/shows.test.ts (10 tests) 223ms
+
+ Test Files  12 passed (12)
+      Tests  288 passed (288)
+   Start at  01:11:50
+   Duration  4.71s (transform 513ms, setup 0ms, collect 1.04s, tests 783ms, environment 2ms, prepare 912ms)
+
+[exit 0]
+
+================================================================
+$ pnpm build
+================================================================
+$ pnpm -r build
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ next build
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/4) ...
+   Generating static pages (1/4) 
+   Generating static pages (2/4) 
+   Generating static pages (3/4) 
+ ✓ Generating static pages (4/4)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    41.4 kB         129 kB
+└ ○ /_not-found                          872 B          88.1 kB
++ First Load JS shared by all            87.2 kB
+  ├ chunks/5b8f0dd8-535379dfdada73c5.js  53.6 kB
+  ├ chunks/749-c1d3b0ac10fb9f0d.js       31.7 kB
+  └ other shared chunks (total)          1.86 kB
+
+
+○  (Static)  prerendered as static content
+
+$ next build
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/4) ...
+   Generating static pages (1/4) 
+   Generating static pages (2/4) 
+   Generating static pages (3/4) 
+ ✓ Generating static pages (4/4)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    239 kB          326 kB
+└ ○ /_not-found                          872 B          88.2 kB
++ First Load JS shared by all            87.3 kB
+  ├ chunks/5b8f0dd8-cbb985564f7327f7.js  53.6 kB
+  ├ chunks/749-135c8e6b81412004.js       31.7 kB
+  └ other shared chunks (total)          1.96 kB
+
+
+○  (Static)  prerendered as static content
+
+[exit 0]
+
+================================================================
+$ python3 scripts/mutation-check.py
+================================================================
+ATRAPADA   STOP -> black
+      Tests  5 failed | 283 passed (288)
+ATRAPADA   SAFE MODE -> black
+      Tests  5 failed | 283 passed (288)
+ATRAPADA   PAUSE -> hold
+      Tests  6 failed | 282 passed (288)
+ATRAPADA   uv x+w <= 1
+      Tests  2 failed | 286 passed (288)
+ATRAPADA   uv w,h > 0
+      Tests  2 failed | 286 passed (288)
+ATRAPADA   capacidad del edificio
+      Tests  2 failed | 286 passed (288)
+ATRAPADA   doble membresia
+      Tests  1 failed | 287 passed (288)
+ATRAPADA   aspecto del recorte
+      Tests  1 failed | 287 passed (288)
+ATRAPADA   guard de URLs
+      Tests  2 failed | 286 passed (288)
+ATRAPADA   ended en transporte
+      Tests  5 failed | 283 passed (288)
+ATRAPADA   retry: libera fallada activa
+      Tests  1 failed | 287 passed (288)
+ATRAPADA   retry: recrea el video
+      Tests  3 failed | 285 passed (288)
+ATRAPADA   actuador obedece output
+      Tests  2 failed | 286 passed (288)
+ATRAPADA   simulador determinista
+      Tests  7 failed | 281 passed (288)
+ATRAPADA   flag simulated
+      Tests  2 failed | 286 passed (288)
+ATRAPADA   phase loss antes que UV
+      Tests  2 failed | 286 passed (288)
+ATRAPADA   umbrales configurables
+      Tests  1 failed | 287 passed (288)
+ATRAPADA   serie == lectura viva
+      Tests  1 failed | 287 passed (288)
+ATRAPADA   clip caido se reporta
+      Tests  1 failed | 287 passed (288)
+ATRAPADA   offline != safe mode
+      Tests  1 failed | 287 passed (288)
+ATRAPADA   contexto IA sin handles
+      Tests  1 failed | 287 passed (288)
+ATRAPADA   device health no es online
+      Tests  6 failed | 282 passed (288)
+ATRAPADA   simulated no verificado
+      Tests  1 failed | 287 passed (288)
+ATRAPADA   logico != salud
+      Tests  6 failed | 282 passed (288)
+ATRAPADA   stale degrada salud
+      Tests  1 failed | 287 passed (288)
+ATRAPADA   alarma: ESCALATED
+      Tests  6 failed | 282 passed (288)
+ATRAPADA   alarma: DEESCALATED
+      Tests  4 failed | 284 passed (288)
+ATRAPADA   alarma: RESOLVED
+      Tests  5 failed | 283 passed (288)
+ATRAPADA   ack no borra la alarma
+      Tests  2 failed | 286 passed (288)
+ATRAPADA   escalar invalida el ack
+      Tests  1 failed | 287 passed (288)
+ATRAPADA   metric en la identidad
+      Tests  2 failed | 286 passed (288)
+ATRAPADA   freshness: STALE
+      Tests  7 failed | 281 passed (288)
+ATRAPADA   freshness: COMM_ERROR
+      Tests  3 failed | 285 passed (288)
+ATRAPADA   modo efectivo del estado
+      Tests  3 failed | 285 passed (288)
+ATRAPADA   modo: safe mode manda
+      Tests  1 failed | 287 passed (288)
+ATRAPADA   mes calendario real
+      Tests  2 failed | 286 passed (288)
+ATRAPADA   IA usa umbral configurado
+      Tests  2 failed | 286 passed (288)
+ATRAPADA   membresia por show
+      Tests  18 failed | 270 passed (288)
+TODAS ATRAPADAS
+
+================================================================
+smoke test TRUST CONTROL (:3001)
+================================================================
+GET /   200
+titulo: MASTER OF TRUST — Control Center

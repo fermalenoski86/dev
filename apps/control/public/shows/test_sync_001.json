@@ -1,0 +1,89 @@
+{
+  "id": "test_sync_001",
+  "name": "TEST — Frame lock A+B y semántica de playback",
+  "version": 1,
+  "durationMs": 30000,
+  "media": {
+    "horizontal": "/demo/test_horizontal.mp4"
+  },
+  "mediaGroups": {
+    "towers": {
+      "source": "/demo/test_towers_master.mp4",
+      "canvas": {
+        "width": 2592,
+        "height": 576
+      },
+      "layout": {
+        "screen_a": {
+          "x": 0,
+          "y": 0,
+          "w": 0.4444444444444444,
+          "h": 1
+        },
+        "screen_b": {
+          "x": 0.4444444444444444,
+          "y": 0,
+          "w": 0.5555555555555556,
+          "h": 1
+        }
+      }
+    }
+  },
+  "initialState": {
+    "lightingScene": "trust_normal",
+    "clockState": "normal",
+    "camera": "hero_obelisco"
+  },
+  "timeline": [
+    {
+      "atMs": 1000,
+      "type": "media.play",
+      "target": "screen_a"
+    },
+    {
+      "atMs": 1000,
+      "type": "media.play",
+      "target": "screen_b"
+    },
+    {
+      "atMs": 1000,
+      "type": "media.play",
+      "target": "horizontal"
+    },
+    {
+      "atMs": 8000,
+      "type": "media.pause",
+      "target": "horizontal"
+    },
+    {
+      "atMs": 12000,
+      "type": "media.play",
+      "target": "horizontal"
+    },
+    {
+      "atMs": 16000,
+      "type": "camera.switch",
+      "value": "hero_3d"
+    },
+    {
+      "atMs": 22000,
+      "type": "media.stop",
+      "target": "horizontal"
+    },
+    {
+      "atMs": 24000,
+      "type": "lighting.scene",
+      "value": "trust_normal"
+    },
+    {
+      "atMs": 28000,
+      "type": "media.stop",
+      "target": "screen_a"
+    },
+    {
+      "atMs": 28000,
+      "type": "media.stop",
+      "target": "screen_b"
+    }
+  ]
+}

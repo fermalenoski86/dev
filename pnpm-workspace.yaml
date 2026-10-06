@@ -1,0 +1,10 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+  - 'edge/*'
+
+# Builds aprobados explícitamente. Cualquier paquete que quiera correr scripts
+# de instalación tiene que estar acá: un postinstall es ejecución de código
+# ajeno en la máquina que después compila lo que va al edificio.
+allowBuilds:
+  esbuild: true

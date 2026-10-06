@@ -1,0 +1,99 @@
+{
+  "id": "mcdonalds_takeover_001",
+  "name": "McDonald's Takeover Demo",
+  "version": 1,
+  "durationMs": 30000,
+  "media": {
+    "horizontal": "/demo/test_horizontal.mp4"
+  },
+  "initialState": {
+    "lightingScene": "trust_normal",
+    "clockState": "normal",
+    "camera": "hero_obelisco"
+  },
+  "timeline": [
+    {
+      "atMs": 3000,
+      "type": "media.play",
+      "target": "horizontal"
+    },
+    {
+      "atMs": 5000,
+      "type": "media.play",
+      "target": "screen_a"
+    },
+    {
+      "atMs": 5000,
+      "type": "media.play",
+      "target": "screen_b"
+    },
+    {
+      "atMs": 7000,
+      "type": "lighting.scene",
+      "value": "mcd_red_gold"
+    },
+    {
+      "atMs": 12000,
+      "type": "clock.state",
+      "value": "accent"
+    },
+    {
+      "atMs": 14000,
+      "type": "camera.switch",
+      "value": "hero_3d"
+    },
+    {
+      "atMs": 22000,
+      "type": "camera.switch",
+      "value": "street_corrientes"
+    },
+    {
+      "atMs": 25000,
+      "type": "lighting.scene",
+      "value": "trust_normal"
+    },
+    {
+      "atMs": 25000,
+      "type": "clock.state",
+      "value": "normal"
+    },
+    {
+      "atMs": 28000,
+      "type": "media.stop",
+      "target": "screen_a"
+    },
+    {
+      "atMs": 28000,
+      "type": "media.stop",
+      "target": "screen_b"
+    },
+    {
+      "atMs": 29000,
+      "type": "media.stop",
+      "target": "horizontal"
+    }
+  ],
+  "mediaGroups": {
+    "towers": {
+      "source": "/demo/test_towers_master.mp4",
+      "canvas": {
+        "width": 2592,
+        "height": 576
+      },
+      "layout": {
+        "screen_a": {
+          "x": 0,
+          "y": 0,
+          "w": 0.4444444444444444,
+          "h": 1
+        },
+        "screen_b": {
+          "x": 0.4444444444444444,
+          "y": 0,
+          "w": 0.5555555555555556,
+          "h": 1
+        }
+      }
+    }
+  }
+}

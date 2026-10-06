@@ -1,0 +1,392 @@
+TRUST PLATFORM — M2C.1.2 FINAL RELEASE GATE — salida real
+fecha: 2026-09-27T18:49:33Z
+node v22.22.2 · pnpm 12.5.1
+chromium: Chromium 153.0.8010.0
+
+========== 1. pnpm install --frozen-lockfile ==========
+Scope: all 10 workspace projects
+✓ Lockfile passes supply-chain policies (verified 1d ago)
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages are hard linked from the content-addressable store to the virtual store.
+  Content-addressable store is at: /root/.local/share/pnpm/store/v11
+  Virtual store is at:             node_modules/.pnpm
+Packages: +271
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 271, reused 271, downloaded 0, added 271, done
+
+devDependencies:
++ @types/node 26.6.2
++ @typescript-eslint/eslint-plugin 8.70.0
++ @typescript-eslint/parser 8.70.0
++ eslint 8.57.1
++ prettier 3.9.8
++ typescript 5.9.3
++ vitest 2.1.9
++ zod 3.25.76
+
+Done in 5s using pnpm v12.5.1
+[exit 0]
+
+========== 2. pnpm verify ==========
+$ pnpm lint && pnpm typecheck && pnpm test
+$ eslint "{packages,apps}/*/src/**/*.{ts,tsx}"
+$ pnpm -r typecheck
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ vitest run
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v2.1.9 /home/claude/trust-platform
+
+ ✓ packages/show-authoring/src/authoring.test.ts (48 tests) 182ms
+ ✓ packages/control-core/src/m2a2.test.ts (33 tests) 101ms
+ ✓ packages/control-core/src/control-core.test.ts (46 tests) 70ms
+ ✓ packages/telemetry/src/lifecycle.test.ts (45 tests) 45ms
+ ✓ packages/show-authoring/src/preview-session.test.ts (28 tests) 101ms
+ ✓ packages/show-engine/src/playback.test.ts (25 tests) 60ms
+ ✓ packages/show-engine/src/resolve.test.ts (32 tests) 23ms
+ ✓ packages/telemetry/src/telemetry.test.ts (38 tests) 115ms
+ ✓ packages/show-engine/src/groups.test.ts (23 tests) 27ms
+ ✓ packages/control-core/src/m2a3.test.ts (17 tests) 39ms
+ ✓ packages/trust-3d/src/MediaTextureManager.test.ts (19 tests) 13ms
+ ✓ packages/show-engine/src/preflight.test.ts (17 tests) 29ms
+ ✓ packages/show-engine/src/fades.test.ts (11 tests) 136ms
+ ✓ packages/show-authoring/src/artifacts.test.ts (6 tests) 35ms
+ ✓ packages/timeline/src/transport.test.ts (15 tests) 6ms
+ ✓ packages/show-engine/src/compile.test.ts (7 tests) 74ms
+ ✓ packages/show-engine/src/shows.test.ts (10 tests) 236ms
+
+ Test Files  17 passed (17)
+      Tests  420 passed (420)
+   Start at  18:50:36
+   Duration  7.29s (transform 723ms, setup 0ms, collect 1.73s, tests 1.29s, environment 3ms, prepare 1.38s)
+
+[exit 0]
+
+========== 3. pnpm build ==========
+$ pnpm -r build
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ next build
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/4) ...
+   Generating static pages (1/4) 
+   Generating static pages (2/4) 
+   Generating static pages (3/4) 
+ ✓ Generating static pages (4/4)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    58.3 kB         146 kB
+└ ○ /_not-found                          872 B          88.1 kB
++ First Load JS shared by all            87.2 kB
+  ├ chunks/5b8f0dd8-c9a2733de0ccfb23.js  53.6 kB
+  ├ chunks/749-8f8d7ea634c00b60.js       31.7 kB
+  └ other shared chunks (total)          1.86 kB
+
+
+○  (Static)  prerendered as static content
+
+$ next build
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/4) ...
+   Generating static pages (1/4) 
+   Generating static pages (2/4) 
+   Generating static pages (3/4) 
+ ✓ Generating static pages (4/4)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    239 kB          326 kB
+└ ○ /_not-found                          872 B          88.2 kB
++ First Load JS shared by all            87.3 kB
+  ├ chunks/5b8f0dd8-cbb985564f7327f7.js  53.6 kB
+  ├ chunks/749-135c8e6b81412004.js       31.7 kB
+  └ other shared chunks (total)          1.96 kB
+
+
+○  (Static)  prerendered as static content
+
+[exit 0]
+
+========== 4. python3 scripts/mutation-check.py ==========
+ATRAPADA   STOP -> black
+      Tests  5 failed | 415 passed (420)
+ATRAPADA   SAFE MODE -> black
+      Tests  6 failed | 414 passed (420)
+ATRAPADA   PAUSE -> hold
+      Tests  7 failed | 413 passed (420)
+ATRAPADA   uv x+w <= 1
+      Tests  2 failed | 418 passed (420)
+ATRAPADA   uv w,h > 0
+      Tests  2 failed | 418 passed (420)
+ATRAPADA   capacidad del edificio
+      Tests  2 failed | 418 passed (420)
+ATRAPADA   doble membresia
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   aspecto del recorte
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   guard de URLs
+      Tests  3 failed | 417 passed (420)
+ATRAPADA   ended en transporte
+      Tests  5 failed | 415 passed (420)
+ATRAPADA   retry: libera fallada activa
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   retry: recrea el video
+      Tests  3 failed | 417 passed (420)
+ATRAPADA   actuador obedece output
+      Tests  2 failed | 418 passed (420)
+ATRAPADA   simulador determinista
+      Tests  7 failed | 413 passed (420)
+ATRAPADA   flag simulated
+      Tests  2 failed | 418 passed (420)
+ATRAPADA   phase loss antes que UV
+      Tests  3 failed | 417 passed (420)
+ATRAPADA   umbrales configurables
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   serie == lectura viva
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   clip caido se reporta
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   logico != salud
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   offline != safe mode
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   contexto IA sin handles
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   provenance simulada
+      Tests  9 failed | 411 passed (420)
+ATRAPADA   simulated no verificado
+      Tests  4 failed | 416 passed (420)
+ATRAPADA   verificado mira provenance
+      Tests  4 failed | 416 passed (420)
+ATRAPADA   stale degrada salud
+      Tests  2 failed | 418 passed (420)
+ATRAPADA   alarmas -> salud electrica
+      Tests  6 failed | 414 passed (420)
+ATRAPADA   preview no pisa al motor
+      Tests  5 failed | 415 passed (420)
+ATRAPADA   override off por defecto
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   serie congelada en stale
+      Tests  7 failed | 413 passed (420)
+ATRAPADA   engine recarga si cambio
+      Tests  2 failed | 418 passed (420)
+ATRAPADA   revision por contenido
+      Tests  5 failed | 415 passed (420)
+ATRAPADA   canPreview corta BLOCKED
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   canPreview mira exportable
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   blocked suelta el motor
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   scrub deja en pausa
+      Tests  2 failed | 418 passed (420)
+ATRAPADA   preset queda dirty
+      Tests  3 failed | 417 passed (420)
+ATRAPADA   storage valida con Zod
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   hold no emite evento
+      Tests  4 failed | 416 passed (420)
+ATRAPADA   black emite media.stop
+      Tests  3 failed | 417 passed (420)
+ATRAPADA   namespace de assets
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   ruta local en assets
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   BLOCKED bloquea export
+      Tests  4 failed | 416 passed (420)
+ATRAPADA   logger guarda la key
+      Tests  5 failed | 415 passed (420)
+ATRAPADA   serie corta en measuredAt
+      Tests  4 failed | 416 passed (420)
+ATRAPADA   ack emite evento
+      Tests  2 failed | 418 passed (420)
+ATRAPADA   ack no borra
+      Tests  5 failed | 415 passed (420)
+ATRAPADA   ack all sincroniza log
+      Tests  4 failed | 416 passed (420)
+ATRAPADA   sin tarifa en la alarma
+      Tests  2 failed | 418 passed (420)
+ATRAPADA   alarma: ESCALATED
+      Tests  7 failed | 413 passed (420)
+ATRAPADA   alarma: DEESCALATED
+      Tests  4 failed | 416 passed (420)
+ATRAPADA   alarma: RESOLVED
+      Tests  6 failed | 414 passed (420)
+ATRAPADA   ack no borra la alarma
+      Tests  11 failed | 409 passed (420)
+ATRAPADA   escalar invalida el ack
+      Tests  2 failed | 418 passed (420)
+ATRAPADA   metric en la identidad
+      Tests  2 failed | 418 passed (420)
+ATRAPADA   freshness: STALE
+      Tests  9 failed | 411 passed (420)
+ATRAPADA   freshness: COMM_ERROR
+      Tests  3 failed | 417 passed (420)
+ATRAPADA   modo efectivo del estado
+      Tests  4 failed | 416 passed (420)
+ATRAPADA   modo: safe mode manda
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   mes calendario real
+      Tests  2 failed | 418 passed (420)
+ATRAPADA   IA usa umbral configurado
+      Tests  2 failed | 418 passed (420)
+ATRAPADA   compiler: atMs acumulado
+      Tests  6 failed | 414 passed (420)
+ATRAPADA   compiler: A y B mismo cue
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   compiler: cierre a identidad
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   compiler: escena existe
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   compiler: uv por pixeles
+      Tests  34 failed | 386 passed (420)
+ATRAPADA   assets: namespace
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   assets: unmanaged bloquea
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   assets: aspecto
+      Tests  6 failed | 414 passed (420)
+ATRAPADA   validation: no exporta
+      Tests  3 failed | 417 passed (420)
+ATRAPADA   draft: duracion minima
+      Tests  1 failed | 419 passed (420)
+ATRAPADA   draft: duplicar id nuevo
+      Tests  2 failed | 418 passed (420)
+ATRAPADA   membresia por show
+      Tests  33 failed | 387 passed (420)
+TODAS ATRAPADAS
+
+--- artefactos antes/después del mutation check ---
+docs/examples/README.md: OK
+docs/examples/mcdonalds_takeover_15s.draft.json: OK
+docs/examples/mcdonalds_takeover_15s.show.json: OK
+
+========== 5. pnpm emit:examples ==========
+$ vitest run --config vitest.emit.config.ts
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v2.1.9 /home/claude/trust-platform
+
+ ✓ scripts/emit-examples.emit.ts (1 test) 14ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  19:01:44
+   Duration  732ms (transform 308ms, setup 0ms, collect 430ms, tests 14ms, environment 0ms, prepare 103ms)
+
+[exit 0]
+
+--- docs/examples/README.md ---
+# Ejemplos generados
+
+Generados por `packages/show-authoring/src/emit.test.ts`, que usa el MISMO
+camino que el Builder: preset → compileTakeoverDraft → ShowPackage → preflight.
+No son archivos escritos a mano.
+
+- `mcdonalds_takeover_15s.draft.json` — el draft, tal como lo guarda el editor.
+- `mcdonalds_takeover_15s.show.json` — lo que ejecuta el ShowEngine.
+
+## Resultado de la compilación
+
+| | |
+|---|---|
+| duración | 15000 ms |
+| eventos | 14 |
+| mediaGroups | towers |
+| validación del draft | READY |
+| preflight errores | ninguno |
+| preflight warnings | ninguno |
+
+> Los assets son los clips de prueba del repo, no material de McDonald's:
+> no hay contenido de marca en el repositorio. Ver TAKEOVER_BUILDER.md.
+
+========== 6. pnpm e2e ==========
+$ TRUST_CHROMIUM_PATH=/opt/trust-chromium/chromium pnpm e2e
+[WebServer] $ next start -p 3001
+
+Running 2 tests using 1 worker
+
+  ✓  1 [chromium] › e2e/builder.spec.ts:41:7 › TRUST CONTROL — Takeover Builder › preset, edición, preview, persistencia y export (3.2s)
+  ✓  2 [chromium] › e2e/builder.spec.ts:115:7 › TRUST CONTROL — Takeover Builder › cargar otro preset con cambios sin guardar pide confirmación (1.1s)
+
+  2 passed (5.8s)
+[exit 0]
+
+========== 7. pnpm verify (cierre, tras mutation-check) ==========
+$ pnpm lint && pnpm typecheck && pnpm test
+$ eslint "{packages,apps}/*/src/**/*.{ts,tsx}"
+$ pnpm -r typecheck
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ vitest run
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v2.1.9 /home/claude/trust-platform
+
+ ✓ packages/show-authoring/src/authoring.test.ts (48 tests) 175ms
+ ✓ packages/control-core/src/m2a2.test.ts (33 tests) 90ms
+ ✓ packages/control-core/src/control-core.test.ts (46 tests) 60ms
+ ✓ packages/telemetry/src/lifecycle.test.ts (45 tests) 57ms
+ ✓ packages/show-authoring/src/preview-session.test.ts (28 tests) 94ms
+ ✓ packages/show-engine/src/playback.test.ts (25 tests) 39ms
+ ✓ packages/show-engine/src/resolve.test.ts (32 tests) 23ms
+ ✓ packages/telemetry/src/telemetry.test.ts (38 tests) 138ms
+ ✓ packages/show-engine/src/groups.test.ts (23 tests) 27ms
+ ✓ packages/control-core/src/m2a3.test.ts (17 tests) 36ms
+ ✓ packages/trust-3d/src/MediaTextureManager.test.ts (19 tests) 12ms
+ ✓ packages/show-engine/src/preflight.test.ts (17 tests) 29ms
+ ✓ packages/show-engine/src/fades.test.ts (11 tests) 133ms
+ ✓ packages/show-authoring/src/artifacts.test.ts (6 tests) 33ms
+ ✓ packages/timeline/src/transport.test.ts (15 tests) 6ms
+ ✓ packages/show-engine/src/compile.test.ts (7 tests) 76ms
+ ✓ packages/show-engine/src/shows.test.ts (10 tests) 221ms
+
+ Test Files  17 passed (17)
+      Tests  420 passed (420)
+   Start at  19:03:10
+   Duration  6.85s (transform 653ms, setup 0ms, collect 1.52s, tests 1.25s, environment 3ms, prepare 1.28s)
+
+[exit 0]

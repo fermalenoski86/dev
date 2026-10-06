@@ -1,0 +1,24 @@
+{
+  "name": "@trust/platform-contracts",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "build": "echo 'source-only package'"
+  },
+  "dependencies": {
+    "canonicalize": "5.1.0",
+    "zod": "^3.23.8",
+    "@trust/show-engine": "workspace:*",
+    "@trust/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "@trust/show-authoring": "workspace:*"
+  }
+}

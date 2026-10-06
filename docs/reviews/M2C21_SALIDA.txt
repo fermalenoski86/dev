@@ -1,0 +1,458 @@
+TRUST PLATFORM — M2C.2.1 EXECUTIVE VISUAL RELEASE — salida real
+fecha: 2026-09-29T00:20:14Z
+node v22.22.2 · pnpm 12.5.1 · chromium Chromium 153.0.8010.0
+
+========== 1. pnpm install --frozen-lockfile ==========
+Scope: all 11 workspace projects
+✓ Lockfile passes supply-chain policies (verified 1d ago)
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages are hard linked from the content-addressable store to the virtual store.
+  Content-addressable store is at: /root/.local/share/pnpm/store/v11
+  Virtual store is at:             node_modules/.pnpm
+Packages: +271
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 271, reused 271, downloaded 0, added 271, done
+
+devDependencies:
++ @types/node 26.6.2
++ @typescript-eslint/eslint-plugin 8.70.0
++ @typescript-eslint/parser 8.70.0
++ eslint 8.57.1
++ prettier 3.9.8
++ typescript 5.9.3
++ vitest 2.1.9
++ zod 3.25.76
+
+Done in 4.9s using pnpm v12.5.1
+[exit 0]
+
+========== 2. pnpm verify ==========
+$ pnpm lint && pnpm typecheck && pnpm test
+$ eslint "{packages,apps}/*/src/**/*.{ts,tsx}"
+
+/home/claude/trust-platform/packages/experience-core/src/composition.ts
+  339:64  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/home/claude/trust-platform/packages/experience-core/src/experience.ts
+  315:47  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+✖ 2 problems (0 errors, 2 warnings)
+
+$ pnpm -r typecheck
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+src/composition.test.ts(129,21): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/composition.test.ts(129,38): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/experience.test.ts(273,57): error TS2322: Type '"IDLE"' is not assignable to type 'ExperiencePhase'.
+src/masters.test.ts(131,16): error TS2339: Property 'tr' does not exist on type 'never'.
+src/masters.test.ts(131,32): error TS2339: Property 'tl' does not exist on type 'never'.
+src/masters.test.ts(132,16): error TS2339: Property 'br' does not exist on type 'never'.
+src/masters.test.ts(132,32): error TS2339: Property 'bl' does not exist on type 'never'.
+src/masters.test.ts(337,33): error TS2322: Type '"LOADING" | "PLAYING" | "PAUSED" | "ENDED" | "IDLE"' is not assignable to type 'ExperiencePhase'.
+  Type '"IDLE"' is not assignable to type 'ExperiencePhase'.
+src/masters.test.ts(338,45): error TS2322: Type '"LOADING" | "PLAYING" | "PAUSED" | "ENDED" | "IDLE"' is not assignable to type 'ExperiencePhase'.
+  Type '"IDLE"' is not assignable to type 'ExperiencePhase'.
+[ELIFECYCLE] Command failed with exit code 2.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in /home/claude/trust-platform/packages/
+  │ experience-core
+
+[ELIFECYCLE] Command failed with exit code 1.
+[ELIFECYCLE] Command failed with exit code 1.
+[exit 1]
+
+========== 3. pnpm build ==========
+$ pnpm -r build
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ next build
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/4) ...
+   Generating static pages (1/4) 
+   Generating static pages (2/4) 
+   Generating static pages (3/4) 
+ ✓ Generating static pages (4/4)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    239 kB          326 kB
+└ ○ /_not-found                          872 B          88.2 kB
++ First Load JS shared by all            87.3 kB
+  ├ chunks/5b8f0dd8-cbb985564f7327f7.js  53.6 kB
+  ├ chunks/749-135c8e6b81412004.js       31.7 kB
+  └ other shared chunks (total)          1.96 kB
+
+
+○  (Static)  prerendered as static content
+
+$ next build
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/5) ...
+   Generating static pages (1/5) 
+   Generating static pages (2/5) 
+   Generating static pages (3/5) 
+ ✓ Generating static pages (5/5)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    30.1 kB         146 kB
+├ ○ /_not-found                          872 B          88.1 kB
+└ ○ /experience                          9.98 kB         126 kB
++ First Load JS shared by all            87.2 kB
+  ├ chunks/5b8f0dd8-9ce579deb28bc5df.js  53.6 kB
+  ├ chunks/749-26757fa452999330.js       31.7 kB
+  └ other shared chunks (total)          1.86 kB
+
+
+○  (Static)  prerendered as static content
+
+[exit 0]
+
+========== 2. pnpm verify (corregido) ==========
+$ pnpm lint && pnpm typecheck && pnpm test
+$ eslint "{packages,apps}/*/src/**/*.{ts,tsx}"
+
+/home/claude/trust-platform/packages/experience-core/src/composition.ts
+  339:64  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/home/claude/trust-platform/packages/experience-core/src/experience.ts
+  315:47  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+✖ 2 problems (0 errors, 2 warnings)
+
+$ pnpm -r typecheck
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ vitest run
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v2.1.9 /home/claude/trust-platform
+
+ ✓ packages/show-authoring/src/authoring.test.ts (48 tests) 153ms
+ ✓ packages/control-core/src/m2a2.test.ts (33 tests) 83ms
+ ✓ packages/control-core/src/control-core.test.ts (46 tests) 53ms
+ ✓ packages/telemetry/src/lifecycle.test.ts (45 tests) 41ms
+ ✓ packages/experience-core/src/masters.test.ts (29 tests) 18ms
+ ✓ packages/experience-core/src/experience.test.ts (36 tests) 51ms
+ ✓ packages/show-authoring/src/preview-session.test.ts (28 tests) 86ms
+ ✓ packages/show-engine/src/playback.test.ts (25 tests) 37ms
+ ✓ packages/show-engine/src/resolve.test.ts (32 tests) 21ms
+ ✓ packages/experience-core/src/composition.test.ts (27 tests) 27ms
+ ✓ packages/telemetry/src/telemetry.test.ts (38 tests) 129ms
+ ✓ packages/show-engine/src/groups.test.ts (23 tests) 23ms
+ ✓ packages/control-core/src/m2a3.test.ts (17 tests) 39ms
+ ✓ packages/trust-3d/src/MediaTextureManager.test.ts (19 tests) 11ms
+ ✓ packages/show-engine/src/preflight.test.ts (17 tests) 28ms
+ ✓ packages/show-engine/src/fades.test.ts (11 tests) 122ms
+ ✓ packages/show-authoring/src/artifacts.test.ts (6 tests) 29ms
+ ✓ packages/timeline/src/transport.test.ts (15 tests) 5ms
+ ✓ packages/show-engine/src/compile.test.ts (7 tests) 66ms
+ ✓ packages/show-engine/src/shows.test.ts (10 tests) 199ms
+
+ Test Files  20 passed (20)
+      Tests  512 passed (512)
+   Start at  00:23:27
+   Duration  7.21s (transform 670ms, setup 0ms, collect 1.63s, tests 1.22s, environment 3ms, prepare 1.39s)
+
+[exit 0]
+
+========== 4. python3 scripts/mutation-check.py ==========
+ATRAPADA   STOP -> black
+      Tests  5 failed | 507 passed (512)
+ATRAPADA   SAFE MODE -> black
+      Tests  6 failed | 506 passed (512)
+ATRAPADA   PAUSE -> hold
+      Tests  7 failed | 505 passed (512)
+ATRAPADA   uv x+w <= 1
+      Tests  2 failed | 510 passed (512)
+ATRAPADA   uv w,h > 0
+      Tests  2 failed | 510 passed (512)
+ATRAPADA   capacidad del edificio
+      Tests  2 failed | 510 passed (512)
+ATRAPADA   doble membresia
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   aspecto del recorte
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   guard de URLs
+      Tests  3 failed | 509 passed (512)
+ATRAPADA   ended en transporte
+      Tests  5 failed | 507 passed (512)
+ATRAPADA   retry: libera fallada activa
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   retry: recrea el video
+      Tests  3 failed | 509 passed (512)
+ATRAPADA   actuador obedece output
+      Tests  2 failed | 510 passed (512)
+ATRAPADA   simulador determinista
+      Tests  7 failed | 505 passed (512)
+ATRAPADA   flag simulated
+      Tests  2 failed | 510 passed (512)
+ATRAPADA   phase loss antes que UV
+      Tests  3 failed | 509 passed (512)
+ATRAPADA   umbrales configurables
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   serie == lectura viva
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   clip caido se reporta
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   logico != salud
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   offline != safe mode
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   contexto IA sin handles
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   provenance simulada
+      Tests  9 failed | 503 passed (512)
+ATRAPADA   simulated no verificado
+      Tests  4 failed | 508 passed (512)
+ATRAPADA   verificado mira provenance
+      Tests  4 failed | 508 passed (512)
+ATRAPADA   stale degrada salud
+      Tests  2 failed | 510 passed (512)
+ATRAPADA   alarmas -> salud electrica
+      Tests  6 failed | 506 passed (512)
+ATRAPADA   preview no pisa al motor
+      Tests  5 failed | 507 passed (512)
+ATRAPADA   override off por defecto
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   serie congelada en stale
+      Tests  7 failed | 505 passed (512)
+ATRAPADA   engine recarga si cambio
+      Tests  2 failed | 510 passed (512)
+ATRAPADA   revision por contenido
+      Tests  5 failed | 507 passed (512)
+ATRAPADA   canPreview corta BLOCKED
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   canPreview mira exportable
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   blocked suelta el motor
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   scrub deja en pausa
+      Tests  2 failed | 510 passed (512)
+ATRAPADA   preset queda dirty
+      Tests  3 failed | 509 passed (512)
+ATRAPADA   storage valida con Zod
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   hold no emite evento
+      Tests  7 failed | 505 passed (512)
+ATRAPADA   black emite media.stop
+      Tests  4 failed | 508 passed (512)
+ATRAPADA   namespace de assets
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   ruta local en assets
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   BLOCKED bloquea export
+      Tests  4 failed | 508 passed (512)
+ATRAPADA   experiencia: vista pura
+      Tests  2 failed | 510 passed (512)
+ATRAPADA   experiencia: assets locales
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   experiencia: PLAY requiere ready
+      Tests  2 failed | 510 passed (512)
+ATRAPADA   experiencia: reset conoce estado
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   segmentos reparten el uv
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   segmento usa su indice
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   black no muestra media
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   contain entra entero
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   fallo no cuenta cargado
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   READY exige todo
+      Tests  5 failed | 507 passed (512)
+ATRAPADA   fallback debe estar cargado
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   STOP nunca se bloquea
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   signature con seek
+      Tests  2 failed | 510 passed (512)
+ATRAPADA   check requerido bloquea
+      Tests  2 failed | 510 passed (512)
+ATRAPADA   check sin ejecutar falla
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   logger guarda la key
+      Tests  5 failed | 507 passed (512)
+ATRAPADA   serie corta en measuredAt
+      Tests  4 failed | 508 passed (512)
+ATRAPADA   ack emite evento
+      Tests  2 failed | 510 passed (512)
+ATRAPADA   ack no borra
+      Tests  5 failed | 507 passed (512)
+ATRAPADA   ack all sincroniza log
+      Tests  4 failed | 508 passed (512)
+ATRAPADA   sin tarifa en la alarma
+      Tests  2 failed | 510 passed (512)
+ATRAPADA   alarma: ESCALATED
+      Tests  7 failed | 505 passed (512)
+ATRAPADA   alarma: DEESCALATED
+      Tests  4 failed | 508 passed (512)
+ATRAPADA   alarma: RESOLVED
+      Tests  6 failed | 506 passed (512)
+ATRAPADA   ack no borra la alarma
+      Tests  11 failed | 501 passed (512)
+ATRAPADA   escalar invalida el ack
+      Tests  2 failed | 510 passed (512)
+ATRAPADA   metric en la identidad
+      Tests  2 failed | 510 passed (512)
+ATRAPADA   freshness: STALE
+      Tests  9 failed | 503 passed (512)
+ATRAPADA   freshness: COMM_ERROR
+      Tests  3 failed | 509 passed (512)
+ATRAPADA   modo efectivo del estado
+      Tests  4 failed | 508 passed (512)
+ATRAPADA   modo: safe mode manda
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   mes calendario real
+      Tests  2 failed | 510 passed (512)
+ATRAPADA   IA usa umbral configurado
+      Tests  2 failed | 510 passed (512)
+ATRAPADA   compiler: atMs acumulado
+      Tests  11 failed | 501 passed (512)
+ATRAPADA   compiler: A y B mismo cue
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   compiler: cierre a identidad
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   compiler: escena existe
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   compiler: uv por pixeles
+      Tests  37 failed | 419 passed (456)
+ATRAPADA   assets: namespace
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   assets: unmanaged bloquea
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   assets: aspecto
+      Tests  7 failed | 505 passed (512)
+ATRAPADA   validation: no exporta
+      Tests  3 failed | 509 passed (512)
+ATRAPADA   draft: duracion minima
+      Tests  1 failed | 511 passed (512)
+ATRAPADA   draft: duplicar id nuevo
+      Tests  2 failed | 510 passed (512)
+ATRAPADA   membresia por show
+      Tests  37 failed | 475 passed (512)
+TODAS ATRAPADAS
+
+--- artefactos antes/después ---
+docs/examples/README.md: OK
+docs/examples/mcdonalds_takeover_15s.draft.json: OK
+docs/examples/mcdonalds_takeover_15s.show.json: OK
+
+========== 5. pnpm e2e ==========
+[WebServer] $ [WebServer] next start -p 3001
+
+Running 7 tests using 1 worker
+
+  ✓  1 [chromium] › e2e/builder.spec.ts:41:7 › TRUST CONTROL — Takeover Builder › preset, edición, preview, persistencia y export (2.5s)
+  ✓  2 [chromium] › e2e/builder.spec.ts:115:7 › TRUST CONTROL — Takeover Builder › cargar otro preset con cambios sin guardar pide confirmación (900ms)
+  ✓  3 [chromium] › e2e/experience.spec.ts:19:7 › MASTER OF TRUST — Client Experience › presentación completa: play, vistas, stop y reset (14.4s)
+  ✓  4 [chromium] › e2e/experience.spec.ts:86:7 › MASTER OF TRUST — Client Experience › la end card aparece al terminar y marca la capacidad futura (17.1s)
+  ✓  5 [chromium] › e2e/experience.spec.ts:94:7 › MASTER OF TRUST — Client Experience › CRITERIO: SIGNATURE salta a los 12 s y no arranca desde Normal (2.2s)
+  ✓  6 [chromium] › e2e/experience.spec.ts:118:7 › MASTER OF TRUST — Client Experience › CRITERIO: DEMO CHECK corre pruebas reales y da PRESENTATION READY (1.7s)
+  ✓  7 [chromium] › e2e/experience.spec.ts:150:7 › MASTER OF TRUST — Client Experience › CRITERIO: el respaldo local reproduce desde el panel de operador (2.8s)
+
+  7 passed (43.0s)
+
+========== 6. pnpm verify (cierre) ==========
+$ pnpm lint && pnpm typecheck && pnpm test
+$ eslint "{packages,apps}/*/src/**/*.{ts,tsx}"
+
+/home/claude/trust-platform/packages/experience-core/src/composition.ts
+  339:64  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/home/claude/trust-platform/packages/experience-core/src/experience.ts
+  315:47  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+✖ 2 problems (0 errors, 2 warnings)
+
+$ pnpm -r typecheck
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ vitest run
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v2.1.9 /home/claude/trust-platform
+
+ ✓ packages/show-authoring/src/authoring.test.ts (48 tests) 143ms
+ ✓ packages/control-core/src/m2a2.test.ts (33 tests) 75ms
+ ✓ packages/control-core/src/control-core.test.ts (46 tests) 55ms
+ ✓ packages/telemetry/src/lifecycle.test.ts (45 tests) 29ms
+ ✓ packages/experience-core/src/masters.test.ts (29 tests) 16ms
+ ✓ packages/experience-core/src/experience.test.ts (36 tests) 44ms
+ ✓ packages/show-authoring/src/preview-session.test.ts (28 tests) 80ms
+ ✓ packages/show-engine/src/playback.test.ts (25 tests) 32ms
+ ✓ packages/show-engine/src/resolve.test.ts (32 tests) 18ms
+ ✓ packages/experience-core/src/composition.test.ts (27 tests) 16ms
+ ✓ packages/telemetry/src/telemetry.test.ts (38 tests) 111ms
+ ✓ packages/show-engine/src/groups.test.ts (23 tests) 22ms
+ ✓ packages/control-core/src/m2a3.test.ts (17 tests) 30ms
+ ✓ packages/trust-3d/src/MediaTextureManager.test.ts (19 tests) 13ms
+ ✓ packages/show-engine/src/preflight.test.ts (17 tests) 24ms
+ ✓ packages/show-engine/src/fades.test.ts (11 tests) 100ms
+ ✓ packages/show-authoring/src/artifacts.test.ts (6 tests) 26ms
+ ✓ packages/timeline/src/transport.test.ts (15 tests) 4ms
+ ✓ packages/show-engine/src/compile.test.ts (7 tests) 66ms
+ ✓ packages/show-engine/src/shows.test.ts (10 tests) 182ms
+
+ Test Files  20 passed (20)
+      Tests  512 passed (512)
+   Start at  00:38:23
+   Duration  6.54s (transform 606ms, setup 0ms, collect 1.52s, tests 1.09s, environment 3ms, prepare 1.25s)
+
+[exit 0]

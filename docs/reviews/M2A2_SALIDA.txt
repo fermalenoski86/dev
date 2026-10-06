@@ -1,0 +1,212 @@
+TRUST PLATFORM — M2A.2 (gate final de CONTROL) — salida real
+fecha: 2026-09-25T01:52:59Z
+node v22.22.2 · pnpm 12.5.1 · lockfile 1 documento(s)
+
+================ pnpm verify ================
+$ pnpm lint && pnpm typecheck && pnpm test
+$ eslint "{packages,apps}/*/src/**/*.{ts,tsx}"
+$ pnpm -r typecheck
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ vitest run
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v2.1.9 /home/claude/trust-platform
+
+ ✓ packages/control-core/src/m2a2.test.ts (33 tests) 87ms
+ ✓ packages/control-core/src/control-core.test.ts (46 tests) 59ms
+ ✓ packages/telemetry/src/lifecycle.test.ts (45 tests) 46ms
+ ✓ packages/show-engine/src/playback.test.ts (25 tests) 38ms
+ ✓ packages/show-engine/src/resolve.test.ts (32 tests) 23ms
+ ✓ packages/telemetry/src/telemetry.test.ts (38 tests) 120ms
+ ✓ packages/show-engine/src/groups.test.ts (23 tests) 25ms
+ ✓ packages/trust-3d/src/MediaTextureManager.test.ts (19 tests) 12ms
+ ✓ packages/show-engine/src/preflight.test.ts (17 tests) 27ms
+ ✓ packages/show-engine/src/fades.test.ts (11 tests) 108ms
+ ✓ packages/timeline/src/transport.test.ts (15 tests) 5ms
+ ✓ packages/show-engine/src/compile.test.ts (7 tests) 78ms
+ ✓ packages/show-engine/src/shows.test.ts (10 tests) 194ms
+
+ Test Files  13 passed (13)
+      Tests  321 passed (321)
+   Start at  01:53:43
+   Duration  5.01s (transform 554ms, setup 0ms, collect 1.12s, tests 823ms, environment 2ms, prepare 947ms)
+
+[exit 0]
+
+================ pnpm build ================
+$ pnpm -r build
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ next build
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/4) ...
+   Generating static pages (1/4) 
+   Generating static pages (2/4) 
+   Generating static pages (3/4) 
+ ✓ Generating static pages (4/4)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    42.8 kB         130 kB
+└ ○ /_not-found                          872 B          88.1 kB
++ First Load JS shared by all            87.2 kB
+  ├ chunks/5b8f0dd8-535379dfdada73c5.js  53.6 kB
+  ├ chunks/749-c1d3b0ac10fb9f0d.js       31.7 kB
+  └ other shared chunks (total)          1.86 kB
+
+
+○  (Static)  prerendered as static content
+
+$ next build
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/4) ...
+   Generating static pages (1/4) 
+   Generating static pages (2/4) 
+   Generating static pages (3/4) 
+ ✓ Generating static pages (4/4)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    239 kB          326 kB
+└ ○ /_not-found                          872 B          88.2 kB
++ First Load JS shared by all            87.3 kB
+  ├ chunks/5b8f0dd8-cbb985564f7327f7.js  53.6 kB
+  ├ chunks/749-135c8e6b81412004.js       31.7 kB
+  └ other shared chunks (total)          1.96 kB
+
+
+○  (Static)  prerendered as static content
+
+[exit 0]
+
+================ python3 scripts/mutation-check.py ================
+ATRAPADA   STOP -> black
+      Tests  5 failed | 316 passed (321)
+ATRAPADA   SAFE MODE -> black
+      Tests  5 failed | 316 passed (321)
+ATRAPADA   PAUSE -> hold
+      Tests  6 failed | 315 passed (321)
+ATRAPADA   uv x+w <= 1
+      Tests  2 failed | 319 passed (321)
+ATRAPADA   uv w,h > 0
+      Tests  2 failed | 319 passed (321)
+ATRAPADA   capacidad del edificio
+      Tests  2 failed | 319 passed (321)
+ATRAPADA   doble membresia
+      Tests  1 failed | 320 passed (321)
+ATRAPADA   aspecto del recorte
+      Tests  1 failed | 320 passed (321)
+ATRAPADA   guard de URLs
+      Tests  2 failed | 319 passed (321)
+ATRAPADA   ended en transporte
+      Tests  5 failed | 316 passed (321)
+ATRAPADA   retry: libera fallada activa
+      Tests  1 failed | 320 passed (321)
+ATRAPADA   retry: recrea el video
+      Tests  3 failed | 318 passed (321)
+ATRAPADA   actuador obedece output
+      Tests  2 failed | 319 passed (321)
+ATRAPADA   simulador determinista
+      Tests  7 failed | 314 passed (321)
+ATRAPADA   flag simulated
+      Tests  2 failed | 319 passed (321)
+ATRAPADA   phase loss antes que UV
+      Tests  3 failed | 318 passed (321)
+ATRAPADA   umbrales configurables
+      Tests  1 failed | 320 passed (321)
+ATRAPADA   serie == lectura viva
+      Tests  1 failed | 320 passed (321)
+ATRAPADA   clip caido se reporta
+      Tests  1 failed | 320 passed (321)
+ATRAPADA   logico != salud
+      Tests  1 failed | 320 passed (321)
+ATRAPADA   offline != safe mode
+      Tests  1 failed | 320 passed (321)
+ATRAPADA   contexto IA sin handles
+      Tests  1 failed | 320 passed (321)
+ATRAPADA   provenance simulada
+      Tests  9 failed | 312 passed (321)
+ATRAPADA   simulated no verificado
+      Tests  4 failed | 317 passed (321)
+ATRAPADA   verificado mira provenance
+      Tests  4 failed | 317 passed (321)
+ATRAPADA   stale degrada salud
+      Tests  2 failed | 319 passed (321)
+ATRAPADA   alarmas -> salud electrica
+      Tests  6 failed | 315 passed (321)
+ATRAPADA   preview no pisa al motor
+      Tests  5 failed | 316 passed (321)
+ATRAPADA   override off por defecto
+      Tests  1 failed | 320 passed (321)
+ATRAPADA   serie congelada en stale
+      Tests  3 failed | 318 passed (321)
+ATRAPADA   ack emite evento
+      Tests  1 failed | 320 passed (321)
+ATRAPADA   ack no borra
+      Tests  2 failed | 319 passed (321)
+ATRAPADA   ack all sincroniza log
+      Tests  2 failed | 319 passed (321)
+ATRAPADA   sin tarifa en la alarma
+      Tests  2 failed | 319 passed (321)
+ATRAPADA   alarma: ESCALATED
+      Tests  7 failed | 314 passed (321)
+ATRAPADA   alarma: DEESCALATED
+      Tests  4 failed | 317 passed (321)
+ATRAPADA   alarma: RESOLVED
+      Tests  5 failed | 316 passed (321)
+ATRAPADA   ack no borra la alarma
+      Tests  7 failed | 314 passed (321)
+ATRAPADA   escalar invalida el ack
+      Tests  2 failed | 319 passed (321)
+ATRAPADA   metric en la identidad
+      Tests  2 failed | 319 passed (321)
+ATRAPADA   freshness: STALE
+      Tests  10 failed | 311 passed (321)
+ATRAPADA   freshness: COMM_ERROR
+      Tests  3 failed | 318 passed (321)
+ATRAPADA   modo efectivo del estado
+      Tests  4 failed | 317 passed (321)
+ATRAPADA   modo: safe mode manda
+      Tests  1 failed | 320 passed (321)
+ATRAPADA   mes calendario real
+      Tests  2 failed | 319 passed (321)
+ATRAPADA   IA usa umbral configurado
+      Tests  2 failed | 319 passed (321)
+ATRAPADA   membresia por show
+      Tests  18 failed | 303 passed (321)
+TODAS ATRAPADAS
+
+================ smoke test :3001 ================
+GET /   200
+titulo: MASTER OF TRUST — Control Center

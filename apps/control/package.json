@@ -1,0 +1,35 @@
+{
+  "name": "@trust/control",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start -p 3001",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@trust/control-core": "workspace:*",
+    "@trust/shared-types": "workspace:*",
+    "@trust/show-engine": "workspace:*",
+    "@trust/telemetry": "workspace:*",
+    "@trust/timeline": "workspace:*",
+    "next": "^14.2.15",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^3.23.8",
+    "zustand": "^5.0.0",
+    "@trust/show-authoring": "workspace:*",
+    "@trust/experience-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.11",
+    "@types/react-dom": "^18.3.1",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.6.3"
+  }
+}

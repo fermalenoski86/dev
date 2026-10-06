@@ -1,0 +1,205 @@
+TRUST PLATFORM — Milestone 2A (TRUST CONTROL) — salida real de comandos
+fecha: 2026-09-24T20:22:55Z
+node v22.22.2 · pnpm 12.5.1
+lockfile: 3106 lineas · documentos YAML: 1
+node_modules borrados antes de empezar: si
+
+================================================================
+$ pnpm install --frozen-lockfile
+================================================================
+Scope: all 9 workspace projects
+✓ Lockfile passes supply-chain policies (verified 3m ago)
+Lockfile is up to date, resolution step is skipped
+Packages are hard linked from the content-addressable store to the virtual store.
+  Content-addressable store is at: /root/.local/share/pnpm/store/v11
+  Virtual store is at:             node_modules/.pnpm
+Packages: +271
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 271, reused 271, downloaded 0, added 271, done
+
+devDependencies:
++ @types/node 26.6.2
++ @typescript-eslint/eslint-plugin 8.70.0
++ @typescript-eslint/parser 8.70.0
++ eslint 8.57.1
++ prettier 3.9.8
++ typescript 5.9.3
++ vitest 2.1.9
++ zod 3.25.76
+
+Done in 325ms using pnpm v12.5.1
+[exit 0]
+
+================================================================
+$ pnpm verify
+================================================================
+$ pnpm lint && pnpm typecheck && pnpm test
+$ eslint "{packages,apps}/*/src/**/*.{ts,tsx}"
+$ pnpm -r typecheck
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ vitest run
+▲ [WARNING] Cannot find base config file "../../tsconfig.base.json" [tsconfig.json]
+
+    ../../../tsconfig.json:1:13:
+      1 │ { "extends": "../../tsconfig.base.json", "include": ["src"] }
+        ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v2.1.9 /home/claude/trust-platform
+
+ ✓ packages/control-core/src/control-core.test.ts (40 tests) 45ms
+ ✓ packages/show-engine/src/playback.test.ts (25 tests) 39ms
+ ✓ packages/show-engine/src/resolve.test.ts (32 tests) 23ms
+ ✓ packages/telemetry/src/telemetry.test.ts (38 tests) 115ms
+ ✓ packages/show-engine/src/groups.test.ts (23 tests) 27ms
+ ✓ packages/trust-3d/src/MediaTextureManager.test.ts (19 tests) 22ms
+ ✓ packages/show-engine/src/preflight.test.ts (17 tests) 28ms
+ ✓ packages/show-engine/src/fades.test.ts (11 tests) 126ms
+ ✓ packages/timeline/src/transport.test.ts (15 tests) 5ms
+ ✓ packages/show-engine/src/compile.test.ts (7 tests) 79ms
+ ✓ packages/show-engine/src/shows.test.ts (10 tests) 199ms
+
+ Test Files  11 passed (11)
+      Tests  237 passed (237)
+   Start at  20:23:38
+   Duration  4.31s (transform 467ms, setup 0ms, collect 936ms, tests 707ms, environment 2ms, prepare 825ms)
+
+[exit 0]
+
+================================================================
+$ pnpm build
+================================================================
+$ pnpm -r build
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ next build
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+
+ ⚠ The Next.js plugin was not detected in your ESLint configuration. See https://nextjs.org/docs/basic-features/eslint#migrating-existing-config
+   Collecting page data ...
+   Generating static pages (0/4) ...
+   Generating static pages (1/4) 
+   Generating static pages (2/4) 
+   Generating static pages (3/4) 
+ ✓ Generating static pages (4/4)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    37 kB           124 kB
+└ ○ /_not-found                          872 B          88.1 kB
++ First Load JS shared by all            87.2 kB
+  ├ chunks/5b8f0dd8-535379dfdada73c5.js  53.6 kB
+  ├ chunks/749-c1d3b0ac10fb9f0d.js       31.7 kB
+  └ other shared chunks (total)          1.86 kB
+
+
+○  (Static)  prerendered as static content
+
+$ next build
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+
+ ⚠ The Next.js plugin was not detected in your ESLint configuration. See https://nextjs.org/docs/basic-features/eslint#migrating-existing-config
+   Collecting page data ...
+   Generating static pages (0/4) ...
+   Generating static pages (1/4) 
+   Generating static pages (2/4) 
+   Generating static pages (3/4) 
+ ✓ Generating static pages (4/4)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    238 kB          326 kB
+└ ○ /_not-found                          872 B          88.2 kB
++ First Load JS shared by all            87.3 kB
+  ├ chunks/5b8f0dd8-cbb985564f7327f7.js  53.6 kB
+  ├ chunks/749-135c8e6b81412004.js       31.7 kB
+  └ other shared chunks (total)          1.96 kB
+
+
+○  (Static)  prerendered as static content
+
+[exit 0]
+
+================================================================
+smoke test de TRUST CONTROL (next start -p 3001)
+================================================================
+GET /                          200
+GET /shows/trust_signature_001 200
+titulo servido: MASTER OF TRUST — Control Center
+
+================================================================
+$ python3 scripts/mutation-check.py
+================================================================
+ATRAPADA   STOP -> black
+      Tests  4 failed | 233 passed (237)
+ATRAPADA   SAFE MODE -> black
+      Tests  4 failed | 233 passed (237)
+ATRAPADA   PAUSE -> hold
+      Tests  5 failed | 232 passed (237)
+ATRAPADA   uv x+w <= 1
+      Tests  2 failed | 235 passed (237)
+ATRAPADA   uv w,h > 0
+      Tests  2 failed | 235 passed (237)
+ATRAPADA   capacidad del edificio
+      Tests  2 failed | 235 passed (237)
+ATRAPADA   doble membresia
+      Tests  1 failed | 236 passed (237)
+ATRAPADA   aspecto del recorte
+      Tests  1 failed | 236 passed (237)
+ATRAPADA   guard de URLs
+      Tests  2 failed | 235 passed (237)
+ATRAPADA   ended en transporte
+      Tests  5 failed | 232 passed (237)
+ATRAPADA   retry: libera fallada activa
+      Tests  1 failed | 236 passed (237)
+ATRAPADA   retry: recrea el video
+      Tests  3 failed | 234 passed (237)
+ATRAPADA   actuador obedece output
+      Tests  2 failed | 235 passed (237)
+ATRAPADA   simulador determinista
+      Tests  6 failed | 231 passed (237)
+ATRAPADA   flag simulated
+      Tests  3 failed | 234 passed (237)
+ATRAPADA   phase loss antes que UV
+      Tests  2 failed | 235 passed (237)
+ATRAPADA   umbrales configurables
+      Tests  1 failed | 236 passed (237)
+ATRAPADA   serie == lectura viva
+      Tests  1 failed | 236 passed (237)
+ATRAPADA   clip caido es critico
+      Tests  1 failed | 236 passed (237)
+ATRAPADA   offline no es safe mode
+      Tests  1 failed | 236 passed (237)
+ATRAPADA   contexto IA sin handles
+      Tests  1 failed | 236 passed (237)
+ATRAPADA   membresia por show
+      Tests  16 failed | 221 passed (237)
+TODAS ATRAPADAS

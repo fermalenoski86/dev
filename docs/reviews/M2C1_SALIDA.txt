@@ -1,0 +1,340 @@
+TRUST PLATFORM — M2C.1 TAKEOVER BUILDER — salida real
+fecha: 2026-09-26T07:49:57Z
+node v22.22.2 · pnpm 12.5.1
+
+========== pnpm install --frozen-lockfile ==========
+Scope: all 10 workspace projects
+✓ Lockfile passes supply-chain policies (verified 8h ago)
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages are hard linked from the content-addressable store to the virtual store.
+  Content-addressable store is at: /root/.local/share/pnpm/store/v11
+  Virtual store is at:             node_modules/.pnpm
+Packages: +271
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 271, reused 271, downloaded 0, added 271, done
+
+devDependencies:
++ @types/node 26.6.2
++ @typescript-eslint/eslint-plugin 8.70.0
++ @typescript-eslint/parser 8.70.0
++ eslint 8.57.1
++ prettier 3.9.8
++ typescript 5.9.3
++ vitest 2.1.9
++ zod 3.25.76
+
+Done in 4.1s using pnpm v12.5.1
+[exit 0]
+
+========== pnpm verify ==========
+$ pnpm lint && pnpm typecheck && pnpm test
+$ eslint "{packages,apps}/*/src/**/*.{ts,tsx}"
+
+/home/claude/trust-platform/packages/show-authoring/src/draft-schema.ts
+  255:20  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+/home/claude/trust-platform/packages/show-authoring/src/emit.test.ts
+  40:3  warning  Unexpected console statement  no-console
+  41:3  warning  Unexpected console statement  no-console
+  42:3  warning  Unexpected console statement  no-console
+  43:3  warning  Unexpected console statement  no-console
+
+✖ 5 problems (0 errors, 5 warnings)
+
+$ pnpm -r typecheck
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ vitest run
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v2.1.9 /home/claude/trust-platform
+
+ ✓ packages/show-authoring/src/authoring.test.ts (48 tests) 172ms
+ ✓ packages/control-core/src/m2a2.test.ts (33 tests) 89ms
+ ✓ packages/control-core/src/control-core.test.ts (46 tests) 59ms
+ ✓ packages/telemetry/src/lifecycle.test.ts (45 tests) 47ms
+ ✓ packages/show-engine/src/playback.test.ts (25 tests) 37ms
+ ✓ packages/show-engine/src/resolve.test.ts (32 tests) 22ms
+ ✓ packages/telemetry/src/telemetry.test.ts (38 tests) 130ms
+ ✓ packages/show-engine/src/groups.test.ts (23 tests) 37ms
+ ✓ packages/control-core/src/m2a3.test.ts (17 tests) 36ms
+ ✓ packages/trust-3d/src/MediaTextureManager.test.ts (19 tests) 12ms
+ ✓ packages/show-engine/src/preflight.test.ts (17 tests) 32ms
+ ✓ packages/show-engine/src/fades.test.ts (11 tests) 124ms
+ ✓ packages/timeline/src/transport.test.ts (15 tests) 5ms
+ ✓ packages/show-engine/src/compile.test.ts (7 tests) 72ms
+stdout | packages/show-authoring/src/emit.test.ts > emite los artefactos de ejemplo
+DURACION 15000 · EVENTOS 14 · GRUPOS [ 'towers' ]
+PREFLIGHT errores: []
+PREFLIGHT warnings: []
+VALIDATE status: READY
+
+ ✓ packages/show-authoring/src/emit.test.ts (2 tests) 20ms
+ ✓ packages/show-engine/src/shows.test.ts (10 tests) 216ms
+
+ Test Files  16 passed (16)
+      Tests  388 passed (388)
+   Start at  07:50:53
+   Duration  6.21s (transform 613ms, setup 0ms, collect 1.38s, tests 1.11s, environment 3ms, prepare 1.18s)
+
+[exit 0]
+
+========== pnpm verify (final) ==========
+$ pnpm lint && pnpm typecheck && pnpm test
+$ eslint "{packages,apps}/*/src/**/*.{ts,tsx}"
+$ pnpm -r typecheck
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ tsc --noEmit
+$ vitest run
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v2.1.9 /home/claude/trust-platform
+
+ ✓ packages/show-authoring/src/authoring.test.ts (48 tests) 180ms
+ ✓ packages/control-core/src/m2a2.test.ts (33 tests) 93ms
+ ✓ packages/control-core/src/control-core.test.ts (46 tests) 61ms
+ ✓ packages/telemetry/src/lifecycle.test.ts (45 tests) 40ms
+ ✓ packages/show-engine/src/playback.test.ts (25 tests) 41ms
+ ✓ packages/show-engine/src/resolve.test.ts (32 tests) 23ms
+ ✓ packages/telemetry/src/telemetry.test.ts (38 tests) 114ms
+ ✓ packages/show-engine/src/groups.test.ts (23 tests) 27ms
+ ✓ packages/control-core/src/m2a3.test.ts (17 tests) 37ms
+ ✓ packages/trust-3d/src/MediaTextureManager.test.ts (19 tests) 13ms
+ ✓ packages/show-engine/src/preflight.test.ts (17 tests) 28ms
+ ✓ packages/show-engine/src/fades.test.ts (11 tests) 134ms
+ ✓ packages/timeline/src/transport.test.ts (15 tests) 5ms
+ ✓ packages/show-authoring/src/emit.test.ts (2 tests) 20ms
+ ✓ packages/show-engine/src/compile.test.ts (7 tests) 73ms
+ ✓ packages/show-engine/src/shows.test.ts (10 tests) 226ms
+
+ Test Files  16 passed (16)
+      Tests  388 passed (388)
+   Start at  07:52:30
+   Duration  6.40s (transform 611ms, setup 0ms, collect 1.39s, tests 1.11s, environment 3ms, prepare 1.23s)
+
+[exit 0]
+
+========== pnpm build ==========
+$ pnpm -r build
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ echo 'source-only package'
+source-only package
+$ next build
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/4) ...
+   Generating static pages (1/4) 
+   Generating static pages (2/4) 
+   Generating static pages (3/4) 
+ ✓ Generating static pages (4/4)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    57 kB           144 kB
+└ ○ /_not-found                          872 B          88.1 kB
++ First Load JS shared by all            87.2 kB
+  ├ chunks/5b8f0dd8-c9a2733de0ccfb23.js  53.6 kB
+  ├ chunks/749-8f8d7ea634c00b60.js       31.7 kB
+  └ other shared chunks (total)          1.86 kB
+
+
+○  (Static)  prerendered as static content
+
+$ next build
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/4) ...
+   Generating static pages (1/4) 
+   Generating static pages (2/4) 
+   Generating static pages (3/4) 
+ ✓ Generating static pages (4/4)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    239 kB          326 kB
+└ ○ /_not-found                          872 B          88.2 kB
++ First Load JS shared by all            87.3 kB
+  ├ chunks/5b8f0dd8-cbb985564f7327f7.js  53.6 kB
+  ├ chunks/749-135c8e6b81412004.js       31.7 kB
+  └ other shared chunks (total)          1.96 kB
+
+
+○  (Static)  prerendered as static content
+
+[exit 0]
+
+========== mutation-check ==========
+ATRAPADA   STOP -> black
+      Tests  5 failed | 383 passed (388)
+ATRAPADA   SAFE MODE -> black
+      Tests  6 failed | 382 passed (388)
+ATRAPADA   PAUSE -> hold
+      Tests  7 failed | 381 passed (388)
+ATRAPADA   uv x+w <= 1
+      Tests  2 failed | 386 passed (388)
+ATRAPADA   uv w,h > 0
+      Tests  2 failed | 386 passed (388)
+ATRAPADA   capacidad del edificio
+      Tests  2 failed | 386 passed (388)
+ATRAPADA   doble membresia
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   aspecto del recorte
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   guard de URLs
+      Tests  3 failed | 385 passed (388)
+ATRAPADA   ended en transporte
+      Tests  5 failed | 383 passed (388)
+ATRAPADA   retry: libera fallada activa
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   retry: recrea el video
+      Tests  3 failed | 385 passed (388)
+ATRAPADA   actuador obedece output
+      Tests  2 failed | 386 passed (388)
+ATRAPADA   simulador determinista
+      Tests  7 failed | 381 passed (388)
+ATRAPADA   flag simulated
+      Tests  2 failed | 386 passed (388)
+ATRAPADA   phase loss antes que UV
+      Tests  3 failed | 385 passed (388)
+ATRAPADA   umbrales configurables
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   serie == lectura viva
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   clip caido se reporta
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   logico != salud
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   offline != safe mode
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   contexto IA sin handles
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   provenance simulada
+      Tests  9 failed | 379 passed (388)
+ATRAPADA   simulated no verificado
+      Tests  4 failed | 384 passed (388)
+ATRAPADA   verificado mira provenance
+      Tests  4 failed | 384 passed (388)
+ATRAPADA   stale degrada salud
+      Tests  2 failed | 386 passed (388)
+ATRAPADA   alarmas -> salud electrica
+      Tests  6 failed | 382 passed (388)
+ATRAPADA   preview no pisa al motor
+      Tests  5 failed | 383 passed (388)
+ATRAPADA   override off por defecto
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   serie congelada en stale
+      Tests  7 failed | 381 passed (388)
+ATRAPADA   hold no emite evento
+      Tests  2 failed | 386 passed (388)
+ATRAPADA   black emite media.stop
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   namespace de assets
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   ruta local en assets
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   BLOCKED bloquea export
+      Tests  3 failed | 385 passed (388)
+ATRAPADA   logger guarda la key
+      Tests  5 failed | 383 passed (388)
+ATRAPADA   serie corta en measuredAt
+      Tests  4 failed | 384 passed (388)
+ATRAPADA   ack emite evento
+      Tests  2 failed | 386 passed (388)
+ATRAPADA   ack no borra
+      Tests  5 failed | 383 passed (388)
+ATRAPADA   ack all sincroniza log
+      Tests  4 failed | 384 passed (388)
+ATRAPADA   sin tarifa en la alarma
+      Tests  2 failed | 386 passed (388)
+ATRAPADA   alarma: ESCALATED
+      Tests  7 failed | 381 passed (388)
+ATRAPADA   alarma: DEESCALATED
+      Tests  4 failed | 384 passed (388)
+ATRAPADA   alarma: RESOLVED
+      Tests  6 failed | 382 passed (388)
+ATRAPADA   ack no borra la alarma
+      Tests  11 failed | 377 passed (388)
+ATRAPADA   escalar invalida el ack
+      Tests  2 failed | 386 passed (388)
+ATRAPADA   metric en la identidad
+      Tests  2 failed | 386 passed (388)
+ATRAPADA   freshness: STALE
+      Tests  9 failed | 379 passed (388)
+ATRAPADA   freshness: COMM_ERROR
+      Tests  3 failed | 385 passed (388)
+ATRAPADA   modo efectivo del estado
+      Tests  4 failed | 384 passed (388)
+ATRAPADA   modo: safe mode manda
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   mes calendario real
+      Tests  2 failed | 386 passed (388)
+ATRAPADA   IA usa umbral configurado
+      Tests  2 failed | 386 passed (388)
+ATRAPADA   compiler: atMs acumulado
+      Tests  3 failed | 385 passed (388)
+ATRAPADA   compiler: A y B mismo cue
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   compiler: cierre a identidad
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   compiler: escena existe
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   compiler: uv por pixeles
+      Tests  19 failed | 369 passed (388)
+ATRAPADA   assets: namespace
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   assets: unmanaged bloquea
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   assets: aspecto
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   validation: no exporta
+      Tests  2 failed | 386 passed (388)
+ATRAPADA   draft: duracion minima
+      Tests  1 failed | 387 passed (388)
+ATRAPADA   draft: duplicar id nuevo
+      Tests  2 failed | 386 passed (388)
+ATRAPADA   membresia por show
+      Tests  23 failed | 365 passed (388)
+TODAS ATRAPADAS
+
+========== smoke test :3001 ==========
+GET /                              200
+GET /demo/test_towers_master.mp4    200 · 2579197 bytes
+GET /demo/test_horizontal.mp4      200

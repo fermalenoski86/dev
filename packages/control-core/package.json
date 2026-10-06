@@ -1,0 +1,24 @@
+{
+  "name": "@trust/control-core",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "build": "echo 'source-only package'"
+  },
+  "dependencies": {
+    "@trust/shared-types": "workspace:*",
+    "@trust/telemetry": "workspace:*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@trust/show-engine": "workspace:*",
+    "@trust/timeline": "workspace:*"
+  }
+}

@@ -1,0 +1,225 @@
+# Mutation check: rompe a proposito cada regla critica y verifica que algun
+# test la atrape. Uso: python3 scripts/mutation-check.py (desde la raiz).
+# No corre en `pnpm verify`: tarda ~1 min. Correrlo antes de cerrar un gate.
+import pathlib, subprocess, sys
+M = [
+ ("STOP -> black",            "packages/show-engine/src/resolve.ts",   "  if (transport === 'stopped') return 'black';\n", ""),
+ ("SAFE MODE -> black",       "packages/show-engine/src/resolve.ts",   "  if (safeMode) return 'black';\n", ""),
+ ("PAUSE -> hold",            "packages/show-engine/src/resolve.ts",   "  return transport === 'playing' ? 'live' : 'hold';", "  return 'live';"),
+ ("uv x+w <= 1",              "packages/shared-types/src/index.ts",    "(r) => r.x + r.w <= 1 + 1e-9", "(r) => true"),
+ ("uv w,h > 0",               "packages/shared-types/src/index.ts",    "(r) => r.w > 0 && r.h > 0", "(r) => true"),
+ ("capacidad del edificio",   "packages/show-engine/src/preflight.ts", "if (!surface.syncCapableWith.includes(other as never)) {", "if (false) {"),
+ ("doble membresia",          "packages/show-engine/src/preflight.ts", "      if (previo) {", "      if (false) {"),
+ ("aspecto del recorte",      "packages/show-engine/src/preflight.ts", "if (desvio > 0.02) {", "if (false) {"),
+ ("guard de URLs",            "packages/show-engine/src/preflight.ts", "  if (!src.startsWith('/')) return false;", "  return true;"),
+ ("ended en transporte",      "packages/timeline/src/index.ts",        "      this.status = 'ended';", ""),
+ ("retry: libera fallada activa", "packages/trust-3d/src/MediaTextureManager.ts", "if (activeSources.has(source) && !entry.failed) continue;", "if (activeSources.has(source)) continue;"),
+ ("retry: recrea el video",   "packages/trust-3d/src/MediaTextureManager.ts", "    this.release(source);\n    this.acquire(source);\n    return true;", "    return true;"),
+ ("actuador obedece output",  "packages/trust-3d/src/MediaTextureManager.ts", "if (runtime.output !== 'live') {", "if (runtime.cue !== 'playing') {"),
+ ("simulador determinista",  "packages/telemetry/src/simulator.ts", "  const s = f * f * (3 - 2 * f); // smoothstep\n  return a + (b - a) * s;", "  return Math.random();"),
+ ("flag simulated",          "packages/telemetry/src/simulator.ts", "    simulated: true,", "    simulated: false,"),
+ ("phase loss antes que UV", "packages/telemetry/src/alarms.ts", "    if (p.voltageV < thresholds.voltage.phaseLossV) {", "    if (false) {"),
+ ("umbrales configurables",  "packages/telemetry/src/alarms.ts", "if (t.powerFactor < thresholds.powerFactor.warnBelow) {", "if (t.powerFactor < 0.1) {"),
+ ("serie == lectura viva",   "packages/telemetry/src/simulator.ts", "  return Array.from({ length: points }, (_, i) => sampleTelemetry(fromMs + i * step, config));", "  return Array.from({ length: points }, (_, i) => sampleTelemetry(fromMs + i * step + 500, config));"),
+ ("clip caido se reporta",   "packages/control-core/src/system.ts", "      detail: failed\n        ? 'El clip asignado no carga'", "      detail: false\n        ? 'El clip asignado no carga'"),
+ ("logico != salud",         "packages/control-core/src/system.ts", "      health: healthOf(id),\n      provenance: prov[id],", "      health: (logicalState === 'BLACK' ? 'OFFLINE' : healthOf(id)),\n      provenance: prov[id],"),
+ ("offline != safe mode",    "packages/control-core/src/system.ts", "    health: input.controlReachable ? healthOf('connectivity') : 'OFFLINE',", "    health: healthOf('connectivity'),"),
+ ("contexto IA sin handles", "packages/control-core/src/ai.ts", "  return {\n    advisoryOnly: true,", "  return {\n    // @ts-expect-error mutante\n    leak: () => input.log,\n    advisoryOnly: true,"),
+ ("provenance simulada",     "packages/control-core/src/system.ts", "  screen_corrientes: 'SIMULATED',", "  screen_corrientes: 'REAL',"),
+ ("simulated no verificado",  "packages/control-core/src/system.ts", "  SIMULATED: false,", "  SIMULATED: true,"),
+ ("verificado mira provenance","packages/control-core/src/system.ts", "return subsystems.some((s) => PROVENANCE_IS_VERIFIED[s.provenance]);", "return subsystems.some((s) => s.health !== 'ONLINE');"),
+ ("stale degrada salud",      "packages/control-core/src/system.ts", "  if (sample.quality === 'STALE') return 'STALE';", "  if (false) return 'STALE';"),
+ ("alarmas -> salud electrica","packages/control-core/src/system.ts", "  if (alarms.some((a) => a.severity === 'critical')) return 'CRITICAL';", "  if (false) return 'CRITICAL';"),
+ ("preview no pisa al motor", "packages/control-core/src/modes.ts", "  if (showDrivesLighting) {\n    return { state: engineState, source: 'ENGINE', overrideBlockedReason: 'SHOW_TIMELINE' };\n  }", "  if (false) {\n    return { state: engineState, source: 'ENGINE', overrideBlockedReason: 'SHOW_TIMELINE' };\n  }"),
+ ("override off por defecto", "packages/control-core/src/modes.ts", "  if (!overrideEnabled) return { state: engineState, source: 'ENGINE', overrideBlockedReason: 'DISABLED' };", "  // sin chequeo"),
+ ("serie congelada en stale", "packages/telemetry/src/freshness.ts", "  const toMs = Math.min(sample.measuredAt, nowMs);", "  const toMs = nowMs;"),
+ ("engine recarga si cambio", "packages/show-authoring/src/preview-session.ts", "    if (this.engineRevision !== revision) {", "    if (false) {"),
+ ("revision por contenido",   "packages/show-authoring/src/preview-session.ts", "  const json = JSON.stringify(pkg);", "  const json = pkg.id;"),
+ ("canPreview corta BLOCKED", "packages/show-authoring/src/preview-session.ts", "  if (validation.status === 'BLOCKED') return false;", ""),
+ ("canPreview mira exportable","packages/show-authoring/src/preview-session.ts", "  if (!validation.exportable) return false;", ""),
+ ("blocked suelta el motor",  "packages/show-authoring/src/preview-session.ts", "    if (!canPreview(validation)) {\n      this.release();\n      return null;\n    }", "    if (!canPreview(validation)) {\n      return null;\n    }"),
+ ("scrub deja en pausa",      "packages/show-authoring/src/preview-session.ts", "    if (engine.getStatus() !== 'playing') engine.play();", ""),
+ ("preset queda dirty",       "packages/show-authoring/src/persistence.ts", "  return { draft, dirty: !desdeDisco, autosave: !desdeDisco };", "  return { draft, dirty: false, autosave: false };"),
+ ("storage valida con Zod",   "packages/show-authoring/src/persistence.ts", "    return parsed.success ? parsed.data : null;", "    return JSON.parse(raw) as TakeoverDraft;"),
+ ("hold no emite evento",    "packages/show-authoring/src/compiler.ts", "      case 'hold':\n        // Nada.", "      case 'hold':\n        timeline.push({ atMs, type: 'media.stop', target: screenId });\n        // Nada."),
+ ("black emite media.stop",  "packages/show-authoring/src/compiler.ts", "          timeline.push({ atMs, type: 'media.stop', target: screenId });\n          s.playing = false;", "          s.playing = false;"),
+ ("namespace de assets",     "packages/show-authoring/src/asset-registry.ts", "  } else if (!ALLOWED_ASSET_PREFIXES.some((p) => asset.source.startsWith(p))) {", "  } else if (false) {"),
+ ("ruta local en assets",    "packages/show-authoring/src/asset-registry.ts", "  } else if (!isLocalMediaPath(asset.source)) {", "  } else if (false) {"),
+ ("BLOCKED bloquea export",  "packages/show-authoring/src/validation.ts", "errors.length > 0 ? 'BLOCKED' : warnings.length > 0 ? 'WARNING' : 'READY'", "warnings.length > 0 ? 'WARNING' : 'READY'"),
+ ("experiencia: vista pura", "packages/experience-core/src/experience.ts", "export function setView(state: ExperienceState, view: ExperienceView): ExperienceState {\n  return { ...state, view };", "export function setView(state: ExperienceState, view: ExperienceView): ExperienceState {\n  return { ...INITIAL_EXPERIENCE, view, loaded: state.loaded };"),
+ ("experiencia: assets locales","packages/experience-core/src/experience.ts", "  if (/^[a-z][a-z0-9+.-]*:/i.test(src)) return false;\n  if (src.split('/').some((seg) => seg === '..')) return false;\n  return true;\n}\n\nexport function nonLocalAssets", "  return true;\n}\n\nexport function nonLocalAssets"),
+ ("experiencia: PLAY requiere ready","packages/experience-core/src/experience.ts", "  return isReadyToPresent(state) && state.phase !== 'LOADING';", "  return state.phase !== 'LOADING';"),
+ ("experiencia: reset conoce estado","packages/experience-core/src/experience.ts", "    ...INITIAL_EXPERIENCE,\n    loaded: state.loaded,", "    ...state,"),
+ ("pantalla A en su lugar", "packages/experience-core/src/composition.ts", "      screen_a: q([0.237, 0.335], [0.415, 0.266], [0.415, 0.360], [0.237, 0.429]),", "      screen_a: q([0.130, 0.335], [0.415, 0.266], [0.415, 0.360], [0.130, 0.429]),"),
+ ("pantalla B en su lugar", "packages/experience-core/src/composition.ts", "      screen_b: q([0.555, 0.258], [0.733, 0.309], [0.733, 0.418], [0.555, 0.367]),", "      screen_b: q([0.555, 0.258], [0.900, 0.309], [0.900, 0.418], [0.555, 0.367]),"),
+ ("client mode usa campaña",  "packages/experience-core/src/experience.ts", "  return CAMPAIGN_MEDIA[source] ?? source;", "  return source;"),
+ ("precarga solo campaña",    "packages/experience-core/src/experience.ts", "export const EXPERIENCE_MEDIA: string[] = Object.values(CAMPAIGN_MEDIA);", "export const EXPERIENCE_MEDIA: string[] = Object.keys(CAMPAIGN_MEDIA);"),
+ ("titular ejecutivo",        "packages/experience-core/src/experience.ts", "export const HOME_HEADLINE = '3 superficies digitales · 1 momento sincronizado';", "export const HOME_HEADLINE = '15 s · 3 pantallas · iluminación · reloj';"),
+ ("WHY sin claims de luz",    "packages/experience-core/src/experience.ts", "    body: 'Tres superficies digitales coordinadas sobre un único edificio.',", "    body: 'Tres superficies, iluminación y reloj sobre un único edificio.',"),
+ ("segmentos reparten el uv","packages/experience-core/src/composition.ts", "      const ancho = base.w / segmentos.length;", "      const ancho = base.w;"),
+ ("segmento usa su indice",  "packages/experience-core/src/composition.ts", "{ x: base.x + ancho * segment, y: base.y, w: ancho, h: base.h }", "{ x: base.x, y: base.y, w: ancho, h: base.h }"),
+ ("black no muestra media",  "packages/experience-core/src/composition.ts", "        source: rt && rt.output !== 'black' ? rt.source : null,", "        source: rt ? rt.source : null,"),
+ ("contain entra entero",    "packages/experience-core/src/composition.ts", "  const escala = Math.min(containerW / master.width, containerH / master.height);", "  const escala = Math.max(containerW / master.width, containerH / master.height);"),
+ ("fallo no cuenta cargado", "packages/experience-core/src/experience.ts", "    loaded: state.loaded.filter((a) => a !== asset),\n    failed:", "    loaded: [...state.loaded, asset],\n    failed:"),
+ ("READY exige todo",        "packages/experience-core/src/experience.ts", "  return requiredAssets().every((a) => isAssetSatisfied(state, a));", "  return requiredAssets().some((a) => isAssetSatisfied(state, a));"),
+ ("fallback debe estar cargado","packages/experience-core/src/experience.ts", "  return Boolean(fb) && state.loaded.includes(fb!);", "  return Boolean(fb);"),
+ ("STOP nunca se bloquea",   "packages/experience-core/src/experience.ts", "  void state;\n  return true;", "  void state;\n  return state.phase !== 'LOADING';"),
+ ("signature con seek",      "packages/experience-core/src/experience.ts", "    seekToMs: spec.seekToMs,\n    pauseAfterSeek: spec.seekToMs !== null,", "    seekToMs: null,\n    pauseAfterSeek: spec.seekToMs !== null,"),
+ ("check requerido bloquea", "packages/experience-core/src/experience.ts", "    status: failures.length === 0 ? 'PRESENTATION READY' : 'NOT READY',", "    status: 'PRESENTATION READY',"),
+ ("check sin ejecutar falla","packages/experience-core/src/experience.ts", "(c) => porId.get(c.id) ?? { id: c.id, ok: false, detail: 'sin ejecutar' },", "(c) => porId.get(c.id) ?? { id: c.id, ok: true, detail: 'sin ejecutar' },"),
+ ("logger guarda la key",    "packages/control-core/src/acknowledge.ts", "        key: tr.key,", "        key: undefined,"),
+ ("serie corta en measuredAt","packages/telemetry/src/freshness.ts", "  const toMs = Math.min(sample.measuredAt, nowMs);", "  const toMs = sample.quality === 'LIVE' ? nowMs : Math.min(sample.measuredAt, nowMs);"),
+ ("ack emite evento",        "packages/control-core/src/acknowledge.ts", "    emitted: actualizada ? [emit(log, actualizada, now, actor)] : [],", "    emitted: [],"),
+ ("ack no borra",            "packages/control-core/src/acknowledge.ts", "  registry.acknowledge(key, now);\n  const actualizada = registry.get(key);", "  const actualizada = registry.get(key);"),
+ ("ack all sincroniza log",  "packages/control-core/src/acknowledge.ts", "  const eventos = log.acknowledgeAll();", "  const eventos = 0;"),
+ ("sin tarifa en la alarma", "packages/telemetry/src/alarms.ts", "(umbral ${thresholds.powerFactor.criticalBelow})", "— riesgo de penalizacion en factura"),
+ ("alarma: ESCALATED",        "packages/telemetry/src/lifecycle.ts", "    if (RANK[alarm.severity] > RANK[antes.severity]) {", "    if (false) {"),
+ ("alarma: DEESCALATED",      "packages/telemetry/src/lifecycle.ts", "    } else if (RANK[alarm.severity] < RANK[antes.severity]) {", "    } else if (false) {"),
+ ("alarma: RESOLVED",         "packages/telemetry/src/lifecycle.ts", "    if (actuales.has(key)) continue;", "    continue;"),
+ ("ack no borra la alarma",   "packages/telemetry/src/lifecycle.ts", "    this.tracked.set(key, { ...e, acknowledged: true, acknowledgedAt: now });", "    this.tracked.delete(key);"),
+ ("escalar invalida el ack",  "packages/telemetry/src/lifecycle.ts", "        acknowledged: t.type === 'ESCALATED' ? false : (antes?.acknowledged ?? false),", "        acknowledged: antes?.acknowledged ?? false,"),
+ ("metric en la identidad",   "packages/telemetry/src/alarms.ts", "  return `${a.code}|${a.phase ?? '-'}|${a.metric}`;", "  return `${a.code}|${a.phase ?? '-'}`;"),
+ ("freshness: STALE",         "packages/telemetry/src/freshness.ts", "    quality: ageMs > staleAfterMs ? 'STALE' : 'LIVE',", "    quality: 'LIVE',"),
+ ("freshness: COMM_ERROR",    "packages/telemetry/src/freshness.ts", "  if (input.commError) {", "  if (false) {"),
+ ("modo efectivo del estado", "packages/control-core/src/modes.ts", "  const effective = SCENE_TO_MODE.get(activeSceneId) ?? null;", "  const effective = requested;"),
+ ("modo: safe mode manda",    "packages/control-core/src/modes.ts", "  if (safeMode) {\n    return {", "  if (false) {\n    return {"),
+ ("mes calendario real",      "packages/telemetry/src/simulator.ts", "  const diasCompletosDelMes = local.getUTCDate() - 1;", "  const diasCompletosDelMes = Math.floor(localMs / MS_DAY) % 30;"),
+ ("IA usa umbral configurado","packages/control-core/src/ai.ts", "        threshold: tr.alarm.threshold,", "        threshold: 0.92,"),
+ ("compiler: atMs acumulado", "packages/show-authoring/src/compiler.ts", "  for (const { moment, index, startMs, endMs } of spans) {", "  for (const { moment, index, endMs } of spans) {\n    const startMs = 0;"),
+ ("compiler: A y B mismo cue","packages/show-authoring/src/compiler.ts", "      aplicarPantalla('screen_b', moment.screens.upper, startMs, ref);", "      aplicarPantalla('screen_b', moment.screens.pellegrini, startMs, ref);"),
+ ("compiler: cierre a identidad","packages/show-authoring/src/compiler.ts", "      timeline.push({ atMs: durationMs, type: 'lighting.scene', value: draft.closingSceneId, fadeMs: 0 });", "      void draft.closingSceneId;"),
+ ("compiler: escena existe",  "packages/show-authoring/src/compiler.ts", "      if (!ctx.sceneIds.has(sceneId)) {", "      if (false) {"),
+ ("compiler: uv por pixeles", "packages/show-authoring/src/compiler.ts", "        x: a.pixelWidth,\n        y: 0,", "        x: canvas.width / 2,\n        y: 0,"),
+ ("assets: namespace",        "packages/show-authoring/src/asset-registry.ts", "  } else if (!ALLOWED_ASSET_PREFIXES.some((p) => asset.source.startsWith(p))) {", "  } else if (false) {"),
+ ("assets: unmanaged bloquea","packages/show-authoring/src/asset-registry.ts", "  if (asset.unmanaged) {\n    block(", "  if (false) {\n    block("),
+ ("assets: aspecto",          "packages/show-authoring/src/asset-registry.ts", "    if (desvio > ASPECT_TOLERANCE) {", "    if (false) {"),
+ ("validation: no exporta",   "packages/show-authoring/src/validation.ts", "  return { status, errors, warnings, compile, exportable: errors.length === 0 };", "  return { status, errors, warnings, compile, exportable: true };"),
+ ("draft: duracion minima",   "packages/show-authoring/src/draft-schema.ts", "  durationMs: z.number().int().min(MIN_MOMENT_MS),", "  durationMs: z.number().int(),"),
+ ("draft: duplicar id nuevo", "packages/show-authoring/src/draft-schema.ts", "    id: nextMomentId(draft, `${original.id}_copy`),", "    id: original.id,"),
+ ("membresia por show",       "packages/show-engine/src/resolve.ts",   "      if (group && rect) {", "      if (false) {"),
+ ('storage: dedup solo por tamaño', 'packages/platform-storage/src/local-disk.ts', '      if (existente.sha256 !== shaDeClave(key) || existente.sizeBytes !== sizeBytes) {', '      if (existente.sizeBytes !== sizeBytes) {'),
+ ('storage: shard≠hash aceptado', 'packages/platform-storage/src/keys.ts', "  if (!m || m[2]?.slice(0, 2) !== m[1]) throw new StorageKeyError('clave de contenido inválida');", "  if (!m) throw new StorageKeyError('clave de contenido inválida');"),
+ ('storage: temporal huérfano pisado', 'packages/platform-storage/src/local-disk.ts', '      await fs.mkdir(dir, { mode: DIR_MODE });', '      await fs.mkdir(dir, { mode: DIR_MODE, recursive: true });'),
+ ('storage: permisos no endurecidos', 'packages/platform-storage/src/local-disk.ts', '    if ((st.mode & 0o777) !== DIR_MODE) {', '    if ((st.mode & 0o777) === -1) {'),
+ ('media: HEVC aceptado', 'packages/platform-media/src/validator.ts', '  if (media.codec !== ACCEPTED_CODEC) {', "  if (media.codec !== ACCEPTED_CODEC && media.codec !== 'HEVC') {"),
+ ('media: 29.97 aceptado (float)', 'packages/platform-media/src/validator.ts', '  if (!fps || !ACCEPTED_FPS.some((a) => a.numerator === fps.numerator && a.denominator === fps.denominator)) {', '  if (!fps || !ACCEPTED_FPS.some((a) => Math.round(a.numerator / a.denominator) === Math.round(fps.numerator / fps.denominator))) {'),
+ ('media: resolución errada aceptada', 'packages/platform-media/src/validator.ts', '  if (media.width !== fmt.width || media.height !== fmt.height) {', '  if (media.width !== fmt.width && media.height !== fmt.height) {'),
+ ('media: múltiples pistas aceptadas', 'packages/platform-media/src/validator.ts', '  if (media.videoStreamCount > 1) {', '  if (media.videoStreamCount > 2) {'),
+ ('media: formato hardcodeado', 'packages/platform-media/src/validator.ts', '  const fmt = formats[parseSurfaceType(surfaceType, formats)];', '  const fmt = { width: 1920, height: 412 };'),
+ ('media: MOV pasa como MP4', 'packages/platform-media/src/ffprobe.ts', "  const esMp4 = formatName.split(',').includes('mp4') && brand !== null && MP4_BRANDS.includes(brand);", "  const esMp4 = formatName.split(',').includes('mp4');"),
+ ('media: carátula cuenta como pista', 'packages/platform-media/src/ffprobe.ts', "  const videos = streams.filter((s) => s.codec_type === 'video' && !esCaratula(s));", "  const videos = streams.filter((s) => s.codec_type === 'video');"),
+ ('media: decode de frame omitido', 'packages/platform-media/src/pipeline.ts', '    const frame = await decoder.decode(m.path, { streamIndex: probe.media.videoStreamIndex ?? 0, durationMs: probe.media.durationMs ?? 0, signal: opts.signal });', '    const frame = { ok: true as const, frameBytes: 1 };', 'npx vitest run -c vitest.media.config.ts'),
+ ('media: timeout omitido', 'packages/platform-media/src/process.ts', "    const timer = setTimeout(() => terminar({ kind: 'timeout' }), opts.timeoutMs);", '    const timer = setTimeout(() => {}, opts.timeoutMs);', 'npx vitest run -c vitest.media.config.ts'),
+]
+# Restauracion garantizada: si esto se interrumpe a mitad (Ctrl-C, timeout,
+# SIGTERM), el repo NO puede quedar con una mutacion aplicada. Pasa, y el
+# sintoma es un test que "falla solo" sin que nadie haya tocado nada.
+import atexit, json, os, signal, sys
+
+# Diario en disco. `atexit` y los handlers de señal no corren ante SIGKILL
+# (timeout -9, contenedor detenido), y cuando eso pasa el repo queda MUTADO:
+# aparecen tests "fallando solos" y lint con errores que nadie escribio. Ya
+# ocurrio dos veces. El diario permite recuperar sin adivinar.
+#
+#   python3 scripts/mutation-check.py --restore
+_DIARIO = pathlib.Path(__file__).with_name('.mutation-journal.json')
+
+_pendiente = {}
+
+def _guardar_diario():
+    if _pendiente:
+        _DIARIO.write_text(json.dumps(_pendiente))
+    elif _DIARIO.exists():
+        _DIARIO.unlink()
+
+def _restaurar_desde_diario():
+    if not _DIARIO.exists():
+        print('sin mutaciones pendientes')
+        return 0
+    datos = json.loads(_DIARIO.read_text())
+    for f, orig in datos.items():
+        pathlib.Path(f).write_text(orig)
+        print('restaurado:', f)
+    _DIARIO.unlink()
+    return len(datos)
+
+if '--restore' in sys.argv:
+    sys.exit(0 if _restaurar_desde_diario() >= 0 else 1)
+
+# Lock exclusivo. Dos corridas simultaneas se pisan el diario —el segundo lo
+# sobrescribe— y la mutacion del primero queda VIVA en el repo sin registro.
+# Paso de verdad: tres mutantes aplicados a la vez, uno de ellos salteando la
+# validacion Zod de `loadDraft`.
+_LOCK = pathlib.Path(__file__).with_name('.mutation-lock')
+try:
+    _fd = os.open(str(_LOCK), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    os.write(_fd, str(os.getpid()).encode())
+    os.close(_fd)
+except FileExistsError:
+    viejo = _LOCK.read_text().strip()
+    activo = pathlib.Path(f'/proc/{viejo}').exists() if viejo.isdigit() else False
+    if activo:
+        print(f'ERROR: ya hay un mutation-check corriendo (pid {viejo}).')
+        print('Esperalo, o matalo y corre: python3 scripts/mutation-check.py --restore')
+        sys.exit(2)
+    print(f'lock huerfano del pid {viejo}: la corrida anterior murio. Restaurando.')
+    _restaurar_desde_diario()
+    _LOCK.write_text(str(os.getpid()))
+
+atexit.register(lambda: _LOCK.exists() and _LOCK.unlink())
+
+# Si quedo un diario de una corrida anterior, se restaura antes de empezar:
+# mutar sobre codigo ya mutado daria resultados sin sentido.
+if _DIARIO.exists():
+    print('ATENCION: corrida anterior interrumpida, restaurando')
+    _restaurar_desde_diario()
+
+def _restaurar(*_):
+    for f, orig in list(_pendiente.items()):
+        pathlib.Path(f).write_text(orig)
+        _pendiente.pop(f, None)
+    _guardar_diario()
+
+atexit.register(_restaurar)
+for _sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+    try:
+        signal.signal(_sig, lambda *_: (_restaurar(), sys.exit(130)))
+    except (ValueError, OSError):
+        pass
+
+# --tanda inicio:fin  → corre solo esas reglas (índices de Python, fin
+# excluido). Sirve para entornos donde un proceso largo no sobrevive: se
+# corre en tandas y se suman los resultados. Sin la opción, corren todas.
+_reglas = M
+for _i, _arg in enumerate(sys.argv):
+    if _arg == '--tanda' and _i + 1 < len(sys.argv):
+        _ini, _fin = (int(v) if v else None for v in sys.argv[_i + 1].split(':'))
+        _reglas = M[_ini:_fin]
+        print(f'tanda {_ini}:{_fin} — {len(_reglas)} de {len(M)} reglas', flush=True)
+
+# Una regla puede traer un 5.º campo: el comando de test que la atrapa. Por
+# defecto, la suite unitaria. Las mutaciones de procesos reales (ffprobe/ffmpeg)
+# usan la suite de media (vitest.media.config.ts).
+CMD_DEFAULT = "npx vitest run"
+CMD_MEDIA = "npx vitest run -c vitest.media.config.ts"
+
+ok = True
+for regla in _reglas:
+    name, f, a, b = regla[:4]
+    cmd = regla[4] if len(regla) > 4 else CMD_DEFAULT
+    p = pathlib.Path(f); orig = p.read_text()
+    assert a in orig, f"no encontre el patron de: {name}"
+    _pendiente[f] = orig
+    _guardar_diario()
+    try:
+        p.write_text(orig.replace(a, b, 1))
+        r = subprocess.run(f"{cmd} 2>&1 | grep -E 'Tests '", shell=True, capture_output=True, text=True)
+        line = r.stdout.strip()
+    finally:
+        p.write_text(orig)
+        _pendiente.pop(f, None)
+        _guardar_diario()
+    caught = "failed" in line
+    ok &= caught
+    print(f"{'ATRAPADA ' if caught else 'SOBREVIVE'}  {name:28s} {line}", flush=True)
+print("TODAS ATRAPADAS" if ok else "HAY MUTANTES VIVOS")

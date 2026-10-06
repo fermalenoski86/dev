@@ -1,0 +1,13 @@
+node_modules/
+.next/
+dist/
+.turbo/
+*.tsbuildinfo
+.env
+.env.local
+.DS_Store
+.mutation-journal.json
+.mutation-lock
+test-results/
+playwright-report/
+docs/reviews/*.patch

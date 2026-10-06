@@ -1,0 +1,166 @@
+{
+  "takeoverDraftVersion": 1,
+  "id": "mcdonalds_takeover_15s",
+  "name": "McDonald's Takeover 15 s",
+  "clientName": "McDonald's",
+  "campaignName": "Takeover Obelisco 15 s",
+  "createdAt": 1767225600000,
+  "updatedAt": 1767225600000,
+  "surfaces": {
+    "upperMode": "master",
+    "masterAssetId": "test_towers_master",
+    "corrientesAssetId": null,
+    "pellegriniAssetId": null,
+    "horizontalAssetId": "test_horizontal",
+    "includeHorizontalInMaster": false
+  },
+  "moments": [
+    {
+      "id": "normal",
+      "name": "Normal",
+      "durationMs": 3000,
+      "screens": {
+        "upper": {
+          "mode": "hold"
+        },
+        "corrientes": {
+          "mode": "hold"
+        },
+        "pellegrini": {
+          "mode": "hold"
+        },
+        "horizontal": {
+          "mode": "hold"
+        }
+      },
+      "lighting": {
+        "mode": "scene",
+        "sceneId": "trust_normal"
+      },
+      "clock": {
+        "mode": "state",
+        "value": "normal"
+      },
+      "notes": "El edificio en su identidad, antes de ceder nada."
+    },
+    {
+      "id": "reveal",
+      "name": "Brand reveal",
+      "durationMs": 3000,
+      "screens": {
+        "upper": {
+          "mode": "play",
+          "fromMs": 0
+        },
+        "corrientes": {
+          "mode": "play",
+          "fromMs": 0
+        },
+        "pellegrini": {
+          "mode": "play",
+          "fromMs": 0
+        },
+        "horizontal": {
+          "mode": "play",
+          "fromMs": 0
+        }
+      },
+      "lighting": {
+        "mode": "scene",
+        "sceneId": "brand_accent",
+        "fadeMs": 1500
+      },
+      "clock": {
+        "mode": "inherit"
+      },
+      "notes": "Aparece el contenido; la iluminación todavía es del edificio."
+    },
+    {
+      "id": "takeover",
+      "name": "Full takeover",
+      "durationMs": 6000,
+      "screens": {
+        "upper": {
+          "mode": "hold"
+        },
+        "corrientes": {
+          "mode": "hold"
+        },
+        "pellegrini": {
+          "mode": "hold"
+        },
+        "horizontal": {
+          "mode": "hold"
+        }
+      },
+      "lighting": {
+        "mode": "scene",
+        "sceneId": "mcd_red_gold",
+        "fadeMs": 2000
+      },
+      "clock": {
+        "mode": "state",
+        "value": "accent"
+      },
+      "notes": "Rojo de marca en la torre. Cúpula y reloj siguen dorados: la firma no se alquila."
+    },
+    {
+      "id": "firma",
+      "name": "Signature",
+      "durationMs": 2000,
+      "screens": {
+        "upper": {
+          "mode": "hold"
+        },
+        "corrientes": {
+          "mode": "hold"
+        },
+        "pellegrini": {
+          "mode": "hold"
+        },
+        "horizontal": {
+          "mode": "hold"
+        }
+      },
+      "lighting": {
+        "mode": "scene",
+        "sceneId": "iconic_signature",
+        "fadeMs": 1200
+      },
+      "clock": {
+        "mode": "state",
+        "value": "normal"
+      },
+      "notes": "El edificio se recupera a sí mismo antes de terminar."
+    },
+    {
+      "id": "exit",
+      "name": "Exit",
+      "durationMs": 1000,
+      "screens": {
+        "upper": {
+          "mode": "black"
+        },
+        "corrientes": {
+          "mode": "black"
+        },
+        "pellegrini": {
+          "mode": "black"
+        },
+        "horizontal": {
+          "mode": "black"
+        }
+      },
+      "lighting": {
+        "mode": "scene",
+        "sceneId": "trust_normal",
+        "fadeMs": 800
+      },
+      "clock": {
+        "mode": "inherit"
+      }
+    }
+  ],
+  "closingSceneId": "trust_normal",
+  "notes": "DEMO. Los assets son patrones de prueba: no hay material de McDonald's en el repositorio. La escena mcd_red_gold sí es real."
+}
