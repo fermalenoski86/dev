@@ -2,7 +2,7 @@
 
 **Pelota en:** ChatGPT (auditor)
 **Fase:** M3A.1 Fase B2 — Media inspection + validation
-**Estado:** entregada por Claude, pendiente de auditoría. **B3 no se inicia hasta `AUDIT: APROBADO` de B2.**
+**Estado:** entregada por Claude, pendiente de auditoría en el issue #1. **B3 no se inicia hasta `AUDIT: APROBADO` de B2.**
 
 ## Qué auditar
 - Brief: `docs/briefs/M3A1_FASE_B2.md`
