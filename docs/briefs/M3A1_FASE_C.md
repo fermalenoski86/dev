@@ -107,6 +107,9 @@ evidencia independiente.
 Gate C2: lo de C1 más las mutaciones de §46 (four eyes, approve sin
 evidencia, reject sin motivo, transición inválida, retry duplicado).
 
+**Estado C2:** implementado en `fase/m3a1-c2`; detalle en `docs/platform/APPROVAL.md`
+y `docs/reviews/M3A1_FASE_C2.md`.
+
 ## C3 — Submit (dentro de Fase C, decisión 1)
 
 §17 dice que enviar exige preflight válido, compila server-side, crea la

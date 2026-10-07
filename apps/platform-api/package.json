@@ -15,7 +15,9 @@
   "dependencies": {
     "@fastify/cookie": "11.0.2",
     "@fastify/multipart": "9.2.1",
+    "@trust/platform-approval": "workspace:*",
     "@trust/platform-assets": "workspace:*",
+    "@trust/platform-audit": "workspace:*",
     "@trust/platform-auth": "workspace:*",
     "@trust/platform-contracts": "workspace:*",
     "@trust/platform-db": "workspace:*",

@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
 import { connect } from '@trust/platform-db';
 import { maxUploadBytesFromEnv } from '@trust/platform-assets';
+import { maxEvidenceBytesFromEnv } from '@trust/platform-approval';
 import { mediaRuntimeFromEnv } from '@trust/platform-media';
 import { storageFromEnv } from '@trust/platform-storage';
 import { LoginRateLimiter } from '@trust/platform-auth';
@@ -57,7 +58,7 @@ export async function createServer(env: NodeJS.ProcessEnv = process.env) {
   // Se verifica UNA vez al arrancar: /ready no lanza procesos por cada probe.
   const binarios = (await binarioPresente(media.ffprobePath)) && (await binarioPresente(media.ffmpegPath));
   const app = await buildApp({
-    db, storage, media, actors: new SessionActorProvider(db, { cookieName: auth.cookieName, externalApprovalEnabled }), auth, trustProxyHops: hops, maxUploadBytes: maxUploadBytesFromEnv(env), mediaBinariesOk: () => binarios,
+    db, storage, media, actors: new SessionActorProvider(db, { cookieName: auth.cookieName, externalApprovalEnabled }), auth, trustProxyHops: hops, maxUploadBytes: maxUploadBytesFromEnv(env), maxEvidenceBytes: maxEvidenceBytesFromEnv(env), mediaBinariesOk: () => binarios,
     log: { level: env.LOG_LEVEL ?? 'info' },
   });
   app.addHook('onClose', async () => { await db.destroy(); }); // el pool es de este servidor

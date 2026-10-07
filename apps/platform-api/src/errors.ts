@@ -1,3 +1,4 @@
+import { ApprovalError } from '@trust/platform-approval';
 import { IdempotencyKeyReusedError } from '@trust/platform-db';
 import { InvalidSurfaceTypeError } from '@trust/platform-media';
 import { ZodError } from 'zod';
@@ -38,6 +39,7 @@ export function toErrorResponse(err: unknown, requestId: string): { status: numb
     body: { code, message, ...(details ? { details } : {}), requestId },
   });
   if (err instanceof ApiError) return body(err.statusCode, err.code, err.message, err.details);
+  if (err instanceof ApprovalError) return body(err.httpStatus, err.code, err.message, err.details);
   if (err instanceof ZodError) return body(400, 'VALIDATION_ERROR', 'La solicitud no es válida.', zodDetails(err));
   if (err instanceof IdempotencyKeyReusedError) return body(409, err.code, 'La Idempotency-Key ya se usó con otra solicitud.');
   if (err instanceof InvalidSurfaceTypeError) return body(400, err.code, 'surfaceType no existe en las capacidades del edificio.');

@@ -65,12 +65,15 @@ export async function seedVersion(
   );
 }
 
-export async function seedEvidence(db: Kysely<Database>, userId: string, contenido = `mail-${Math.random()}`) {
+/** Evidencia de UNA versión (0003). Por defecto un EMAIL (message/rfc822). */
+export async function seedEvidence(db: Kysely<Database>, userId: string, versionId: string, contenido = `mail-${Math.random()}`) {
   const o = await seedStoredObject(db, contenido, 'message/rfc822');
-  return db.insertInto('approval_evidence').values({ type: 'EMAIL', original_filename: 'ok-cliente.eml', stored_object_id: o.storedObjectId, uploaded_by: userId }).returning('id').executeTakeFirstOrThrow();
+  return db.insertInto('approval_evidence').values({ show_version_id: versionId, type: 'EMAIL', original_filename: 'ok-cliente.eml', stored_object_id: o.storedObjectId, uploaded_by: userId }).returning('id').executeTakeFirstOrThrow();
 }
 
+/** Decisión directa en la base, citando el hash real de la versión (0003). */
 export async function seedApproval(db: Kysely<Database>, versionId: string, actorId: string, decision: 'APPROVED' | 'REJECTED' = 'APPROVED') {
-  const ev = decision === 'APPROVED' ? await seedEvidence(db, actorId) : null;
-  return db.insertInto('approvals').values({ show_version_id: versionId, decision, actor_user_id: actorId, evidence_id: ev?.id ?? null, reason: decision === 'REJECTED' ? 'Cambiar el cierre' : null }).returning('id').executeTakeFirstOrThrow();
+  const ev = decision === 'APPROVED' ? await seedEvidence(db, actorId, versionId) : null;
+  const v = await db.selectFrom('show_versions').select('version_hash').where('id', '=', versionId).executeTakeFirstOrThrow();
+  return db.insertInto('approvals').values({ show_version_id: versionId, decision, actor_user_id: actorId, evidence_id: ev?.id ?? null, reason: decision === 'REJECTED' ? 'Cambiar el cierre' : null, version_hash: v.version_hash }).returning(['id', 'evidence_id']).executeTakeFirstOrThrow();
 }

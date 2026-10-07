@@ -85,3 +85,67 @@ export const MeResponseSchema = z.object({
   csrfToken: z.string().nullable(),
   expiresAt: z.string().datetime().nullable(),
 });
+
+/* ── approval (C2, §17–20, §30) ─────────────────────────────────────── */
+const Uuid = z.string().uuid();
+const IsoDate = z.string().datetime();
+
+export const VersionParamsSchema = z.object({ id: Uuid }).strict();
+export const EvidenceParamsSchema = z.object({ id: Uuid, evidenceId: Uuid }).strict();
+export const ContractParamsSchema = z.object({ id: Uuid }).strict();
+
+/** Idempotency-Key obligatoria en evidencia, approve y reject (§28). */
+export const IdempotencyHeadersSchema = UploadHeadersSchema;
+
+export const EvidenceFieldsSchema = z.object({ type: z.enum(['EMAIL', 'PDF', 'MESSAGE', 'OTHER']) }).strict();
+
+/** El cliente cita el hash que vio: la decisión es sobre la versión EXACTA. Nada de contractId: el scope lo deriva el backend. */
+export const ApproveBodySchema = z.object({ evidenceId: Uuid, versionHash: Sha }).strict();
+export const RejectBodySchema = z.object({ reason: z.string().trim().min(1).max(2000), versionHash: Sha }).strict();
+export const FourEyesBodySchema = z.object({ fourEyesRequired: z.boolean() }).strict();
+
+export const EvidenceResponseSchema = z.object({
+  id: Uuid,
+  showVersionId: Uuid,
+  type: z.enum(['EMAIL', 'PDF', 'MESSAGE', 'OTHER']),
+  originalFilename: z.string(),
+  mimeType: z.enum(['application/pdf', 'message/rfc822', 'text/plain', 'image/png', 'image/jpeg']),
+  sizeBytes: z.number().int().positive(),
+  sha256: Sha,
+  uploadedBy: Uuid,
+  uploadedAt: IsoDate,
+});
+
+export const ShowVersionResponseSchema = z.object({
+  id: Uuid,
+  campaignId: Uuid,
+  contractId: Uuid,
+  versionNumber: z.number().int().positive(),
+  versionHash: Sha,
+  hashAlgorithm: z.literal('sha256'),
+  canonicalizationVersion: z.string(),
+  hashEnvelopeVersion: z.number().int().positive(),
+  showPackageSchemaVersion: z.number().int().positive(),
+  compilerVersion: z.string(),
+  sourceDraftId: Uuid,
+  sourceDraftRevision: z.number().int().positive(),
+  submittedBy: Uuid,
+  submittedAt: IsoDate,
+  status: z.enum(['SUBMITTED', 'APPROVED', 'REJECTED']),
+  fourEyesRequired: z.boolean(),
+  approval: z
+    .object({
+      id: Uuid,
+      decision: z.enum(['APPROVED', 'REJECTED']),
+      actorUserId: Uuid,
+      evidenceId: Uuid.nullable(),
+      reason: z.string().nullable(),
+      versionHash: Sha,
+      createdAt: IsoDate,
+    })
+    .nullable(),
+  evidence: z.array(EvidenceResponseSchema),
+  assets: z.array(z.object({ logicalRef: z.string(), assetId: Uuid, sha256: Sha })),
+});
+
+export const FourEyesResponseSchema = z.object({ contractId: Uuid, fourEyesRequired: z.boolean(), changed: z.boolean() });

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import cookie from '@fastify/cookie';
 import multipart from '@fastify/multipart';
+import { DEFAULT_MAX_EVIDENCE_BYTES } from '@trust/platform-approval';
 import { AssetUploadService, type AssetView, displayFilename, toView } from '@trust/platform-assets';
 import { deriveSurfaceFormats } from '@trust/platform-contracts';
 import type { Database } from '@trust/platform-db';
@@ -12,6 +13,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { type Kysely, sql } from 'kysely';
 import type { z } from 'zod';
 import { type ActorProvider, CSRF_HEADER, DEV_ACTOR_HEADER, requireActor } from './actor';
+import { registerApprovalRoutes } from './approval-routes';
 import { type AuthConfig, registerAuthRoutes } from './auth-routes';
 import {
   AssetListQuerySchema,
@@ -44,6 +46,8 @@ export interface AppDeps {
   /** Rutas /api/v1/auth/*. Sin esto (tests con provider DEV) no se registran. */
   auth?: AuthConfig;
   maxUploadBytes: number;
+  /** MAX_EVIDENCE_BYTES (C2). Default 25 MiB. */
+  maxEvidenceBytes?: number;
   /**
    * Saltos de proxy confiables para `req.ip` (Fastify `trustProxy`). 0 = la IP
    * del socket. Detrás de un reverse proxy hay que declararlo, o el rate limit
@@ -150,6 +154,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   });
 
   if (deps.auth) registerAuthRoutes(app, { db: deps.db, actors: deps.actors, auth: deps.auth });
+  registerApprovalRoutes(app, { db: deps.db, storage: deps.storage, actors: deps.actors, maxEvidenceBytes: deps.maxEvidenceBytes ?? DEFAULT_MAX_EVIDENCE_BYTES });
 
   /* ── assets (§18) ─────────────────────────────────────────────────── */
   app.post('/api/v1/assets', async (req, reply) => {

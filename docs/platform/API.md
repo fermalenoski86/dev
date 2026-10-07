@@ -13,6 +13,12 @@ Arranque: `pnpm --filter @trust/platform-api start` (variables en `.env.example`
 | GET | `/api/v1/assets/:id` | un Asset del actor | 200 · 400 · 401 · 404 |
 | GET | `/api/v1/assets/:id/status` | `{id, status, rejection}` | 200 · 400 · 401 · 404 |
 | GET | `/api/v1/assets?status=&limit=&cursor=` | Assets del actor, más nuevos primero | 200 `{items, nextCursor}` · 400 |
+| GET | `/api/v1/show-versions/:id` | versión con estado derivado, evidencia y manifiesto (C2) | ver `APPROVAL.md` |
+| POST | `/api/v1/show-versions/:id/evidence` | evidencia multipart, detección por bytes (C2) | ver `APPROVAL.md` |
+| GET | `/api/v1/show-versions/:id/evidence/:evidenceId` | descarga (`attachment`, `nosniff`, CSP sandbox) (C2) | ver `APPROVAL.md` |
+| POST | `/api/v1/show-versions/:id/approve` | aprobar con evidencia y hash exacto (C2) | ver `APPROVAL.md` |
+| POST | `/api/v1/show-versions/:id/reject` | rechazar con motivo y hash exacto (C2) | ver `APPROVAL.md` |
+| PUT | `/api/v1/contracts/:id/four-eyes` | política de cuatro ojos, solo ADMIN (C2) | ver `APPROVAL.md` |
 
 No hay `PATCH`, `PUT` ni `DELETE` de Assets (§26): responden 404 `NOT_FOUND`.
 
