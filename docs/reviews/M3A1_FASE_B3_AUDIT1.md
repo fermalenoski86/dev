@@ -51,3 +51,24 @@ solo archivos de B3, sin HANDOFF.
 - **BL-07** queda como reporte operativo, sin código contractual nuevo.
   **BL-08** queda report-only, con período de gracia y sin borrados.
   **BL-09** queda para después de B3 y no dispensa el gate. Registrado en `BACKLOG.md`.
+
+## Extra: carrera en el arnés de PostgreSQL (visto en CI de main@5ba9f1a)
+
+El job `postgres` de main falló con `23505 pg_authid_rolname_index`: los
+archivos de test corren en paralelo y todos ejecutan `CREATE ROLE trust_owner`
+tras un `IF NOT EXISTS`; dos workers pasan el chequeo a la vez. B3 suma dos
+archivos `.db.test.ts`, así que la carrera se vuelve más probable en este PR.
+
+Corrección: `pg_advisory_xact_lock` al comienzo del `DO` en
+`packages/platform-db/src/testing.ts`. Reproducción determinística (dos `psql`
+en paralelo con `pg_sleep(1)` entre el chequeo y el `CREATE ROLE`): sin lock →
+`ERROR: duplicate key value violates unique constraint "pg_authid_rolname_index"`;
+con lock → sin errores. Suite PG sobre clusters nuevos (sin roles): 4/4 corridas verdes.
+
+## Extra: `e2e-m2c` rojo sobre 3629c5c
+
+Falló `Client Mode › sin controles de operador…` (primer test de la corrida,
+`ready-state` en LOADING durante 40 s). Ese job pasó 14/14 sobre `037bfc4`, y
+entre los dos commits no cambió nada en `apps/`, `e2e/`, `experience-core`,
+`trust-3d`, `playwright.config.ts` ni `.github/`. No lo declaro flake: el push
+siguiente vuelve a correr el job, y si se repite lo investigo como propio.

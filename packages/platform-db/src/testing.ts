@@ -44,7 +44,12 @@ export async function createTestDatabase(opts: { migrate?: boolean } = {}): Prom
   const admin = new pg.Client({ connectionString: ADMIN_URL });
   await admin.connect();
   try {
+    // Los archivos de test corren en paralelo y todos crean los mismos roles
+    // (globales al cluster): sin serializar, dos workers pasan el NOT EXISTS a
+    // la vez y uno choca con 23505 en pg_authid (visto en CI sobre main@5ba9f1a).
+    // El lock vive lo que vive la transacción implícita del DO.
     await admin.query(`DO $$ BEGIN
+      PERFORM pg_advisory_xact_lock(7243100099);
       IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'trust_owner') THEN CREATE ROLE trust_owner LOGIN PASSWORD '${OWNER_PW}'; END IF;
       IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'trust_app') THEN CREATE ROLE trust_app LOGIN PASSWORD '${APP_PW}' NOSUPERUSER NOCREATEDB NOCREATEROLE; END IF;
     END $$;`);
