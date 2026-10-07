@@ -213,10 +213,16 @@ import os, re
 _override = os.environ.get('MUTATION_TEST_CMD')
 
 
+_ANSI = re.compile(r'\x1b\[[0-9;]*[A-Za-z]')
+
+
 def clasificar(line):
     """ATRAPADA solo si vitest reporta tests fallados. Una suite que no produce
     la línea 'Tests …' (no arrancó, crasheó, comando inexistente) NO es una
     mutación atrapada: es un fallo de infraestructura y también tumba el gate."""
+    # En CI vitest colorea la salida: "\x1b[31m2 failed" no tiene límite de
+    # palabra antes del número. Se limpian los códigos ANSI antes de clasificar.
+    line = _ANSI.sub('', line)
     if re.search(r'Tests\s.*\b\d+ failed', line):
         return 'ATRAPADA'
     if re.search(r'Tests\s.*\b\d+ passed', line):
@@ -229,6 +235,9 @@ if '--autoprueba' in sys.argv:
     assert clasificar('      Tests  596 passed | 1 skipped (597)') == 'SOBREVIVE'
     assert clasificar('') == 'SIN SALIDA'
     assert clasificar('Error: Cannot find module vitest') == 'SIN SALIDA'
+    # salida coloreada como la de GitHub Actions
+    assert clasificar('      Tests  \x1b[1m\x1b[31m2 failed\x1b[39m\x1b[22m | \x1b[32m594 passed\x1b[39m') == 'ATRAPADA'
+    assert clasificar('      Tests  \x1b[1m\x1b[32m596 passed\x1b[39m\x1b[22m') == 'SOBREVIVE'
     print('autoprueba OK')
     sys.exit(0)
 

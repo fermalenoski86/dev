@@ -63,12 +63,16 @@ jobs:
         with: { node-version: 22 }
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
       - run: pnpm build
-      - name: Playwright 1.56.1 + Chromium
+      # El Chromium que baja Playwright no trae H.264: los MP4 de la experiencia
+      # no cargan y la pantalla queda en LOADING. Se usa el Google Chrome que ya
+      # viene en el runner (con codecs propietarios) vía TRUST_CHROMIUM_PATH.
+      - name: Playwright 1.56.1 + Google Chrome del runner
         run: |
           npm i --no-save --prefix /tmp/pw @playwright/test@1.56.1
-          /tmp/pw/node_modules/.bin/playwright install --with-deps chromium
+          /tmp/pw/node_modules/.bin/playwright install-deps chromium
+          google-chrome --version
       - run: scripts/ci/run.sh e2e-m2c /tmp/pw/node_modules/.bin/playwright test -c playwright.config.ts e2e/experience.spec.ts e2e/builder.spec.ts --reporter=line
-        env: { NODE_PATH: /tmp/pw/node_modules }
+        env: { NODE_PATH: /tmp/pw/node_modules, TRUST_CHROMIUM_PATH: /usr/bin/google-chrome }
 
   mutations:
     runs-on: ubuntu-24.04
