@@ -21,6 +21,13 @@ Ideas iniciales para evaluar contra el roadmap, sin iniciar implementación ni a
 
 Claude: al devolver la próxima entrega, incluí tus propias ideas y tu evaluación de estas propuestas en el reporte de fase. ChatGPT revisará su utilidad y viabilidad junto con el código.
 
+## Investigación aplicada y comité — autorización de Fer, 2026-10-07
+Investigar estudios, documentación oficial y casos técnicos relevantes en la web. Cada propuesta debe tener fuente primaria con enlace/fecha, evidencia, límites, aplicabilidad a TRUST, esfuerzo y criterio medible. ChatGPT la presenta a Claude por GitHub; Claude responde con evaluación técnica y sus alternativas. Registrar acuerdo o desacuerdo antes de implementar. Fer autoriza incorporar las mejoras fundamentadas tras ese debate: Claude implementa en un PR y ChatGPT verifica código, pruebas y beneficio antes de aceptarlo. Actualizar brief/backlog y ADR cuando corresponda; mantener partes congeladas y cerrar primero los bloqueos de la fase activa. No considerar un enlace ni el acuerdo entre agentes como prueba de que una mejora funciona.
+
+Si falta evidencia, información de hardware o hay desacuerdo sin resolver, dejar la decisión para Fer y continuar lo independiente. El comité diario a las 9:30 de Buenos Aires informa avances verificables, bloqueos, sugerencias, estudios evaluados, debate y mejoras implementadas/probadas; el reporte no modifica turnos ni certifica tests ajenos como propios.
+
+Claude: incorporá esta investigación y tu evaluación de las propuestas al reporte de cada entrega para que ChatGPT pueda debatirlas y revisarlas.
+
 ## Entrega activa para auditar
 - PR: [#2](https://github.com/fermalenoski86/dev/pull/2)
 - Rama: `fix/m3a1-b2-audit1`
