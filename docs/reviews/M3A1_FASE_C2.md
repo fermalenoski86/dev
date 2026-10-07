@@ -1,6 +1,7 @@
 # M3A.1 — Fase C2: evidencia y approve/reject con cuatro ojos
 
-**Estado:** entregado para auditoría. C3 (submit) **no iniciado**. B1–B4 y C1
+**Estado:** entregado para auditoría; corregido tras `AUDIT: CAMBIOS` #1
+(`M3A1_FASE_C2_AUDIT1.md`). C3 (submit) **no iniciado**. B1–B4 y C1
 sin cambios de arquitectura; M2C.2 sin tocar.
 
 **Rama:** `fase/m3a1-c2` desde `main@4d9292d` (C1 aprobada y mergeada).
@@ -97,8 +98,9 @@ la base (atrapada por los tests de esquema).
 4. **Clasificación solo por bytes:** un email pegado como MESSAGE es EMAIL
    (422 con `detected: EMAIL`). Así los mismos bytes siempre tienen el mismo
    MIME en `stored_objects` (único por sha256).
-5. **OTHER = PNG/JPEG** (capturas). No se acepta SVG, HTML, Office, ZIP ni
-   ejecutables.
+5. **OTHER no habilitado en C2** (corregido tras la auditoría #1, ver
+   `M3A1_FASE_C2_AUDIT1.md`): no se acepta ninguna imagen, ni SVG, HTML,
+   Office, ZIP o ejecutables.
 6. **Códigos HTTP:** contenido fuera de la allowlist 415; tipo que no coincide,
    vacío, evidencia inexistente para la versión 422; demasiado grande 413;
    hash distinto 409 `VERSION_HASH_MISMATCH`.

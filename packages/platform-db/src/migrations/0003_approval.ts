@@ -20,12 +20,15 @@ import { type Kysely, sql } from 'kysely';
  */
 export const reversible = true;
 
-/** Allowlist cerrada: tipo de evidencia → MIME detectado por bytes. */
+/**
+ * Allowlist cerrada: tipo de evidencia → MIME detectado por bytes. OTHER no
+ * tiene ningún MIME admitido en C2 (auditoría C2 #1): el CHECK de Fase A
+ * conserva el valor, pero ninguna fila OTHER pasa el trigger.
+ */
 export const EVIDENCE_MIME_BY_TYPE_0003: Readonly<Record<string, readonly string[]>> = {
   PDF: ['application/pdf'],
   EMAIL: ['message/rfc822'],
   MESSAGE: ['text/plain'],
-  OTHER: ['image/png', 'image/jpeg'],
 };
 
 const pares = Object.entries(EVIDENCE_MIME_BY_TYPE_0003)

@@ -907,9 +907,11 @@ NOT NULL (la evidencia se sube a una versión y solo respalda esa versión, FK
 compuesta desde `approvals`), `approvals.version_hash` verificado por trigger
 contra la versión, allowlist tipo↔MIME y "sin evidencia después de la
 decisión" también en la base. La evidencia se clasifica SOLO por bytes
-(PDF, email RFC 5322, texto UTF-8 no-markup, PNG, JPEG): los mismos bytes dan
+(PDF, email RFC 5322, texto UTF-8 no-markup; OTHER sin ningún tipo habilitado
+hasta tener un decoder que valide la imagen completa): los mismos bytes dan
 siempre el mismo MIME, lo que mantiene coherente `stored_objects` único por
-sha256; se sirve siempre como descarga con `nosniff` y CSP sandbox. Las
+sha256; se sirve siempre como descarga con `nosniff`, CSP sandbox y un nombre
+generado por el servidor (`evidence-<id>.<ext>` según el MIME validado). Las
 decisiones serializan por campaña (`FOR UPDATE` sobre `campaigns`, porque
 `trust_app` no tiene UPDATE sobre `show_versions`), usan `withIdempotency` y
 escriben audit en la misma transacción. Cuatro ojos: chequeo en la app con el

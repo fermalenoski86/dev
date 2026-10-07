@@ -1,5 +1,5 @@
-import { ApprovalService, DECIDE_ROLES, READ_ROLES } from '@trust/platform-approval';
-import { contentDispositionFor, displayFilename } from '@trust/platform-assets';
+import { ApprovalService, DECIDE_ROLES, READ_ROLES, downloadFilename } from '@trust/platform-approval';
+import { displayFilename } from '@trust/platform-assets';
 import type { Database } from '@trust/platform-db';
 import type { ObjectStorage } from '@trust/platform-storage';
 import type { FastifyInstance } from 'fastify';
@@ -92,7 +92,7 @@ export function registerApprovalRoutes(app: FastifyInstance, deps: ApprovalRoute
       const f = EvidenceFieldsSchema.safeParse(campos);
       if (!f.success) {
         part.file.resume();
-        throw new ApiError(400, 'VALIDATION_ERROR', 'Campo inválido: type (EMAIL, PDF, MESSAGE u OTHER) antes del archivo.', {
+        throw new ApiError(400, 'VALIDATION_ERROR', 'Campo inválido: type (EMAIL, PDF o MESSAGE; OTHER no está habilitado) antes del archivo.', {
           issues: f.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
         });
       }
@@ -111,11 +111,12 @@ export function registerApprovalRoutes(app: FastifyInstance, deps: ApprovalRoute
     const actor = await requireActor(deps.actors, req, READ_ROLES);
     const { id, evidenceId } = EvidenceParamsSchema.parse(req.params);
     const { evidence, stream } = await service.openEvidence(actor, id, evidenceId);
-    // Siempre descarga: nunca se renderiza en el origen de la API.
+    // Siempre descarga: nunca se renderiza en el origen de la API. El nombre lo genera el servidor
+    // con la extensión del MIME validado; el original queda solo como metadata (auditoría C2 #1).
     return reply
       .header('content-type', evidence.mimeType === 'text/plain' ? 'text/plain; charset=utf-8' : evidence.mimeType)
       .header('content-length', String(evidence.sizeBytes))
-      .header('content-disposition', contentDispositionFor(evidence.originalFilename))
+      .header('content-disposition', `attachment; filename="${downloadFilename(evidence)}"`)
       .header('content-security-policy', "default-src 'none'; sandbox")
       .header('x-evidence-sha256', evidence.sha256)
       .send(stream);

@@ -41,7 +41,8 @@ Ambas son terminales. Desde un terminal, approve/reject/evidencia → 409
 
 ## Evidencia (decisión 2, §19)
 
-Multipart en una solicitud: campo `type` (EMAIL, PDF, MESSAGE, OTHER) y
+Multipart en una solicitud: campo `type` (EMAIL, PDF o MESSAGE; OTHER existe en
+el modelo pero no está habilitado en C2 → 400) y
 después `file`. Stream al temporal con sha256 y tamaño durante el stream; corte
 en `MAX_EVIDENCE_BYTES` + 1 (default 25 MiB) con `limitBody` (el parser tiene
 límite propio de ruta y nunca trunca en silencio). Después, storage
@@ -54,7 +55,7 @@ Detección por **bytes reales** (`detect.ts`), allowlist cerrada:
 | PDF | `%PDF-` en el byte 0 | application/pdf |
 | EMAIL | texto UTF-8 con encabezados RFC 5322 (From + Date/Subject, bloque terminado en línea vacía) | message/rfc822 |
 | MESSAGE | texto UTF-8 sin encabezados de email (ej. export de un chat) | text/plain |
-| OTHER | PNG o JPEG por firma (capturas de pantalla: inertes) | image/png · image/jpeg |
+| OTHER | **ninguno en C2** (auditoría C2 #1): una firma PNG/JPEG no prueba que el archivo entero sea una imagen inerte; sin un decoder que valide el archivo completo, una imagen se rechaza (415) | — |
 
 "Texto" = UTF-8 válido en todo el archivo, sin NUL ni controles C0 salvo
 TAB/LF/CR/FF, y que no empiece como HTML/XML/SVG según el sniffing de WHATWG.
@@ -66,8 +67,10 @@ El `Content-Type` declarado en la parte y la extensión no deciden nada.
 - En todos esos casos no se persiste nada (ni fila ni blob final; el temporal se borra).
 - La base repite tipo↔MIME y "nada después de la decisión" (trigger `evidence_insert`).
 
-Descarga: siempre `Content-Disposition: attachment` (RFC 6266/5987, nombre
-saneado), `X-Content-Type-Options: nosniff`, `Content-Security-Policy:
+Descarga: siempre `Content-Disposition: attachment; filename="evidence-<id>.<ext>"`
+con el nombre GENERADO por el servidor y la extensión derivada del MIME validado
+(`pdf`, `eml`, `txt`); el nombre original queda solo como metadata en el JSON
+(auditoría C2 #1), `X-Content-Type-Options: nosniff`, `Content-Security-Policy:
 default-src 'none'; sandbox`, `Cache-Control: no-store`, MIME detectado y
 `X-Evidence-SHA256`.
 

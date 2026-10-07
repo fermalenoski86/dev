@@ -97,7 +97,8 @@ export const ContractParamsSchema = z.object({ id: Uuid }).strict();
 /** Idempotency-Key obligatoria en evidencia, approve y reject (§28). */
 export const IdempotencyHeadersSchema = UploadHeadersSchema;
 
-export const EvidenceFieldsSchema = z.object({ type: z.enum(['EMAIL', 'PDF', 'MESSAGE', 'OTHER']) }).strict();
+/** OTHER existe en el modelo (§19) pero no está habilitado en C2: no hay un tipo inerte validado (auditoría C2 #1). */
+export const EvidenceFieldsSchema = z.object({ type: z.enum(['EMAIL', 'PDF', 'MESSAGE']) }).strict();
 
 /** El cliente cita el hash que vio: la decisión es sobre la versión EXACTA. Nada de contractId: el scope lo deriva el backend. */
 export const ApproveBodySchema = z.object({ evidenceId: Uuid, versionHash: Sha }).strict();
@@ -109,7 +110,7 @@ export const EvidenceResponseSchema = z.object({
   showVersionId: Uuid,
   type: z.enum(['EMAIL', 'PDF', 'MESSAGE', 'OTHER']),
   originalFilename: z.string(),
-  mimeType: z.enum(['application/pdf', 'message/rfc822', 'text/plain', 'image/png', 'image/jpeg']),
+  mimeType: z.enum(['application/pdf', 'message/rfc822', 'text/plain']),
   sizeBytes: z.number().int().positive(),
   sha256: Sha,
   uploadedBy: Uuid,

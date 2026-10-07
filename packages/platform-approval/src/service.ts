@@ -6,7 +6,7 @@ import { type Principal, type Role, canAccessContract } from '@trust/platform-au
 import { type Database, type EvidenceType, requestFingerprint, withIdempotency } from '@trust/platform-db';
 import { type ObjectStorage, StorageIntegrityError, StorageLimitError, type TempObjectInfo } from '@trust/platform-storage';
 import { type Kysely, sql } from 'kysely';
-import { ContentSniffer, MIME_BY_KIND, TYPE_BY_KIND, classifyContent } from './detect';
+import { ContentSniffer, EXTENSION_BY_MIME, MIME_BY_KIND, TYPE_BY_KIND, classifyContent } from './detect';
 import { ApprovalError, fromDatabaseError } from './errors';
 
 /**
@@ -99,6 +99,13 @@ export interface ApprovalDeps {
   maxEvidenceBytes: number;
 }
 
+/** Nombre de descarga generado por el servidor: `evidence-<id>.<ext>` con la extensión del MIME validado. */
+export function downloadFilename(e: Pick<EvidenceView, 'id' | 'mimeType'>): string {
+  const ext = EXTENSION_BY_MIME[e.mimeType];
+  if (!ext) throw new Error(`MIME de evidencia fuera de la allowlist: ${e.mimeType}`);
+  return `evidence-${e.id}.${ext}`;
+}
+
 export interface EvidenceUploadInput {
   actor: Principal;
   versionId: string;
@@ -160,8 +167,8 @@ export class ApprovalService {
       if (r.temp.sizeBytes === 0) throw new ApprovalError(422, 'EVIDENCE_EMPTY', 'El archivo de evidencia está vacío.');
       const kind = classifyContent({ head: r.head, isText: r.isText });
       if (!kind) {
-        throw new ApprovalError(415, 'EVIDENCE_UNSUPPORTED_CONTENT', 'El contenido no es un tipo de evidencia admitido (PDF, email RFC 5322, texto, PNG o JPEG).', {
-          accepted: ['application/pdf', 'message/rfc822', 'text/plain', 'image/png', 'image/jpeg'],
+        throw new ApprovalError(415, 'EVIDENCE_UNSUPPORTED_CONTENT', 'El contenido no es un tipo de evidencia admitido (PDF, email RFC 5322 o texto).', {
+          accepted: ['application/pdf', 'message/rfc822', 'text/plain'],
         });
       }
       const detectedType = TYPE_BY_KIND[kind];

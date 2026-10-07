@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { pngReal } from './testing';
 import { ContentSniffer, HEAD_BYTES, classifyContent, looksLikeEmail, looksLikeMarkup } from './detect';
 
 const sniff = (...chunks: Array<Buffer | string>) => {
@@ -9,14 +10,19 @@ const sniff = (...chunks: Array<Buffer | string>) => {
 const clasificar = (...chunks: Array<Buffer | string>) => classifyContent(sniff(...chunks));
 
 const EMAIL = 'From: Cliente <ok@cliente.com>\r\nTo: trust@affinitas.com\r\nSubject: Aprobado\r\nDate: Wed, 7 Oct 2026 10:00:00 -0300\r\n\r\nAprobamos la versión 3.\r\n';
-const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
-const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 16]);
+/** Payload de la auditoría C2 #1: firma JPEG y después un ejecutable. */
+const JPEG_FALSO = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff]), Buffer.from('MZ This is not a JPEG; arbitrary executable payload')]);
 
 describe('CRITERIO C2: evidencia — detección por bytes reales (allowlist cerrada)', () => {
-  it('PDF, PNG y JPEG por firma; el nombre o MIME declarado no participa', () => {
+  it('PDF por firma; el nombre o MIME declarado no participa', () => {
     expect(clasificar('%PDF-1.7\n%âãÏÓ\n1 0 obj\n')).toBe('PDF');
-    expect(clasificar(PNG)).toBe('PNG');
-    expect(clasificar(JPEG)).toBe('JPEG');
+  });
+
+  it('auditoría C2 #1: una firma de imagen no alcanza — firma JPEG + ejecutable, firma PNG + payload y una imagen REAL quedan afuera (OTHER no habilitado)', () => {
+    expect(clasificar(JPEG_FALSO)).toBeNull();
+    expect(clasificar(Buffer.concat([pngReal().subarray(0, 8), Buffer.from('MZ payload')]))).toBeNull();
+    expect(clasificar(pngReal())).toBeNull();
+    expect(clasificar(Buffer.concat([pngReal(), Buffer.from('MZ trailing')]))).toBeNull();
   });
 
   it('email RFC 5322 (From + Subject/Date antes de la línea vacía) → EMAIL; texto común → MESSAGE', () => {

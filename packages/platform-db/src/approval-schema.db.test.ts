@@ -34,8 +34,9 @@ describe('CRITERIO C2 (0003): evidencia', () => {
     await evidencia(v.id, apr.id, 'PDF', 'application/pdf');
     await evidencia(v.id, apr.id, 'EMAIL', 'message/rfc822');
     await evidencia(v.id, apr.id, 'MESSAGE', 'text/plain');
-    await evidencia(v.id, apr.id, 'OTHER', 'image/png');
-    await evidencia(v.id, apr.id, 'OTHER', 'image/jpeg');
+    // OTHER no tiene ningún MIME admitido en C2 (auditoría C2 #1)
+    expect(await falla(evidencia(v.id, apr.id, 'OTHER', 'image/png'))).toMatch(/EVIDENCE_TYPE_MISMATCH/);
+    expect(await falla(evidencia(v.id, apr.id, 'OTHER', 'image/jpeg'))).toMatch(/EVIDENCE_TYPE_MISMATCH/);
     expect(await falla(evidencia(v.id, apr.id, 'PDF', 'text/html'))).toMatch(/EVIDENCE_TYPE_MISMATCH/);
     expect(await falla(evidencia(v.id, apr.id, 'OTHER', 'video/mp4'))).toMatch(/EVIDENCE_TYPE_MISMATCH/);
     expect(await falla(evidencia(v.id, apr.id, 'EMAIL', 'application/pdf'))).toMatch(/EVIDENCE_TYPE_MISMATCH/);

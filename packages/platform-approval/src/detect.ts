@@ -12,8 +12,10 @@ import type { EvidenceType } from '@trust/platform-db';
  *   EMAIL    texto UTF-8 con encabezados RFC 5322       → message/rfc822
  *            (From: y además Date: o Subject:, antes de la primera línea vacía)
  *   MESSAGE  texto UTF-8 sin encabezados de email       → text/plain
- *   OTHER    PNG (firma de 8 bytes) o JPEG (FF D8 FF)    → image/png | image/jpeg
- *            (capturas de pantalla: tipos inertes, documentados en APPROVAL.md)
+ *   OTHER    NINGUNO en C2 (auditoría C2 #1): una firma de imagen (PNG,
+ *            JPEG) no demuestra que el archivo entero sea una imagen inerte;
+ *            sin un decoder real que valide el archivo completo, OTHER queda
+ *            fuera de la allowlist. Una imagen se rechaza como cualquier binario.
  *
  * "Texto" = UTF-8 válido en TODO el archivo, sin NUL ni controles C0 salvo
  * TAB/LF/CR/FF. Un texto que un navegador interpretaría como HTML/XML/SVG
@@ -26,22 +28,25 @@ import type { EvidenceType } from '@trust/platform-db';
  * el detectado, es EVIDENCE_TYPE_MISMATCH; si el contenido no está en la
  * allowlist, EVIDENCE_UNSUPPORTED_CONTENT.
  */
-export type DetectedKind = 'PDF' | 'EMAIL' | 'MESSAGE' | 'PNG' | 'JPEG';
+export type DetectedKind = 'PDF' | 'EMAIL' | 'MESSAGE';
 
 export const MIME_BY_KIND: Readonly<Record<DetectedKind, string>> = {
   PDF: 'application/pdf',
   EMAIL: 'message/rfc822',
   MESSAGE: 'text/plain',
-  PNG: 'image/png',
-  JPEG: 'image/jpeg',
 };
 
 export const TYPE_BY_KIND: Readonly<Record<DetectedKind, EvidenceType>> = {
   PDF: 'PDF',
   EMAIL: 'EMAIL',
   MESSAGE: 'MESSAGE',
-  PNG: 'OTHER',
-  JPEG: 'OTHER',
+};
+
+/** Extensión del nombre de DESCARGA, derivada del MIME validado (nunca del nombre original). */
+export const EXTENSION_BY_MIME: Readonly<Record<string, string>> = {
+  'application/pdf': 'pdf',
+  'message/rfc822': 'eml',
+  'text/plain': 'txt',
 };
 
 /** Bytes del comienzo que se conservan para las firmas y los encabezados. */
@@ -88,8 +93,6 @@ export class ContentSniffer {
 // eslint-disable-next-line no-control-regex
 const CONTROL_PROHIBIDO = /[\u0000-\u0008\u000b\u000e-\u001f\u007f]/;
 const esTextoSeguro = (s: string) => !CONTROL_PROHIBIDO.test(s);
-
-const PNG_SIG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 /**
  * Patrones de WHATWG MIME Sniffing §7.1 ("identifying a resource with an
@@ -140,8 +143,6 @@ export function looksLikeEmail(text: string): boolean {
 export function classifyContent(s: { head: Buffer; isText: boolean }): DetectedKind | null {
   const { head } = s;
   if (head.subarray(0, 5).toString('latin1') === '%PDF-') return 'PDF';
-  if (head.length >= 8 && head.subarray(0, 8).equals(PNG_SIG)) return 'PNG';
-  if (head.length >= 3 && head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff) return 'JPEG';
   if (!s.isText) return null;
   // El head puede cortar un multibyte al final: decodificarlo sin fatal no
   // cambia nada, porque la validez del archivo entero ya la decidió isText.

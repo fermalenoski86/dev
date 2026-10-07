@@ -12,6 +12,7 @@ import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { SESSION_COOKIE_DEV, SessionActorProvider } from './actor';
 import { buildApp } from './app';
+import { pngReal } from '@trust/platform-approval/testing';
 import { ErrorResponseSchema, EvidenceResponseSchema, FourEyesResponseSchema, ShowVersionResponseSchema } from './contracts';
 
 /**
@@ -166,13 +167,22 @@ describe('CRITERIO C2: evidencia — bytes reales, allowlist, límite y descarga
     expect([await cuenta('approval_evidence'), await cuenta('stored_objects')]).toEqual(antes);
   });
 
-  it('contenido rechazado: ZIP/Office y ejecutable → 415', async () => {
+  it('contenido rechazado: ZIP/Office, ejecutable, firma JPEG + ejecutable (auditoría C2 #1) e imagen real → 415', async () => {
     const v = await version();
-    for (const bytes of [Buffer.from('PK\x03\x04[Content_Types].xml', 'latin1'), Buffer.from('MZ\x90\x00\x03\x00\x00\x00', 'latin1')]) {
-      const r = await subirEvidencia(v.id, U.apr!, bytes, { type: 'OTHER', name: 'x.docx' });
+    const jpegFalso = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff]), Buffer.from('MZ This is not a JPEG; arbitrary executable payload')]);
+    for (const bytes of [Buffer.from('PK\x03\x04[Content_Types].xml', 'latin1'), Buffer.from('MZ\x90\x00\x03\x00\x00\x00', 'latin1'), jpegFalso, pngReal()]) {
+      const r = await subirEvidencia(v.id, U.apr!, bytes, { type: 'PDF', name: 'payload.exe', mime: 'image/jpeg' });
       expect(r.statusCode).toBe(415);
       esError(r.json(), 'EVIDENCE_UNSUPPORTED_CONTENT');
     }
+  });
+
+  it('OTHER no está habilitado en C2 → 400 antes de recibir el archivo', async () => {
+    const v = await version();
+    const r = await subirEvidencia(v.id, U.apr!, pngReal(), { type: 'OTHER', name: 'captura.png' });
+    expect(r.statusCode).toBe(400);
+    esError(r.json(), 'VALIDATION_ERROR');
+    expect(await cuenta('approval_evidence', v.id)).toBe(0);
   });
 
   it('tipo declarado distinto del detectado → 422 EVIDENCE_TYPE_MISMATCH', async () => {
@@ -234,11 +244,14 @@ describe('CRITERIO C2: evidencia — bytes reales, allowlist, límite y descarga
   it('descarga: attachment, nosniff, CSP sandbox, MIME detectado y los mismos bytes', async () => {
     const v = await version();
     const bytes = pdfUnico();
-    const ev = EvidenceResponseSchema.parse((await subirEvidencia(v.id, U.apr!, bytes, { name: 'ok "cliente".pdf' })).json());
+    const ev = EvidenceResponseSchema.parse((await subirEvidencia(v.id, U.apr!, bytes, { name: 'payload.exe' })).json());
+    expect(ev.originalFilename).toBe('payload.exe'); // queda como metadata
     const r = await app.inject({ method: 'GET', url: `/api/v1/show-versions/${v.id}/evidence/${ev.id}`, headers: { cookie: U.soloOp!.cookie } });
     expect(r.statusCode).toBe(200);
     expect(r.headers['content-type']).toBe('application/pdf');
-    expect(String(r.headers['content-disposition'])).toMatch(/^attachment; filename="[A-Za-z0-9._ -]+"; filename\*=UTF-8''[^"]+$/);
+    // auditoría C2 #1: el nombre de descarga lo genera el servidor con la extensión del MIME validado
+    expect(r.headers['content-disposition']).toBe(`attachment; filename="evidence-${ev.id}.pdf"`);
+    expect(String(r.headers['content-disposition'])).not.toContain('.exe');
     expect(r.headers['x-content-type-options']).toBe('nosniff');
     expect(r.headers['content-security-policy']).toBe("default-src 'none'; sandbox");
     expect(Buffer.compare(r.rawPayload, bytes)).toBe(0);
