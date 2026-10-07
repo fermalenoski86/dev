@@ -1,0 +1,31 @@
+{
+  "name": "@trust/platform-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "start": "tsx src/server.ts",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "build": "echo source-only app B4: se ejecuta con tsx",
+    "smoke": "tsx scripts/curl-smoke.ts"
+  },
+  "dependencies": {
+    "@fastify/multipart": "9.2.1",
+    "@trust/platform-assets": "workspace:*",
+    "@trust/platform-contracts": "workspace:*",
+    "@trust/platform-db": "workspace:*",
+    "@trust/platform-media": "workspace:*",
+    "@trust/platform-storage": "workspace:*",
+    "@trust/show-engine": "workspace:*",
+    "fastify": "5.6.1",
+    "kysely": "0.29.6",
+    "pg": "8.23.1",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.10",
+    "tsx": "4.20.6"
+  }
+}

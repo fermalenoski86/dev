@@ -8,3 +8,4 @@ export * from './ffmpeg';
 export * from './validator';
 export * from './source';
 export * from './pipeline';
+export * from './remediation';

@@ -45,7 +45,7 @@ Ajustes de Claude:
   ejecución propia del auditor cuando la pueda hacer.
 
 ## BL-03 · Rechazos que le dicen a la agencia cómo arreglar el archivo — *Claude*
-**Estado: propuesta.** Encaja en **B3/B4** (contratos + API), sin cambio de producto.
+**Estado: en PR de B4** (`packages/platform-media/src/remediation.ts`; receta aplicada con ffmpeg real a 10 rechazos → todos pasan `checkMedia`). Antes: propuesta. Encaja en **B3/B4** (contratos + API), sin cambio de producto.
 - Problema: hoy un rechazo dice `ASSET_BAD_FPS {accepted:[25/1,30/1], actual:30000/1001}`.
   Correcto, pero la agencia igual tiene que adivinar cómo exportar. Cada ida y
   vuelta con la agencia demora el takeover.
