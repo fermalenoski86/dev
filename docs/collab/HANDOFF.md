@@ -1,10 +1,15 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador) — C1 aprobada en el PR [#7](https://github.com/fermalenoski86/dev/pull/7) sobre `8c4709a8774ea4917aeb9d8bc37938fdecea2f4f`: [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/7#issuecomment-6043735018). Iniciar C2 según el brief aprobado.
+**Pelota en:** ChatGPT (auditor) — auditar C2 en el PR [#8](https://github.com/fermalenoski86/dev/pull/8) (issue [#9](https://github.com/fermalenoski86/dev/issues/9)), rama `fase/m3a1-c2`, HEAD `0cb79b797eb4b9c83f0117e1e8ce1802974eb674`.
 **Fase:** M3A.1 Fase C2 — evidencia y approve/reject con cuatro ojos
-**Estado:** C1 cerrada: rate limiter con memoria acotada, IP inválida en balde único y regresiones; prueba local específica 9/9 y reproducción 20k→20k tras expiración. CI exacta `37653841793` completa verde. C2 habilitada; C3 y Fase D siguen bloqueadas hasta sus gates. Tags m3a1-b2/b3/b4 siguen pendientes de autorización explícita de Fer.
+**Estado:** C2 entregada: migración 0003 (evidencia atada a la versión, hash exacto en la Approval, allowlist tipo↔MIME en la base), `@trust/platform-approval` (detección por bytes, approve/reject idempotentes con la campaña bloqueada, cuatro ojos por contrato solo ADMIN) y rutas `/show-versions/:id`, `/evidence`, `/approve`, `/reject`, `/contracts/:id/four-eyes`. Gates locales reales: verify 636+1, build, PG 173+6, bootstrap 6/6, media 63/63, mutaciones 176/176. E2E M2C no ejecutado localmente (sin Chrome H.264): lo cubre el CI del PR ([run 37677801532](https://github.com/fermalenoski86/dev/actions/runs/37677801532), en curso al entregar). C1 cerrada (PR #7 mergeado; no había issue abierto que cerrar). C3 y Fase D bloqueadas hasta el gate de C2. Tags m3a1-b2/b3/b4/c1 siguen pendientes de autorización explícita de Fer, por eso no se etiquetó C1.
 
-CI exacta verde: https://github.com/fermalenoski86/dev/actions/runs/37653841793. La salida local real está en `docs/reviews/M3A1_FASE_C1_AUDIT1_SALIDA.txt`; E2E local no corrido, lo cubre la CI. **No se pudo comentar en el PR #7:** la API de GitHub devolvió 500 en cada intento de crear un comentario, este turno y probablemente el anterior. Este HANDOFF vale como pedido de re-auditoría. Los tags m3a1-b2/b3/b4 siguen pendientes de que Fer los autorice.
+## Entrega activa para auditar
+- PR: [#8](https://github.com/fermalenoski86/dev/pull/8) · issue [#9](https://github.com/fermalenoski86/dev/issues/9) · base `main`
+- Rama: `fase/m3a1-c2` · HEAD entregado: `0cb79b797eb4b9c83f0117e1e8ce1802974eb674` (comprobar antes de auditar).
+- Reporte: `docs/reviews/M3A1_FASE_C2.md` · salida: `docs/reviews/M3A1_FASE_C2_SALIDA.txt` · diseño: `docs/platform/APPROVAL.md`, ADR-058.
+- Punto a validar primero: interpretación de "INTERNAL_APPROVER fuera de scope" frente a la decisión 4 de C1 (decisión 1 del reporte).
+- Propuestas nuevas: BL-14 (PDF sin contenido activo) y BL-15 (sello RFC 3161, decisión de producto), más la evaluación de las tres ideas iniciales.
 
 ## Objetivo autorizado por Fer — 2026-10-06
 Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
@@ -29,13 +34,6 @@ Investigar estudios, documentación oficial y casos técnicos relevantes en la w
 Si falta evidencia, información de hardware o hay desacuerdo sin resolver, dejar la decisión para Fer y continuar lo independiente. El comité diario a las 9:30 de Buenos Aires informa avances verificables, bloqueos, sugerencias, estudios evaluados, debate y mejoras implementadas/probadas; el reporte no modifica turnos ni certifica tests ajenos como propios.
 
 Claude: incorporá esta investigación y tu evaluación de las propuestas al reporte de cada entrega para que ChatGPT pueda debatirlas y revisarlas.
-
-## Entrega activa para auditar
-- PR: [#5](https://github.com/fermalenoski86/dev/pull/5) · issue [#6](https://github.com/fermalenoski86/dev/issues/6) · base `main`
-- Rama: `fase/m3a1-b4` · HEAD entregado: `d9eb28ef335aa9bf422811657f2225ca2b08946e` (comprobar antes de auditar).
-- Reporte: `docs/reviews/M3A1_FASE_B4.md` · salida: `docs/reviews/M3A1_FASE_B4_SALIDA.txt` (no equivale a aprobación).
-- Diseño: `docs/platform/API.md`, ADR-056.
-- CI independiente sobre ese HEAD: https://github.com/fermalenoski86/dev/actions/runs/37595789039
 
 ## Regla de entrega para evitar turnos perdidos
 `docs/collab/HANDOFF.md` en `main` es la autoridad para asignar el turno. Al terminar una entrega, Claude debe actualizarlo en `main` con **Pelota en: ChatGPT**, el PR, su rama y el commit a revisar; actualizar solo la copia en la rama del PR no transfiere el turno. ChatGPT audita el código de esa rama, publica el resultado y devuelve la pelota en `main` a Claude. Releer el archivo y usar su SHA vigente para no sobrescribir actualizaciones concurrentes. No hay aprobación automática por cambio de turno.
@@ -117,6 +115,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-07 19:53 UTC — Claude: C2 entregada en PR #8 @0cb79b7 (0003, platform-approval, rutas de aprobación, 27 tests HTTP, 23 mutaciones nuevas; locales verify/build/PG/bootstrap/media/mutaciones 176/176 en verde, E2E en CI). Issue #9 de auditoría. Pelota a ChatGPT.
 - 2026-10-07 — ChatGPT: C1 `AUDIT: APROBADO` sobre `8c4709a`; P1 cerrado con barrido, tope duro, validación y regresiones. Prueba específica local 9/9, reproducción 20k→20k y CI exacta completa verde. Pelota a Claude para C2.
 - 2026-10-07 17:01 UTC — Claude: corrige AUDIT: CAMBIOS #1 de C1 (rate limit con memoria acotada) en 8c4709a, CI verde; flaky preexistente preview-session.test.ts observado y reportado. Pelota a ChatGPT.
 - 2026-10-07 17:05 UTC — Claude (turno programado, concurrente con el de 17:01): verificación independiente de `8c4709a` con el script del auditor (20000→20000; 5000 IPs basura = +51 claves). Propuesta: issue P2 para diagnosticar el flake de `preview-session.test.ts` (M2C, sin cambiar conducta). Sin cambios de código. Pelota sigue en ChatGPT.
