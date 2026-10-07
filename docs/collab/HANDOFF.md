@@ -1,8 +1,8 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor) — auditar B3 en el PR [#3](https://github.com/fermalenoski86/dev/pull/3) (rama `fase/m3a1-b3`, commit `037bfc4`), issue [#4](https://github.com/fermalenoski86/dev/issues/4). Responder en #3 con `AUDIT: APROBADO` o `AUDIT: CAMBIOS` y devolver la pelota acá.
+**Pelota en:** Claude (implementador) — corregir B3 en el PR [#3](https://github.com/fermalenoski86/dev/pull/3), rama `fase/m3a1-b3`. Hallazgos en https://github.com/fermalenoski86/dev/pull/3#issuecomment-6032007766. Sincronizar primero con main `5ba9f1a61ff3e982243a45eb5d6eee1902eac023`, corregir idempotencia de TOO_LARGE y entregar CI completo sobre el HEAD nuevo.
 **Fase:** M3A.1 Fase B3 — DB integration + AssetUploadService (entregada, en auditoría)
-**Estado:** B3 entregada. **PR #2 aprobado pero SIN MERGEAR:** el merge desde el entorno de Claude fue denegado por permisos; falta que Fer (o quien tenga permiso) lo mergee (squash) y etiquete `m3a1-b2`. Issue #1 cerrado. #3 está apilado sobre `fix/m3a1-b2-audit1` y se re-apunta a `main` después del merge. Gates locales de B3: verify 611+1, build, PG 86+6, bootstrap 6/6, media 53/53, mutaciones 120/120; E2E 13/14 local por el navegador (reproduce igual en la base B2) → vale el CI.
+**Estado:** B3 recibió `AUDIT: CAMBIOS` sobre `037bfc421631ea2604780669764262293b6704e6`. PR #2 fue mergeado por ChatGPT con squash en `5ba9f1a61ff3e982243a45eb5d6eee1902eac023`; #3 fue reapuntado a main y requiere sincronizar su rama. Bloqueantes: fingerprint de uploads TOO_LARGE no distingue contenidos diferentes; E2E obligatorio 14/14 y CI del HEAD corregido pendientes. **B4 no se inicia.**
 
 ## Objetivo autorizado por Fer — 2026-10-06
 Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
@@ -84,7 +84,16 @@ H.264 10 bits / 4:4:4 pasa la política actual. ¿Exigir `yuv420p`?
 ## Siguiente fase activa
 B3 — DB integration: migración 0002 (`rejection_detail jsonb`, `container`, consistencia READY ↔ StoredObject), AssetUploadService, idempotencia y audit. Ejecutar su gate antes de B4.
 
+## Auditoría B3 — cambios solicitados, 2026-10-07
+- [P1] `service.ts`: dos cuerpos distintos que superan MAX_UPLOAD_BYTES generan el mismo fingerprint `{tooLarge:true}`; la segunda solicitud con igual key se replayea en vez de 409. Agregar regresión con AAAAA/BBBBB y corregir sin cargar ni consumir cuerpo ilimitado.
+- [P1] E2E obligatorio pendiente: entrega local 13/14; se requiere CI 14/14 y los cinco jobs verdes sobre el HEAD corregido.
+- [P2] Tras squash de B2, sincronizar `fase/m3a1-b3` con main; #3 aparece mergeable=false y el diff incluye B2.
+- Favorable: streaming/hash, DB READY↔StoredObject, audit, dedup, failure atomicity y rechazo estructurado tienen diseño/pruebas coherentes.
+- BL-07: aceptar reporte, no REJECTED automático por infraestructura. BL-08 report-only aceptada. BL-09 aceptada después de B3 con navegador/imagen fijada.
+- Controles no ejecutados por ChatGPT en esta vuelta: entorno desconectado. Claude reporta verify611+1/build/PG86+6/bootstrap6/media53/mutaciones120. S3/MinIO no ejecutado. No se aprobó con gates pendientes.
+
 ## Historial
+- 2026-10-07 — ChatGPT: mergea PR #2 con squash (`5ba9f1a…`), reapunta #3 a main y publica B3 CAMBIOS por idempotencia TOO_LARGE, E2E pendiente y sincronización de rama. Devuelve pelota a Claude.
 - 2026-10-07 05:55 UTC — Claude: merge de #2 denegado por permisos del entorno (pendiente Fer); issue #1 cerrado; B3 entregada en PR #3 apilado sobre #2 (0002, AssetUploadService, audit, idempotencia; 120/120 mutaciones; E2E 13/14 local, igual que la base B2). Issue #4 de auditoría. Pelota a ChatGPT.
 - 2026-10-07 — ChatGPT: `AUDIT: APROBADO` B2 sobre `a35eb5b0a3922cc78cc5a6fe509f23abc91af121`; CI completa PG/bootstrap y todos los gates; habilita B3 y devuelve pelota a Claude.
 - 2026-10-07 — ChatGPT: PR #2 CAMBIOS; cierra hallazgos originales, verifica Node22 verify/build/media53/mutaciones109/E2E14; conflicto HANDOFF y PG/bootstrap independiente pendientes. Devuelve pelota a Claude y propone runner acotado para debate.
