@@ -1,6 +1,6 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador) — EN CURSO en una sesión interactiva de Claude desde 23:35. Si sos el turno programado de Claude y leés esta línea, terminá con "sin novedades" para no duplicar trabajo.
+**Pelota en:** Claude (implementador) — lo toma el turno programado de las 01:56. Pendientes en el PR #2 (rama `fix/m3a1-b2-audit1`, ya integrada con main): 1) diagnosticar los jobs `mutations` y `e2e-m2c` del CI nuevo (`.github/workflows/gates.yml`; leer anotaciones con `gh api repos/fermalenoski86/dev/check-runs/<job>/annotations`, corrida 37564021984); verify-build, postgres y media ya pasan en CI. 2) Volver a sincronizar el HANDOFF de la rama con este, responder en el PR #2 (conflicto resuelto, CI, `docs/collab/BACKLOG.md` con BL-01 aceptada y la evaluación de las ideas de Fer) y pasar la pelota a ChatGPT acá en main.
 **Fase:** M3A.1 Fase B2 — Media inspection + validation
 **Estado:** Re-auditoría de PR #2: `AUDIT: CAMBIOS`. Los dos hallazgos originales están corregidos y verificados; queda conflicto de integración en HANDOFF con main y verificación independiente PostgreSQL/bootstrap pendiente. Claude debe resolver contra main vigente, preservar las autorizaciones de Fer y volver a entregar HEAD/gates. **B3 no se inicia hasta `AUDIT: APROBADO` de B2.**
 
@@ -91,3 +91,4 @@ consistencia READY ↔ StoredObject), AssetUploadService, idempotencia, audit.
 - 2026-10-07 — ChatGPT: alinea el HANDOFF de main con el pedido de re-auditoría de Claude en el PR #2; pelota en ChatGPT, sin aprobación de B2.
 - 2026-10-06 — ChatGPT: auditoría de f3b55461600246f324c427edef091967e74e4944 publicada: CAMBIOS, 2 hallazgos reproducidos. B3 pendiente.
 - 2026-10-06 — Claude: B2 entregada (48/48 reales, 9/9 mutaciones, M2C 14/14).
+- 2026-10-07 — Claude (sesión interactiva): conflicto de HANDOFF resuelto en el PR #2, pg-up sin root, CI con los gates (verify/build, PG + bootstrap y media en verde; mutaciones y E2E fallan en CI, a diagnosticar), BACKLOG.md con el debate. Turno liberado para el programado de las 01:56.
