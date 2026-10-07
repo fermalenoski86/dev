@@ -1,8 +1,8 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor). Auditar C3 en el PR [#10](https://github.com/fermalenoski86/dev/pull/10) (issue [#11](https://github.com/fermalenoski86/dev/issues/11)), rama `fase/m3a1-c3`, HEAD `309d783` (base `main`; #8 ya mergeado).
-**Fase:** M3A.1 Fase C3: submit server-side (cierre de Fase C)
-**Estado:** C2 aprobada; issue #9 cerrado; merge de #8 pendiente (ChatGPT o Fer). C3 entregada: `POST /api/v1/campaigns/:id/submit { draftRevision }` con campaña bloqueada, revisión citada, una revisión = un envío, Assets READY por superficie, compilación + preflight del motor contra `EL_TRUST`, hash con `source` por sha256, `createShowVersion` + `VERSION_SUBMITTED`, idempotencia. Gates locales reales: verify 637+1, build, PG 188+6, bootstrap 6/6, media 63/63, mutaciones 186/186. E2E M2C no ejecutado localmente (sin Chrome H.264), lo cubre el CI del PR. Los tags m3a1-b2/b3/b4/c1/c2 siguen pendientes de autorización explícita de Fer. Fase D sigue bloqueada hasta el gate de C3.
+**Pelota en:** Claude (implementador) — sincronizar C3 en el PR [#10](https://github.com/fermalenoski86/dev/pull/10) según [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/10#issuecomment-6049279397). No iniciar Fase D.
+**Fase:** M3A.1 Fase C3 — submit server-side (cambios solicitados: base no integrable)
+**Estado:** C2 mergeada por ChatGPT en `main@4a75fa4c9ead88b61a0809d46183d6fb2ad4c5a3`. C3 `efe3609` funciona preliminarmente y su CI exacta está verde, pero la rama conserva el stack pre-squash: merge-base `4d9292d`, GitHub `mergeable=false`, diff 40 archivos en vez de los 17 propios. Reconstruir/rebasear desde main y reentregar HEAD con CI completa y diff limpio. C3/Fase D bloqueadas.
 
 ## Entrega activa para auditar
 - PR: [#10](https://github.com/fermalenoski86/dev/pull/10) · issue [#11](https://github.com/fermalenoski86/dev/issues/11) · base `main`
@@ -114,6 +114,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-07 — ChatGPT: mergea C2 PR #8 en `main@4a75fa4`, reapunta #10 y publica C3 `AUDIT: CAMBIOS`: rama apilada no integrable tras squash (merge-base viejo, 40 archivos, mergeable=false). Funcional preliminar y CI del stack verdes; pelota a Claude para base limpia.
 - 2026-10-07 23:58 UTC — Claude: #8 mergeado; #10 reapuntado a `main` y sincronizado en `309d783` (contenido de C3 sin cambios). Pelota sigue en ChatGPT.
 - 2026-10-07 22:49 UTC — Claude: C2 aprobada (issue #9 cerrado; merge de #8 denegado por permisos del entorno, pendiente). C3 entregada en PR #10 @efe3609, apilado sobre #8 (submit server-side, 14 tests HTTP, 9 mutaciones nuevas, 186/186). Issue #11 de auditoría. Pelota a ChatGPT.
 - 2026-10-07 — ChatGPT: C2 `AUDIT: APROBADO` sobre `cf7f23e`; P1 cerrado retirando OTHER, generando filename seguro y agregando regresiones/mutaciones. CI exacta completa verde. BL-16 aceptada para backlog; pelota a Claude para merge/C3.
