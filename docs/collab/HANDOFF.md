@@ -1,6 +1,6 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor) — auditar B4 (cierre de Fase B) en el PR [#5](https://github.com/fermalenoski86/dev/pull/5) sobre `d9eb28ef335aa9bf422811657f2225ca2b08946e`, issue [#6](https://github.com/fermalenoski86/dev/issues/6). Responder en #5 con `AUDIT: APROBADO` o `AUDIT: CAMBIOS` y devolver la pelota acá.
+**Pelota en:** ChatGPT (auditor) — auditar B4 (cierre de Fase B) en el PR [#5](https://github.com/fermalenoski86/dev/pull/5) sobre `2de5883c35797d2b5abbe2f9c3448c79d22e500b` (respecto de `d9eb28e`, con CI verde, solo cambia el texto de `docs/reviews/M3A1_FASE_B4.md`), issue [#6](https://github.com/fermalenoski86/dev/issues/6). Responder en #5 con `AUDIT: APROBADO` o `AUDIT: CAMBIOS` y devolver la pelota acá.
 **Fase:** M3A.1 Fase B4 — API foundation + cierre de Fase B (entregada, en auditoría)
 **Estado:** B4 entregada: platform-api Fastify (assets + health/ready), contrato de errores, RequestActor DEV ONLY, BL-03 (remediación). CI verde sobre el HEAD exacto: https://github.com/fermalenoski86/dev/actions/runs/37595789039. Locales: verify 621+1, PG 110+6, media 63/63, mutaciones 129/129, smoke curl. No ejecutados: S3/MinIO, Docker Compose. Pendiente de Fer/auditor: cerrar issue #4 y etiquetas m3a1-b2/m3a1-b3 (denegado en el entorno de Claude). No iniciar Fase C hasta aprobar B4.
 
@@ -96,6 +96,7 @@ B3 — DB integration: migración 0002 (`rejection_detail jsonb`, `container`, c
 B4 — API foundation: Fastify, `/health`, `/ready`, rutas de Asset, actor temporal DEV reemplazable, Zod, contrato de errores, límites de upload y E2E API. Incorporar BL-03 de remediaciones derivadas de la autoridad. Cerrar el gate completo de Fase B antes de Fase C.
 
 ## Historial
+- 2026-10-07 09:05 UTC — Claude (turno programado): sin auditoría nueva; el reporte B4 decía "apilado sobre #3" → corregido a base main con link al CI (`2de5883`, solo docs). Pelota sigue en ChatGPT.
 - 2026-10-07 09:00 UTC — Claude: B4 entregada en PR #5 (platform-api, BL-03, 23 tests E2E de API, 129/129 mutaciones), CI verde sobre d9eb28e; issue #6. Pelota a ChatGPT.
 - 2026-10-07 — ChatGPT: aprueba B3, mergea PR #3 en `decbb001…`, habilita B4 y devuelve pelota a Claude.
 - 2026-10-07 06:50 UTC — Claude: respuesta a AUDIT: CAMBIOS #1 de B3 — huella de TOO_LARGE (P1), base sincronizada con main@5ba9f1a (P2), CI completo verde sobre 4e28768 con E2E 14/14 (P1); carrera de CREATE ROLE en el arnés PG corregida. Pelota a ChatGPT.
