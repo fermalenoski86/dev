@@ -1,8 +1,8 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor) — auditar C2 en el PR [#8](https://github.com/fermalenoski86/dev/pull/8) (issue [#9](https://github.com/fermalenoski86/dev/issues/9)), rama `fase/m3a1-c2`, HEAD `0cb79b797eb4b9c83f0117e1e8ce1802974eb674`.
-**Fase:** M3A.1 Fase C2 — evidencia y approve/reject con cuatro ojos
-**Estado:** C2 entregada: migración 0003 (evidencia atada a la versión, hash exacto en la Approval, allowlist tipo↔MIME en la base), `@trust/platform-approval` (detección por bytes, approve/reject idempotentes con la campaña bloqueada, cuatro ojos por contrato solo ADMIN) y rutas `/show-versions/:id`, `/evidence`, `/approve`, `/reject`, `/contracts/:id/four-eyes`. Gates locales reales: verify 636+1, build, PG 173+6, bootstrap 6/6, media 63/63, mutaciones 176/176. E2E M2C no ejecutado localmente (sin Chrome H.264): lo cubre el CI del PR ([run 37677801532](https://github.com/fermalenoski86/dev/actions/runs/37677801532), en curso al entregar). C1 cerrada (PR #7 mergeado; no había issue abierto que cerrar). C3 y Fase D bloqueadas hasta el gate de C2. Tags m3a1-b2/b3/b4/c1 siguen pendientes de autorización explícita de Fer, por eso no se etiquetó C1.
+**Pelota en:** Claude (implementador) — corregir C2 en el PR [#8](https://github.com/fermalenoski86/dev/pull/8) según [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/8#issuecomment-6045918447). No iniciar C3.
+**Fase:** M3A.1 Fase C2 — evidencia y approve/reject con cuatro ojos (cambios solicitados)
+**Estado:** Auditada C2 sobre `0cb79b797eb4b9c83f0117e1e8ce1802974eb674`. [P1] OTHER acepta como JPEG cualquier payload con prefijo `FF D8 FF` (también PNG solo por firma) y la descarga conserva una extensión potencialmente ejecutable; no demuestra contenido inerte. Validar el archivo completo con decoder real o retirar OTHER, y generar filename de descarga coherente con el MIME. Local verify 636+1 y build verdes; CI tenía cuatro jobs verdes y mutaciones en curso al dictamen. C3 bloqueada.
 
 ## Entrega activa para auditar
 - PR: [#8](https://github.com/fermalenoski86/dev/pull/8) · issue [#9](https://github.com/fermalenoski86/dev/issues/9) · base `main`
@@ -115,6 +115,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-07 — ChatGPT: C2 `AUDIT: CAMBIOS` sobre `0cb79b7`; P1 porque OTHER clasifica como JPEG/PNG por firma solamente y descarga con el nombre/extensión original. Reproducción: `FF D8 FF + MZ/payload` → JPEG. Local verify/build verdes; pelota a Claude, C3 bloqueada.
 - 2026-10-07 19:53 UTC — Claude: C2 entregada en PR #8 @0cb79b7 (0003, platform-approval, rutas de aprobación, 27 tests HTTP, 23 mutaciones nuevas; locales verify/build/PG/bootstrap/media/mutaciones 176/176 en verde, E2E en CI). Issue #9 de auditoría. Pelota a ChatGPT.
 - 2026-10-07 — ChatGPT: C1 `AUDIT: APROBADO` sobre `8c4709a`; P1 cerrado con barrido, tope duro, validación y regresiones. Prueba específica local 9/9, reproducción 20k→20k y CI exacta completa verde. Pelota a Claude para C2.
 - 2026-10-07 17:01 UTC — Claude: corrige AUDIT: CAMBIOS #1 de C1 (rate limit con memoria acotada) en 8c4709a, CI verde; flaky preexistente preview-session.test.ts observado y reportado. Pelota a ChatGPT.
