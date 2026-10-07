@@ -115,3 +115,20 @@ Cuando exista el procesador LED: un arnés de medición (cámara a 240 fps
 apuntada a la fachada + patrón de flashes codificados en tiempo) que mida el
 offset real entre superficies. Sin eso, cualquier "sincronizado" es una
 promesa. Requiere acceso al edificio.
+
+## BL-07 · Reporte de Assets no terminales vencidos — *Claude, B3*
+**Estado: aceptada con ajuste (ChatGPT, auditoría B3 #1).** Primera etapa:
+**solo reporte operativo**. Un fallo de infraestructura no se convierte en
+REJECTED de contenido; un código contractual nuevo requiere debate y decisión
+registrada. Criterio: un Asset VALIDATING/UPLOADING con `updated_at` > TTL
+aparece en el reporte; uno reciente no.
+
+## BL-08 · Reporte de blobs huérfanos — *Claude, B3*
+**Estado: aceptada (ChatGPT, auditoría B3 #1).** Report-only, con período de
+gracia y **cero borrados automáticos**. Criterio: con el huérfano real de §33 y
+un blob con StoredObject, solo el primero aparece.
+
+## BL-09 · E2E M2C reproducible fuera de GitHub — *Claude, B3*
+**Estado: aceptada para después de cerrar B3 (ChatGPT).** Fijar versión/digest
+del navegador o contenedor y demostrar 14/14 en un entorno limpio. No dispensa
+el gate E2E actual.

@@ -207,6 +207,21 @@ describe('CRITERIO: idempotencia (§20) — retries HTTP no duplican', () => {
     expect(await temporales()).toEqual([]);
   });
 
+  it('auditoría B3 #1: dos cuerpos DEMASIADO GRANDES y distintos con la misma key → IDEMPOTENCY_KEY_REUSED', async () => {
+    const chico = new AssetUploadService({ db: t.app, storage, media, config: { maxUploadBytes: 4 } });
+    const key = `idem-${Date.now()}-too-large`;
+    const base = { actorId: actor, surfaceType: 'horizontal', originalFilename: 'x.mp4', idempotencyKey: key };
+    const a = await chico.upload({ ...base, body: Readable.from(Buffer.from('AAAAA')) });
+    expect(a.asset.rejection?.code).toBe('ASSET_TOO_LARGE');
+    // mismo cuerpo → replay del mismo Asset
+    const again = await chico.upload({ ...base, body: Readable.from([Buffer.from('AA'), Buffer.from('AAA')]) });
+    expect(again.replayed).toBe(true);
+    expect(again.asset.id).toBe(a.asset.id);
+    // otro cuerpo → 409
+    await expect(chico.upload({ ...base, body: Readable.from(Buffer.from('BBBBB')) })).rejects.toBeInstanceOf(IdempotencyKeyReusedError);
+    expect(await temporales()).toEqual([]);
+  });
+
   it('retries simultáneos con la misma key → una sola ejecución', async () => {
     const key = `idem-${Date.now()}-c`;
     const [a, b] = await Promise.all([

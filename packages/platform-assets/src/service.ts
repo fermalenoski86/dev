@@ -15,6 +15,7 @@ import {
 import { type ObjectStorage, StorageIntegrityError, StorageLimitError, type TempObjectInfo } from '@trust/platform-storage';
 import type { Kysely, Selectable } from 'kysely';
 import { displayFilename, normalizeOriginalFilename } from './filename';
+import { limitBody } from './limited-body';
 
 /**
  * AssetUploadService — M3A.1 Fase B3 (§5, §14–17, §20, §27, §31–33).
@@ -26,7 +27,8 @@ import { displayFilename, normalizeOriginalFilename } from './filename';
  *   1. STREAM → temporal con tempId del servidor; SHA-256 y bytes DURANTE el
  *      stream; corte en MAX_UPLOAD_BYTES. Nada entero en RAM.
  *   2. Idempotency-Key (opcional): fingerprint = operación + surfaceType +
- *      nombre + sha256 + tamaño. Mismo actor+key+fingerprint → misma respuesta;
+ *      nombre + sha256 + tamaño (si supera el límite: sha256 de los primeros
+ *      límite+1 bytes, ver limitBody). Mismo actor+key+fingerprint → misma respuesta;
  *      otro contenido → 409 IDEMPOTENCY_KEY_REUSED. El Asset se crea DESPUÉS de
  *      esta decisión: un retry HTTP nunca crea un segundo Asset.
  *   3. TX: Asset UPLOADING + audit ASSET_UPLOADED.
@@ -99,7 +101,7 @@ export interface UploadResult {
 
 export const UPLOAD_OPERATION = 'asset.upload';
 
-type Recibido = { kind: 'ok'; temp: TempObjectInfo } | { kind: 'too_large'; limitBytes: number };
+type Recibido = { kind: 'ok'; temp: TempObjectInfo } | { kind: 'too_large'; limitBytes: number; prefixSha256: string };
 
 export class AssetUploadService {
   constructor(private readonly deps: AssetUploadDeps) {
@@ -121,7 +123,9 @@ export class AssetUploadService {
         surfaceType,
         originalFilename,
         requiredDurationMs: input.requiredDurationMs ?? null,
-        content: recibido.kind === 'ok' ? { sha256: recibido.temp.sha256, sizeBytes: recibido.temp.sizeBytes } : { tooLarge: true },
+        content: recibido.kind === 'ok'
+          ? { sha256: recibido.temp.sha256, sizeBytes: recibido.temp.sizeBytes }
+          : { tooLarge: true, limitBytes: recibido.limitBytes, prefixSha256: recibido.prefixSha256 },
       });
       const r = await withIdempotency(db, { key: input.idempotencyKey, actorId: input.actorId, operation: UPLOAD_OPERATION, fingerprint }, async () => ({
         status: 201,
@@ -135,12 +139,17 @@ export class AssetUploadService {
 
   private async recibir(tempId: string, body: Readable): Promise<Recibido> {
     const limitBytes = this.deps.config.maxUploadBytes;
+    // El corte lo hace limitBody (con huella del prefijo); el maxBytes del
+    // storage queda como segunda barrera.
+    const limitado = limitBody(body, limitBytes);
     try {
-      return { kind: 'ok', temp: await this.deps.storage.putTemporary(tempId, body, { maxBytes: limitBytes }) };
+      return { kind: 'ok', temp: await this.deps.storage.putTemporary(tempId, limitado.stream, { maxBytes: limitBytes }) };
     } catch (e) {
       if (!(e instanceof StorageLimitError)) throw e;
-      body.destroy(); // abortar el stream del cliente
-      return { kind: 'too_large', limitBytes };
+      body.destroy(); // abortar el stream del cliente: no se sigue consumiendo
+      const prefixSha256 = limitado.prefixSha256();
+      if (!prefixSha256) throw e; // el storage cortó primero: no debería pasar
+      return { kind: 'too_large', limitBytes, prefixSha256 };
     }
   }
 
@@ -158,7 +167,7 @@ export class AssetUploadService {
         actorUserId: input.actorId, action: 'ASSET_UPLOADED', entityType: 'asset', entityId: a.id,
         metadata: recibido.kind === 'ok'
           ? { sha256: recibido.temp.sha256, sizeBytes: recibido.temp.sizeBytes, surfaceType: input.surfaceType, filename: display }
-          : { tooLarge: true, limitBytes: recibido.limitBytes, surfaceType: input.surfaceType, filename: display },
+          : { tooLarge: true, limitBytes: recibido.limitBytes, prefixSha256: recibido.prefixSha256, surfaceType: input.surfaceType, filename: display },
       });
       return a;
     });

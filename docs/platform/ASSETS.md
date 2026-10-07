@@ -13,7 +13,7 @@ estado que diga más de lo que es cierto**.
 |---|---|---|---|
 | 0 | `surfaceType` contra `deriveSurfaceFormats(EL_TRUST)` | app | error de request; no se crea Asset |
 | 1 | stream → temporal (`tempId` = UUID del servidor), SHA-256 y bytes **durante** el stream, corte en `MAX_UPLOAD_BYTES` | storage | límite → paso 4 (`ASSET_TOO_LARGE`); otro error → excepción, temporal borrado |
-| 2 | Idempotency-Key (opcional): fingerprint = operación + surface + nombre + **sha256 + tamaño** | DB (fila bloqueada) | otra solicitud con la key → `409 IDEMPOTENCY_KEY_REUSED` |
+| 2 | Idempotency-Key (opcional): fingerprint = operación + surface + nombre + **sha256 + tamaño** (si supera el límite: **sha256 de los primeros límite+1 bytes** + límite) | DB (fila bloqueada) | otra solicitud con la key → `409 IDEMPOTENCY_KEY_REUSED` |
 | 3 | TX: Asset `UPLOADING` + `ASSET_UPLOADED` | DB | excepción |
 | 4 | vacío / grande → TX: `REJECTED` + `ASSET_REJECTED` | DB | — |
 | 5 | TX: `VALIDATING` (sha256, tamaño) + `ASSET_VALIDATION_STARTED` | DB | excepción |
@@ -31,6 +31,26 @@ stream. Si el Asset naciera antes, cada retry HTTP crearía un Asset más (y al
 rechazarlo quedaría un Asset terminal duplicado). Así, un retry nunca crea un
 segundo Asset. El estado `UPLOADING` existe y se audita (`ASSET_UPLOADED`), pero
 dura lo que tarda una transacción.
+
+### Identidad de un upload demasiado grande (auditoría B3 #1)
+
+Un cuerpo que supera `MAX_UPLOAD_BYTES` no se guarda ni se lee entero: se corta
+al ver el byte `límite + 1` (`limitBody`, que además deja de consumir el stream
+del cliente). Su identidad para la Idempotency-Key es el sha256 de **exactamente
+esos `límite + 1` bytes** — el mismo valor sin importar cómo llegue troceado.
+
+Límite de esa identidad: dos cuerpos que coinciden en los primeros `límite + 1`
+bytes y difieren después son indistinguibles. Los dos se rechazan igual
+(`ASSET_TOO_LARGE`, mismo límite), así que el replay devuelve lo mismo que daría
+procesarlos de nuevo. Si B4 necesitara la identidad del cuerpo completo, habría
+que separar reserva y finalize (o exigir un hash declarado por el cliente); se
+decide antes de B4.
+
+### Observabilidad de UPLOADING (para B4)
+
+Como el Asset se crea después del stream, **no existe un Asset UPLOADING visible
+durante la transferencia**. Si B4 necesita mostrar progreso, tiene que salir de
+la conexión HTTP, no de la base.
 
 ### Fallo de la base después del commit de storage (§33)
 
