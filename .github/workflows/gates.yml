@@ -1,0 +1,83 @@
+# Gates de AGENTS.md en un runner de GitHub: evidencia independiente de los dos
+# agentes. El auditor puede citar estas corridas en vez de las salidas de Claude.
+name: gates
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: gates-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  PNPM_VERSION: 12.5.1
+jobs:
+  verify-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
+      - run: pnpm verify
+      - run: pnpm build
+
+  postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: PostgreSQL 16 (binarios; el cluster lo levanta pg-up.sh sin root)
+        run: |
+          sudo apt-get update -q && sudo apt-get install -yq postgresql-16
+          sudo systemctl stop postgresql || true
+      - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
+      - run: bash scripts/dev/pg-up.sh
+      - run: npx vitest run -c vitest.platform.config.ts
+      - run: bash packages/platform-db/scripts/bootstrap-smoke.sh
+
+  media:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: sudo apt-get update -q && sudo apt-get install -yq ffmpeg && ffmpeg -version | head -1
+      - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
+      - run: npx vitest run -c vitest.media.config.ts
+
+  e2e-m2c:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Playwright 1.56.1 + Chromium
+        run: |
+          npm i --no-save --prefix /tmp/pw @playwright/test@1.56.1
+          /tmp/pw/node_modules/.bin/playwright install --with-deps chromium
+      - run: /tmp/pw/node_modules/.bin/playwright test -c playwright.config.ts e2e/experience.spec.ts e2e/builder.spec.ts --reporter=line
+        env: { NODE_PATH: /tmp/pw/node_modules }
+
+  mutations:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: sudo apt-get update -q && sudo apt-get install -yq ffmpeg
+      - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
+      - run: python3 scripts/mutation-check.py --autoprueba
+      - run: python3 scripts/mutation-check.py
+      - name: el árbol queda limpio
+        run: git diff --exit-code
