@@ -1,8 +1,8 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador) — B2 aprobada en el PR #2. Mergear el PR y comenzar B3 conforme a `docs/briefs/M3A1_FASE_B.md`: migración 0002, AssetUploadService, consistencia READY ↔ StoredObject, idempotencia y audit. Entregar B3 en PR/commit explícito y transferir el turno en este HANDOFF de main.
-**Fase:** M3A.1 Fase B3 — DB integration + AssetUploadService
-**Estado:** `AUDIT: APROBADO` de B2 sobre HEAD `a35eb5b0a3922cc78cc5a6fe509f23abc91af121`. PR mergeable; hallazgos cerrados; gates obligatorios completos mediante ejecución del auditor + CI independiente. Claude puede mergear #2 e iniciar B3 sin confirmación rutinaria.
+**Pelota en:** ChatGPT (auditor) — auditar B3 en el PR [#3](https://github.com/fermalenoski86/dev/pull/3) (rama `fase/m3a1-b3`, commit `037bfc4`), issue [#4](https://github.com/fermalenoski86/dev/issues/4). Responder en #3 con `AUDIT: APROBADO` o `AUDIT: CAMBIOS` y devolver la pelota acá.
+**Fase:** M3A.1 Fase B3 — DB integration + AssetUploadService (entregada, en auditoría)
+**Estado:** B3 entregada. **PR #2 aprobado pero SIN MERGEAR:** el merge desde el entorno de Claude fue denegado por permisos; falta que Fer (o quien tenga permiso) lo mergee (squash) y etiquete `m3a1-b2`. Issue #1 cerrado. #3 está apilado sobre `fix/m3a1-b2-audit1` y se re-apunta a `main` después del merge. Gates locales de B3: verify 611+1, build, PG 86+6, bootstrap 6/6, media 53/53, mutaciones 120/120; E2E 13/14 local por el navegador (reproduce igual en la base B2) → vale el CI.
 
 ## Objetivo autorizado por Fer — 2026-10-06
 Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
@@ -29,11 +29,12 @@ Si falta evidencia, información de hardware o hay desacuerdo sin resolver, deja
 Claude: incorporá esta investigación y tu evaluación de las propuestas al reporte de cada entrega para que ChatGPT pueda debatirlas y revisarlas.
 
 ## Entrega activa para auditar
-- PR: [#2](https://github.com/fermalenoski86/dev/pull/2)
-- Rama: `fix/m3a1-b2-audit1`
-- Commit entregado: `91956d538322fa40ae94663593e7725924e89345` (comprobar el HEAD actual antes de auditar).
-- Reporte de correcciones: `docs/reviews/M3A1_FASE_B2_AUDIT1.md`, en la rama del PR.
-- Salida reportada por Claude: `docs/reviews/M3A1_FASE_B2_AUDIT1_SALIDA.txt`, en la rama del PR. No equivale a aprobación del auditor.
+- PR: [#3](https://github.com/fermalenoski86/dev/pull/3) · issue de auditoría [#4](https://github.com/fermalenoski86/dev/issues/4)
+- Rama: `fase/m3a1-b3` (base `fix/m3a1-b2-audit1` hasta que #2 se mergee)
+- Commit entregado: `037bfc4` (comprobar el HEAD actual antes de auditar).
+- Reporte: `docs/reviews/M3A1_FASE_B3.md` (7 decisiones a validar, propuestas BL-07..09).
+- Salida reportada por Claude: `docs/reviews/M3A1_FASE_B3_SALIDA.txt`. No equivale a aprobación del auditor.
+- Diseño: `docs/platform/ASSETS.md`, ADR-055.
 
 ## Regla de entrega para evitar turnos perdidos
 `docs/collab/HANDOFF.md` en `main` es la autoridad para asignar el turno. Al terminar una entrega, Claude debe actualizarlo en `main` con **Pelota en: ChatGPT**, el PR, su rama y el commit a revisar; actualizar solo la copia en la rama del PR no transfiere el turno. ChatGPT audita el código de esa rama, publica el resultado y devuelve la pelota en `main` a Claude. Releer el archivo y usar su SHA vigente para no sobrescribir actualizaciones concurrentes. No hay aprobación automática por cambio de turno.
@@ -84,6 +85,7 @@ H.264 10 bits / 4:4:4 pasa la política actual. ¿Exigir `yuv420p`?
 B3 — DB integration: migración 0002 (`rejection_detail jsonb`, `container`, consistencia READY ↔ StoredObject), AssetUploadService, idempotencia y audit. Ejecutar su gate antes de B4.
 
 ## Historial
+- 2026-10-07 05:55 UTC — Claude: merge de #2 denegado por permisos del entorno (pendiente Fer); issue #1 cerrado; B3 entregada en PR #3 apilado sobre #2 (0002, AssetUploadService, audit, idempotencia; 120/120 mutaciones; E2E 13/14 local, igual que la base B2). Issue #4 de auditoría. Pelota a ChatGPT.
 - 2026-10-07 — ChatGPT: `AUDIT: APROBADO` B2 sobre `a35eb5b0a3922cc78cc5a6fe509f23abc91af121`; CI completa PG/bootstrap y todos los gates; habilita B3 y devuelve pelota a Claude.
 - 2026-10-07 — ChatGPT: PR #2 CAMBIOS; cierra hallazgos originales, verifica Node22 verify/build/media53/mutaciones109/E2E14; conflicto HANDOFF y PG/bootstrap independiente pendientes. Devuelve pelota a Claude y propone runner acotado para debate.
 - 2026-10-07 — ChatGPT: alinea el HANDOFF de main con el pedido de re-auditoría de Claude en el PR #2; pelota en ChatGPT, sin aprobación de B2.
