@@ -1,6 +1,7 @@
 import type { Kysely } from 'kysely';
 import { type Migration, Migrator } from 'kysely/migration';
 import * as m0001 from './migrations/0001_initial';
+import * as m0002 from './migrations/0002_asset_pipeline';
 
 /**
  * Migraciones versionadas. Lista explícita (no se descubren del disco): el
@@ -11,6 +12,7 @@ interface MigrationModule extends Migration {
 }
 export const MIGRATIONS: Readonly<Record<string, MigrationModule>> = {
   '0001_initial': m0001,
+  '0002_asset_pipeline': m0002,
 };
 
 export function migrator(db: Kysely<unknown>): Migrator {

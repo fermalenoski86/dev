@@ -1,0 +1,214 @@
+M3A.1 Fase B3 — salida REAL de los gates (Claude, 2026-10-07T05:47Z)
+Base: rama fase/m3a1-b3 sobre a35eb5b (PR #2). Entorno: v22.22.0, pnpm 12.5.1, psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1), ffmpeg version 6.1.1-3ubuntu5
+
+=== pnpm install --frozen-lockfile ===
+Lockfile is up to date, resolution step is skipped
+Done in 20ms using pnpm v12.5.1
+
+=== pnpm verify ===
+  127:64  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  127:73  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  127:86  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  315:29   warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  315:54   warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  315:79   warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  315:94   warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  315:101  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  315:108  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  409:64  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  356:47  warning  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+✖ 11 problems (0 errors, 11 warnings)
+ Test Files  29 passed | 1 skipped (30)
+      Tests  611 passed | 1 skipped (612)
+verify=0
+
+=== pnpm build ===
+packages/shared-types build: Done
+packages/platform-storage build: Done
+packages/telemetry build: Done
+packages/timeline build: Done
+packages/show-engine build: Done
+packages/control-core build: Done
+packages/show-authoring build: Done
+packages/trust-3d build: Done
+packages/experience-core build: Done
+packages/platform-contracts build: Done
+apps/control build: Done
+packages/platform-db build: Done
+packages/platform-media build: Done
+packages/platform-audit build: Done
+packages/platform-assets build: Done
+apps/previs build: Done
+build=0
+
+=== PostgreSQL 16 real: npx vitest run -c vitest.platform.config.ts ===
+ RUN  v2.1.9 /home/claude/dev
+ ✓ packages/platform-db/src/schema.db.test.ts (31 tests) 1357ms
+   ✓ migraciones > up sobre base vacía, down y up de nuevo (smoke test reversible) 563ms
+ ✓ packages/platform-assets/src/upload.db.test.ts (28 tests) 4511ms
+   ✓ CRITERIO: deduplicación (§15, §32) > mismo MP4 dos veces: 2 Assets READY, 1 StoredObject, 1 archivo físico 324ms
+   ✓ CRITERIO: fallo de la base DESPUÉS del commit de storage (§16, §33) > blob final queda seguro, Asset no queda READY, y el retry idempotente recupera 355ms
+ ✓ packages/platform-audit/src/audit.db.test.ts (8 tests) 975ms
+ ✓ packages/platform-db/src/idempotency.db.test.ts (9 tests) 717ms
+ ✓ packages/platform-db/src/asset-consistency.db.test.ts (10 tests) 387ms
+ ↓ packages/platform-db/src/bootstrap.smoke.db.test.ts (6 tests | 6 skipped)
+ Test Files  5 passed | 1 skipped (6)
+      Tests  86 passed | 6 skipped (92)
+   Start at  05:45:37
+   Duration  10.63s (transform 379ms, setup 0ms, collect 1.38s, tests 7.95s, environment 1ms, prepare 311ms)
+pg=0
+
+=== bash packages/platform-db/scripts/bootstrap-smoke.sh ===
+ ✓ packages/platform-db/src/bootstrap.smoke.db.test.ts (6 tests) 140ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+bootstrap=0
+
+=== media real: npx vitest run -c vitest.media.config.ts ===
+ ✓ packages/platform-media/src/process.real.test.ts (15 tests) 3816ms
+ ✓ packages/platform-media/src/media.real.test.ts (38 tests) 3103ms
+ Test Files  2 passed (2)
+      Tests  53 passed (53)
+media=0
+
+=== python3 scripts/mutation-check.py --autoprueba && python3 scripts/mutation-check.py ===
+autoprueba OK
+ATRAPADA   STOP -> black                ⎯⎯�
+ATRAPADA   SAFE MODE -> black           ⎯⎯�
+ATRAPADA   PAUSE -> hold                ⎯⎯�
+ATRAPADA   uv x+w <= 1                  ⎯⎯�
+ATRAPADA   uv w,h > 0                   ⎯⎯�
+ATRAPADA   capacidad del edificio       ⎯⎯�
+ATRAPADA   doble membresia              ⎯⎯�
+ATRAPADA   aspecto del recorte          ⎯⎯�
+ATRAPADA   guard de URLs                ⎯⎯�
+ATRAPADA   ended en transporte          ⎯⎯�
+ATRAPADA   retry: libera fallada activa ⎯⎯�
+ATRAPADA   retry: recrea el video       ⎯⎯�
+ATRAPADA   actuador obedece output      ⎯⎯�
+ATRAPADA   simulador determinista       ⎯⎯�
+ATRAPADA   flag simulated               ⎯⎯�
+ATRAPADA   phase loss antes que UV      ⎯⎯�
+ATRAPADA   umbrales configurables       ⎯⎯�
+ATRAPADA   serie == lectura viva        ⎯⎯�
+ATRAPADA   clip caido se reporta        ⎯⎯�
+ATRAPADA   logico != salud              ⎯⎯�
+ATRAPADA   offline != safe mode         ⎯⎯�
+ATRAPADA   contexto IA sin handles      ⎯⎯�
+ATRAPADA   provenance simulada          ⎯⎯�
+ATRAPADA   simulated no verificado      ⎯⎯�
+ATRAPADA   verificado mira provenance   ⎯⎯�
+ATRAPADA   stale degrada salud          ⎯⎯�
+ATRAPADA   alarmas -> salud electrica   ⎯⎯�
+ATRAPADA   preview no pisa al motor     ⎯⎯�
+ATRAPADA   override off por defecto     ⎯⎯�
+ATRAPADA   serie congelada en stale     ⎯⎯�
+ATRAPADA   engine recarga si cambio     ⎯⎯�
+ATRAPADA   revision por contenido       ⎯⎯�
+ATRAPADA   canPreview corta BLOCKED     ⎯⎯�
+ATRAPADA   canPreview mira exportable   ⎯⎯�
+ATRAPADA   blocked suelta el motor      ⎯⎯�
+ATRAPADA   scrub deja en pausa          ⎯⎯�
+ATRAPADA   preset queda dirty           ⎯⎯�
+ATRAPADA   storage valida con Zod       ⎯⎯�
+ATRAPADA   hold no emite evento         ⎯⎯�
+ATRAPADA   black emite media.stop       ⎯⎯�
+ATRAPADA   namespace de assets          ⎯⎯�
+ATRAPADA   ruta local en assets         ⎯⎯�
+ATRAPADA   BLOCKED bloquea export       ⎯⎯�
+ATRAPADA   experiencia: vista pura      ⎯⎯�
+ATRAPADA   experiencia: assets locales  ⎯⎯�
+ATRAPADA   experiencia: PLAY requiere ready ⎯�
+ATRAPADA   experiencia: reset conoce estado ⎯�
+ATRAPADA   pantalla A en su lugar       ⎯⎯�
+ATRAPADA   pantalla B en su lugar       ⎯⎯�
+ATRAPADA   client mode usa campaña      ⎯⎯�
+ATRAPADA   precarga solo campaña        ⎯⎯�
+ATRAPADA   titular ejecutivo            ⎯⎯�
+ATRAPADA   WHY sin claims de luz        ⎯⎯�
+ATRAPADA   segmentos reparten el uv     ⎯⎯�
+ATRAPADA   segmento usa su indice       ⎯⎯�
+ATRAPADA   black no muestra media       ⎯⎯�
+ATRAPADA   contain entra entero         ⎯⎯�
+ATRAPADA   fallo no cuenta cargado      ⎯⎯�
+ATRAPADA   READY exige todo             ⎯⎯�
+ATRAPADA   fallback debe estar cargado  ⎯⎯�
+ATRAPADA   STOP nunca se bloquea        ⎯⎯�
+ATRAPADA   signature con seek           ⎯⎯�
+ATRAPADA   check requerido bloquea      ⎯⎯�
+ATRAPADA   check sin ejecutar falla     ⎯⎯�
+ATRAPADA   logger guarda la key         ⎯⎯�
+ATRAPADA   serie corta en measuredAt    ⎯⎯�
+ATRAPADA   ack emite evento             ⎯⎯�
+ATRAPADA   ack no borra                 ⎯⎯�
+ATRAPADA   ack all sincroniza log       ⎯⎯�
+ATRAPADA   sin tarifa en la alarma      ⎯⎯�
+ATRAPADA   alarma: ESCALATED            ⎯⎯�
+ATRAPADA   alarma: DEESCALATED          ⎯⎯�
+ATRAPADA   alarma: RESOLVED             ⎯⎯�
+ATRAPADA   ack no borra la alarma       ⎯⎯�
+ATRAPADA   escalar invalida el ack      ⎯⎯�
+ATRAPADA   metric en la identidad       ⎯⎯�
+ATRAPADA   freshness: STALE             ⎯⎯�
+ATRAPADA   freshness: COMM_ERROR        ⎯⎯�
+ATRAPADA   modo efectivo del estado     ⎯⎯�
+ATRAPADA   modo: safe mode manda        ⎯⎯�
+ATRAPADA   mes calendario real          ⎯⎯�
+ATRAPADA   IA usa umbral configurado    ⎯⎯�
+ATRAPADA   compiler: atMs acumulado     ⎯⎯�
+ATRAPADA   compiler: A y B mismo cue    ⎯⎯�
+ATRAPADA   compiler: cierre a identidad ⎯⎯�
+ATRAPADA   compiler: escena existe      ⎯⎯�
+ATRAPADA   compiler: uv por pixeles     ⎯⎯�
+ATRAPADA   assets: namespace            ⎯⎯�
+ATRAPADA   assets: unmanaged bloquea    ⎯⎯�
+ATRAPADA   assets: aspecto              ⎯⎯�
+ATRAPADA   validation: no exporta       ⎯⎯�
+ATRAPADA   draft: duracion minima       ⎯⎯�
+ATRAPADA   draft: duplicar id nuevo     ⎯⎯�
+ATRAPADA   membresia por show           ⎯⎯�
+ATRAPADA   storage: dedup solo por tamaño ⎯�
+ATRAPADA   storage: shard≠hash aceptado ⎯⎯
+ATRAPADA   storage: temporal huérfano pisado �
+ATRAPADA   storage: permisos no endurecidos ⎯�
+ATRAPADA   media: HEVC aceptado         ⎯⎯�
+ATRAPADA   media: 29.97 aceptado (float) ⎯⎯�
+ATRAPADA   media: resolución errada aceptada �
+ATRAPADA   media: múltiples pistas aceptadas �
+ATRAPADA   media: formato hardcodeado   ⎯⎯�
+ATRAPADA   media: MOV pasa como MP4     ⎯⎯�
+ATRAPADA   media: carátula cuenta como pista �
+ATRAPADA   media: decode de frame omitido ⎯⎯
+ATRAPADA   media: timeout omitido       ⎯⎯�
+ATRAPADA   media: reintento de decode omitido �
+ATRAPADA   media: reintento rescata corruptos �
+ATRAPADA   assets: hash del upload ignorado ⎯�
+ATRAPADA   assets: dedup desactivado    ⎯⎯�
+ATRAPADA   assets: temporal no limpiado ⎯⎯�
+ATRAPADA   assets: REJECTED entra READY ⎯⎯�
+ATRAPADA   assets: BAD_RESOLUTION aceptado ⎯�
+ATRAPADA   assets: corrupto aceptado    ⎯⎯�
+ATRAPADA   assets: READY sin StoredObject ⎯⎯
+ATRAPADA   assets: READY con sha ajeno  ⎯⎯�
+ATRAPADA   assets: READY con tamaño ajeno ⎯�
+ATRAPADA   assets: terminal sin detail  ⎯⎯�
+ATRAPADA   assets: tempId desde filename ⎯⎯�
+atrapadas 120 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+exit 0
+
+=== E2E M2C (NO es gate verde en este entorno) ===
+--- Chromium de Playwright 1194 (sin H.264): 2 passed, 12 failed en LOADING (no se adjunta: navegador inválido para este suite)
+--- @sparticuz/chromium 153, rama B3:
+  1 failed
+    [chromium] › e2e/experience.spec.ts:267:7 › MASTER OF TRUST — Operator Mode › CRITERIO: las pantallas pintan frames reales durante todo el takeover 
+  13 passed (1.3m)
+--- @sparticuz/chromium 153, base aprobada B2 (origin/fix/m3a1-b2-audit1, worktree limpio):
+  1 failed
+    [chromium] › e2e/experience.spec.ts:267:7 › MASTER OF TRUST — Operator Mode › CRITERIO: las pantallas pintan frames reales durante todo el takeover 
+  13 passed (1.3m)
+--- git diff --stat a35eb5b -- apps e2e packages/experience-core packages/trust-3d:
+(vacío)
+
+=== S3/MinIO ===
+no ejecutado: sin MinIO en el entorno (igual que B1/B2).

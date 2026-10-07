@@ -34,9 +34,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
-      - name: PostgreSQL 16 (binarios; el cluster lo levanta pg-up.sh sin root)
+      # B3: el pipeline de Asset corre con PostgreSQL + ffprobe/ffmpeg reales
+      - name: PostgreSQL 16 (binarios; el cluster lo levanta pg-up.sh sin root) + ffmpeg
         run: |
-          sudo apt-get update -q && sudo apt-get install -yq postgresql-16
+          sudo apt-get update -q && sudo apt-get install -yq postgresql-16 ffmpeg
           sudo systemctl stop postgresql || true
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
       - run: bash scripts/dev/pg-up.sh
@@ -81,8 +82,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
-      - run: sudo apt-get update -q && sudo apt-get install -yq ffmpeg
+      # las mutaciones de B3 necesitan PostgreSQL real además de ffmpeg
+      - name: ffmpeg + PostgreSQL 16
+        run: |
+          sudo apt-get update -q && sudo apt-get install -yq ffmpeg postgresql-16
+          sudo systemctl stop postgresql || true
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
+      - run: bash scripts/dev/pg-up.sh
       - run: python3 scripts/mutation-check.py --autoprueba
       - run: scripts/ci/run.sh mutaciones python3 scripts/mutation-check.py
       - name: el árbol queda limpio
