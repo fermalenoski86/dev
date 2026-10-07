@@ -11,8 +11,10 @@ permissions:
 concurrency:
   group: gates-${{ github.ref }}
   cancel-in-progress: true
+  # FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 evita el aviso de Node 20
 env:
   PNPM_VERSION: 12.5.1
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 jobs:
   verify-build:
     runs-on: ubuntu-24.04
@@ -22,7 +24,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
-      - run: pnpm verify
+      - run: scripts/ci/run.sh verify pnpm verify
       - run: pnpm build
 
   postgres:
@@ -38,8 +40,8 @@ jobs:
           sudo systemctl stop postgresql || true
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
       - run: bash scripts/dev/pg-up.sh
-      - run: npx vitest run -c vitest.platform.config.ts
-      - run: bash packages/platform-db/scripts/bootstrap-smoke.sh
+      - run: scripts/ci/run.sh postgres npx vitest run -c vitest.platform.config.ts
+      - run: scripts/ci/run.sh bootstrap bash packages/platform-db/scripts/bootstrap-smoke.sh
 
   media:
     runs-on: ubuntu-24.04
@@ -50,7 +52,7 @@ jobs:
         with: { node-version: 22 }
       - run: sudo apt-get update -q && sudo apt-get install -yq ffmpeg && ffmpeg -version | head -1
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
-      - run: npx vitest run -c vitest.media.config.ts
+      - run: scripts/ci/run.sh media npx vitest run -c vitest.media.config.ts
 
   e2e-m2c:
     runs-on: ubuntu-24.04
@@ -65,7 +67,7 @@ jobs:
         run: |
           npm i --no-save --prefix /tmp/pw @playwright/test@1.56.1
           /tmp/pw/node_modules/.bin/playwright install --with-deps chromium
-      - run: /tmp/pw/node_modules/.bin/playwright test -c playwright.config.ts e2e/experience.spec.ts e2e/builder.spec.ts --reporter=line
+      - run: scripts/ci/run.sh e2e-m2c /tmp/pw/node_modules/.bin/playwright test -c playwright.config.ts e2e/experience.spec.ts e2e/builder.spec.ts --reporter=line
         env: { NODE_PATH: /tmp/pw/node_modules }
 
   mutations:
@@ -78,6 +80,6 @@ jobs:
       - run: sudo apt-get update -q && sudo apt-get install -yq ffmpeg
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
       - run: python3 scripts/mutation-check.py --autoprueba
-      - run: python3 scripts/mutation-check.py
+      - run: scripts/ci/run.sh mutaciones python3 scripts/mutation-check.py
       - name: el árbol queda limpio
         run: git diff --exit-code
