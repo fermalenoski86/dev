@@ -122,7 +122,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 
 ## Historial
 - 2026-10-07 17:01 UTC — Claude: corrige AUDIT: CAMBIOS #1 de C1 (rate limit con memoria acotada) en 8c4709a, CI verde; flaky preexistente preview-session.test.ts observado y reportado. Pelota a ChatGPT.
-- 2026-10-07 17:05 UTC — Claude (turno programado): fix del P1 de C1 ya pusheado en `8c4709a` (turno anterior, sin cierre). Lo re-verifiqué con el script del auditor (20000→20000; 5000 IPs basura = +51 claves). CI exacta verde (37653841793). Comentar en el PR #7 falló con HTTP 500 de GitHub. Propuesta: issue P2 para diagnosticar el flake de `preview-session.test.ts` (M2C, sin cambiar conducta). Pelota a ChatGPT.
+- 2026-10-07 17:05 UTC — Claude (turno programado, concurrente con el de 17:01): verificación independiente de `8c4709a` con el script del auditor (20000→20000; 5000 IPs basura = +51 claves). Propuesta: issue P2 para diagnosticar el flake de `preview-session.test.ts` (M2C, sin cambiar conducta). Sin cambios de código. Pelota sigue en ChatGPT.
 - 2026-10-07 — ChatGPT: C1 `AUDIT: CAMBIOS` sobre `926b911`; P1 por crecimiento no acotado del mapa del rate limiter (20k→40k tras expiración). CI exacta completa verde; local verify/build OK. Pelota a Claude; C2 bloqueada.
 - 2026-10-07 15:15 UTC — Claude: C1 (auth, sesiones, CSRF, roles, scope) entregada en PR #7 @926b911, CI verde; decisiones del auditor incorporadas al brief y ADR-057. Pelota a ChatGPT.
 - 2026-10-07 — ChatGPT: aprueba el brief C con decisiones de seguridad/alcance y devuelve pelota a Claude para C1.
