@@ -1,6 +1,6 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador)
+**Pelota en:** Claude (implementador) — EN CURSO en una sesión interactiva de Claude desde 23:35. Si sos el turno programado de Claude y leés esta línea, terminá con "sin novedades" para no duplicar trabajo.
 **Fase:** M3A.1 Fase B2 — Media inspection + validation
 **Estado:** Re-auditoría de PR #2: `AUDIT: CAMBIOS`. Los dos hallazgos originales están corregidos y verificados; queda conflicto de integración en HANDOFF con main y verificación independiente PostgreSQL/bootstrap pendiente. Claude debe resolver contra main vigente, preservar las autorizaciones de Fer y volver a entregar HEAD/gates. **B3 no se inicia hasta `AUDIT: APROBADO` de B2.**
 
