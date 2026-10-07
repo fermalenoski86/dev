@@ -133,6 +133,8 @@ M = [
  ('api: ve assets ajenos', 'apps/platform-api/src/app.ts', "where('id', '=', id).where('created_by', '=', actorId).executeTakeFirst();", "where('id', '=', id).executeTakeFirst();", 'npx vitest run -c vitest.platform.config.ts apps/platform-api'),
  ('api: ready ignora la base', 'apps/platform-api/src/app.ts', "      database: await check(() => sql`SELECT 1`.execute(deps.db)),", "      database: 'ok' as const,", 'npx vitest run -c vitest.platform.config.ts apps/platform-api'),
  ('api: x-request-id sin sanear', 'apps/platform-api/src/app.ts', "const REQUEST_ID_RE = /^[A-Za-z0-9._-]{8,128}$/;", "const REQUEST_ID_RE = /^[\\s\\S]+$/;", 'npx vitest run -c vitest.platform.config.ts apps/platform-api'),
+ ('api: partes después del archivo aceptadas', 'apps/platform-api/src/app.ts', "        afterBody: nadaDespuesDelArchivo,\n", "", 'npx vitest run -c vitest.platform.config.ts apps/platform-api'),
+ ('assets: afterBody ignorado', 'packages/platform-assets/src/service.ts', "      if (input.afterBody) await input.afterBody();\n", "", 'npx vitest run -c vitest.platform.config.ts apps/platform-api'),
  ('remediación: resolución hardcodeada', 'packages/platform-media/src/remediation.ts', "  const args = normalizationArgs(fmt.width, fmt.height, fps);", "  const args = normalizationArgs(1920, 412, fps);", 'npx vitest run packages/platform-media/src/remediation.test.ts'),
 ]
 # Restauracion garantizada: si esto se interrumpe a mitad (Ctrl-C, timeout,

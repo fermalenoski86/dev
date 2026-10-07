@@ -27,7 +27,11 @@ Una solicitud `multipart/form-data`: **primero los campos**, después el archivo
 | `file` | sí | el archivo; fluye por stream al temporal |
 
 Headers: `Idempotency-Key` (obligatorio, 8–200 ASCII visibles) y, en
-desarrollo, `X-Dev-Actor`. Cualquier otro campo → 400.
+desarrollo, `X-Dev-Actor`. Cualquier otro campo → 400. **`file` es la última
+parte**: un campo o un segundo archivo después de `file` → 400
+`VALIDATION_ERROR`. El archivo fluye al temporal mientras llega; antes de crear
+el Asset o reservar la Idempotency-Key se lee el resto del multipart, y si trae
+algo más se rechaza sin dejar Asset, key ni temporal (auditoría B4 #1).
 
 ¿Por qué no `uploads` + `finalize`? Una sola solicitud alcanza con la
 idempotencia por contenido de B3 (el fingerprint incluye el sha256 del cuerpo, o

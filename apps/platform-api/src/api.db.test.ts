@@ -224,6 +224,33 @@ describe('CRITERIO: POST /api/v1/assets — upload real (§18, §20, §22)', () 
     expect(await contarAssets()).toBe(antes);
   });
 
+  it('auditoría B4 #1: campo o segundo archivo DESPUÉS de file → 400, sin Asset, sin key y sin temporal', async () => {
+    const tmp = path.join(root, 'store', 'tmp');
+    const temporales = async () => (await fs.readdir(tmp).catch(() => [])).length;
+    const bytes = readFileSync(fx('valid_horizontal_30.mp4'));
+    const casos: Array<Array<[string, string] | [string, Buffer, string]>> = [
+      [['surfaceType', 'horizontal'], ['file', bytes, 'a.mp4'], ['admin', 'true']],
+      [['surfaceType', 'horizontal'], ['file', bytes, 'a.mp4'], ['file', bytes, 'b.mp4']],
+      [['surfaceType', 'horizontal'], ['file', bytes, 'a.mp4'], ['otro', bytes, 'c.mp4']],
+      [['surfaceType', 'horizontal'], ['file', bytes, 'a.mp4'], ['surfaceType', 'screen_a']],
+    ];
+    for (const campos of casos) {
+      const antes = await contarAssets();
+      const key = `despues-${Date.now()}-${n++}`;
+      const mp = await multipart(campos);
+      const r = await app.inject({ method: 'POST', url: '/api/v1/assets', headers: { 'content-type': mp.contentType, 'x-dev-actor': actor, 'idempotency-key': key }, payload: mp.payload });
+      expect(r.statusCode, JSON.stringify(campos.map((c) => c[0]))).toBe(400);
+      esError(r.json(), 'VALIDATION_ERROR');
+      expect(await contarAssets()).toBe(antes);
+      const k = await t.app.selectFrom('idempotency_keys').select('key').where('key', '=', key).executeTakeFirst();
+      expect(k).toBeUndefined();
+      expect(await temporales()).toBe(0);
+    }
+    // y la misma solicitud bien formada, con la misma forma de armado, sí entra
+    const ok = await subir('valid_horizontal_30.mp4', 'horizontal');
+    expect(ok.statusCode).toBe(201);
+  });
+
   it('cuerpo que no es multipart → 415 UNSUPPORTED_MEDIA_TYPE', async () => {
     const r = await app.inject({ method: 'POST', url: '/api/v1/assets', headers: { 'x-dev-actor': actor, 'idempotency-key': 'json-12345678', 'content-type': 'application/json' }, payload: { file: 'x' } });
     expect(r.statusCode).toBe(415);

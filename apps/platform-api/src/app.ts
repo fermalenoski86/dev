@@ -85,7 +85,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
       // +1: el corte y la huella de TOO_LARGE los hace limitBody en el byte límite+1;
       // busboy no tiene que cortar antes (sería nondeterminístico).
       fileSize: deps.maxUploadBytes + 1,
-      files: 1,
+      files: 2, // el segundo se ve para rechazarlo con 400, no con un error genérico del parser
       fields: 4,
       fieldSize: 1024,
       parts: 6,
@@ -142,7 +142,20 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 
     const inicio = process.hrtime.bigint();
     const campos: Record<string, string> = {};
-    for await (const part of req.parts()) {
+    // Iterador explícito: después del archivo hay que seguir leyendo para
+    // validar que no venga nada más (auditoría B4 #1), sin bufferear el archivo.
+    const partes = req.parts()[Symbol.asyncIterator]();
+    const nadaDespuesDelArchivo = async () => {
+      for (let sig = await partes.next(); !sig.done; sig = await partes.next()) {
+        const extra = sig.value;
+        if (extra.type === 'file') extra.file.resume();
+        throw new ApiError(400, 'VALIDATION_ERROR', 'El archivo tiene que ser la última parte; no se aceptan campos ni archivos después.', {
+          unexpectedPart: displayFilename(extra.fieldname),
+        });
+      }
+    };
+    for (let paso = await partes.next(); !paso.done; paso = await partes.next()) {
+      const part = paso.value;
       if (part.type === 'field') {
         if (part.fieldname in campos) throw new ApiError(400, 'VALIDATION_ERROR', `Campo repetido: ${displayFilename(part.fieldname)}.`);
         campos[part.fieldname] = String(part.value);
@@ -170,6 +183,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
         body: part.file,
         idempotencyKey: hdr.data['idempotency-key'],
         requiredDurationMs: f.data.requiredDurationMs,
+        afterBody: nadaDespuesDelArchivo,
       });
       const asset = conRemediacion(r.asset);
       const status = statusForAsset(r.asset);
