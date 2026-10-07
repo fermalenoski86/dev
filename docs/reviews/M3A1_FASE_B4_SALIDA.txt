@@ -1,0 +1,230 @@
+M3A.1 Fase B4 — salida REAL de los gates (Claude, 2026-10-07T08:42Z)
+Rama fase/m3a1-b4 sobre fase/m3a1-b3@4e28768. Entorno: v22.22.0, pnpm 12.5.1, psql (PostgreSQL) 16.15, ffmpeg version 6.1.1-3ubuntu5
+
+=== pnpm install --frozen-lockfile ===
+Lockfile is up to date, resolution step is skipped
+Done in 26ms using pnpm v12.5.1
+
+=== pnpm verify ===
+✖ 11 problems (0 errors, 11 warnings)
+ Test Files  31 passed | 1 skipped (32)
+      Tests  621 passed | 1 skipped (622)
+verify=0
+
+=== pnpm build ===
+exit 0
+
+=== PostgreSQL 16: npx vitest run -c vitest.platform.config.ts ===
+ ✓ packages/platform-db/src/schema.db.test.ts (31 tests) 1414ms
+ ✓ apps/platform-api/src/api.db.test.ts (23 tests) 2278ms
+ ✓ packages/platform-assets/src/upload.db.test.ts (29 tests) 4813ms
+ ✓ packages/platform-audit/src/audit.db.test.ts (8 tests) 970ms
+ ✓ packages/platform-db/src/idempotency.db.test.ts (9 tests) 767ms
+ ✓ packages/platform-db/src/asset-consistency.db.test.ts (10 tests) 451ms
+ ↓ packages/platform-db/src/bootstrap.smoke.db.test.ts (6 tests | 6 skipped)
+ Test Files  6 passed | 1 skipped (7)
+      Tests  110 passed | 6 skipped (116)
+pg=0
+
+=== bootstrap-smoke.sh ===
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+
+=== media real: npx vitest run -c vitest.media.config.ts ===
+ ✓ packages/platform-media/src/process.real.test.ts (15 tests) 3862ms
+ ✓ packages/platform-media/src/media.real.test.ts (38 tests) 3184ms
+ ✓ packages/platform-media/src/remediation.real.test.ts (10 tests) 10726ms
+ Test Files  3 passed (3)
+      Tests  63 passed (63)
+
+=== mutaciones: --autoprueba + corrida completa ===
+autoprueba OK
+ATRAPADA   STOP -> black                ⎯⎯
+ATRAPADA   SAFE MODE -> black           ⎯⎯
+ATRAPADA   PAUSE -> hold                ⎯⎯
+ATRAPADA   uv x+w <= 1                  ⎯⎯
+ATRAPADA   uv w,h > 0                   ⎯⎯
+ATRAPADA   capacidad del edificio       ⎯⎯
+ATRAPADA   doble membresia              ⎯⎯
+ATRAPADA   aspecto del recorte          ⎯⎯
+ATRAPADA   guard de URLs                ⎯⎯
+ATRAPADA   ended en transporte          ⎯⎯
+ATRAPADA   retry: libera fallada activa ⎯⎯
+ATRAPADA   retry: recrea el video       ⎯⎯
+ATRAPADA   actuador obedece output      ⎯⎯
+ATRAPADA   simulador determinista       ⎯⎯
+ATRAPADA   flag simulated               ⎯⎯
+ATRAPADA   phase loss antes que UV      ⎯⎯
+ATRAPADA   umbrales configurables       ⎯⎯
+ATRAPADA   serie == lectura viva        ⎯⎯
+ATRAPADA   clip caido se reporta        ⎯⎯
+ATRAPADA   logico != salud              ⎯⎯
+ATRAPADA   offline != safe mode         ⎯⎯
+ATRAPADA   contexto IA sin handles      ⎯⎯
+ATRAPADA   provenance simulada          ⎯⎯
+ATRAPADA   simulated no verificado      ⎯⎯
+ATRAPADA   verificado mira provenance   ⎯⎯
+ATRAPADA   stale degrada salud          ⎯⎯
+ATRAPADA   alarmas -> salud electrica   ⎯⎯
+ATRAPADA   preview no pisa al motor     ⎯⎯
+ATRAPADA   override off por defecto     ⎯⎯
+ATRAPADA   serie congelada en stale     ⎯⎯
+ATRAPADA   engine recarga si cambio     ⎯⎯
+ATRAPADA   revision por contenido       ⎯⎯
+ATRAPADA   canPreview corta BLOCKED     ⎯⎯
+ATRAPADA   canPreview mira exportable   ⎯⎯
+ATRAPADA   blocked suelta el motor      ⎯⎯
+ATRAPADA   scrub deja en pausa          ⎯⎯
+ATRAPADA   preset queda dirty           ⎯⎯
+ATRAPADA   storage valida con Zod       ⎯⎯
+ATRAPADA   hold no emite evento         ⎯⎯
+ATRAPADA   black emite media.stop       ⎯⎯
+ATRAPADA   namespace de assets          ⎯⎯
+ATRAPADA   ruta local en assets         ⎯⎯
+ATRAPADA   BLOCKED bloquea export       ⎯⎯
+ATRAPADA   experiencia: vista pura      ⎯⎯
+ATRAPADA   experiencia: assets locales  ⎯⎯
+ATRAPADA   experiencia: PLAY requiere ready ⎯
+ATRAPADA   experiencia: reset conoce estado ⎯
+ATRAPADA   pantalla A en su lugar       ⎯⎯
+ATRAPADA   pantalla B en su lugar       ⎯⎯
+ATRAPADA   client mode usa campaña      ⎯⎯
+ATRAPADA   precarga solo campaña        ⎯⎯
+ATRAPADA   titular ejecutivo            ⎯⎯
+ATRAPADA   WHY sin claims de luz        ⎯⎯
+ATRAPADA   segmentos reparten el uv     ⎯⎯
+ATRAPADA   segmento usa su indice       ⎯⎯
+ATRAPADA   black no muestra media       ⎯⎯
+ATRAPADA   contain entra entero         ⎯⎯
+ATRAPADA   fallo no cuenta cargado      ⎯⎯
+ATRAPADA   READY exige todo             ⎯⎯
+ATRAPADA   fallback debe estar cargado  ⎯⎯
+ATRAPADA   STOP nunca se bloquea        ⎯⎯
+ATRAPADA   signature con seek           ⎯⎯
+ATRAPADA   check requerido bloquea      ⎯⎯
+ATRAPADA   check sin ejecutar falla     ⎯⎯
+ATRAPADA   logger guarda la key         ⎯⎯
+ATRAPADA   serie corta en measuredAt    ⎯⎯
+ATRAPADA   ack emite evento             ⎯⎯
+ATRAPADA   ack no borra                 ⎯⎯
+ATRAPADA   ack all sincroniza log       ⎯⎯
+ATRAPADA   sin tarifa en la alarma      ⎯⎯
+ATRAPADA   alarma: ESCALATED            ⎯⎯
+ATRAPADA   alarma: DEESCALATED          ⎯⎯
+ATRAPADA   alarma: RESOLVED             ⎯⎯
+ATRAPADA   ack no borra la alarma       ⎯⎯
+ATRAPADA   escalar invalida el ack      ⎯⎯
+ATRAPADA   metric en la identidad       ⎯⎯
+ATRAPADA   freshness: STALE             ⎯⎯
+ATRAPADA   freshness: COMM_ERROR        ⎯⎯
+ATRAPADA   modo efectivo del estado     ⎯⎯
+ATRAPADA   modo: safe mode manda        ⎯⎯
+ATRAPADA   mes calendario real          ⎯⎯
+ATRAPADA   IA usa umbral configurado    ⎯⎯
+ATRAPADA   compiler: atMs acumulado     ⎯⎯
+ATRAPADA   compiler: A y B mismo cue    ⎯⎯
+ATRAPADA   compiler: cierre a identidad ⎯⎯
+ATRAPADA   compiler: escena existe      ⎯⎯
+ATRAPADA   compiler: uv por pixeles     ⎯⎯
+ATRAPADA   assets: namespace            ⎯⎯
+ATRAPADA   assets: unmanaged bloquea    ⎯⎯
+ATRAPADA   assets: aspecto              ⎯⎯
+ATRAPADA   validation: no exporta       ⎯⎯
+ATRAPADA   draft: duracion minima       ⎯⎯
+ATRAPADA   draft: duplicar id nuevo     ⎯⎯
+ATRAPADA   membresia por show           ⎯⎯
+ATRAPADA   storage: dedup solo por tamaño ⎯
+ATRAPADA   storage: shard≠hash aceptado ⎯⎯
+ATRAPADA   storage: temporal huérfano pisado 
+ATRAPADA   storage: permisos no endurecidos ⎯
+ATRAPADA   media: HEVC aceptado         ⎯⎯
+ATRAPADA   media: 29.97 aceptado (float) ⎯⎯
+ATRAPADA   media: resolución errada aceptada 
+ATRAPADA   media: múltiples pistas aceptadas 
+ATRAPADA   media: formato hardcodeado   ⎯⎯
+ATRAPADA   media: MOV pasa como MP4     ⎯⎯
+ATRAPADA   media: carátula cuenta como pista 
+ATRAPADA   media: decode de frame omitido ⎯⎯
+ATRAPADA   media: timeout omitido       ⎯⎯
+ATRAPADA   media: reintento de decode omitido 
+ATRAPADA   media: reintento rescata corruptos 
+ATRAPADA   assets: hash del upload ignorado ⎯
+ATRAPADA   assets: huella de TOO_LARGE ignorada 
+ATRAPADA   assets: dedup desactivado    ⎯⎯
+ATRAPADA   assets: temporal no limpiado ⎯⎯
+ATRAPADA   assets: REJECTED entra READY ⎯⎯
+ATRAPADA   assets: BAD_RESOLUTION aceptado ⎯
+ATRAPADA   assets: corrupto aceptado    ⎯⎯
+ATRAPADA   assets: READY sin StoredObject ⎯⎯
+ATRAPADA   assets: READY con sha ajeno  ⎯⎯
+ATRAPADA   assets: READY con tamaño ajeno ⎯
+ATRAPADA   assets: terminal sin detail  ⎯⎯
+ATRAPADA   assets: tempId desde filename ⎯⎯
+ATRAPADA   api: actor no exigido        ⎯⎯
+ATRAPADA   api: Idempotency-Key opcional ⎯⎯
+ATRAPADA   api: 500 filtra el error interno ⎯
+ATRAPADA   api: TOO_LARGE no es 413     ⎯⎯
+ATRAPADA   api: ve assets ajenos        ⎯⎯
+ATRAPADA   api: ready ignora la base    ⎯⎯
+ATRAPADA   api: x-request-id sin sanear ⎯⎯
+ATRAPADA   remediación: resolución hardcodeada
+atrapadas 129 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+exit 0
+
+=== smoke: pnpm --filter @trust/platform-api smoke (curl real contra createServer) ===
+
+### health
+$ curl $API/health
+{"status":"ok"}
+HTTP 200
+
+
+### ready
+$ curl $API/ready
+{"status":"ready","checks":{"database":"ok","storage":"ok","media":"ok"}}
+HTTP 200
+
+
+### upload READY
+$ curl -H X-Dev-Actor: <USER_UUID> -H Idempotency-Key: smoke-ready-0001 -F surfaceType=horizontal -F file=@<fixtures>/valid_horizontal_30.mp4;type=video/mp4 $API/api/v1/assets
+{"id":"23a6e08c-d944-4fd1-8853-4813345a7e4f","status":"READY","surfaceType":"horizontal","originalFilename":"valid_horizontal_30.mp4","sha256":"9a831948ce482c1dbcb62a9f6ad9c1965f0e0d6fa6a23a4e83b936d2c683fd48","sizeBytes":1532803,"mimeType":"video/mp4","container":"MP4","width":1920,"height":412,"fps":30,"codec":"H264","durationMs":2000,"storedObjectId":"65b2b03f-ba36-4821-8e26-25360678d9e0","rejection":null}
+HTTP 201
+
+
+### retry con la misma key (replay)
+$ curl -i -H X-Dev-Actor: <USER_UUID> -H Idempotency-Key: smoke-ready-0001 -F surfaceType=horizontal -F file=@<fixtures>/valid_horizontal_30.mp4;type=video/mp4 $API/api/v1/assets
+HTTP/1.1 100 Continue
+
+HTTP/1.1 200 OK
+idempotent-replayed: true
+content-type: application/json; charset=utf-8
+x-request-id: ba73990a-8ff5-4ef0-a0c1-5e2b705f6328
+cache-control: no-store
+x-content-type-options: nosniff
+content-length: 412
+Date: Wed, 07 Oct 2026 08:17:05 GMT
+Connection: keep-alive
+Keep-Alive: timeout=72
+
+{"id":"23a6e08c-d944-4fd1-8853-4813345a7e4f","status":"READY","surfaceType":"horizontal","originalFilename":"valid_horizontal_30.mp4","sha256":"9a831948ce482c1dbcb62a9f6ad9c1965f0e0d6fa6a23a4e83b936d2c683fd48","sizeBytes":1532803,"mimeType":"video/mp4","container":"MP4","width":1920,"height":412,"fps":30,"codec":"H264","durationMs":2000,"storedObjectId":"65b2b03f-ba36-4821-8e26-25360678d9e0","rejection":null}
+HTTP 200
+
+
+### upload REJECTED (29.97 fps)
+$ curl -H X-Dev-Actor: <USER_UUID> -H Idempotency-Key: smoke-reject-0001 -F surfaceType=horizontal -F file=@<fixtures>/bad_fps_2997.mp4;type=video/mp4 $API/api/v1/assets
+{"code":"ASSET_BAD_FPS","message":"El framerate no es exactamente 25 o 30 fps.","details":{"asset":{"id":"e3138fc5-6bd8-486c-9cd5-fe461eef885d","status":"REJECTED","surfaceType":"horizontal","originalFilename":"bad_fps_2997.mp4","sha256":"475b8fc9d9aad995ddc2e5093bd80427a9f09a3a5506ef54abc2b74f66309bf4","sizeBytes":1529407,"mimeType":null,"container":null,"width":null,"height":null,"fps":null,"codec":null,"durationMs":null,"storedObjectId":null,"rejection":{"code":"ASSET_BAD_FPS","message":"El framerate no es exactamente 25 o 30 fps.","details":{"actual":"30000/1001","accepted":["25/1","30/1"]},"remediation":{"summary":"El framerate tiene que ser exactamente 25 o 30 fps (no 29,97 ni 23,976). Exportá a 30 fps.","ffmpeg":{"args":["-i","{input}","-map","0:V:0","-vf","scale=1920:412:flags=lanczos,setsar=1,fps=30","-c:v","libx264","-pix_fmt","yuv420p","-an","-sn","-dn","-movflags","+faststart","-f","mp4","{output}"],"displayCommand":"ffmpeg -i {input} -map 0:V:0 -vf scale=1920:412:flags=lanczos,setsar=1,fps=30 -c:v libx264 -pix_fmt yuv420p -an -sn -dn -movflags +faststart -f mp4 {output}"}}}}},"requestId":"31eac979-05d2-482f-93ad-b31ad50f9970"}
+HTTP 422
+
+
+### sin actor
+$ curl $API/api/v1/assets
+{"code":"UNAUTHENTICATED","message":"Se requiere un actor autenticado.","requestId":"c70d41e0-8008-43b1-8e22-689ea5ef59a2"}
+HTTP 401
+
+
+=== E2E M2C ===
+no ejecutado verde en este entorno (sin Chrome con H.264): evidencia = job e2e-m2c del CI sobre el HEAD del PR.
+
+=== S3/MinIO · Docker Compose ===
+no ejecutados (sin MinIO ni Docker).

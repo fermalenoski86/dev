@@ -872,3 +872,13 @@ misma Idempotency-Key recupera. El Asset se crea después del stream para que el
 fingerprint incluya el sha256 del contenido. La migración 0002 hace cumplir en
 PostgreSQL la consistencia READY ↔ StoredObject (sha256, tamaño, MIME) y la
 lista cerrada de `rejection_code`. Detalle: `docs/platform/ASSETS.md`.
+
+## ADR-056 — platform-api: upload en una solicitud, identidad enchufable
+**Fecha:** 2026-10 · **Estado:** propuesto (auditoría B4) · **Origen:** M3A.1 Fase B4
+Fastify 5 en `apps/platform-api`. Upload multipart en UNA solicitud (campos
+antes del archivo) con Idempotency-Key obligatoria: la idempotencia por
+contenido de B3 hace innecesario un `uploads`+`finalize`. Rechazos con HTTP
+coherente (413/415/422/503) y contrato `{code,message,details?,requestId}`;
+remediación derivada de la autoridad (BL-03). Identidad por `ActorProvider`:
+hoy solo `DevelopmentActorProvider` (DEV ONLY, se niega en producción); Fase C
+lo reemplaza sin tocar rutas. Detalle: `docs/platform/API.md`.

@@ -70,6 +70,13 @@ export interface UploadInput {
   idempotencyKey?: string;
   requiredDurationMs?: number;
   signal?: AbortSignal;
+  /**
+   * Se llama cuando el cuerpo terminó de llegar al temporal y ANTES de crear
+   * el Asset o reservar la Idempotency-Key. Si lanza, no queda nada: ni Asset,
+   * ni key, ni temporal. La API lo usa para validar lo que viene después del
+   * archivo en el multipart (auditoría B4 #1).
+   */
+  afterBody?: () => Promise<void>;
 }
 
 export type AssetStatus = 'UPLOADING' | 'VALIDATING' | 'READY' | 'REJECTED';
@@ -117,6 +124,7 @@ export class AssetUploadService {
     const tempId = randomUUID(); // nunca deriva del nombre del archivo
     try {
       const recibido = await this.recibir(tempId, input.body);
+      if (input.afterBody) await input.afterBody();
       const run = () => this.procesar({ ...input, surfaceType, originalFilename }, tempId, recibido);
       if (!input.idempotencyKey) return { asset: await run(), replayed: false };
       const fingerprint = requestFingerprint(UPLOAD_OPERATION, {

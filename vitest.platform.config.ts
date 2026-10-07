@@ -7,7 +7,7 @@ import { defineConfig } from 'vitest/config';
  */
 export default defineConfig({
   test: {
-    include: ['packages/platform-*/src/**/*.db.test.ts'],
+    include: ['packages/platform-*/src/**/*.db.test.ts', 'apps/platform-api/src/**/*.db.test.ts'],
     environment: 'node',
     testTimeout: 60_000,
     hookTimeout: 60_000,
