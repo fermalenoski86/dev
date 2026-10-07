@@ -6,8 +6,32 @@ un brief escrito por Fer para Fase C**: este documento no agrega requisitos.
 Solo ordena los del master en checkpoints y deja marcado lo que el master no
 decide. Cada punto cita su sección.
 
-**Propuesto por Claude el 2026-10-07 para acordar con el auditor antes de
-implementar.** Lo que quede marcado ❓ va a `decisión-producto` si no hay acuerdo.
+**Propuesto por Claude el 2026-10-07; aprobado por el auditor el mismo día con
+las decisiones de abajo** (comentario en el PR #7). Los ❓ originales quedan
+resueltos por esas decisiones; ver ADR-057.
+
+### Decisiones del auditor (vinculantes)
+
+1. **C3 (submit) es parte de Fase C**, testeado sobre un Draft persistido por
+   fixture/servicio, sin UI.
+2. **Evidencia:** `POST /show-versions/:id/evidence`, límite configurable, hash
+   por stream; detección por **bytes reales** con allowlist cerrada (OTHER solo
+   para tipos inertes documentados); se sirve siempre como descarga
+   (`Content-Disposition: attachment`, `nosniff`). Tests de MIME declarado falso,
+   tamaño y contenido rechazado.
+3. **Audit:** se aceptan `AUTH_LOGIN_SUCCEEDED` y `AUTH_LOGIN_FAILED`.
+   Inexistente → `actor_user_id = null`. La metadata nunca lleva email,
+   password, cookie, token ni IP cruda. El rate limit va antes de que crezca el audit.
+4. **Autorización C2:** rol + scope de contrato server-side en lectura de
+   ShowVersion, evidencia, approve y reject. Tests: INTERNAL_APPROVER fuera de
+   scope, EXTERNAL_APPROVER deshabilitado y acceso cruzado.
+5. **Sesiones y passwords:** token ≥128 bits, solo su hash persistido; rotación
+   en login y en cambio de privilegios; vencimiento y revocación server-side.
+   Cookie de producción `__Host-`, host-only, Secure, HttpOnly, SameSite=Lax,
+   Path=/. Argon2id con parámetros explícitos, al menos m=19 MiB / t=2 / p=1, y
+   benchmark reproducible registrado antes de elegir valores mayores.
+
+BL-10 se implementa después de tener actor real (C1); BL-11 sigue como spike aparte.
 
 Ya existe y NO se rehace (Fase A/B): las tablas `users`, `user_roles`,
 `sessions`, `approval_evidence` y `approvals`; el trigger de cuatro ojos; la
@@ -47,8 +71,11 @@ content-addressed; platform-api con `ActorProvider`. M2C.2 sigue congelado
 8. **Scope por contrato** (§24): el backend deriva los contratos visibles. El
    `contractId` que manda el cliente nunca autoriza nada. Tests de acceso
    cruzado.
-9. **Audit** (§27): `USER_CREATED`, `ROLE_CHANGED`, y login exitoso/fallido
-   ❓ (§27 no los lista; propongo `AUTH_LOGIN_FAILED` sin datos sensibles).
+9. **Audit** (§27): `USER_CREATED`, `ROLE_CHANGED`, `AUTH_LOGIN_SUCCEEDED` y
+   `AUTH_LOGIN_FAILED` (decisión 3).
+
+**Estado C1:** implementado en este PR; detalle en `docs/platform/AUTH.md` y
+`docs/reviews/M3A1_FASE_C1.md`.
 
 Gate C1: verify, build, PG, bootstrap, media, mutaciones (nuevas: hash
 Argon2id omitido, sesión sin expiración, CSRF omitido, rol ignorado,
@@ -57,13 +84,12 @@ evidencia independiente.
 
 ## C2 — Approval (§17–20, §28)
 
-1. **Evidencia** (§19): `POST /show-versions/:id/evidence` (o
-   `/approval-evidence` ❓) multipart, por el mismo storage content-addressed
+1. **Evidencia** (§19, decisión 2): `POST /show-versions/:id/evidence` multipart, por el mismo storage content-addressed
    que los Assets: hash incremental, límite, nombre como metadata. Inmutable
    (trigger existente). Tipos: EMAIL, PDF, MESSAGE, OTHER.
-   ❓ Validación de contenido por tipo: el master no pide inspección; propongo
-   un allowlist de MIME por magic bytes (PDF, `message/rfc822`, texto) sin
-   ejecutar nada.
+   Detección por bytes reales con allowlist cerrada (OTHER solo para tipos
+   inertes documentados), sin ejecutar nada; se sirve como descarga
+   (`Content-Disposition: attachment`, `nosniff`).
 2. **Aprobar / rechazar** (§17, §20): `POST /show-versions/:id/approve`
    (evidencia obligatoria) y `POST /show-versions/:id/reject` (motivo
    obligatorio). Requieren INTERNAL_APPROVER, o EXTERNAL_APPROVER del contrato
@@ -81,18 +107,18 @@ evidencia independiente.
 Gate C2: lo de C1 más las mutaciones de §46 (four eyes, approve sin
 evidencia, reject sin motivo, transición inválida, retry duplicado).
 
-## C3 — Submit ❓ (alcance a acordar)
+## C3 — Submit (dentro de Fase C, decisión 1)
 
 §17 dice que enviar exige preflight válido, compila server-side, crea la
 ShowVersion y congela el hash. Eso necesita leer el Draft de una Campaign
 (§8, §30 `/campaigns/:id/draft`), que es la frontera con **Fase D** (Builder
 repository integration, §31).
 
-Propuesta: **C3 = `POST /campaigns/:id/submit` sobre el Draft que ya está en
+Acordado: **C3 = `POST /campaigns/:id/submit` sobre el Draft que ya está en
 la base** (compilador y preflight existentes, `createShowVersion`,
 `VERSION_SUBMITTED`, Idempotency-Key), **sin** CRUD de Campaign ni
-sincronización del Builder, que quedan para D. Si el auditor o Fer prefieren
-mover submit entero a D, Fase C termina en C2.
+sincronización del Builder, que quedan para D. Se testea sobre un Draft
+persistido por fixture/servicio, sin UI.
 
 ## Fuera de alcance
 

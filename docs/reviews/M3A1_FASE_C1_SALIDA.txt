@@ -1,0 +1,155 @@
+M3A.1 Fase C1 — salida REAL de los gates (Claude, 2026-10-07T14:43Z)
+Rama fase/m3a1-c sobre 8262c83 (integra main@77ba536). Entorno: v22.22.0, pnpm 12.5.1, psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1), ffmpeg version 6.1.1-3ubuntu5
+
+=== pnpm install --frozen-lockfile ===
+✓ Lockfile passes supply-chain policies (verified 46m ago)
+Lockfile is up to date, resolution step is skipped
+Done in 28ms using pnpm v12.5.1
+
+=== pnpm verify ===
+✖ 11 problems (0 errors, 11 warnings)
+ Test Files  32 passed | 1 skipped (33)
+      Tests  625 passed | 1 skipped (626)
+verify=0
+
+=== pnpm build ===
+exit 0
+apps/control build: 
+apps/control build: Done
+
+=== PostgreSQL 16: npx vitest run -c vitest.platform.config.ts ===
+ ✓ packages/platform-db/src/schema.db.test.ts (31 tests) 906ms
+ ✓ apps/platform-api/src/api.db.test.ts (25 tests) 2437ms
+ ✓ packages/platform-assets/src/upload.db.test.ts (29 tests) 4462ms
+ ✓ apps/platform-api/src/auth.db.test.ts (14 tests) 1147ms
+ ✓ packages/platform-auth/src/auth.db.test.ts (12 tests) 785ms
+ ✓ packages/platform-audit/src/audit.db.test.ts (8 tests) 788ms
+ ✓ packages/platform-db/src/idempotency.db.test.ts (9 tests) 672ms
+ ✓ packages/platform-db/src/asset-consistency.db.test.ts (10 tests) 359ms
+ ↓ packages/platform-db/src/bootstrap.smoke.db.test.ts (6 tests | 6 skipped)
+ ✓ apps/platform-api/src/cli/user-create.db.test.ts (3 tests) 366ms
+ Test Files  9 passed | 1 skipped (10)
+      Tests  141 passed | 6 skipped (147)
+pg=0
+
+=== bootstrap-smoke.sh ===
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+boot=0
+
+=== media: npx vitest run -c vitest.media.config.ts ===
+ Test Files  3 passed (3)
+      Tests  63 passed (63)
+media=0
+
+=== benchmark Argon2id: pnpm --filter @trust/platform-auth bench:argon2 -- --runs 10 ===
+node v22.22.0 · Intel(R) Xeon(R) Processor @ 2.10GHz ×2 · 8 GiB · runs=10
+actual (OWASP mínimo)          hash p50=19.3ms p95=29.0ms · verify p50=20.0ms p95=29.2ms · m=19456,t=2,p=1
+m=46MiB t=1 p=1 (OWASP alt.)   hash p50=26.5ms p95=40.2ms · verify p50=26.6ms p95=39.9ms · m=47104,t=1,p=1
+m=64MiB t=3 p=1                hash p50=135.9ms p95=158.3ms · verify p50=126.9ms p95=142.9ms · m=65536,t=3,p=1
+
+=== mutaciones: python3 scripts/mutation-check.py (150 reglas, 19 nuevas de C1) ===
+Corrida completa:
+ATRAPADA   auth: Argon2id omitido (Argon2d)
+ATRAPADA   auth: parámetros Argon2 bajados
+ATRAPADA   auth: sesión sin expiración
+ATRAPADA   auth: sesión revocada sigue valiendo
+ATRAPADA   auth: usuario deshabilitado conserva sesión
+ATRAPADA   auth: CSRF omitido
+ATRAPADA   auth: CSRF de cualquier sesión
+ATRAPADA   auth: rol ignorado
+ATRAPADA   auth: external habilitado sin flag
+ATRAPADA   auth: cross-contract permitido
+ATRAPADA   auth: cambio de rol no revoca sesiones
+ATRAPADA   auth: login no rota la sesión previa
+ATRAPADA   auth: rate limit después del audit
+ATRAPADA   auth: rate limit apagado
+SOBREVIVE  auth: IPv6 por dirección completa
+ATRAPADA   auth: audit de login con email
+ATRAPADA   auth: cookie sin HttpOnly
+ATRAPADA   auth: login acepta no-JSON
+ATRAPADA   auth: logout no revoca
+atrapadas 149 · sobreviven 1 · sin salida 0
+GATE FALLIDO: HAY MUTANTES VIVOS O SUITES SIN SALIDA
+→ El mutante 'IPv6 por dirección completa' sobrevivió porque su comando corría solo los tests de PostgreSQL;
+  lo atrapa el test unitario rate-limit.test.ts. Se corrigió el comando de la regla y se re-corrió:
+$ python3 scripts/mutation-check.py --tanda 145:146
+ATRAPADA   auth: IPv6 por dirección completa
+      Tests  2 failed | 2 passed (4)
+atrapadas 1 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+Total: 150/150 atrapadas (149 en la corrida completa + la regla corregida). El CI corre las 150 juntas.
+
+=== E2E M2C (playwright, 14) ===
+NO corrido localmente: este entorno no tiene Chrome con H.264 (mismo límite que en B2–B4). Evidencia: job e2e-m2c del CI.
+
+=== smoke real con curl: pnpm --filter @trust/platform-api smoke ===
+$ tsx scripts/curl-smoke.ts
+### health
+$ curl $API/health
+{"status":"ok"}
+HTTP 200
+### ready
+$ curl $API/ready
+{"status":"ready","checks":{"database":"ok","storage":"ok","media":"ok"}}
+HTTP 200
+### sin sesión → 401
+$ curl $API/api/v1/assets
+{"code":"UNAUTHENTICATED","message":"Se requiere un actor autenticado.","requestId":"10e2377d-2db9-41a1-b616-325a842d1b18"}
+HTTP 401
+### login con password mala → 401
+$ curl -H content-type: application/json --data {"email":"smoke@trust.test","password":"no es la password"} $API/api/v1/auth/login
+{"code":"INVALID_CREDENTIALS","message":"Email o contraseña incorrectos.","requestId":"d217754a-094e-4888-b1cf-4514ac38336e"}
+HTTP 401
+### login (cookie jar)
+$ curl -c <jar> -H 'content-type: application/json' --data '{"email":"smoke@trust.test","password":"<PASSWORD>"}' $API/api/v1/auth/login
+{"user":{"id":"<USER_UUID>","name":"Smoke","email":"smoke@trust.test","organization":"Affinitas"},"roles":["OPERATOR"],"externalContractIds":[],"csrfToken":"<CSRF>","expiresAt":"2026-10-07T22:43:20.125Z"}
+### me
+$ curl -b <jar> $API/api/v1/auth/me
+{"user":{"id":"<USER_UUID>","name":"Smoke","email":"smoke@trust.test","organization":"Affinitas"},"roles":["OPERATOR"],"externalContractIds":[],"csrfToken":"<CSRF>","expiresAt":"2026-10-07T22:43:20.125Z"}
+HTTP 200
+### upload sin X-CSRF-Token → 403
+$ curl -b <jar> -H Idempotency-Key: smoke-nocsrf-0001 -F surfaceType=horizontal -F file=@<fixtures>/valid_horizontal_30.mp4;type=video/mp4 $API/api/v1/assets
+{"code":"CSRF_TOKEN_INVALID","message":"Falta el token CSRF o no corresponde a esta sesión.","requestId":"f8edb813-ba28-477b-992e-68ff333afc58"}
+HTTP 403
+### upload READY
+$ curl -b <jar> -H X-CSRF-Token: <CSRF> -H Idempotency-Key: smoke-ready-0001 -F surfaceType=horizontal -F file=@<fixtures>/valid_horizontal_30.mp4;type=video/mp4 $API/api/v1/assets
+{"id":"56e05abc-f19b-423f-8cbe-f2f553cb8529","status":"READY","surfaceType":"horizontal","originalFilename":"valid_horizontal_30.mp4","sha256":"9a831948ce482c1dbcb62a9f6ad9c1965f0e0d6fa6a23a4e83b936d2c683fd48","sizeBytes":1532803,"mimeType":"video/mp4","container":"MP4","width":1920,"height":412,"fps":30,"codec":"H264","durationMs":2000,"storedObjectId":"bd26b449-f2fa-482d-b4f9-a66340422334","rejection":null}
+HTTP 201
+### retry con la misma key (replay)
+$ curl -i -b <jar> -H X-CSRF-Token: <CSRF> -H Idempotency-Key: smoke-ready-0001 -F surfaceType=horizontal -F file=@<fixtures>/valid_horizontal_30.mp4;type=video/mp4 $API/api/v1/assets
+HTTP/1.1 100 Continue
+
+HTTP/1.1 200 OK
+idempotent-replayed: true
+content-type: application/json; charset=utf-8
+x-request-id: 4066a6de-61db-4ea0-9daf-ccfe8c747a80
+cache-control: no-store
+x-content-type-options: nosniff
+content-length: 412
+Date: Wed, 07 Oct 2026 14:43:20 GMT
+Connection: keep-alive
+Keep-Alive: timeout=72
+
+{"id":"56e05abc-f19b-423f-8cbe-f2f553cb8529","status":"READY","surfaceType":"horizontal","originalFilename":"valid_horizontal_30.mp4","sha256":"9a831948ce482c1dbcb62a9f6ad9c1965f0e0d6fa6a23a4e83b936d2c683fd48","sizeBytes":1532803,"mimeType":"video/mp4","container":"MP4","width":1920,"height":412,"fps":30,"codec":"H264","durationMs":2000,"storedObjectId":"bd26b449-f2fa-482d-b4f9-a66340422334","rejection":null}
+HTTP 200
+### upload REJECTED (29.97 fps)
+$ curl -b <jar> -H X-CSRF-Token: <CSRF> -H Idempotency-Key: smoke-reject-0001 -F surfaceType=horizontal -F file=@<fixtures>/bad_fps_2997.mp4;type=video/mp4 $API/api/v1/assets
+{"code":"ASSET_BAD_FPS","message":"El framerate no es exactamente 25 o 30 fps.","details":{"asset":{"id":"ff43b48c-67d3-4ae5-bbb4-bb5b741bdd34","status":"REJECTED","surfaceType":"horizontal","originalFilename":"bad_fps_2997.mp4","sha256":"475b8fc9d9aad995ddc2e5093bd80427a9f09a3a5506ef54abc2b74f66309bf4","sizeBytes":1529407,"mimeType":null,"container":null,"width":null,"height":null,"fps":null,"codec":null,"durationMs":null,"storedObjectId":null,"rejection":{"code":"ASSET_BAD_FPS","message":"El framerate no es exactamente 25 o 30 fps.","details":{"actual":"30000/1001","accepted":["25/1","30/1"]},"remediation":{"summary":"El framerate tiene que ser exactamente 25 o 30 fps (no 29,97 ni 23,976). Exportá a 30 fps.","ffmpeg":{"args":["-i","{input}","-map","0:V:0","-vf","scale=1920:412:flags=lanczos,setsar=1,fps=30","-c:v","libx264","-pix_fmt","yuv420p","-an","-sn","-dn","-movflags","+faststart","-f","mp4","{output}"],"displayCommand":"ffmpeg -i {input} -map 0:V:0 -vf scale=1920:412:flags=lanczos,setsar=1,fps=30 -c:v libx264 -pix_fmt yuv420p -an -sn -dn -movflags +faststart -f mp4 {output}"}}}}},"requestId":"36c04970-5fd0-4e74-aa86-d63a2df93ca2"}
+HTTP 422
+### logout
+$ curl -i -b <jar> -H X-CSRF-Token: <CSRF> -c <jar> -X POST $API/api/v1/auth/logout
+HTTP/1.1 204 No Content
+set-cookie: trust_session=; Max-Age=0; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax
+x-request-id: ef5559f5-9dc2-408f-94ce-a1e5ca998349
+cache-control: no-store
+x-content-type-options: nosniff
+Date: Wed, 07 Oct 2026 14:43:20 GMT
+Connection: keep-alive
+Keep-Alive: timeout=72
+
+HTTP 204
+### me después del logout → 401
+$ curl -b <jar> $API/api/v1/auth/me
+{"code":"UNAUTHENTICATED","message":"Se requiere un actor autenticado.","requestId":"386b11f2-ac3d-43c4-b57b-83bdcd4bd52a"}
+HTTP 401

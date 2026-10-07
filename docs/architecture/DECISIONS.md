@@ -882,3 +882,20 @@ coherente (413/415/422/503) y contrato `{code,message,details?,requestId}`;
 remediación derivada de la autoridad (BL-03). Identidad por `ActorProvider`:
 hoy solo `DevelopmentActorProvider` (DEV ONLY, se niega en producción); Fase C
 lo reemplaza sin tocar rutas. Detalle: `docs/platform/API.md`.
+
+## ADR-057 — Auth y roles: sesión server-side, CSRF atado a la sesión, scope por contrato
+**Fecha:** 2026-10 · **Estado:** propuesto (auditoría C1) · **Origen:** M3A.1 Fase C1 + decisiones del auditor sobre el brief C
+`@trust/platform-auth`. Passwords Argon2id (`@node-rs/argon2`) con parámetros
+explícitos m=19 MiB/t=2/p=1 (mínimo OWASP); subirlos exige el benchmark
+reproducible `bench:argon2` en la infraestructura real. Sesión server-side en
+`sessions`: token de 256 bits, en la base solo su sha256; vencimiento absoluto
+del servidor; revocable; nueva en cada login (revoca la previa) y todas
+revocadas en un cambio de roles. CSRF = HMAC(token, "trust-csrf-v1"),
+exigido en `X-CSRF-Token` en toda mutación con sesión. Cookie HttpOnly,
+SameSite=Lax, Path=/, sin Domain; en producción `__Host-trust_session` y
+Secure. Rate limit de login por email y por dirección (IPv6 /64) ANTES de
+Argon2 y del audit; `AUTH_LOGIN_SUCCEEDED`/`AUTH_LOGIN_FAILED` sin email, IP,
+password, cookie ni token (inexistente → actor null). Roles efectivos y
+contratos externos los deriva el backend; EXTERNAL_APPROVER solo cuenta con el
+flag global y el contrato habilitados. Alta de usuarios solo por CLI. El
+provider DEV queda solo para tests. Detalle: `docs/platform/AUTH.md`.

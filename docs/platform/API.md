@@ -26,8 +26,8 @@ Una solicitud `multipart/form-data`: **primero los campos**, después el archivo
 | `requiredDurationMs` | no | entero 1…3 600 000 |
 | `file` | sí | el archivo; fluye por stream al temporal |
 
-Headers: `Idempotency-Key` (obligatorio, 8–200 ASCII visibles) y, en
-desarrollo, `X-Dev-Actor`. Cualquier otro campo → 400. **`file` es la última
+Headers: `Idempotency-Key` (obligatorio, 8–200 ASCII visibles), la cookie de
+sesión y `X-CSRF-Token` (C1, ver AUTH.md). Cualquier otro campo → 400. **`file` es la última
 parte**: un campo o un segundo archivo después de `file` → 400
 `VALIDATION_ERROR`. El archivo fluye al temporal mientras llega; antes de crear
 el Asset o reservar la Idempotency-Key se lee el resto del multipart, y si trae
@@ -46,13 +46,16 @@ arma en memoria: la prueba "upload por HTTP real" sube con `fetch` desde un
 `Blob` leído del disco.
 
 ```bash
-curl -H "X-Dev-Actor: $USER_UUID" -H "Idempotency-Key: campania-42-master-v1" \
+curl -c jar -H 'content-type: application/json' \
+     --data '{"email":"ana@affinitas.com","password":"…"}' http://127.0.0.1:4000/api/v1/auth/login   # → csrfToken
+curl -b jar -H "X-CSRF-Token: $CSRF" -H "Idempotency-Key: campania-42-master-v1" \
      -F surfaceType=horizontal -F "file=@master.mp4;type=video/mp4" \
      http://127.0.0.1:4000/api/v1/assets
 ```
 
-Salida real de estos comandos (READY, replay, REJECTED, 401):
-`pnpm --filter @trust/platform-api smoke`, copiada en `docs/reviews/M3A1_FASE_B4_SALIDA.txt`.
+Salida real de estos comandos (login, CSRF, READY, replay, REJECTED, logout, 401):
+`pnpm --filter @trust/platform-api smoke`, copiada en `docs/reviews/M3A1_FASE_C1_SALIDA.txt`
+(la de B4, con `X-Dev-Actor`, queda en `M3A1_FASE_B4_SALIDA.txt`).
 
 ## Mapeo HTTP del resultado
 
@@ -81,17 +84,17 @@ transcodificando, `ffmpeg.args` (arreglo con los marcadores `{input}` y
 deriva de la misma autoridad que valida; un test real aplica la receta a cada
 fixture rechazable y el resultado pasa `checkMedia`.
 
-## Identidad (§19) — DEV ONLY
+## Identidad (§19) — sesión desde C1
 
-`RequestActor { userId, source }` lo resuelve un `ActorProvider`. Hoy existe solo
-`DevelopmentActorProvider`: lee `X-Dev-Actor`, exige un usuario **existente y
-habilitado** en la base y, si no, 401. No hay UUID por defecto. `createServer`
-se niega a arrancar con `NODE_ENV=production` o sin
-`TRUST_DEV_ACTOR_PROVIDER=enabled`. Fase C reemplaza el provider por sesión real
-sin tocar rutas ni servicios.
+`RequestActor { userId, source, roles, externalContractIds, session? }` lo
+resuelve un `ActorProvider`. Desde C1 `createServer` usa **solo**
+`SessionActorProvider` (cookie de sesión server-side, CSRF en mutaciones, roles
+derivados en el backend): ver `docs/platform/AUTH.md`. `DevelopmentActorProvider`
+(`X-Dev-Actor`) queda solo para tests. Las rutas de Assets exigen OPERATOR o
+ADMIN (403 `FORBIDDEN`).
 
-Visibilidad hasta Fase C: un actor ve solo los Assets que creó; lo ajeno es 404
-(no 403, para no revelar existencia).
+Visibilidad: un actor ve solo los Assets que creó; lo ajeno es 404 (no 403,
+para no revelar existencia).
 
 ## Observabilidad (§23)
 
@@ -99,7 +102,7 @@ Logs JSON (pino). `requestId` por request: el `X-Request-Id` del cliente si es
 seguro (`[A-Za-z0-9._-]{8,128}`), si no un UUID; vuelve en el header y en todo
 error. El upload registra `assetId, requestId, bytes, durationMs, result,
 rejection, replayed, filename` (versión `displayFilename`). Se redactan
-`authorization`, `cookie`, `x-dev-actor` e `idempotency-key`; nunca se loggea
+`authorization`, `cookie`, `x-dev-actor`, `x-csrf-token`, `set-cookie` e `idempotency-key`; nunca se loggea
 el contenido del archivo.
 
 ## Docker Compose (§35)

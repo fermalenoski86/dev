@@ -9,11 +9,14 @@
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
     "build": "echo source-only app B4: se ejecuta con tsx",
-    "smoke": "tsx scripts/curl-smoke.ts"
+    "smoke": "tsx scripts/curl-smoke.ts",
+    "user:create": "tsx scripts/user-create.ts"
   },
   "dependencies": {
+    "@fastify/cookie": "11.0.2",
     "@fastify/multipart": "9.2.1",
     "@trust/platform-assets": "workspace:*",
+    "@trust/platform-auth": "workspace:*",
     "@trust/platform-contracts": "workspace:*",
     "@trust/platform-db": "workspace:*",
     "@trust/platform-media": "workspace:*",
