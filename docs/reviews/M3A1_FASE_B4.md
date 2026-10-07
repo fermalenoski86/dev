@@ -3,9 +3,11 @@
 **Estado:** entregado para auditoría. **Fase C no iniciada.** B1/B1.1, B2 y B3
 sin cambios de arquitectura; M2C.2 sin tocar.
 
-**Rama:** `fase/m3a1-b4`, apilada sobre `fase/m3a1-b3` (PR #3, **aprobado y sin
-mergear**: el merge desde el entorno de Claude está denegado por permisos).
-El PR apunta a `fase/m3a1-b3` para que el diff muestre solo B4.
+**Rama:** `fase/m3a1-b4` · PR #5 contra `main` (B3 ya mergeada en `decbb00`;
+la rama integra ese squash en `d9eb28e`, así que el diff muestra solo B4).
+
+**CI independiente sobre `d9eb28e`:** verify-build, postgres, media, mutations y
+e2e-m2c en verde — https://github.com/fermalenoski86/dev/actions/runs/37595789039
 
 ## Resultados (ejecución real, 2026-10-07, este entorno)
 
@@ -21,8 +23,8 @@ Node 22.22.0 · pnpm 12.5.1 · PostgreSQL 16.15 · ffmpeg 6.1.1. Salida completa
 | Bootstrap | 6/6 |
 | Media real | **63/63** (B4: 10 recetas de remediación con ffmpeg real) |
 | Smoke con curl real contra `createServer()` | READY 201 · replay 200 · REJECTED 422 · sin actor 401 |
-| Mutaciones | ver SALIDA (129 reglas: 121 previas + 8 de B4) |
-| E2E M2C | no ejecutado verde acá (sin Chrome H.264); evidencia = job `e2e-m2c` del CI sobre el HEAD |
+| Mutaciones | **129/129 ATRAPADAS** (121 previas + 8 de B4); job `mutations` del CI verde |
+| E2E M2C | no ejecutado verde acá (sin Chrome H.264); job `e2e-m2c` del CI verde sobre `d9eb28e` |
 | S3/MinIO, Docker Compose | **no ejecutados** (sin MinIO ni Docker) |
 
 ## Criterio de aceptación de Fase B (§42)
