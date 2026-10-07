@@ -1,8 +1,8 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor) — revisar el brief de Fase C en el PR [#7](https://github.com/fermalenoski86/dev/pull/7) (`docs/briefs/M3A1_FASE_C.md`, HEAD `82d7a41`). Responder con `AUDIT: APROBADO` del brief o ajustes; los ❓ sin acuerdo van a `decisión-producto`. Además: mergear #5 (B4 aprobada; el merge está denegado en el entorno de Claude).
-**Fase:** M3A.1 Fase C — auth, roles, approval (brief en acuerdo, sin código todavía)
-**Estado:** B4 y Fase B aprobadas en #5 (`AUDIT: APROBADO` sobre `3311097`, https://github.com/fermalenoski86/dev/pull/5#issuecomment-6037450237) — falta el merge (squash) y la etiqueta `m3a1-b4`. Fase C no tiene brief de Fer: Claude propone uno derivado del master (§17–24) con checkpoints C1 auth/roles, C2 approval, C3 submit (❓ frontera con Fase D). BL-10/BL-11 registradas en BACKLOG (en #7) con los ajustes del auditor. Pendientes de Fer/auditor: issues #4 y #6 sin cerrar; etiquetas m3a1-b2/b3/b4.
+**Pelota en:** Claude (implementador) — sincronizar el PR [#7](https://github.com/fermalenoski86/dev/pull/7) con `main`, incorporar las decisiones de la aprobación del brief y comenzar C1 (auth + roles). Aprobación: https://github.com/fermalenoski86/dev/pull/7#issuecomment-6039457437. Al entregar código, actualizar este HANDOFF en `main` con PR/HEAD exacto y devolver la pelota a ChatGPT.
+**Fase:** M3A.1 Fase C1 — auth y roles (brief aprobado; implementación a cargo de Claude)
+**Estado:** Brief C aprobado sobre `811950d1790ee7f33c8baa738527631a224f734e` con decisiones vinculantes: C3/submit queda en Fase C; evidencia en ruta por ShowVersion con allowlist/attachment; audit de login sin sensibles; scope por contrato en C2; sesiones ≥128 bits y Argon2id parametrizado/benchmark. Merge-tree con main limpio, pero GitHub mostraba `mergeable=false`: sincronizar antes de codificar. Issues #4 y #6 ya fueron cerrados por ChatGPT. Tags m3a1-b2/b3/b4 siguen pendientes de autorización explícita de Fer. No iniciar C2 hasta aprobar C1.
 
 ## Objetivo autorizado por Fer — 2026-10-06
 Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
@@ -106,8 +106,17 @@ B4 — API foundation: Fastify, `/health`, `/ready`, rutas de Asset, actor tempo
 ## Siguiente fase activa
 Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, Scheduler, EDGE ni Deploy.
 
+## Decisión del brief C — 2026-10-07
+- Aprobación: https://github.com/fermalenoski86/dev/pull/7#issuecomment-6039457437
+- C1: auth, sesiones, CSRF, roles y scope por contrato.
+- C2: evidencia y approve/reject con cuatro ojos.
+- C3: submit server-side sobre Draft persistido; Builder sync permanece en Fase D.
+- Fuentes de seguridad: OWASP Password Storage, Session Management y CSRF Prevention Cheat Sheets.
+- PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
+
 ## Historial
-- 2026-10-07 12:10 UTC — Claude: B4 aprobada (sin merge por permisos); brief de Fase C derivado del master en PR #7 para acordar antes de codificar; BL-10/BL-11 registradas. Pelota a ChatGPT.
+- 2026-10-07 — ChatGPT: aprueba el brief C con decisiones de seguridad/alcance y devuelve pelota a Claude para C1.
+- 2026-10-07 12:10 UTC — Claude: B4 mergeada por ChatGPT; brief de Fase C derivado del master en PR #7 para acordar antes de codificar; BL-10/BL-11 registradas. Pelota a ChatGPT.
 - 2026-10-07 — ChatGPT: aprueba B4, mergea PR #5 en `0341d15`, habilita Fase C y devuelve pelota a Claude.
 - 2026-10-07 10:50 UTC — Claude: respuesta a AUDIT: CAMBIOS #1 de B4 (partes multipart posteriores a `file` → 400), CI verde sobre 3311097; pelota a ChatGPT.
 - 2026-10-07 — ChatGPT: B4 `AUDIT: CAMBIOS` sobre `2de5883`; P1 multipart posterior a `file` no validado. Auditor local: verify 621+1, build y media63; CI equivalente cubre PG/bootstrap/mutaciones/E2E. Pelota a Claude; Fase C bloqueada.
