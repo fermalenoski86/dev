@@ -1,8 +1,8 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador) — sincronizar el PR [#7](https://github.com/fermalenoski86/dev/pull/7) con `main`, incorporar las decisiones de la aprobación del brief y comenzar C1 (auth + roles). Aprobación: https://github.com/fermalenoski86/dev/pull/7#issuecomment-6039457437. Al entregar código, actualizar este HANDOFF en `main` con PR/HEAD exacto y devolver la pelota a ChatGPT.
-**Fase:** M3A.1 Fase C1 — auth y roles (brief aprobado; implementación a cargo de Claude)
-**Estado:** Brief C aprobado sobre `811950d1790ee7f33c8baa738527631a224f734e` con decisiones vinculantes: C3/submit queda en Fase C; evidencia en ruta por ShowVersion con allowlist/attachment; audit de login sin sensibles; scope por contrato en C2; sesiones ≥128 bits y Argon2id parametrizado/benchmark. Merge-tree con main limpio, pero GitHub mostraba `mergeable=false`: sincronizar antes de codificar. Issues #4 y #6 ya fueron cerrados por ChatGPT. Tags m3a1-b2/b3/b4 siguen pendientes de autorización explícita de Fer. No iniciar C2 hasta aprobar C1.
+**Pelota en:** ChatGPT (auditor) — auditar C1 en el PR [#7](https://github.com/fermalenoski86/dev/pull/7), HEAD exacto `926b91103db0b1033acc391db819960d747a53e7`, CI verde https://github.com/fermalenoski86/dev/actions/runs/37639230161. Entrega: https://github.com/fermalenoski86/dev/pull/7#issuecomment-6040759971. Responder `AUDIT: APROBADO` o `AUDIT: CAMBIOS`.
+**Fase:** M3A.1 Fase C1 — auth y roles (entregada para auditoría; C2 no iniciada)
+**Estado:** C1 implementada en `fase/m3a1-c`: `@trust/platform-auth` (Argon2id m19/t2/p1 + benchmark, sesiones server-side de 256 bits con solo el hash persistido, CSRF HMAC, rotación en login y en cambio de roles, rate limit antes de Argon2 y del audit, `AUTH_LOGIN_*` sin datos sensibles, scope por contrato, EXTERNAL_APPROVER apagado), `/api/v1/auth/*`, Assets con OPERATOR/ADMIN, CLI `user:create`, ADR-057, 19 mutaciones nuevas (150/150). E2E local no corrido (sin Chrome con H.264); la evidencia es el CI. Tags m3a1-b2/b3/b4 siguen pendientes de autorización explícita de Fer. No iniciar C2 hasta aprobar C1.
 
 ## Objetivo autorizado por Fer — 2026-10-06
 Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
@@ -115,6 +115,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-07 15:15 UTC — Claude: C1 (auth, sesiones, CSRF, roles, scope) entregada en PR #7 @926b911, CI verde; decisiones del auditor incorporadas al brief y ADR-057. Pelota a ChatGPT.
 - 2026-10-07 — ChatGPT: aprueba el brief C con decisiones de seguridad/alcance y devuelve pelota a Claude para C1.
 - 2026-10-07 12:10 UTC — Claude: B4 mergeada por ChatGPT; brief de Fase C derivado del master en PR #7 para acordar antes de codificar; BL-10/BL-11 registradas. Pelota a ChatGPT.
 - 2026-10-07 — ChatGPT: aprueba B4, mergea PR #5 en `0341d15`, habilita Fase C y devuelve pelota a Claude.
