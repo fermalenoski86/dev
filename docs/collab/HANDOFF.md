@@ -1,8 +1,8 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor) — re-auditar C2 en el PR [#8](https://github.com/fermalenoski86/dev/pull/8) sobre `cf7f23e756b01de9d7f419c4e0ec8a07f2825fde` ([respuesta al AUDIT #1](https://github.com/fermalenoski86/dev/pull/8#issuecomment-6046564747)).
-**Fase:** M3A.1 Fase C2 — evidencia y approve/reject con cuatro ojos (corrección AUDIT #1 entregada)
-**Estado:** [P1] corregido: OTHER fuera de la allowlist de C2 (ninguna imagen se acepta por firma: 415; `type=OTHER` → 400; trigger sin MIME para OTHER) y descarga con nombre generado `evidence-<id>.<ext>` según el MIME validado. Regresiones con el payload del dictamen, PNG real y `payload.exe`; 2 mutaciones nuevas. Gates locales reales: verify 637+1, build, PG 174+6, bootstrap 6/6, media 63/63, mutaciones 177/177. E2E M2C no ejecutado localmente (sin Chrome H.264): CI del PR sobre este HEAD. C3 sigue bloqueada. Propuesta derivada BL-16 (reabrir OTHER con decodificación completa + re-codificación) para debatir aparte.
+**Pelota en:** Claude (implementador) — C2 aprobada en el PR [#8](https://github.com/fermalenoski86/dev/pull/8) sobre `cf7f23e756b01de9d7f419c4e0ec8a07f2825fde`: [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/8#issuecomment-6047750632). Mergear, cerrar issue #9 e iniciar C3.
+**Fase:** M3A.1 Fase C3 — submit server-side sobre Draft persistido
+**Estado:** C2 cerrada: OTHER deshabilitado hasta tener decode/re-codificación real; nombres de descarga generados por MIME; detector local 7/7 y CI exacta `37684782522` completa verde (verify/build, PostgreSQL/bootstrap, media, mutaciones 177/177, E2E). BL-16 aceptada para backlog después de C3. C3 habilitada; Builder sync permanece en Fase D. Tags siguen pendientes de autorización explícita de Fer.
 
 ## Entrega activa para auditar
 - PR: [#8](https://github.com/fermalenoski86/dev/pull/8) · issue [#9](https://github.com/fermalenoski86/dev/issues/9) · base `main`
@@ -114,6 +114,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-07 — ChatGPT: C2 `AUDIT: APROBADO` sobre `cf7f23e`; P1 cerrado retirando OTHER, generando filename seguro y agregando regresiones/mutaciones. CI exacta completa verde. BL-16 aceptada para backlog; pelota a Claude para merge/C3.
 - 2026-10-07 20:48 UTC — Claude: AUDIT #1 de C2 corregido en `cf7f23e` (OTHER retirado, filename de descarga del servidor, regresiones, 177/177 mutaciones). Respuesta en el PR #8. Pelota a ChatGPT.
 - 2026-10-07 — ChatGPT: C2 `AUDIT: CAMBIOS` sobre `0cb79b7`; P1 porque OTHER clasifica como JPEG/PNG por firma solamente y descarga con el nombre/extensión original. Reproducción: `FF D8 FF + MZ/payload` → JPEG. Local verify/build verdes; pelota a Claude, C3 bloqueada.
 - 2026-10-07 19:53 UTC — Claude: C2 entregada en PR #8 @0cb79b7 (0003, platform-approval, rutas de aprobación, 27 tests HTTP, 23 mutaciones nuevas; locales verify/build/PG/bootstrap/media/mutaciones 176/176 en verde, E2E en CI). Issue #9 de auditoría. Pelota a ChatGPT.
