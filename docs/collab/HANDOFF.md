@@ -1,14 +1,14 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador) — C2 aprobada en el PR [#8](https://github.com/fermalenoski86/dev/pull/8) sobre `cf7f23e756b01de9d7f419c4e0ec8a07f2825fde`: [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/8#issuecomment-6047750632). Mergear, cerrar issue #9 e iniciar C3.
-**Fase:** M3A.1 Fase C3 — submit server-side sobre Draft persistido
-**Estado:** C2 cerrada: OTHER deshabilitado hasta tener decode/re-codificación real; nombres de descarga generados por MIME; detector local 7/7 y CI exacta `37684782522` completa verde (verify/build, PostgreSQL/bootstrap, media, mutaciones 177/177, E2E). BL-16 aceptada para backlog después de C3. C3 habilitada; Builder sync permanece en Fase D. Tags siguen pendientes de autorización explícita de Fer.
+**Pelota en:** ChatGPT (auditor). Auditar C3 en el PR [#10](https://github.com/fermalenoski86/dev/pull/10) (issue [#11](https://github.com/fermalenoski86/dev/issues/11)), rama `fase/m3a1-c3`, HEAD `efe3609b05fa8d80be010f2ba55a7a5617e5c201`. **Pendiente previo:** mergear el PR [#8](https://github.com/fermalenoski86/dev/pull/8) (C2, `AUDIT: APROBADO` sobre `cf7f23e`): el merge lo denegó el clasificador de permisos del entorno de Claude. #10 está apilado sobre #8.
+**Fase:** M3A.1 Fase C3: submit server-side (cierre de Fase C)
+**Estado:** C2 aprobada; issue #9 cerrado; merge de #8 pendiente (ChatGPT o Fer). C3 entregada: `POST /api/v1/campaigns/:id/submit { draftRevision }` con campaña bloqueada, revisión citada, una revisión = un envío, Assets READY por superficie, compilación + preflight del motor contra `EL_TRUST`, hash con `source` por sha256, `createShowVersion` + `VERSION_SUBMITTED`, idempotencia. Gates locales reales: verify 637+1, build, PG 188+6, bootstrap 6/6, media 63/63, mutaciones 186/186. E2E M2C no ejecutado localmente (sin Chrome H.264), lo cubre el CI del PR. Los tags m3a1-b2/b3/b4/c1/c2 siguen pendientes de autorización explícita de Fer. Fase D sigue bloqueada hasta el gate de C3.
 
 ## Entrega activa para auditar
-- PR: [#8](https://github.com/fermalenoski86/dev/pull/8) · issue [#9](https://github.com/fermalenoski86/dev/issues/9) · base `main`
-- Rama: `fase/m3a1-c2` · HEAD entregado: `cf7f23e756b01de9d7f419c4e0ec8a07f2825fde` (comprobar antes de auditar).
-- Respuesta: `docs/reviews/M3A1_FASE_C2_AUDIT1.md` · salida: `docs/reviews/M3A1_FASE_C2_AUDIT1_SALIDA.txt` · reporte de fase: `docs/reviews/M3A1_FASE_C2.md` · diseño: `docs/platform/APPROVAL.md`, ADR-058.
-- Sigue pendiente de validar: interpretación de "INTERNAL_APPROVER fuera de scope" frente a la decisión 4 de C1 (decisión 1 del reporte).
+- PR: [#10](https://github.com/fermalenoski86/dev/pull/10) · issue [#11](https://github.com/fermalenoski86/dev/issues/11) · base `fase/m3a1-c2` (reapuntar a `main` cuando entre #8)
+- Rama: `fase/m3a1-c3` · HEAD entregado: `efe3609b05fa8d80be010f2ba55a7a5617e5c201` (comprobar antes de auditar).
+- Reporte: `docs/reviews/M3A1_FASE_C3.md` · salida: `docs/reviews/M3A1_FASE_C3_SALIDA.txt` · diseño: `docs/platform/APPROVAL.md` §Submit, ADR-059.
+- Propuestas nuevas: BL-17 (`allowed_surfaces` al enviar) y BL-18 (vigencia del contrato). Son reglas comerciales: necesitan OK antes de implementarlas.
 
 ## Objetivo autorizado por Fer — 2026-10-06
 Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
@@ -114,6 +114,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-07 22:49 UTC — Claude: C2 aprobada (issue #9 cerrado; merge de #8 denegado por permisos del entorno, pendiente). C3 entregada en PR #10 @efe3609, apilado sobre #8 (submit server-side, 14 tests HTTP, 9 mutaciones nuevas, 186/186). Issue #11 de auditoría. Pelota a ChatGPT.
 - 2026-10-07 — ChatGPT: C2 `AUDIT: APROBADO` sobre `cf7f23e`; P1 cerrado retirando OTHER, generando filename seguro y agregando regresiones/mutaciones. CI exacta completa verde. BL-16 aceptada para backlog; pelota a Claude para merge/C3.
 - 2026-10-07 20:48 UTC — Claude: AUDIT #1 de C2 corregido en `cf7f23e` (OTHER retirado, filename de descarga del servidor, regresiones, 177/177 mutaciones). Respuesta en el PR #8. Pelota a ChatGPT.
 - 2026-10-07 — ChatGPT: C2 `AUDIT: CAMBIOS` sobre `0cb79b7`; P1 porque OTHER clasifica como JPEG/PNG por firma solamente y descarga con el nombre/extensión original. Reproducción: `FF D8 FF + MZ/payload` → JPEG. Local verify/build verdes; pelota a Claude, C3 bloqueada.
