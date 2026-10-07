@@ -19,6 +19,7 @@ Arranque: `pnpm --filter @trust/platform-api start` (variables en `.env.example`
 | POST | `/api/v1/show-versions/:id/approve` | aprobar con evidencia y hash exacto (C2) | ver `APPROVAL.md` |
 | POST | `/api/v1/show-versions/:id/reject` | rechazar con motivo y hash exacto (C2) | ver `APPROVAL.md` |
 | PUT | `/api/v1/contracts/:id/four-eyes` | política de cuatro ojos, solo ADMIN (C2) | ver `APPROVAL.md` |
+| POST | `/api/v1/campaigns/:id/submit` | envía el Draft persistido: compila, preflight, ShowVersion inmutable (C3) | ver `APPROVAL.md` §Submit |
 
 No hay `PATCH`, `PUT` ni `DELETE` de Assets (§26): responden 404 `NOT_FOUND`.
 

@@ -103,6 +103,9 @@ export const EvidenceFieldsSchema = z.object({ type: z.enum(['EMAIL', 'PDF', 'ME
 /** El cliente cita el hash que vio: la decisión es sobre la versión EXACTA. Nada de contractId: el scope lo deriva el backend. */
 export const ApproveBodySchema = z.object({ evidenceId: Uuid, versionHash: Sha }).strict();
 export const RejectBodySchema = z.object({ reason: z.string().trim().min(1).max(2000), versionHash: Sha }).strict();
+/** C3: el cliente cita la revisión del draft que vio (concurrencia optimista). */
+export const SubmitBodySchema = z.object({ draftRevision: z.number().int().min(1) }).strict();
+export const CampaignParamsSchema = z.object({ id: Uuid }).strict();
 export const FourEyesBodySchema = z.object({ fourEyesRequired: z.boolean() }).strict();
 
 export const EvidenceResponseSchema = z.object({

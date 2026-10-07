@@ -123,6 +123,9 @@ importers:
       '@trust/platform-storage':
         specifier: workspace:*
         version: link:../../packages/platform-storage
+      '@trust/show-authoring':
+        specifier: workspace:*
+        version: link:../../packages/show-authoring
       '@trust/show-engine':
         specifier: workspace:*
         version: link:../../packages/show-engine
@@ -253,12 +256,21 @@ importers:
       '@trust/platform-auth':
         specifier: workspace:*
         version: link:../platform-auth
+      '@trust/platform-contracts':
+        specifier: workspace:*
+        version: link:../platform-contracts
       '@trust/platform-db':
         specifier: workspace:*
         version: link:../platform-db
       '@trust/platform-storage':
         specifier: workspace:*
         version: link:../platform-storage
+      '@trust/show-authoring':
+        specifier: workspace:*
+        version: link:../show-authoring
+      '@trust/show-engine':
+        specifier: workspace:*
+        version: link:../show-engine
       kysely:
         specifier: 0.29.6
         version: 0.29.6

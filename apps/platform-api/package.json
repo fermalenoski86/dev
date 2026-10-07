@@ -23,6 +23,7 @@
     "@trust/platform-db": "workspace:*",
     "@trust/platform-media": "workspace:*",
     "@trust/platform-storage": "workspace:*",
+    "@trust/show-authoring": "workspace:*",
     "@trust/show-engine": "workspace:*",
     "fastify": "5.6.1",
     "kysely": "0.29.6",

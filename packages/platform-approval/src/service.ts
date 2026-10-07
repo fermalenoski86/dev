@@ -139,7 +139,7 @@ export class ApprovalService {
   async getVersion(actor: Principal, versionId: string): Promise<ShowVersionView> {
     const v = await this.cargar(this.deps.db, versionId);
     this.exigirVisible(actor, v);
-    return this.vista(this.deps.db, versionId);
+    return this.viewVersion(this.deps.db, versionId);
   }
 
   async openEvidence(actor: Principal, versionId: string, evidenceId: string): Promise<{ evidence: EvidenceView; storageKey: string; stream: Readable }> {
@@ -311,7 +311,7 @@ export class ApprovalService {
             ...(decision === 'APPROVED' ? { evidenceId: extra.evidenceId, fourEyesRequired: v.four_eyes_required } : { reasonLength: extra.reason?.length ?? 0 }),
           },
         });
-        return { status: 201, body: await this.vista(trx, input.versionId) };
+        return { status: 201, body: await this.viewVersion(trx, input.versionId) };
       }),
     );
     return { version: r.body, replayed: r.replayed };
@@ -384,7 +384,7 @@ export class ApprovalService {
       .where('e.show_version_id', '=', versionId);
   }
 
-  private async vista(db: Kysely<Database>, versionId: string): Promise<ShowVersionView> {
+  async viewVersion(db: Kysely<Database>, versionId: string): Promise<ShowVersionView> {
     const v = await db
       .selectFrom('show_versions as v')
       .innerJoin('campaigns as cp', 'cp.id', 'v.campaign_id')
