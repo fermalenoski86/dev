@@ -1,8 +1,8 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor) — re-auditar el PR #2, rama `fix/m3a1-b2-audit1`, commit `54b0b77604d61e24c2478929e585e44ea1cbb115`. El conflicto de HANDOFF está resuelto (la rama integra main). Hay verificación independiente en CI de GitHub: https://github.com/fermalenoski86/dev/actions/runs/37565432005 — los 5 jobs en verde (verify 596+1, PG 48+6 + bootstrap 6/6, media 53/53, E2E 14/14, mutaciones 109/109). Debate: `docs/collab/BACKLOG.md` (BL-01 tu runner: aceptado con ajustes; BL-02 CI; BL-03/04 propuestas de Claude; evaluación de las ideas de Fer).
-**Fase:** M3A.1 Fase B2 — Media inspection + validation
-**Estado:** Re-auditoría de PR #2: `AUDIT: CAMBIOS`. Los dos hallazgos originales están corregidos y verificados; queda conflicto de integración en HANDOFF con main y verificación independiente PostgreSQL/bootstrap pendiente. Claude debe resolver contra main vigente, preservar las autorizaciones de Fer y volver a entregar HEAD/gates. **B3 no se inicia hasta `AUDIT: APROBADO` de B2.**
+**Pelota en:** Claude (implementador) — B2 aprobada en el PR #2. Mergear el PR y comenzar B3 conforme a `docs/briefs/M3A1_FASE_B.md`: migración 0002, AssetUploadService, consistencia READY ↔ StoredObject, idempotencia y audit. Entregar B3 en PR/commit explícito y transferir el turno en este HANDOFF de main.
+**Fase:** M3A.1 Fase B3 — DB integration + AssetUploadService
+**Estado:** `AUDIT: APROBADO` de B2 sobre HEAD `a35eb5b0a3922cc78cc5a6fe509f23abc91af121`. PR mergeable; hallazgos cerrados; gates obligatorios completos mediante ejecución del auditor + CI independiente. Claude puede mergear #2 e iniciar B3 sin confirmación rutinaria.
 
 ## Objetivo autorizado por Fer — 2026-10-06
 Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
@@ -44,26 +44,24 @@ Claude: incorporá esta investigación y tu evaluación de las propuestas al rep
 
 ChatGPT verificó ambos hallazgos corregidos en `91956d538322fa40ae94663593e7725924e89345`. No equivale a aprobación global B2.
 
-## Gates verificados por ChatGPT — re-auditoría de PR #2
-- Commit: `91956d538322fa40ae94663593e7725924e89345`; main al auditar: `4940358cfce98386a88a66db105140dd1593b361`.
-- Node 22.23.3 / pnpm 12.5.1 / ffmpeg 6.1.1: install, verify (596 passed + 1 skipped; lint sin errores), build OK.
-- Media real Node22: 53/53. Mutaciones completas Node22: 109/109 atrapadas, exit 0; 0 sobreviven / 0 sin salida. Autoprueba y overrides passed/sin salida fallan correctamente. Working tree restaurado y limpio.
-- M2C E2E Chromium 153 real / Node22: 14/14 passed (1.4 min), sobre el build verificado.
-- PostgreSQL real/bootstrap: pendientes de ejecución independiente. Instalación de PG16.15 no pudo crear usuarios/cambiar UID; pg-up y bootstrap fallaron por postgres ausente. Suite platform no ejecutada. Claude reporta PG48+6 skipped/bootstrap6; sus salidas no son ejecuciones del auditor. Sin aprobación con controles pendientes.
-- S3/MinIO opcional no ejecutado aquí.
-- Primera corrida mutaciones bajo npm exec: SIN SALIDA por EUSAGE de npm; descartada. Árbol restaurado y corrida limpia completa mediante PATH Node22: 109/109.
+## Gates de cierre B2
+- Auditor local previo, Node22: verify 596+1 skipped, build, media 53/53, mutaciones 109/109 y E2E 14/14.
+- CI independiente: verify 596+1, build OK, PostgreSQL 48+6 skipped, bootstrap 6/6, media 53/53, E2E 14/14, mutaciones 109/109 y árbol limpio.
+- S3/MinIO de B1 no se repitió; opcional/no disponible y fuera del cambio B2.
+- En la vuelta final el entorno local estaba desconectado; se verificaron código, blobs exactos, mergeability y evidencia del commit equivalente. No quedaron gates obligatorios pendientes.
 
-## Bloqueo activo y acciones de Claude
-- [P2] PR #2 tiene conflicto de contenido en `docs/collab/HANDOFF.md`. Repro: `git fetch origin main`, luego `git merge-tree --write-tree origin/main HEAD` → exit 1 y CONFLICT. GitHub mergeable=false.
-- Resolver con el main vigente **después de esta actualización**, conservando objetivo de Fer, mejora continua, investigación/comité, regla de turno y roadmap. No reemplazar main por la copia vieja de la rama.
-- Devolver HEAD actual y gates/evidencia actualizados, transferir turno en main a ChatGPT. No iniciar B3 todavía.
-- Auditoría publicada: https://github.com/fermalenoski86/dev/pull/2#issuecomment-6029432498
+## Cierre de B2 y acciones de Claude
+- PR #2 aprobado sobre HEAD `a35eb5b0a3922cc78cc5a6fe509f23abc91af121`; mergeable=true.
+- Los 15 archivos cambiados son idénticos al commit probado `54b0b77604d61e24c2478929e585e44ea1cbb115`; entre ambos solo cambió HANDOFF al sincronizar main.
+- CI independiente verde: https://github.com/fermalenoski86/dev/actions/runs/37565432005
+- Mergear #2 e iniciar B3. Mantener B4/API para después del gate de B3.
 
-## Debate pendiente — propuesta técnica del auditor, 2026-10-07
-- Runner de mutaciones: timeout configurable, limpieza de procesos/restauración y diagnóstico de infraestructura. Problema observado: subprocess sin timeout y grep descarta errores; EUSAGE quedó oculto como SIN SALIDA. Beneficio: gate acotado y reproducible. P2, esfuerzo estimado 0.5–1 día.
-- Fuente primaria consultada 2026-10-07: https://docs.python.org/3/library/subprocess.html#subprocess.run y https://docs.python.org/3/library/subprocess.html#subprocess.Popen.communicate. Timeout de run mata/espera el hijo; Popen requiere limpieza explícita. Límite: descendientes del shell requieren tratamiento y pruebas; documentación no demuestra beneficio implementado.
-- Criterio: runner colgado termina en presupuesto, exit no cero, sin hijos vivos ni diff/journal pendiente; error de arranque deja diagnóstico útil y mutaciones109/109 siguen atrapadas.
-- Estado: propuesta enviada en PR #2; respuesta/acuerdo/objeciones de Claude pendientes. NO implementada ni encargada. Claude debe evaluar aceptar/ajustar/descartar y responder también a las ideas de Fer. Registrar decisión en backlog/brief; ADR si corresponde, antes de implementación.
+## Debate de mejora continua — decisión 2026-10-07
+- BL-01: aceptada con los ajustes de Claude; implementar en PR propio después de mergear #2, sin mezclar con B3.
+- BL-03: aceptada con ajuste para B3/B4. Derivar remediación de la autoridad, exponer argumentos estructurados además del texto y no interpolar filenames en shell. Las fixtures corregidas deben pasar `checkMedia`.
+- BL-04: aceptada después de B4. El kit debe incluir versión/hash de la autoridad; sus MP4 deben pasar `checkMedia` y regenerarse al cambiar capabilities.
+- BL-05/BL-06: Fer decide cuando exista hardware. No bloquean B3.
+- Trazabilidad completa: `docs/collab/BACKLOG.md`. Auditoría aprobatoria: https://github.com/fermalenoski86/dev/pull/2#issuecomment-6030654008
 
 ## Qué auditar
 - Brief: `docs/briefs/M3A1_FASE_B2.md`
@@ -82,11 +80,11 @@ ChatGPT verificó ambos hallazgos corregidos en `91956d538322fa40ae94663593e7725
 ## Pregunta abierta (decisión de producto)
 H.264 10 bits / 4:4:4 pasa la política actual. ¿Exigir `yuv420p`?
 
-## Siguiente (después de aprobar B2)
-B3 — DB integration: migración 0002 (`rejection_detail jsonb`, `container`,
-consistencia READY ↔ StoredObject), AssetUploadService, idempotencia, audit.
+## Siguiente fase activa
+B3 — DB integration: migración 0002 (`rejection_detail jsonb`, `container`, consistencia READY ↔ StoredObject), AssetUploadService, idempotencia y audit. Ejecutar su gate antes de B4.
 
 ## Historial
+- 2026-10-07 — ChatGPT: `AUDIT: APROBADO` B2 sobre `a35eb5b0a3922cc78cc5a6fe509f23abc91af121`; CI completa PG/bootstrap y todos los gates; habilita B3 y devuelve pelota a Claude.
 - 2026-10-07 — ChatGPT: PR #2 CAMBIOS; cierra hallazgos originales, verifica Node22 verify/build/media53/mutaciones109/E2E14; conflicto HANDOFF y PG/bootstrap independiente pendientes. Devuelve pelota a Claude y propone runner acotado para debate.
 - 2026-10-07 — ChatGPT: alinea el HANDOFF de main con el pedido de re-auditoría de Claude en el PR #2; pelota en ChatGPT, sin aprobación de B2.
 - 2026-10-06 — ChatGPT: auditoría de f3b55461600246f324c427edef091967e74e4944 publicada: CAMBIOS, 2 hallazgos reproducidos. B3 pendiente.
