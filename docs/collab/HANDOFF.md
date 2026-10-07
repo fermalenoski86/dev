@@ -1,8 +1,8 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor) — re-auditar B3 en el PR [#3](https://github.com/fermalenoski86/dev/pull/3) sobre `4e2876883c16a13e4ccd36ea106410a799fb5f5a` (respuesta a la auditoría #1). Responder en #3 con `AUDIT: APROBADO` o `AUDIT: CAMBIOS` y devolver la pelota acá.
-**Fase:** M3A.1 Fase B3 — DB integration + AssetUploadService (re-entrega tras auditoría #1)
-**Estado:** los 3 hallazgos respondidos (`docs/reviews/M3A1_FASE_B3_AUDIT1.md`). CI completo y verde sobre el HEAD exacto, incluidos e2e-m2c 14/14 y mutaciones: https://github.com/fermalenoski86/dev/actions/runs/37582423246. #3 apunta a main, mergeable=clean. Extra: carrera de CREATE ROLE en el arnés PG corregida (rompió `postgres` en main@5ba9f1a). Pendiente de Fer: etiqueta `m3a1-b2`.
+**Pelota en:** Claude (implementador) — B3 aprobada y mergeada. Comenzar B4 conforme a `docs/briefs/M3A1_FASE_B.md`: Fastify/API foundation, health/readiness, rutas de Asset, contrato de errores, auth temporal explícita y E2E API. Incorporar BL-03 según el acuerdo y entregar PR/HEAD exacto.
+**Fase:** M3A.1 Fase B4 — API foundation + cierre de Fase B
+**Estado:** B3 recibió `AUDIT: APROBADO` sobre `4e2876883c16a13e4ccd36ea106410a799fb5f5a` y fue mergeada con squash en `decbb0016d822774b37b828a4cb8c38883c1becf`. Hallazgos cerrados; gates completos. Claude puede iniciar B4 sin confirmación rutinaria. No iniciar Fase C hasta aprobar B4.
 
 ## Objetivo autorizado por Fer — 2026-10-06
 Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
@@ -82,15 +82,20 @@ H.264 10 bits / 4:4:4 pasa la política actual. ¿Exigir `yuv420p`?
 ## Siguiente fase activa
 B3 — DB integration: migración 0002 (`rejection_detail jsonb`, `container`, consistencia READY ↔ StoredObject), AssetUploadService, idempotencia y audit. Ejecutar su gate antes de B4.
 
-## Auditoría B3 — cambios solicitados, 2026-10-07
-- [P1] `service.ts`: dos cuerpos distintos que superan MAX_UPLOAD_BYTES generan el mismo fingerprint `{tooLarge:true}`; la segunda solicitud con igual key se replayea en vez de 409. Agregar regresión con AAAAA/BBBBB y corregir sin cargar ni consumir cuerpo ilimitado.
-- [P1] E2E obligatorio pendiente: entrega local 13/14; se requiere CI 14/14 y los cinco jobs verdes sobre el HEAD corregido.
-- [P2] Tras squash de B2, sincronizar `fase/m3a1-b3` con main; #3 aparece mergeable=false y el diff incluye B2.
-- Favorable: streaming/hash, DB READY↔StoredObject, audit, dedup, failure atomicity y rechazo estructurado tienen diseño/pruebas coherentes.
-- BL-07: aceptar reporte, no REJECTED automático por infraestructura. BL-08 report-only aceptada. BL-09 aceptada después de B3 con navegador/imagen fijada.
-- Controles no ejecutados por ChatGPT en esta vuelta: entorno desconectado. Claude reporta verify611+1/build/PG86+6/bootstrap6/media53/mutaciones120. S3/MinIO no ejecutado. No se aprobó con gates pendientes.
+## Cierre B3 — 2026-10-07
+- Aprobación: https://github.com/fermalenoski86/dev/pull/3#issuecomment-6033692739
+- Commit auditado: `4e2876883c16a13e4ccd36ea106410a799fb5f5a`; squash en main: `decbb0016d822774b37b828a4cb8c38883c1becf`.
+- Idempotencia TOO_LARGE corregida con huella incremental de `límite+1`, corte del stream, regresión AAAAA/BBBBB y mutación.
+- Auditor local Node22: verify 616+1 skipped, build y media real 53/53.
+- CI exacto verde: PG87+6 skipped, bootstrap6/6, E2E14/14, mutaciones121/121 y árbol limpio: https://github.com/fermalenoski86/dev/actions/runs/37582423246
+- No ejecutados localmente en cierre: PG/bootstrap, E2E y mutaciones completas; cubiertos por CI independiente. S3/MinIO no ejecutado y declarado.
+- BL-07 reporte operativo aceptado; BL-08 reporte de huérfanos sin borrado aceptado; BL-09 después de B3 con navegador/imagen fijada.
+
+## Siguiente fase activa
+B4 — API foundation: Fastify, `/health`, `/ready`, rutas de Asset, actor temporal DEV reemplazable, Zod, contrato de errores, límites de upload y E2E API. Incorporar BL-03 de remediaciones derivadas de la autoridad. Cerrar el gate completo de Fase B antes de Fase C.
 
 ## Historial
+- 2026-10-07 — ChatGPT: aprueba B3, mergea PR #3 en `decbb001…`, habilita B4 y devuelve pelota a Claude.
 - 2026-10-07 06:50 UTC — Claude: respuesta a AUDIT: CAMBIOS #1 de B3 — huella de TOO_LARGE (P1), base sincronizada con main@5ba9f1a (P2), CI completo verde sobre 4e28768 con E2E 14/14 (P1); carrera de CREATE ROLE en el arnés PG corregida. Pelota a ChatGPT.
 - 2026-10-07 — ChatGPT: mergea PR #2 con squash (`5ba9f1a…`), reapunta #3 a main y publica B3 CAMBIOS por idempotencia TOO_LARGE, E2E pendiente y sincronización de rama. Devuelve pelota a Claude.
 - 2026-10-07 05:55 UTC — Claude: merge de #2 denegado por permisos del entorno (pendiente Fer); issue #1 cerrado; B3 entregada en PR #3 apilado sobre #2 (0002, AssetUploadService, audit, idempotencia; 120/120 mutaciones; E2E 13/14 local, igual que la base B2). Issue #4 de auditoría. Pelota a ChatGPT.
