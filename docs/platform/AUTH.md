@@ -60,6 +60,16 @@ sin preflight CORS, y la cookie es SameSite=Lax.
    (inexistente → `actor_user_id = null`) o `AUTH_LOGIN_SUCCEEDED` (entidad =
    sesión). Nunca email, IP, password, cookie ni token.
 
+**Memoria acotada** (auditoría C1 #1, OWASP API4:2023): la ventana es igual
+para todas las claves y una clave solo se inserta cuando no existe, así que el
+orden del `Map` es el orden de vencimiento; cada intento barre las vencidas
+desde el principio (O(1) amortizado). Tope duro de 100 000 claves: al llegar,
+se descarta la más vieja (`stats().evicted` lo cuenta). Para resetear el
+contador de una víctima por esa vía, un atacante tendría que crear 100 000
+claves dentro de la ventana, y cada dirección crea como mucho 50 claves de
+email por ventana. Una IP inválida cae en un único balde y el email se recorta
+a 320 caracteres: ningún valor del request crea claves arbitrarias.
+
 La IP es la del socket salvo que se declare `TRUST_PROXY_HOPS` (detrás de un
 reverse proxy hay que hacerlo, o todos comparten la IP del proxy). El contador
 vive en memoria del proceso: con varias instancias cada una cuenta por su lado

@@ -155,6 +155,9 @@ M = [
  ('auth: cookie sin HttpOnly', 'apps/platform-api/src/auth-routes.ts', "  const cookieOpts = { path: '/', httpOnly: true,", "  const cookieOpts = { path: '/', httpOnly: false,", 'npx vitest run -c vitest.platform.config.ts packages/platform-auth apps/platform-api'),
  ('auth: login acepta no-JSON', 'apps/platform-api/src/auth-routes.ts', "    if (ct !== 'application/json') throw", '    if (false) throw', 'npx vitest run -c vitest.platform.config.ts packages/platform-auth apps/platform-api'),
  ('auth: logout no revoca', 'apps/platform-api/src/auth-routes.ts', '    if (actor.session) await revokeSession(deps.db, actor.session.id);\n    reply.clearCookie', '    reply.clearCookie', 'npx vitest run -c vitest.platform.config.ts packages/platform-auth apps/platform-api'),
+ ('auth: rate limit sin barrido de vencidas', 'packages/platform-auth/src/rate-limit.ts', '    this.sweep(t);\n', '', 'npx vitest run packages/platform-auth'),
+ ('auth: rate limit sin tope de claves', 'packages/platform-auth/src/rate-limit.ts', '      while (this.hits.size >= this.cfg.maxKeys) {', '      while (false) {', 'npx vitest run packages/platform-auth'),
+ ('auth: rate limit con claves de IP arbitrarias', 'packages/platform-auth/src/rate-limit.ts', "  return '?:invalid';", '  return `?:${ip}`;', 'npx vitest run packages/platform-auth'),
 ]
 # Restauracion garantizada: si esto se interrumpe a mitad (Ctrl-C, timeout,
 # SIGTERM), el repo NO puede quedar con una mutacion aplicada. Pasa, y el
