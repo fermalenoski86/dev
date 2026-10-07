@@ -67,3 +67,21 @@ export const UploadFieldsSchema = z
     requiredDurationMs: z.coerce.number().int().min(1).max(3_600_000).optional(),
   })
   .strict();
+
+/* ── auth (C1, §30) ─────────────────────────────────────────────────── */
+export const LoginBodySchema = z
+  .object({
+    email: z.string().min(3).max(320),
+    // el máximo real (256 caracteres) lo aplica platform-auth; acá solo se corta lo absurdo
+    password: z.string().min(1).max(1024),
+  })
+  .strict();
+
+export const MeResponseSchema = z.object({
+  user: z.object({ id: z.string().uuid(), name: z.string(), email: z.string(), organization: z.string() }),
+  roles: z.array(z.enum(['OPERATOR', 'INTERNAL_APPROVER', 'ADMIN', 'EXTERNAL_APPROVER'])),
+  externalContractIds: z.array(z.string().uuid()),
+  /** Token para `X-CSRF-Token` en toda mutación. null fuera de una sesión (provider DEV). */
+  csrfToken: z.string().nullable(),
+  expiresAt: z.string().datetime().nullable(),
+});

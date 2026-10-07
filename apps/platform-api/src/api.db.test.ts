@@ -46,6 +46,8 @@ beforeAll(async () => {
   media.scratchDir = path.join(root, 'scratch');
   actor = (await seedUser(t.app, `api-${Date.now()}@trust.test`)).id;
   otro = (await seedUser(t.app, `otro-${Date.now()}@trust.test`)).id;
+  // C1: los Assets exigen OPERATOR o ADMIN (§22)
+  await t.app.insertInto('user_roles').values([{ user_id: actor, role: 'OPERATOR' }, { user_id: otro, role: 'ADMIN' }]).execute();
   app = await nuevaApp();
 });
 afterAll(async () => {
@@ -139,6 +141,18 @@ describe('CRITERIO: RequestActor (§19) — las rutas no son públicas', () => {
     const u = await seedUser(t.app, `off-${Date.now()}@trust.test`);
     await t.app.updateTable('users').set({ enabled: false }).where('id', '=', u.id).execute();
     expect((await get('/api/v1/assets', u.id)).statusCode).toBe(401);
+  });
+
+  it('C1: autenticado sin rol de Assets (solo INTERNAL_APPROVER) → 403 FORBIDDEN en lectura y en upload, sin crear nada', async () => {
+    const u = await seedUser(t.app, `aprob-${Date.now()}@trust.test`);
+    await t.app.insertInto('user_roles').values({ user_id: u.id, role: 'INTERNAL_APPROVER' }).execute();
+    const r = await get('/api/v1/assets', u.id);
+    expect(r.statusCode).toBe(403);
+    esError(r.json(), 'FORBIDDEN');
+    const antes = await contarAssets();
+    const up = await subir('valid_horizontal_30.mp4', 'horizontal', { who: u.id });
+    expect(up.statusCode).toBe(403);
+    expect(await contarAssets()).toBe(antes);
   });
 
   it('upload sin actor → 401 y no se crea nada', async () => {
@@ -329,7 +343,7 @@ describe('CRITERIO: la API no modifica Assets terminales (§26)', () => {
 describe('CRITERIO: contrato de error y observabilidad (§22, §23)', () => {
   it('error interno → 500 INTERNAL_ERROR sin SQL, stack, paths ni secretos; el detalle va solo al log', async () => {
     const dbCaida = connect('postgres://usuario:secreto-super@127.0.0.1:1/x');
-    const rota = await buildApp({ db: dbCaida, storage, media, actors: { resolve: async () => ({ userId: actor, source: 'development' }) }, maxUploadBytes: MAX, mediaBinariesOk: () => true, log: { stream: logStream } });
+    const rota = await buildApp({ db: dbCaida, storage, media, actors: { resolve: async () => ({ userId: actor, source: 'development', roles: new Set(['OPERATOR'] as const), externalContractIds: [] }) }, maxUploadBytes: MAX, mediaBinariesOk: () => true, log: { stream: logStream } });
     const r = await rota.inject({ method: 'GET', url: '/api/v1/assets', headers: { 'x-request-id': 'req-500-test' } });
     expect(r.statusCode).toBe(500);
     expect(r.json()).toEqual({ code: 'INTERNAL_ERROR', message: 'Error interno.', requestId: 'req-500-test' });

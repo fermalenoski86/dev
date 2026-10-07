@@ -1,0 +1,95 @@
+M3A.1 Fase C1 — AUDIT: CAMBIOS #1 — salida REAL de los gates (Claude, 2026-10-07T16:39Z)
+Rama fase/m3a1-c sobre 926b911. Entorno: v22.22.0, pnpm 12.5.1, psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1), ffmpeg version 6.1.1-3ubuntu5
+Nota: el cluster PostgreSQL se cayó por reinicio del contenedor; se relevantó con scripts/dev/pg-up.sh antes de esta corrida.
+
+=== reproducción del auditor (ahora regresión en rate-limit.test.ts) ===
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+
+=== pnpm install --frozen-lockfile ===
+Lockfile is up to date, resolution step is skipped
+Done in 98ms using pnpm v12.5.1
+
+=== pnpm verify — 1.ª corrida (fallo intermitente preexistente, fuera del cambio) ===
+✖ 11 problems (0 errors, 11 warnings)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  packages/show-authoring/src/preview-session.test.ts > M2C.1.1 punto 1: RESTART y SCRUB usan el show ACTUAL > RESTART sin haber tocado nada sigue reiniciando desde cero
+ Test Files  1 failed | 31 passed | 1 skipped (33)
+      Tests  1 failed | 629 passed | 1 skipped (631)
+verify=1
+--- archivo aislado: npx vitest run packages/show-authoring/src/preview-session.test.ts
+ Test Files  1 passed (1)
+      Tests  28 passed (28)
+
+=== pnpm verify — repetición ===
+✖ 11 problems (0 errors, 11 warnings)
+ Test Files  32 passed | 1 skipped (33)
+      Tests  630 passed | 1 skipped (631)
+verify=0
+
+=== pnpm build ===
+build=0
+
+=== PostgreSQL 16: npx vitest run -c vitest.platform.config.ts ===
+ ✓ packages/platform-db/src/schema.db.test.ts (31 tests) 1568ms
+ ✓ apps/platform-api/src/api.db.test.ts (25 tests) 2841ms
+ ✓ packages/platform-assets/src/upload.db.test.ts (29 tests) 5815ms
+ ✓ apps/platform-api/src/auth.db.test.ts (14 tests) 1333ms
+ ✓ packages/platform-auth/src/auth.db.test.ts (12 tests) 867ms
+ ✓ packages/platform-audit/src/audit.db.test.ts (8 tests) 832ms
+ ✓ packages/platform-db/src/idempotency.db.test.ts (9 tests) 702ms
+ ✓ packages/platform-db/src/asset-consistency.db.test.ts (10 tests) 544ms
+ ↓ packages/platform-db/src/bootstrap.smoke.db.test.ts (6 tests | 6 skipped)
+ ✓ apps/platform-api/src/cli/user-create.db.test.ts (3 tests) 452ms
+ Test Files  9 passed | 1 skipped (10)
+      Tests  141 passed | 6 skipped (147)
+pg=0
+
+=== bootstrap-smoke.sh ===
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+boot=0
+
+=== media ===
+ Test Files  3 passed (3)
+      Tests  63 passed (63)
+media=0
+
+=== smoke curl ===
+### health
+HTTP 200
+### ready
+HTTP 200
+### sin sesión → 401
+HTTP 401
+### login con password mala → 401
+HTTP 401
+### login (cookie jar)
+### me
+HTTP 200
+### upload sin X-CSRF-Token → 403
+HTTP 403
+### upload READY
+HTTP 201
+### retry con la misma key (replay)
+HTTP 200
+### upload REJECTED (29.97 fps)
+HTTP 422
+### logout
+HTTP 204
+### me después del logout → 401
+HTTP 401
+smoke=0
+
+=== mutaciones: python3 scripts/mutation-check.py (153 reglas, corrida completa única) ===
+ATRAPADA   auth: rate limit después del audit
+ATRAPADA   auth: rate limit apagado
+ATRAPADA   auth: rate limit sin barrido de vencidas
+ATRAPADA   auth: rate limit sin tope de claves
+ATRAPADA   auth: rate limit con claves de IP arbitrarias
+atrapadas 153 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+mut=0
+
+=== E2E M2C (14) ===
+NO corrido localmente (sin Chrome con H.264). Evidencia: job e2e-m2c del CI sobre el HEAD.
