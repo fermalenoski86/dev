@@ -861,3 +861,14 @@ puro contra `deriveSurfaceFormats(EL_TRUST)`; fps como racional exacto; MP4
 reconocido por `major_brand` (MOV comparte demuxer). Procesos con
 `shell:false`, `file:` + `protocol_whitelist`, timeout con SIGKILL y
 concurrencia limitada. Detalle: `docs/platform/MEDIA.md`.
+
+## ADR-055 — Pipeline de Asset: fronteras DB/storage y consistencia en la base
+**Fecha:** 2026-10 · **Estado:** propuesto (auditoría B3) · **Origen:** M3A.1 Fase B3
+Sin transacción distribuida: temporal hasta validar, commit content-addressed
+idempotente, y StoredObject + Asset READY + `ASSET_VALIDATED` en UNA
+transacción. Un fallo de la base después del commit deja un blob huérfano
+seguro (nunca se borra un blob final) y el Asset no terminal; el retry con la
+misma Idempotency-Key recupera. El Asset se crea después del stream para que el
+fingerprint incluya el sha256 del contenido. La migración 0002 hace cumplir en
+PostgreSQL la consistencia READY ↔ StoredObject (sha256, tamaño, MIME) y la
+lista cerrada de `rejection_code`. Detalle: `docs/platform/ASSETS.md`.

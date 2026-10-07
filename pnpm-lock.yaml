@@ -187,6 +187,34 @@ importers:
         specifier: workspace:*
         version: link:../timeline
 
+  packages/platform-assets:
+    dependencies:
+      '@trust/platform-audit':
+        specifier: workspace:*
+        version: link:../platform-audit
+      '@trust/platform-contracts':
+        specifier: workspace:*
+        version: link:../platform-contracts
+      '@trust/platform-db':
+        specifier: workspace:*
+        version: link:../platform-db
+      '@trust/platform-media':
+        specifier: workspace:*
+        version: link:../platform-media
+      '@trust/platform-storage':
+        specifier: workspace:*
+        version: link:../platform-storage
+      kysely:
+        specifier: 0.29.6
+        version: 0.29.6
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
+    devDependencies:
+      '@types/pg':
+        specifier: ^8.11.10
+        version: 8.23.1
+
   packages/platform-audit:
     dependencies:
       '@trust/platform-contracts':

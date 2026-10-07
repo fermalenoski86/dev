@@ -20,7 +20,16 @@ const urlPara = (user: string, pw: string, db: string) => {
   u.pathname = `/${db}`;
   return u.toString();
 };
-const pool = (url: string) => new Kysely<Database>({ dialect: new PostgresDialect({ pool: new pg.Pool({ connectionString: url, max: 6 }) }) });
+const pool = (url: string) => {
+  const p = new pg.Pool({ connectionString: url, max: 6 });
+  // close() hace DROP DATABASE … WITH (FORCE): si un cliente inactivo del pool
+  // todavía está cerrándose, el servidor lo termina con 57P01. Eso es el
+  // teardown, no un fallo de test; cualquier otro error sigue siendo fatal.
+  p.on('error', (e: Error & { code?: string }) => {
+    if (e.code !== '57P01') throw e;
+  });
+  return new Kysely<Database>({ dialect: new PostgresDialect({ pool: p }) });
+};
 
 export interface TestDatabase {
   name: string;

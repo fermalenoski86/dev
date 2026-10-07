@@ -1,23 +1,27 @@
 {
-  "name": "@trust/platform-media",
+  "name": "@trust/platform-assets",
   "version": "0.1.0",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./fixtures": "./src/fixtures.ts"
+    ".": "./src/index.ts"
   },
   "scripts": {
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
-    "build": "echo 'source-only package'",
-    "fixtures": "bash scripts/make-fixtures.sh"
+    "build": "echo 'source-only package'"
   },
   "dependencies": {
+    "@trust/platform-audit": "workspace:*",
     "@trust/platform-contracts": "workspace:*",
+    "@trust/platform-db": "workspace:*",
+    "@trust/platform-media": "workspace:*",
     "@trust/platform-storage": "workspace:*",
-    "@trust/show-engine": "workspace:*",
-    "@trust/shared-types": "workspace:*"
+    "kysely": "0.29.6",
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.10"
   }
 }

@@ -43,7 +43,7 @@ export async function seedAsset(db: Kysely<Database>, userId: string, contenido:
     return { assetId: a.id, sha256: sha(contenido), storedObjectId: null as string | null };
   }
   const o = await seedStoredObject(db, contenido);
-  await db.updateTable('assets').set({ status: 'VALIDATING', stored_object_id: o.storedObjectId, mime_type: 'video/mp4', size_bytes: 1000, width: 2592, height: 576, fps: 25, codec: 'h264', duration_ms: 12000 }).where('id', '=', a.id).execute();
+  await db.updateTable('assets').set({ status: 'VALIDATING', stored_object_id: o.storedObjectId, sha256: o.sha256, container: 'MP4', mime_type: 'video/mp4', size_bytes: 1000, width: 2592, height: 576, fps: 25, codec: 'h264', duration_ms: 12000 }).where('id', '=', a.id).execute();
   await db.updateTable('assets').set({ status: 'READY' }).where('id', '=', a.id).execute();
   return { assetId: a.id, sha256: o.sha256, storedObjectId: o.storedObjectId as string | null };
 }

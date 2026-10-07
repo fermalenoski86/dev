@@ -280,11 +280,16 @@ describe('migraciones', () => {
   it('up sobre base vacía, down y up de nuevo (smoke test reversible)', async () => {
     const vacia = await createTestDatabase({ migrate: false });
     try {
-      expect(await migrateUp(vacia.owner as never)).toEqual(['0001_initial:Success']);
+      const ambas = ['0001_initial:Success', '0002_asset_pipeline:Success'];
+      expect(await migrateUp(vacia.owner as never)).toEqual(ambas);
+      // 0002 baja sola: las columnas nuevas desaparecen, 0001 queda intacta
+      expect(await migrateDownOne(vacia.owner as never)).toEqual(['0002_asset_pipeline:Success']);
+      const col = await sql<{ n: string }>`SELECT count(*)::text AS n FROM information_schema.columns WHERE table_name = 'assets' AND column_name IN ('sha256', 'container', 'rejection_detail')`.execute(vacia.owner);
+      expect(col.rows[0]?.n).toBe('0');
       expect(await migrateDownOne(vacia.owner as never)).toEqual(['0001_initial:Success']);
       const n = await sql<{ n: string }>`SELECT count(*)::text AS n FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'show_versions'`.execute(vacia.owner);
       expect(n.rows[0]?.n).toBe('0');
-      expect(await migrateUp(vacia.owner as never)).toEqual(['0001_initial:Success']);
+      expect(await migrateUp(vacia.owner as never)).toEqual(ambas);
     } finally { await vacia.close(); }
   });
   it('con datos: volver a migrar no toca nada', async () => {

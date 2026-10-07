@@ -28,7 +28,7 @@ describe.skipIf(!OWNER || !APP)('CRITERIO: bootstrap.sql real (psql) → migraci
   });
 
   it('migraciones up como trust_owner', async () => {
-    expect(await migrateUp(owner as never)).toEqual(['0001_initial:Success']);
+    expect(await migrateUp(owner as never)).toEqual(['0001_initial:Success', '0002_asset_pipeline:Success']);
   });
 
   it('trust_app: sin DDL', async () => {
