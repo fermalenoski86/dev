@@ -1,8 +1,8 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor) — re-auditar B4 en el PR [#5](https://github.com/fermalenoski86/dev/pull/5) sobre `33110978dda783e03b0e882b21307cbe6b233905` (respuesta a la auditoría #1, hallazgo multipart corregido). Responder en #5 con `AUDIT: APROBADO` o `AUDIT: CAMBIOS` y devolver la pelota acá.
-**Fase:** M3A.1 Fase B4 — API foundation + cierre de Fase B (re-entrega tras auditoría #1)
-**Estado:** [P1] multipart corregido en `3311097`: partes después de `file` → 400 sin Asset, key ni temporal (hook `afterBody` del servicio, sigue en streaming); 4 regresiones + 2 mutaciones (131/131). CI verde sobre el HEAD exacto: https://github.com/fermalenoski86/dev/actions/runs/37608035323. Respuesta: `docs/reviews/M3A1_FASE_B4_AUDIT1.md`. No ejecutados: S3/MinIO, Docker Compose. No iniciar Fase C hasta aprobar B4.
+**Pelota en:** Claude (implementador) — iniciar la siguiente fase documentada, M3A.1 Fase C (auth, roles y approval), desde `main@0341d1510d8feaf036ae2542de55e58cb9be624a`. Crear brief/reporte/PR trazables y devolver la pelota a ChatGPT con el HEAD exacto. Registrar primero BL-10 y BL-11 con los ajustes del debate aprobado en https://github.com/fermalenoski86/dev/pull/5#issuecomment-6037450237.
+**Fase:** M3A.1 Fase C — auth, roles y approval (habilitada; no iniciada por ChatGPT)
+**Estado:** B4 y Fase B aprobadas sobre `33110978dda783e03b0e882b21307cbe6b233905`; PR #5 integrado con squash en `0341d1510d8feaf036ae2542de55e58cb9be624a`. P1 multipart cerrado. Gates completos: local verify 621+1, build, media63; CI exacto PostgreSQL/bootstrap, media, mutaciones131, E2E14. No ejecutados y declarados: S3/MinIO, Docker Compose. Fase C puede avanzar; no iniciar Fase D ni Scheduler/EDGE/Deploy.
 
 ## Objetivo autorizado por Fer — 2026-10-06
 Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
@@ -95,7 +95,19 @@ B3 — DB integration: migración 0002 (`rejection_detail jsonb`, `container`, c
 ## Siguiente fase activa
 B4 — API foundation: Fastify, `/health`, `/ready`, rutas de Asset, actor temporal DEV reemplazable, Zod, contrato de errores, límites de upload y E2E API. Incorporar BL-03 de remediaciones derivadas de la autoridad. Cerrar el gate completo de Fase B antes de Fase C.
 
+## Cierre B4 — 2026-10-07
+- Aprobación: https://github.com/fermalenoski86/dev/pull/5#issuecomment-6037450237
+- Commit auditado: `33110978dda783e03b0e882b21307cbe6b233905`; squash en main: `0341d1510d8feaf036ae2542de55e58cb9be624a`.
+- P1 multipart corregido: se valida cualquier parte posterior a `file` antes de crear Asset/key y se limpia el temporal; cuatro regresiones y dos mutaciones.
+- Auditor local: verify 621+1, build y media real 63/63. CI exacto: PostgreSQL/bootstrap, media, mutaciones 131/131, E2E 14/14 y árbol limpio.
+- BL-10 aceptada para Fase C con límite por actor y concurrencia, versión segura y 429 verificable. BL-11 aceptada con spike/versionado/CI determinista por la limitación de soporte Zod 3.
+- S3/MinIO y Docker Compose no ejecutados, declarados.
+
+## Siguiente fase activa
+Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, Scheduler, EDGE ni Deploy.
+
 ## Historial
+- 2026-10-07 — ChatGPT: aprueba B4, mergea PR #5 en `0341d15`, habilita Fase C y devuelve pelota a Claude.
 - 2026-10-07 10:50 UTC — Claude: respuesta a AUDIT: CAMBIOS #1 de B4 (partes multipart posteriores a `file` → 400), CI verde sobre 3311097; pelota a ChatGPT.
 - 2026-10-07 — ChatGPT: B4 `AUDIT: CAMBIOS` sobre `2de5883`; P1 multipart posterior a `file` no validado. Auditor local: verify 621+1, build y media63; CI equivalente cubre PG/bootstrap/mutaciones/E2E. Pelota a Claude; Fase C bloqueada.
 - 2026-10-07 09:05 UTC — Claude (turno programado): sin auditoría nueva; el reporte B4 decía "apilado sobre #3" → corregido a base main con link al CI (`2de5883`, solo docs). Pelota sigue en ChatGPT.
