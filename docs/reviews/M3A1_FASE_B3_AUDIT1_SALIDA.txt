@@ -66,131 +66,131 @@ media=0
 
 === mutaciones: --autoprueba + corrida completa (reglas 0–108) ===
 autoprueba OK
-ATRAPADA   STOP -> black                ⎯⎯�
-ATRAPADA   SAFE MODE -> black           ⎯⎯�
-ATRAPADA   PAUSE -> hold                ⎯⎯�
-ATRAPADA   uv x+w <= 1                  ⎯⎯�
-ATRAPADA   uv w,h > 0                   ⎯⎯�
-ATRAPADA   capacidad del edificio       ⎯⎯�
-ATRAPADA   doble membresia              ⎯⎯�
-ATRAPADA   aspecto del recorte          ⎯⎯�
-ATRAPADA   guard de URLs                ⎯⎯�
-ATRAPADA   ended en transporte          ⎯⎯�
-ATRAPADA   retry: libera fallada activa ⎯⎯�
-ATRAPADA   retry: recrea el video       ⎯⎯�
-ATRAPADA   actuador obedece output      ⎯⎯�
-ATRAPADA   simulador determinista       ⎯⎯�
-ATRAPADA   flag simulated               ⎯⎯�
-ATRAPADA   phase loss antes que UV      ⎯⎯�
-ATRAPADA   umbrales configurables       ⎯⎯�
-ATRAPADA   serie == lectura viva        ⎯⎯�
-ATRAPADA   clip caido se reporta        ⎯⎯�
-ATRAPADA   logico != salud              ⎯⎯�
-ATRAPADA   offline != safe mode         ⎯⎯�
-ATRAPADA   contexto IA sin handles      ⎯⎯�
-ATRAPADA   provenance simulada          ⎯⎯�
-ATRAPADA   simulated no verificado      ⎯⎯�
-ATRAPADA   verificado mira provenance   ⎯⎯�
-ATRAPADA   stale degrada salud          ⎯⎯�
-ATRAPADA   alarmas -> salud electrica   ⎯⎯�
-ATRAPADA   preview no pisa al motor     ⎯⎯�
-ATRAPADA   override off por defecto     ⎯⎯�
-ATRAPADA   serie congelada en stale     ⎯⎯�
-ATRAPADA   engine recarga si cambio     ⎯⎯�
-ATRAPADA   revision por contenido       ⎯⎯�
-ATRAPADA   canPreview corta BLOCKED     ⎯⎯�
-ATRAPADA   canPreview mira exportable   ⎯⎯�
-ATRAPADA   blocked suelta el motor      ⎯⎯�
-ATRAPADA   scrub deja en pausa          ⎯⎯�
-ATRAPADA   preset queda dirty           ⎯⎯�
-ATRAPADA   storage valida con Zod       ⎯⎯�
-ATRAPADA   hold no emite evento         ⎯⎯�
-ATRAPADA   black emite media.stop       ⎯⎯�
-ATRAPADA   namespace de assets          ⎯⎯�
-ATRAPADA   ruta local en assets         ⎯⎯�
-ATRAPADA   BLOCKED bloquea export       ⎯⎯�
-ATRAPADA   experiencia: vista pura      ⎯⎯�
-ATRAPADA   experiencia: assets locales  ⎯⎯�
-ATRAPADA   experiencia: PLAY requiere ready ⎯�
-ATRAPADA   experiencia: reset conoce estado ⎯�
-ATRAPADA   pantalla A en su lugar       ⎯⎯�
-ATRAPADA   pantalla B en su lugar       ⎯⎯�
-ATRAPADA   client mode usa campaña      ⎯⎯�
-ATRAPADA   precarga solo campaña        ⎯⎯�
-ATRAPADA   titular ejecutivo            ⎯⎯�
-ATRAPADA   WHY sin claims de luz        ⎯⎯�
-ATRAPADA   segmentos reparten el uv     ⎯⎯�
-ATRAPADA   segmento usa su indice       ⎯⎯�
-ATRAPADA   black no muestra media       ⎯⎯�
-ATRAPADA   contain entra entero         ⎯⎯�
-ATRAPADA   fallo no cuenta cargado      ⎯⎯�
-ATRAPADA   READY exige todo             ⎯⎯�
-ATRAPADA   fallback debe estar cargado  ⎯⎯�
-ATRAPADA   STOP nunca se bloquea        ⎯⎯�
-ATRAPADA   signature con seek           ⎯⎯�
-ATRAPADA   check requerido bloquea      ⎯⎯�
-ATRAPADA   check sin ejecutar falla     ⎯⎯�
-ATRAPADA   logger guarda la key         ⎯⎯�
-ATRAPADA   serie corta en measuredAt    ⎯⎯�
-ATRAPADA   ack emite evento             ⎯⎯�
-ATRAPADA   ack no borra                 ⎯⎯�
-ATRAPADA   ack all sincroniza log       ⎯⎯�
-ATRAPADA   sin tarifa en la alarma      ⎯⎯�
-ATRAPADA   alarma: ESCALATED            ⎯⎯�
-ATRAPADA   alarma: DEESCALATED          ⎯⎯�
-ATRAPADA   alarma: RESOLVED             ⎯⎯�
-ATRAPADA   ack no borra la alarma       ⎯⎯�
-ATRAPADA   escalar invalida el ack      ⎯⎯�
-ATRAPADA   metric en la identidad       ⎯⎯�
-ATRAPADA   freshness: STALE             ⎯⎯�
-ATRAPADA   freshness: COMM_ERROR        ⎯⎯�
-ATRAPADA   modo efectivo del estado     ⎯⎯�
-ATRAPADA   modo: safe mode manda        ⎯⎯�
-ATRAPADA   mes calendario real          ⎯⎯�
-ATRAPADA   IA usa umbral configurado    ⎯⎯�
-ATRAPADA   compiler: atMs acumulado     ⎯⎯�
-ATRAPADA   compiler: A y B mismo cue    ⎯⎯�
-ATRAPADA   compiler: cierre a identidad ⎯⎯�
-ATRAPADA   compiler: escena existe      ⎯⎯�
-ATRAPADA   compiler: uv por pixeles     ⎯⎯�
-ATRAPADA   assets: namespace            ⎯⎯�
-ATRAPADA   assets: unmanaged bloquea    ⎯⎯�
-ATRAPADA   assets: aspecto              ⎯⎯�
-ATRAPADA   validation: no exporta       ⎯⎯�
-ATRAPADA   draft: duracion minima       ⎯⎯�
-ATRAPADA   draft: duplicar id nuevo     ⎯⎯�
-ATRAPADA   membresia por show           ⎯⎯�
-ATRAPADA   storage: dedup solo por tamaño ⎯�
+ATRAPADA   STOP -> black                ⎯⎯�
+ATRAPADA   SAFE MODE -> black           ⎯⎯�
+ATRAPADA   PAUSE -> hold                ⎯⎯�
+ATRAPADA   uv x+w <= 1                  ⎯⎯�
+ATRAPADA   uv w,h > 0                   ⎯⎯�
+ATRAPADA   capacidad del edificio       ⎯⎯�
+ATRAPADA   doble membresia              ⎯⎯�
+ATRAPADA   aspecto del recorte          ⎯⎯�
+ATRAPADA   guard de URLs                ⎯⎯�
+ATRAPADA   ended en transporte          ⎯⎯�
+ATRAPADA   retry: libera fallada activa ⎯⎯�
+ATRAPADA   retry: recrea el video       ⎯⎯�
+ATRAPADA   actuador obedece output      ⎯⎯�
+ATRAPADA   simulador determinista       ⎯⎯�
+ATRAPADA   flag simulated               ⎯⎯�
+ATRAPADA   phase loss antes que UV      ⎯⎯�
+ATRAPADA   umbrales configurables       ⎯⎯�
+ATRAPADA   serie == lectura viva        ⎯⎯�
+ATRAPADA   clip caido se reporta        ⎯⎯�
+ATRAPADA   logico != salud              ⎯⎯�
+ATRAPADA   offline != safe mode         ⎯⎯�
+ATRAPADA   contexto IA sin handles      ⎯⎯�
+ATRAPADA   provenance simulada          ⎯⎯�
+ATRAPADA   simulated no verificado      ⎯⎯�
+ATRAPADA   verificado mira provenance   ⎯⎯�
+ATRAPADA   stale degrada salud          ⎯⎯�
+ATRAPADA   alarmas -> salud electrica   ⎯⎯�
+ATRAPADA   preview no pisa al motor     ⎯⎯�
+ATRAPADA   override off por defecto     ⎯⎯�
+ATRAPADA   serie congelada en stale     ⎯⎯�
+ATRAPADA   engine recarga si cambio     ⎯⎯�
+ATRAPADA   revision por contenido       ⎯⎯�
+ATRAPADA   canPreview corta BLOCKED     ⎯⎯�
+ATRAPADA   canPreview mira exportable   ⎯⎯�
+ATRAPADA   blocked suelta el motor      ⎯⎯�
+ATRAPADA   scrub deja en pausa          ⎯⎯�
+ATRAPADA   preset queda dirty           ⎯⎯�
+ATRAPADA   storage valida con Zod       ⎯⎯�
+ATRAPADA   hold no emite evento         ⎯⎯�
+ATRAPADA   black emite media.stop       ⎯⎯�
+ATRAPADA   namespace de assets          ⎯⎯�
+ATRAPADA   ruta local en assets         ⎯⎯�
+ATRAPADA   BLOCKED bloquea export       ⎯⎯�
+ATRAPADA   experiencia: vista pura      ⎯⎯�
+ATRAPADA   experiencia: assets locales  ⎯⎯�
+ATRAPADA   experiencia: PLAY requiere ready ⎯�
+ATRAPADA   experiencia: reset conoce estado ⎯�
+ATRAPADA   pantalla A en su lugar       ⎯⎯�
+ATRAPADA   pantalla B en su lugar       ⎯⎯�
+ATRAPADA   client mode usa campaña      ⎯⎯�
+ATRAPADA   precarga solo campaña        ⎯⎯�
+ATRAPADA   titular ejecutivo            ⎯⎯�
+ATRAPADA   WHY sin claims de luz        ⎯⎯�
+ATRAPADA   segmentos reparten el uv     ⎯⎯�
+ATRAPADA   segmento usa su indice       ⎯⎯�
+ATRAPADA   black no muestra media       ⎯⎯�
+ATRAPADA   contain entra entero         ⎯⎯�
+ATRAPADA   fallo no cuenta cargado      ⎯⎯�
+ATRAPADA   READY exige todo             ⎯⎯�
+ATRAPADA   fallback debe estar cargado  ⎯⎯�
+ATRAPADA   STOP nunca se bloquea        ⎯⎯�
+ATRAPADA   signature con seek           ⎯⎯�
+ATRAPADA   check requerido bloquea      ⎯⎯�
+ATRAPADA   check sin ejecutar falla     ⎯⎯�
+ATRAPADA   logger guarda la key         ⎯⎯�
+ATRAPADA   serie corta en measuredAt    ⎯⎯�
+ATRAPADA   ack emite evento             ⎯⎯�
+ATRAPADA   ack no borra                 ⎯⎯�
+ATRAPADA   ack all sincroniza log       ⎯⎯�
+ATRAPADA   sin tarifa en la alarma      ⎯⎯�
+ATRAPADA   alarma: ESCALATED            ⎯⎯�
+ATRAPADA   alarma: DEESCALATED          ⎯⎯�
+ATRAPADA   alarma: RESOLVED             ⎯⎯�
+ATRAPADA   ack no borra la alarma       ⎯⎯�
+ATRAPADA   escalar invalida el ack      ⎯⎯�
+ATRAPADA   metric en la identidad       ⎯⎯�
+ATRAPADA   freshness: STALE             ⎯⎯�
+ATRAPADA   freshness: COMM_ERROR        ⎯⎯�
+ATRAPADA   modo efectivo del estado     ⎯⎯�
+ATRAPADA   modo: safe mode manda        ⎯⎯�
+ATRAPADA   mes calendario real          ⎯⎯�
+ATRAPADA   IA usa umbral configurado    ⎯⎯�
+ATRAPADA   compiler: atMs acumulado     ⎯⎯�
+ATRAPADA   compiler: A y B mismo cue    ⎯⎯�
+ATRAPADA   compiler: cierre a identidad ⎯⎯�
+ATRAPADA   compiler: escena existe      ⎯⎯�
+ATRAPADA   compiler: uv por pixeles     ⎯⎯�
+ATRAPADA   assets: namespace            ⎯⎯�
+ATRAPADA   assets: unmanaged bloquea    ⎯⎯�
+ATRAPADA   assets: aspecto              ⎯⎯�
+ATRAPADA   validation: no exporta       ⎯⎯�
+ATRAPADA   draft: duracion minima       ⎯⎯�
+ATRAPADA   draft: duplicar id nuevo     ⎯⎯�
+ATRAPADA   membresia por show           ⎯⎯�
+ATRAPADA   storage: dedup solo por tamaño ⎯�
 ATRAPADA   storage: shard≠hash aceptado ⎯⎯
-ATRAPADA   storage: temporal huérfano pisado �
-ATRAPADA   storage: permisos no endurecidos ⎯�
-ATRAPADA   media: HEVC aceptado         ⎯⎯�
-ATRAPADA   media: 29.97 aceptado (float) ⎯⎯�
-ATRAPADA   media: resolución errada aceptada �
-ATRAPADA   media: múltiples pistas aceptadas �
-ATRAPADA   media: formato hardcodeado   ⎯⎯�
-ATRAPADA   media: MOV pasa como MP4     ⎯⎯�
-ATRAPADA   media: carátula cuenta como pista �
+ATRAPADA   storage: temporal huérfano pisado �
+ATRAPADA   storage: permisos no endurecidos ⎯�
+ATRAPADA   media: HEVC aceptado         ⎯⎯�
+ATRAPADA   media: 29.97 aceptado (float) ⎯⎯�
+ATRAPADA   media: resolución errada aceptada �
+ATRAPADA   media: múltiples pistas aceptadas �
+ATRAPADA   media: formato hardcodeado   ⎯⎯�
+ATRAPADA   media: MOV pasa como MP4     ⎯⎯�
+ATRAPADA   media: carátula cuenta como pista �
 ATRAPADA   media: decode de frame omitido ⎯⎯
-ATRAPADA   media: timeout omitido       ⎯⎯�
-ATRAPADA   media: reintento de decode omitido �
-ATRAPADA   media: reintento rescata corruptos �
+ATRAPADA   media: timeout omitido       ⎯⎯�
+ATRAPADA   media: reintento de decode omitido �
+ATRAPADA   media: reintento rescata corruptos �
 (la corrida completa se cortó en la regla 109 porque su patrón cambió con la corrección: se actualizó el patrón y se corrió la tanda 109: )
 
 === mutaciones: python3 scripts/mutation-check.py --tanda 109: ===
 tanda 109:None — 12 de 121 reglas
-ATRAPADA   assets: hash del upload ignorado ⎯�
+ATRAPADA   assets: hash del upload ignorado ⎯�
 ATRAPADA   assets: huella de TOO_LARGE ignorada 
-ATRAPADA   assets: dedup desactivado    ⎯⎯�
-ATRAPADA   assets: temporal no limpiado ⎯⎯�
-ATRAPADA   assets: REJECTED entra READY ⎯⎯�
-ATRAPADA   assets: BAD_RESOLUTION aceptado ⎯�
-ATRAPADA   assets: corrupto aceptado    ⎯⎯�
+ATRAPADA   assets: dedup desactivado    ⎯⎯�
+ATRAPADA   assets: temporal no limpiado ⎯⎯�
+ATRAPADA   assets: REJECTED entra READY ⎯⎯�
+ATRAPADA   assets: BAD_RESOLUTION aceptado ⎯�
+ATRAPADA   assets: corrupto aceptado    ⎯⎯�
 ATRAPADA   assets: READY sin StoredObject ⎯⎯
-ATRAPADA   assets: READY con sha ajeno  ⎯⎯�
-ATRAPADA   assets: READY con tamaño ajeno ⎯�
-ATRAPADA   assets: terminal sin detail  ⎯⎯�
-ATRAPADA   assets: tempId desde filename ⎯⎯�
+ATRAPADA   assets: READY con sha ajeno  ⎯⎯�
+ATRAPADA   assets: READY con tamaño ajeno ⎯�
+ATRAPADA   assets: terminal sin detail  ⎯⎯�
+ATRAPADA   assets: tempId desde filename ⎯⎯�
 atrapadas 12 · sobreviven 0 · sin salida 0
 TODAS ATRAPADAS
 TOTAL: 109 + 12 = 121/121 atrapadas
@@ -200,3 +200,9 @@ no ejecutado verde en este entorno (sin Chrome con H.264). Evidencia: job e2e-m2
 
 === S3/MinIO ===
 no ejecutado (sin MinIO).
+
+=== Extra: carrera de CREATE ROLE en el arnés (fix en testing.ts) ===
+--- sin lock (como main): ERROR:  duplicate key value violates unique constraint "pg_authid_rolname_index"
+--- con lock (fix): sin errores
+Suite PG en 4 clusters nuevos con el fix: 4 x "Test Files  5 passed | 1 skipped (6)"
+Suite PG en el cluster de desarrollo con el fix: Tests  87 passed | 6 skipped (93); bootstrap 6/6; lint 0 errores; typecheck platform-db OK
