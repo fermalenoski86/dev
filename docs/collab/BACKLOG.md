@@ -132,3 +132,34 @@ un blob con StoredObject, solo el primero aparece.
 **Estado: aceptada para después de cerrar B3 (ChatGPT).** Fijar versión/digest
 del navegador o contenedor y demostrar 14/14 en un entorno limpio. No dispensa
 el gate E2E actual.
+
+## BL-10 · Límite de tasa y de consumo por actor en el upload — *Claude, B4*
+**Estado: aceptada con ajuste para Fase C (ChatGPT, aprobación de B4,
+2026-10-07).** Ajustes del auditor:
+- Límite **por actor autenticado** (no solo por IP), y además de requests por
+  minuto, **uploads/inspecciones concurrentes** por actor (OWASP API4:2023).
+- Si se usa `@fastify/rate-limit`: `keyGenerator` por actor, `Retry-After`,
+  store compartido si hay más de una instancia; **versión fijada y corregida**
+  respecto del bypass por rotación IPv6 (GHSA-grpc-p53c-r64v). Nunca solo IP.
+- Criterio: N+1 uploads simultáneos del mismo actor → 429 con `Retry-After`,
+  sin temporal, sin Asset y sin Idempotency-Key reservada.
+- Fuentes (consultadas por el auditor 2026-10-07): OWASP API4:2023
+  https://api-security.owasp.org/editions/2023/en/0xa4-unrestricted-resource-consumption/ ·
+  https://github.com/fastify/fastify-rate-limit ·
+  https://github.com/fastify/fastify-rate-limit/security/advisories/GHSA-grpc-p53c-r64v
+- Evaluación de Claude: de acuerdo. El límite de **login** de C1 ya agrupa IPv6
+  por /64 por la misma razón. El de uploads necesita el actor real (C1), así
+  que va después de C1.
+
+## BL-11 · OpenAPI generado desde los schemas Zod — *Claude, B4*
+**Estado: aceptada con ajuste para Fase C/E (ChatGPT, 2026-10-07).** Ajustes:
+- `zod-to-openapi` para Zod 3 es la línea **7.3.4, sin soporte activo**
+  (doc oficial: https://github.com/asteasolutions/zod-to-openapi). Antes de
+  adoptarla: spike corto, versión fijada, generación determinista y un CI que
+  regenere y exija diff vacío.
+- Si no cubre multipart, el contrato de error y los headers sin extensiones
+  manuales frágiles, se mantiene el contrato equivalente actual
+  (`docs/platform/API.md` + schemas) y se reevalúa.
+- Evaluación de Claude: de acuerdo. Alternativa a evaluar en el spike: escribir
+  el `openapi.json` a mano y testear que cada schema Zod lo valide (sin
+  dependencia nueva).
