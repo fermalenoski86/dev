@@ -110,6 +110,8 @@ M = [
  ('media: carátula cuenta como pista', 'packages/platform-media/src/ffprobe.ts', "  const videos = streams.filter((s) => s.codec_type === 'video' && !esCaratula(s));", "  const videos = streams.filter((s) => s.codec_type === 'video');"),
  ('media: decode de frame omitido', 'packages/platform-media/src/pipeline.ts', '    const frame = await decoder.decode(m.path, { streamIndex: probe.media.videoStreamIndex ?? 0, durationMs: probe.media.durationMs ?? 0, signal: opts.signal });', '    const frame = { ok: true as const, frameBytes: 1 };', 'npx vitest run -c vitest.media.config.ts'),
  ('media: timeout omitido', 'packages/platform-media/src/process.ts', "    const timer = setTimeout(() => terminar({ kind: 'timeout' }), opts.timeoutMs);", '    const timer = setTimeout(() => {}, opts.timeoutMs);', 'npx vitest run -c vitest.media.config.ts'),
+ ('media: reintento de decode omitido', 'packages/platform-media/src/ffmpeg.ts', "      if (!sinFrame || seekMs === 0) return primero;", "      return primero;", 'npx vitest run -c vitest.media.config.ts'),
+ ('media: reintento rescata corruptos', 'packages/platform-media/src/ffmpeg.ts', "primero.outcome.kind === 'exit' && primero.outcome.code === 0 && primero.stdoutBytes === 0", "primero.outcome.kind === 'exit' && primero.stdoutBytes === 0", 'npx vitest run -c vitest.media.config.ts'),
 ]
 # Restauracion garantizada: si esto se interrumpe a mitad (Ctrl-C, timeout,
 # SIGTERM), el repo NO puede quedar con una mutacion aplicada. Pasa, y el
@@ -203,10 +205,46 @@ for _i, _arg in enumerate(sys.argv):
 CMD_DEFAULT = "npx vitest run"
 CMD_MEDIA = "npx vitest run -c vitest.media.config.ts"
 
-ok = True
+# MUTATION_TEST_CMD reemplaza el comando de test de TODAS las reglas. Sirve para
+# demostrar el gate sin correr la suite (ver docs/reviews/M3A1_FASE_B2_AUDIT1.md):
+#   MUTATION_TEST_CMD="printf 'Tests 1 passed\n'" → SOBREVIVE → exit 1
+#   MUTATION_TEST_CMD="true"                       → SIN SALIDA → exit 1
+import os, re
+_override = os.environ.get('MUTATION_TEST_CMD')
+
+
+_ANSI = re.compile(r'\x1b\[[0-9;]*[A-Za-z]')
+
+
+def clasificar(line):
+    """ATRAPADA solo si vitest reporta tests fallados. Una suite que no produce
+    la línea 'Tests …' (no arrancó, crasheó, comando inexistente) NO es una
+    mutación atrapada: es un fallo de infraestructura y también tumba el gate."""
+    # En CI vitest colorea la salida: "\x1b[31m2 failed" no tiene límite de
+    # palabra antes del número. Se limpian los códigos ANSI antes de clasificar.
+    line = _ANSI.sub('', line)
+    if re.search(r'Tests\s.*\b\d+ failed', line):
+        return 'ATRAPADA'
+    if re.search(r'Tests\s.*\b\d+ passed', line):
+        return 'SOBREVIVE'
+    return 'SIN SALIDA'
+
+
+if '--autoprueba' in sys.argv:
+    assert clasificar('      Tests  2 failed | 594 passed | 1 skipped (597)') == 'ATRAPADA'
+    assert clasificar('      Tests  596 passed | 1 skipped (597)') == 'SOBREVIVE'
+    assert clasificar('') == 'SIN SALIDA'
+    assert clasificar('Error: Cannot find module vitest') == 'SIN SALIDA'
+    # salida coloreada como la de GitHub Actions
+    assert clasificar('      Tests  \x1b[1m\x1b[31m2 failed\x1b[39m\x1b[22m | \x1b[32m594 passed\x1b[39m') == 'ATRAPADA'
+    assert clasificar('      Tests  \x1b[1m\x1b[32m596 passed\x1b[39m\x1b[22m') == 'SOBREVIVE'
+    print('autoprueba OK')
+    sys.exit(0)
+
+estados = {'ATRAPADA': 0, 'SOBREVIVE': 0, 'SIN SALIDA': 0}
 for regla in _reglas:
     name, f, a, b = regla[:4]
-    cmd = regla[4] if len(regla) > 4 else CMD_DEFAULT
+    cmd = _override or (regla[4] if len(regla) > 4 else CMD_DEFAULT)
     p = pathlib.Path(f); orig = p.read_text()
     assert a in orig, f"no encontre el patron de: {name}"
     _pendiente[f] = orig
@@ -219,7 +257,11 @@ for regla in _reglas:
         p.write_text(orig)
         _pendiente.pop(f, None)
         _guardar_diario()
-    caught = "failed" in line
-    ok &= caught
-    print(f"{'ATRAPADA ' if caught else 'SOBREVIVE'}  {name:28s} {line}", flush=True)
-print("TODAS ATRAPADAS" if ok else "HAY MUTANTES VIVOS")
+    estado = clasificar(line)
+    estados[estado] += 1
+    print(f"{estado:10s} {name:28s} {line}", flush=True)
+print(f"atrapadas {estados['ATRAPADA']} · sobreviven {estados['SOBREVIVE']} · sin salida {estados['SIN SALIDA']}")
+if estados['SOBREVIVE'] or estados['SIN SALIDA'] or not _reglas:
+    print("GATE FALLIDO: HAY MUTANTES VIVOS O SUITES SIN SALIDA")
+    sys.exit(1)
+print("TODAS ATRAPADAS")

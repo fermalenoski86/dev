@@ -38,6 +38,11 @@ H264=(-c:v libx264 -preset ultrafast -pix_fmt yuv420p -tune zerolatency -x264-pa
 # major_brand ('qt  ') lo delata
 "${FF[@]}" -f lavfi -i "testsrc2=size=1920x412:rate=25:duration=2" "${H264[@]}" "${BIT[@]}" -f mov "$OUT/bad_container_mov.mp4"
 # válido con carátula embebida: la carátula es una "pista de video"
+# un único frame (MP4 sano, duración 1/fps): el seek de decode cae después del
+# frame; el decoder debe reintentar desde 0 (auditoría B2 #1, hallazgo 2)
+for R in 25 30; do
+  "${FF[@]}" -f lavfi -i "color=size=1920x412:rate=$R" -frames:v 1 "${H264[@]}" "${BIT[@]}" "$OUT/one_frame_$R.mp4"
+done
 # attached_pic que NO cuenta como segunda pista
 "${FF[@]}" -f lavfi -i "color=red:size=320x240:duration=1" -frames:v 1 "$OUT/_cover.png"
 "${FF[@]}" -i "$OUT/valid_horizontal_30.mp4" -i "$OUT/_cover.png" -map 0 -map 1 -c copy -disposition:v:1 attached_pic "${BIT[@]}" "$OUT/valid_with_cover_art.mp4"
