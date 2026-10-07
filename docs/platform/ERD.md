@@ -20,7 +20,8 @@ erDiagram
   stored_objects ||--o{ approval_evidence : "blob físico"
   stored_objects ||--o{ show_version_assets : "blob aprobado (Deploy)"
   show_versions ||--o| approvals : "UNA decisión"
-  approval_evidence ||--o{ approvals : "evidence_id"
+  show_versions ||--o{ approval_evidence : "evidencia de ESA versión (0003)"
+  approval_evidence ||--o{ approvals : "evidence_id + show_version_id (FK compuesta, 0003)"
   users ||--o{ audit_events : "actor"
 ```
 
@@ -38,6 +39,8 @@ erDiagram
 | `version_hash` | índice NO único: mismo contenido en dos campañas = dos versiones con el mismo hash |
 | Estado efectivo | SUBMITTED = sin Approval · APPROVED/REJECTED = decisión de su Approval |
 | Una decisión por versión | `approvals.show_version_id UNIQUE` |
+| La decisión cita el hash exacto | `approvals.version_hash` + trigger `approvals_exact_hash` (0003) |
+| Evidencia: tipo ↔ MIME en allowlist y nada después de la decisión | trigger `evidence_insert` (0003) |
 | APPROVED con evidencia, REJECTED con motivo | CHECK constraints |
 | Cuatro ojos por contrato | `contracts.four_eyes_required DEFAULT true` + trigger `FOUR_EYES_VIOLATION` |
 | Blob físico content-addressed e inmutable | `stored_objects.sha256 UNIQUE`; `storage_key` derivada del sha256 (CHECK); trigger inmutable |

@@ -1,0 +1,518 @@
+M3A.1 Fase C2 — AUDIT #1 — salida REAL de los gates (2026-10-07T20:47Z), rama fase/m3a1-c2
+Node v22.22.0 · pnpm 12.5.1 · postgres (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) · ffmpeg version 6.1.1-3ubuntu5
+E2E M2C: NO EJECUTADO localmente (sin Chrome con H.264); lo cubre el job e2e-m2c del CI.
+
+================ verify ================
+$ pnpm verify
+$ pnpm lint && pnpm typecheck && pnpm test
+$ eslint "{packages,apps}/*/src/**/*.{ts,tsx}"
+✖ 11 problems (0 errors, 11 warnings)
+$ pnpm -r typecheck
+packages/shared-types typecheck: Done
+packages/platform-storage typecheck: Done
+packages/timeline typecheck: Done
+packages/telemetry typecheck: Done
+packages/show-engine typecheck: Done
+packages/control-core typecheck: Done
+packages/show-authoring typecheck: Done
+packages/experience-core typecheck: Done
+packages/trust-3d typecheck: Done
+packages/platform-contracts typecheck: Done
+apps/control typecheck: Done
+apps/previs typecheck: Done
+packages/platform-db typecheck: Done
+packages/platform-media typecheck: Done
+packages/platform-audit typecheck: Done
+packages/platform-auth typecheck: Done
+packages/platform-assets typecheck: Done
+packages/platform-approval typecheck: Done
+apps/platform-api typecheck: Done
+$ vitest run
+ ✓ packages/show-authoring/src/authoring.test.ts (48 tests) 103ms
+ ✓ packages/control-core/src/m2a2.test.ts (33 tests) 61ms
+ ✓ packages/experience-core/src/masters.test.ts (39 tests) 34ms
+ ✓ packages/control-core/src/control-core.test.ts (46 tests) 48ms
+ ✓ packages/experience-core/src/experience.test.ts (38 tests) 37ms
+ ✓ packages/telemetry/src/lifecycle.test.ts (45 tests) 29ms
+ ✓ packages/show-authoring/src/preview-session.test.ts (28 tests) 63ms
+ ✓ packages/show-engine/src/playback.test.ts (25 tests) 42ms
+ ✓ packages/show-engine/src/resolve.test.ts (32 tests) 19ms
+ ✓ packages/experience-core/src/composition.test.ts (27 tests) 20ms
+ ✓ packages/telemetry/src/telemetry.test.ts (38 tests) 78ms
+ ✓ packages/show-engine/src/groups.test.ts (23 tests) 28ms
+ ✓ packages/control-core/src/m2a3.test.ts (17 tests) 28ms
+ ✓ packages/trust-3d/src/MediaTextureManager.test.ts (19 tests) 13ms
+ ✓ packages/platform-storage/src/local-disk.test.ts (24 tests) 482ms
+ ✓ packages/show-engine/src/preflight.test.ts (17 tests) 33ms
+ ✓ packages/platform-media/src/validator.test.ts (15 tests) 12ms
+ ✓ packages/show-engine/src/fades.test.ts (11 tests) 106ms
+ ✓ packages/platform-contracts/src/canonical.test.ts (14 tests) 9ms
+ ✓ packages/platform-auth/src/rate-limit.test.ts (9 tests) 85ms
+ ✓ packages/show-authoring/src/artifacts.test.ts (6 tests) 28ms
+ ✓ packages/timeline/src/transport.test.ts (15 tests) 5ms
+ ✓ packages/platform-approval/src/detect.test.ts (7 tests) 10ms
+ ✓ packages/show-engine/src/compile.test.ts (7 tests) 31ms
+ ✓ packages/platform-media/src/remediation.test.ts (5 tests) 5ms
+ ✓ packages/platform-assets/src/filename.test.ts (15 tests) 12ms
+ ✓ packages/show-engine/src/shows.test.ts (10 tests) 167ms
+ ✓ packages/platform-media/src/limiter.test.ts (4 tests) 15ms
+ ✓ packages/platform-assets/src/limited-body.test.ts (5 tests) 15ms
+ ✓ packages/platform-media/src/rational.test.ts (5 tests) 5ms
+ ✓ packages/platform-contracts/src/versions.test.ts (3 tests) 4ms
+ ✓ packages/platform-contracts/src/building-capabilities.test.ts (4 tests) 4ms
+ ✓ packages/platform-db/src/idempotency.test.ts (3 tests) 5ms
+ Test Files  33 passed | 1 skipped (34)
+      Tests  637 passed | 1 skipped (638)
+EXIT 0
+
+================ install ================
+$ pnpm install --frozen-lockfile
+✓ Lockfile passes supply-chain policies (verified 1h ago)
+Done in 46ms using pnpm v12.5.1
+EXIT 0
+
+================ build ================
+$ pnpm build
+$ pnpm -r build
+packages/platform-storage build: Done
+packages/shared-types build: Done
+packages/telemetry build: Done
+packages/timeline build: Done
+packages/show-engine build: Done
+packages/control-core build: Done
+packages/show-authoring build: Done
+packages/trust-3d build: Done
+packages/platform-contracts build: Done
+packages/experience-core build: Done
+packages/platform-db build: Done
+packages/platform-media build: Done
+apps/control build:  ✓ Compiled successfully
+apps/previs build:  ✓ Compiled successfully
+apps/previs build:  ✓ Generating static pages (4/4)
+apps/control build:  ✓ Generating static pages (5/5)
+apps/previs build: Done
+packages/platform-audit build: Done
+packages/platform-assets build: Done
+packages/platform-auth build: Done
+packages/platform-approval build: Done
+apps/platform-api build: Done
+apps/control build: Done
+EXIT 0
+
+================ pg ================
+$ bash scripts/dev/pg-up.sh
+pg_ctl: server is running (PID: 603)
+EXIT 0
+
+================ platform ================
+$ npx vitest run -c vitest.platform.config.ts
+ ✓ apps/platform-api/src/approval.db.test.ts (28 tests) 1632ms
+ ✓ packages/platform-db/src/schema.db.test.ts (31 tests) 999ms
+   ✓ migraciones > up sobre base vacía, down y up de nuevo (smoke test reversible) 370ms
+ ✓ apps/platform-api/src/api.db.test.ts (25 tests) 2446ms
+ ✓ packages/platform-assets/src/upload.db.test.ts (29 tests) 4943ms
+   ✓ CRITERIO: inválidos → REJECTED con código exacto, sin basura > bad_resolution.mp4 (horizontal) → ASSET_BAD_RESOLUTION 419ms
+   ✓ CRITERIO: deduplicación (§15, §32) > mismo MP4 dos veces: 2 Assets READY, 1 StoredObject, 1 archivo físico 316ms
+   ✓ CRITERIO: fallo de la base DESPUÉS del commit de storage (§16, §33) > blob final queda seguro, Asset no queda READY, y el retry idempotente recupera 353ms
+ ✓ apps/platform-api/src/auth.db.test.ts (14 tests) 1085ms
+ ✓ packages/platform-auth/src/auth.db.test.ts (12 tests) 778ms
+ ✓ packages/platform-audit/src/audit.db.test.ts (8 tests) 708ms
+ ✓ packages/platform-db/src/idempotency.db.test.ts (9 tests) 639ms
+ ✓ packages/platform-db/src/asset-consistency.db.test.ts (10 tests) 315ms
+ ✓ packages/platform-db/src/approval-schema.db.test.ts (5 tests) 390ms
+ ✓ apps/platform-api/src/cli/user-create.db.test.ts (3 tests) 379ms
+ Test Files  11 passed | 1 skipped (12)
+      Tests  174 passed | 6 skipped (180)
+EXIT 0
+
+================ bootstrap ================
+$ bash packages/platform-db/scripts/bootstrap-smoke.sh
+ ✓ packages/platform-db/src/bootstrap.smoke.db.test.ts (6 tests) 147ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+EXIT 0
+
+================ media ================
+$ npx vitest run -c vitest.media.config.ts
+ ✓ packages/platform-media/src/process.real.test.ts (15 tests) 3671ms
+   ✓ CRITERIO: timeout real mata el proceso y no deja zombie > ffprobe colgado ⇒ ASSET_INSPECTION_TIMEOUT {stage: probe}, proceso terminado 416ms
+   ✓ CRITERIO: timeout real mata el proceso y no deja zombie > ffmpeg colgado ⇒ ASSET_INSPECTION_TIMEOUT {stage: decode}, proceso terminado 412ms
+   ✓ CRITERIO: concurrencia limitada con procesos reales > 4 procesos colgados con límite 2: solo 2 existen; abortar libera todo 418ms
+   ✓ CRITERIO: nombres hostiles nunca llegan a un shell > el archivo se inspecciona igual y no se ejecuta nada 1328ms
+ ✓ packages/platform-media/src/media.real.test.ts (38 tests) 2980ms
+   ✓ CRITERIO: por qué hacen falta DOS compuertas (probe + decode) > AUDIT B2 #1: MP4 sano de UN frame decodifica (el seek cae después del frame y se reintenta desde 0) 316ms
+ ✓ packages/platform-media/src/remediation.real.test.ts (10 tests) 10309ms
+   ✓ CRITERIO: BL-03 — la receta sugerida produce un archivo que pasa checkMedia > bad_resolution.mp4 (horizontal): ASSET_BAD_RESOLUTION → receta → OK 1078ms
+   ✓ CRITERIO: BL-03 — la receta sugerida produce un archivo que pasa checkMedia > bad_codec_hevc.mp4 (horizontal): ASSET_BAD_CODEC → receta → OK 1057ms
+   ✓ CRITERIO: BL-03 — la receta sugerida produce un archivo que pasa checkMedia > bad_fps_2997.mp4 (horizontal): ASSET_BAD_FPS → receta → OK 1090ms
+   ✓ CRITERIO: BL-03 — la receta sugerida produce un archivo que pasa checkMedia > bad_fps_23976.mp4 (horizontal): ASSET_BAD_FPS → receta → OK 1045ms
+   ✓ CRITERIO: BL-03 — la receta sugerida produce un archivo que pasa checkMedia > bad_fps_50.mp4 (horizontal): ASSET_BAD_FPS → receta → OK 1119ms
+   ✓ CRITERIO: BL-03 — la receta sugerida produce un archivo que pasa checkMedia > bad_container_mov.mp4 (horizontal): ASSET_BAD_CONTAINER → receta → OK 960ms
+   ✓ CRITERIO: BL-03 — la receta sugerida produce un archivo que pasa checkMedia > bad_container_mkv.mp4 (horizontal): ASSET_BAD_CONTAINER → receta → OK 973ms
+   ✓ CRITERIO: BL-03 — la receta sugerida produce un archivo que pasa checkMedia > bad_container_avi.mp4 (horizontal): ASSET_BAD_CONTAINER → receta → OK 1002ms
+   ✓ CRITERIO: BL-03 — la receta sugerida produce un archivo que pasa checkMedia > multiple_video_streams.mp4 (horizontal): ASSET_MULTIPLE_VIDEO_STREAMS → receta → OK 963ms
+   ✓ CRITERIO: BL-03 — la receta sugerida produce un archivo que pasa checkMedia > valid_towers_ab_25.mp4 (horizontal): ASSET_BAD_RESOLUTION → receta → OK 1014ms
+ Test Files  3 passed (3)
+      Tests  63 passed (63)
+EXIT 0
+
+================ mut ================
+$ python3 scripts/mutation-check.py
+ATRAPADA   STOP -> black                ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 632 passed | 1 skipped (638)
+ATRAPADA   SAFE MODE -> black           ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 631 passed | 1 skipped (638)
+ATRAPADA   PAUSE -> hold                ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 630 passed | 1 skipped (638)
+ATRAPADA   uv x+w <= 1                  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 635 passed | 1 skipped (638)
+ATRAPADA   uv w,h > 0                   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 635 passed | 1 skipped (638)
+ATRAPADA   capacidad del edificio       ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 635 passed | 1 skipped (638)
+ATRAPADA   doble membresia              ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   aspecto del recorte          ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   guard de URLs                ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 634 passed | 1 skipped (638)
+ATRAPADA   ended en transporte          ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 632 passed | 1 skipped (638)
+ATRAPADA   retry: libera fallada activa ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   retry: recrea el video       ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 634 passed | 1 skipped (638)
+ATRAPADA   actuador obedece output      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 635 passed | 1 skipped (638)
+ATRAPADA   simulador determinista       ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 630 passed | 1 skipped (638)
+ATRAPADA   flag simulated               ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 635 passed | 1 skipped (638)
+ATRAPADA   phase loss antes que UV      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 634 passed | 1 skipped (638)
+ATRAPADA   umbrales configurables       ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   serie == lectura viva        ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   clip caido se reporta        ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   logico != salud              ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   offline != safe mode         ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   contexto IA sin handles      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   provenance simulada          ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  9 failed | 628 passed | 1 skipped (638)
+ATRAPADA   simulated no verificado      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 633 passed | 1 skipped (638)
+ATRAPADA   verificado mira provenance   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 633 passed | 1 skipped (638)
+ATRAPADA   stale degrada salud          ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 635 passed | 1 skipped (638)
+ATRAPADA   alarmas -> salud electrica   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 631 passed | 1 skipped (638)
+ATRAPADA   preview no pisa al motor     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 632 passed | 1 skipped (638)
+ATRAPADA   override off por defecto     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   serie congelada en stale     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 630 passed | 1 skipped (638)
+ATRAPADA   engine recarga si cambio     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 635 passed | 1 skipped (638)
+ATRAPADA   revision por contenido       ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 632 passed | 1 skipped (638)
+ATRAPADA   canPreview corta BLOCKED     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   canPreview mira exportable   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   blocked suelta el motor      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   scrub deja en pausa          ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 635 passed | 1 skipped (638)
+ATRAPADA   preset queda dirty           ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 634 passed | 1 skipped (638)
+ATRAPADA   storage valida con Zod       ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   hold no emite evento         ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  8 failed | 629 passed | 1 skipped (638)
+ATRAPADA   black emite media.stop       ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 632 passed | 1 skipped (638)
+ATRAPADA   namespace de assets          ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   ruta local en assets         ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   BLOCKED bloquea export       ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 633 passed | 1 skipped (638)
+ATRAPADA   experiencia: vista pura      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 635 passed | 1 skipped (638)
+ATRAPADA   experiencia: assets locales  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   experiencia: PLAY requiere ready ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 635 passed | 1 skipped (638)
+ATRAPADA   experiencia: reset conoce estado ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   pantalla A en su lugar       ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   pantalla B en su lugar       ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   client mode usa campaña      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   precarga solo campaña        ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 634 passed | 1 skipped (638)
+ATRAPADA   titular ejecutivo            ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   WHY sin claims de luz        ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   segmentos reparten el uv     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   segmento usa su indice       ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   black no muestra media       ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   contain entra entero         ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   fallo no cuenta cargado      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   READY exige todo             ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 632 passed | 1 skipped (638)
+ATRAPADA   fallback debe estar cargado  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   STOP nunca se bloquea        ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   signature con seek           ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   check requerido bloquea      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 635 passed | 1 skipped (638)
+ATRAPADA   check sin ejecutar falla     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   logger guarda la key         ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 632 passed | 1 skipped (638)
+ATRAPADA   serie corta en measuredAt    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 633 passed | 1 skipped (638)
+ATRAPADA   ack emite evento             ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 635 passed | 1 skipped (638)
+ATRAPADA   ack no borra                 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 632 passed | 1 skipped (638)
+ATRAPADA   ack all sincroniza log       ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 633 passed | 1 skipped (638)
+ATRAPADA   sin tarifa en la alarma      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 635 passed | 1 skipped (638)
+ATRAPADA   alarma: ESCALATED            ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  7 failed | 630 passed | 1 skipped (638)
+ATRAPADA   alarma: DEESCALATED          ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 633 passed | 1 skipped (638)
+ATRAPADA   alarma: RESOLVED             ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 631 passed | 1 skipped (638)
+ATRAPADA   ack no borra la alarma       ⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  11 failed | 626 passed | 1 skipped (638)
+ATRAPADA   escalar invalida el ack      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 635 passed | 1 skipped (638)
+ATRAPADA   metric en la identidad       ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 635 passed | 1 skipped (638)
+ATRAPADA   freshness: STALE             ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  9 failed | 628 passed | 1 skipped (638)
+ATRAPADA   freshness: COMM_ERROR        ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 634 passed | 1 skipped (638)
+ATRAPADA   modo efectivo del estado     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 633 passed | 1 skipped (638)
+ATRAPADA   modo: safe mode manda        ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   mes calendario real          ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 635 passed | 1 skipped (638)
+ATRAPADA   IA usa umbral configurado    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 635 passed | 1 skipped (638)
+ATRAPADA   compiler: atMs acumulado     ⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  12 failed | 625 passed | 1 skipped (638)
+ATRAPADA   compiler: A y B mismo cue    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   compiler: cierre a identidad ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   compiler: escena existe      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   compiler: uv por pixeles     ⎯⎯⎯⎯⎯⎯ Failed Tests 37 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  37 failed | 534 passed | 1 skipped (572)
+ATRAPADA   assets: namespace            ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   assets: unmanaged bloquea    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   assets: aspecto              ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 631 passed | 1 skipped (638)
+ATRAPADA   validation: no exporta       ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 634 passed | 1 skipped (638)
+ATRAPADA   draft: duracion minima       ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   draft: duplicar id nuevo     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 635 passed | 1 skipped (638)
+ATRAPADA   membresia por show           ⎯⎯⎯⎯⎯⎯ Failed Tests 39 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  39 failed | 598 passed | 1 skipped (638)
+ATRAPADA   storage: dedup solo por tamaño ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   storage: shard≠hash aceptado ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   storage: temporal huérfano pisado ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 634 passed | 1 skipped (638)
+ATRAPADA   storage: permisos no endurecidos ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   media: HEVC aceptado         ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   media: 29.97 aceptado (float) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   media: resolución errada aceptada ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 635 passed | 1 skipped (638)
+ATRAPADA   media: múltiples pistas aceptadas ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   media: formato hardcodeado   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 634 passed | 1 skipped (638)
+ATRAPADA   media: MOV pasa como MP4     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   media: carátula cuenta como pista ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 636 passed | 1 skipped (638)
+ATRAPADA   media: decode de frame omitido ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 61 passed (63)
+ATRAPADA   media: timeout omitido       ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 61 passed (63)
+ATRAPADA   media: reintento de decode omitido ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 59 passed (63)
+ATRAPADA   media: reintento rescata corruptos ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 62 passed (63)
+ATRAPADA   assets: hash del upload ignorado ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 38 passed (39)
+ATRAPADA   assets: huella de TOO_LARGE ignorada ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 38 passed (39)
+ATRAPADA   assets: dedup desactivado    ⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  13 failed | 26 passed (39)
+ATRAPADA   assets: temporal no limpiado ⎯⎯⎯⎯⎯⎯ Failed Tests 27 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  27 failed | 12 passed (39)
+ATRAPADA   assets: REJECTED entra READY ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  9 failed | 30 passed (39)
+ATRAPADA   assets: BAD_RESOLUTION aceptado ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 38 passed (39)
+ATRAPADA   assets: corrupto aceptado    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 38 passed (39)
+ATRAPADA   assets: READY sin StoredObject ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 38 passed (39)
+ATRAPADA   assets: READY con sha ajeno  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 38 passed (39)
+ATRAPADA   assets: READY con tamaño ajeno ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 38 passed (39)
+ATRAPADA   assets: terminal sin detail  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 38 passed (39)
+ATRAPADA   assets: tempId desde filename ⎯⎯⎯⎯⎯⎯ Failed Tests 28 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  28 failed | 11 passed (39)
+ATRAPADA   api: actor no exigido        ⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  11 failed | 59 passed (70)
+ATRAPADA   api: Idempotency-Key opcional ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 68 passed (70)
+ATRAPADA   api: 500 filtra el error interno ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 69 passed (70)
+ATRAPADA   api: TOO_LARGE no es 413     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 69 passed (70)
+ATRAPADA   api: ve assets ajenos        ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 69 passed (70)
+ATRAPADA   api: ready ignora la base    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 69 passed (70)
+ATRAPADA   api: x-request-id sin sanear ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 69 passed (70)
+ATRAPADA   api: partes después del archivo aceptadas ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 69 passed (70)
+ATRAPADA   assets: afterBody ignorado   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 69 passed (70)
+ATRAPADA   remediación: resolución hardcodeada ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 4 passed (5)
+ATRAPADA   auth: Argon2id omitido (Argon2d) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 27 passed | 54 skipped (82)
+ATRAPADA   auth: parámetros Argon2 bajados ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 80 passed (82)
+ATRAPADA   auth: sesión sin expiración  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 81 passed (82)
+ATRAPADA   auth: sesión revocada sigue valiendo ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 77 passed (82)
+ATRAPADA   auth: usuario deshabilitado conserva sesión ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 80 passed (82)
+ATRAPADA   auth: CSRF omitido           ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 79 passed (82)
+ATRAPADA   auth: CSRF de cualquier sesión ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 80 passed (82)
+ATRAPADA   auth: rol ignorado           ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 78 passed (82)
+ATRAPADA   auth: external habilitado sin flag ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 79 passed (82)
+ATRAPADA   auth: cross-contract permitido ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 79 passed (82)
+ATRAPADA   auth: cambio de rol no revoca sesiones ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 80 passed (82)
+ATRAPADA   auth: login no rota la sesión previa ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 81 passed (82)
+ATRAPADA   auth: rate limit después del audit ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 81 passed (82)
+ATRAPADA   auth: rate limit apagado     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 80 passed (82)
+ATRAPADA   auth: IPv6 por dirección completa ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 7 passed (9)
+ATRAPADA   auth: audit de login con email ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 81 passed (82)
+ATRAPADA   auth: cookie sin HttpOnly    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 80 passed (82)
+ATRAPADA   auth: login acepta no-JSON   ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 81 passed (82)
+ATRAPADA   auth: logout no revoca       ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 81 passed (82)
+ATRAPADA   auth: rate limit sin barrido de vencidas ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 7 passed (9)
+ATRAPADA   auth: rate limit sin tope de claves ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 8 passed (9)
+ATRAPADA   auth: rate limit con claves de IP arbitrarias ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 8 passed (9)
+ATRAPADA   c2: cuatro ojos sin trigger  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 81 passed | 6 skipped (89)
+ATRAPADA   c2: cuatro ojos ignora el contrato ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 82 passed | 6 skipped (89)
+ATRAPADA   c2: approve sin evidencia (API) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 82 passed | 6 skipped (89)
+ATRAPADA   c2: approve sin evidencia (base) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 82 passed | 6 skipped (89)
+ATRAPADA   c2: reject sin motivo (API)  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 82 passed | 6 skipped (89)
+ATRAPADA   c2: reject sin motivo (base) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 82 passed | 6 skipped (89)
+ATRAPADA   c2: transición inválida      ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 81 passed | 6 skipped (89)
+ATRAPADA   c2: evidencia después de decidir ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 82 passed | 6 skipped (89)
+ATRAPADA   c2: retry duplicado (sin idempotencia) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 80 passed | 6 skipped (89)
+ATRAPADA   c2: decisión sin hash exacto ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 82 passed | 6 skipped (89)
+ATRAPADA   c2: hash exacto sin trigger  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 82 passed | 6 skipped (89)
+ATRAPADA   c2: scope de lectura ignorado ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 82 passed | 6 skipped (89)
+ATRAPADA   c2: ver alcanza para decidir ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 82 passed | 6 skipped (89)
+ATRAPADA   c2: tipo declarado no se compara ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 82 passed | 6 skipped (89)
+ATRAPADA   c2: allowlist sin trigger    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 82 passed | 6 skipped (89)
+ATRAPADA   c2: HTML pasa como texto     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed (7)
+ATRAPADA   c2: texto sin validar controles ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 5 passed (7)
+ATRAPADA   c2: descarga con el nombre original ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 82 passed | 6 skipped (89)
+ATRAPADA   c2: firma de imagen alcanza  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed (7)
+ATRAPADA   c2: parser corta antes que limitBody ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 82 passed | 6 skipped (89)
+ATRAPADA   c2: aprobación sin audit     ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 81 passed | 6 skipped (89)
+ATRAPADA   c2: desactivar cuatro ojos sin evento explícito ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 82 passed | 6 skipped (89)
+ATRAPADA   c2: última aprobada retrocede ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 82 passed | 6 skipped (89)
+ATRAPADA   c2: evidencia de otra versión (base) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 82 passed | 6 skipped (89)
+atrapadas 177 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+EXIT 0
+

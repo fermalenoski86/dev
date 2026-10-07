@@ -1,0 +1,28 @@
+{
+  "name": "@trust/platform-approval",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "build": "echo 'source-only package'"
+  },
+  "dependencies": {
+    "@trust/platform-assets": "workspace:*",
+    "@trust/platform-audit": "workspace:*",
+    "@trust/platform-auth": "workspace:*",
+    "@trust/platform-db": "workspace:*",
+    "@trust/platform-storage": "workspace:*",
+    "kysely": "0.29.6",
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.10"
+  }
+}

@@ -899,3 +899,22 @@ password, cookie ni token (inexistente → actor null). Roles efectivos y
 contratos externos los deriva el backend; EXTERNAL_APPROVER solo cuenta con el
 flag global y el contrato habilitados. Alta de usuarios solo por CLI. El
 provider DEV queda solo para tests. Detalle: `docs/platform/AUTH.md`.
+
+## ADR-058 — Aprobación: evidencia atada a la versión, decisión sobre el hash exacto
+**Fecha:** 2026-10 · **Estado:** propuesto (auditoría C2) · **Origen:** M3A.1 Fase C2 + decisiones 2 y 4 del brief C
+`@trust/platform-approval`. Migración 0003: `approval_evidence.show_version_id`
+NOT NULL (la evidencia se sube a una versión y solo respalda esa versión, FK
+compuesta desde `approvals`), `approvals.version_hash` verificado por trigger
+contra la versión, allowlist tipo↔MIME y "sin evidencia después de la
+decisión" también en la base. La evidencia se clasifica SOLO por bytes
+(PDF, email RFC 5322, texto UTF-8 no-markup; OTHER sin ningún tipo habilitado
+hasta tener un decoder que valide la imagen completa): los mismos bytes dan
+siempre el mismo MIME, lo que mantiene coherente `stored_objects` único por
+sha256; se sirve siempre como descarga con `nosniff`, CSP sandbox y un nombre
+generado por el servidor (`evidence-<id>.<ext>` según el MIME validado). Las
+decisiones serializan por campaña (`FOR UPDATE` sobre `campaigns`, porque
+`trust_app` no tiene UPDATE sobre `show_versions`), usan `withIdempotency` y
+escriben audit en la misma transacción. Cuatro ojos: chequeo en la app con el
+trigger de 0001 como segunda barrera; la política la cambia solo ADMIN por
+`PUT /contracts/:id/four-eyes` con `FOUR_EYES_DISABLED`. Detalle:
+`docs/platform/APPROVAL.md`.

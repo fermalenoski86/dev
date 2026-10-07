@@ -2,7 +2,7 @@ import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { migrateDownOne, migrateUp } from './migrator';
 import {
-  type TestDatabase, createTestDatabase, seedApproval, seedAsset, seedCampaignWithDraft, seedContract, seedEvidence,
+  type TestDatabase, createTestDatabase, seedApproval, seedAsset, seedCampaignWithDraft, seedContract,
   seedStoredObject, seedUser, seedVersion, sha,
 } from './testing';
 
@@ -208,8 +208,9 @@ describe('CRITERIO: mismo contenido en dos campañas = dos versiones con el mism
 describe('aprobaciones — una decisión por versión, con evidencia o motivo', () => {
   it('APPROVED exige evidencia; REJECTED exige motivo', async () => {
     const { v, apr } = await conVersion();
-    expect(await falla(t.app.insertInto('approvals').values({ show_version_id: v.id, decision: 'APPROVED', actor_user_id: apr.id }).execute())).toMatch(/23514|check/);
-    expect(await falla(t.app.insertInto('approvals').values({ show_version_id: v.id, decision: 'REJECTED', actor_user_id: apr.id, reason: '   ' }).execute())).toMatch(/23514|check/);
+    const { version_hash } = await t.app.selectFrom('show_versions').select('version_hash').where('id', '=', v.id).executeTakeFirstOrThrow();
+    expect(await falla(t.app.insertInto('approvals').values({ show_version_id: v.id, decision: 'APPROVED', actor_user_id: apr.id, version_hash }).execute())).toMatch(/23514|check/);
+    expect(await falla(t.app.insertInto('approvals').values({ show_version_id: v.id, decision: 'REJECTED', actor_user_id: apr.id, reason: '   ', version_hash }).execute())).toMatch(/23514|check/);
   });
   it('una sola decisión final por versión', async () => {
     const { v, apr } = await conVersion();
@@ -219,9 +220,8 @@ describe('aprobaciones — una decisión por versión, con evidencia o motivo', 
   it('aprobación y evidencia son inmutables', async () => {
     const { v, apr } = await conVersion();
     const a = await seedApproval(t.app, v.id, apr.id, 'APPROVED');
-    const ev = await seedEvidence(t.app, apr.id);
     expect(await falla(t.app.updateTable('approvals').set({ reason: 'x' }).where('id', '=', a.id).execute())).toMatch(/42501|permission denied/);
-    expect(await falla(t.owner.updateTable('approval_evidence').set({ original_filename: 'otro.eml' }).where('id', '=', ev.id).execute())).toMatch(/IMMUTABLE_ROW/);
+    expect(await falla(t.owner.updateTable('approval_evidence').set({ original_filename: 'otro.eml' }).where('id', '=', a.evidence_id as string).execute())).toMatch(/IMMUTABLE_ROW/);
   });
 });
 
@@ -280,8 +280,12 @@ describe('migraciones', () => {
   it('up sobre base vacía, down y up de nuevo (smoke test reversible)', async () => {
     const vacia = await createTestDatabase({ migrate: false });
     try {
-      const ambas = ['0001_initial:Success', '0002_asset_pipeline:Success'];
+      const ambas = ['0001_initial:Success', '0002_asset_pipeline:Success', '0003_approval:Success'];
       expect(await migrateUp(vacia.owner as never)).toEqual(ambas);
+      // 0003 baja sola: evidencia sin versión, aprobación sin hash
+      expect(await migrateDownOne(vacia.owner as never)).toEqual(['0003_approval:Success']);
+      const c3 = await sql<{ n: string }>`SELECT count(*)::text AS n FROM information_schema.columns WHERE (table_name, column_name) IN (('approval_evidence', 'show_version_id'), ('approvals', 'version_hash'))`.execute(vacia.owner);
+      expect(c3.rows[0]?.n).toBe('0');
       // 0002 baja sola: las columnas nuevas desaparecen, 0001 queda intacta
       expect(await migrateDownOne(vacia.owner as never)).toEqual(['0002_asset_pipeline:Success']);
       const col = await sql<{ n: string }>`SELECT count(*)::text AS n FROM information_schema.columns WHERE table_name = 'assets' AND column_name IN ('sha256', 'container', 'rejection_detail')`.execute(vacia.owner);
