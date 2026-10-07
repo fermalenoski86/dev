@@ -1,12 +1,8 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor) — re-auditar C1 tras AUDIT: CAMBIOS #1 en el PR [#7](https://github.com/fermalenoski86/dev/pull/7), HEAD exacto `8c4709a8774ea4917aeb9d8bc37938fdecea2f4f`, CI verde https://github.com/fermalenoski86/dev/actions/runs/37653841793. Respuesta: https://github.com/fermalenoski86/dev/pull/7#issuecomment-6042666247.
-**Fase:** M3A.1 Fase C1 — auth y roles (corrección entregada, re-auditoría pendiente; C2 bloqueada)
-**Estado:** [P1] del rate limiter corregido en `8c4709a`:
-- barrido de claves vencidas O(1) amortizado;
-- tope duro `maxKeys` (100 000) que descarta la clave más vieja;
-- IP inválida → un solo balde, email recortado a 320 caracteres, config validada;
-- regresión con la reproducción exacta del auditor (20 000 → 20 000), con 3 mutaciones nuevas (153/153).
+**Pelota en:** Claude (implementador) — C1 aprobada en el PR [#7](https://github.com/fermalenoski86/dev/pull/7) sobre `8c4709a8774ea4917aeb9d8bc37938fdecea2f4f`: [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/7#issuecomment-6043735018). Iniciar C2 según el brief aprobado.
+**Fase:** M3A.1 Fase C2 — evidencia y approve/reject con cuatro ojos
+**Estado:** C1 cerrada: rate limiter con memoria acotada, IP inválida en balde único y regresiones; prueba local específica 9/9 y reproducción 20k→20k tras expiración. CI exacta `37653841793` completa verde. C2 habilitada; C3 y Fase D siguen bloqueadas hasta sus gates. Tags m3a1-b2/b3/b4 siguen pendientes de autorización explícita de Fer.
 
 CI exacta verde: https://github.com/fermalenoski86/dev/actions/runs/37653841793. La salida local real está en `docs/reviews/M3A1_FASE_C1_AUDIT1_SALIDA.txt`; E2E local no corrido, lo cubre la CI. **No se pudo comentar en el PR #7:** la API de GitHub devolvió 500 en cada intento de crear un comentario, este turno y probablemente el anterior. Este HANDOFF vale como pedido de re-auditoría. Los tags m3a1-b2/b3/b4 siguen pendientes de que Fer los autorice.
 
@@ -121,6 +117,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-07 — ChatGPT: C1 `AUDIT: APROBADO` sobre `8c4709a`; P1 cerrado con barrido, tope duro, validación y regresiones. Prueba específica local 9/9, reproducción 20k→20k y CI exacta completa verde. Pelota a Claude para C2.
 - 2026-10-07 17:01 UTC — Claude: corrige AUDIT: CAMBIOS #1 de C1 (rate limit con memoria acotada) en 8c4709a, CI verde; flaky preexistente preview-session.test.ts observado y reportado. Pelota a ChatGPT.
 - 2026-10-07 17:05 UTC — Claude (turno programado, concurrente con el de 17:01): verificación independiente de `8c4709a` con el script del auditor (20000→20000; 5000 IPs basura = +51 claves). Propuesta: issue P2 para diagnosticar el flake de `preview-session.test.ts` (M2C, sin cambiar conducta). Sin cambios de código. Pelota sigue en ChatGPT.
 - 2026-10-07 — ChatGPT: C1 `AUDIT: CAMBIOS` sobre `926b911`; P1 por crecimiento no acotado del mapa del rate limiter (20k→40k tras expiración). CI exacta completa verde; local verify/build OK. Pelota a Claude; C2 bloqueada.
