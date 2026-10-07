@@ -1,15 +1,14 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador) — corregir C2 en el PR [#8](https://github.com/fermalenoski86/dev/pull/8) según [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/8#issuecomment-6045918447). No iniciar C3.
-**Fase:** M3A.1 Fase C2 — evidencia y approve/reject con cuatro ojos (cambios solicitados)
-**Estado:** Auditada C2 sobre `0cb79b797eb4b9c83f0117e1e8ce1802974eb674`. [P1] OTHER acepta como JPEG cualquier payload con prefijo `FF D8 FF` (también PNG solo por firma) y la descarga conserva una extensión potencialmente ejecutable; no demuestra contenido inerte. Validar el archivo completo con decoder real o retirar OTHER, y generar filename de descarga coherente con el MIME. Local verify 636+1 y build verdes; CI tenía cuatro jobs verdes y mutaciones en curso al dictamen. C3 bloqueada.
+**Pelota en:** ChatGPT (auditor) — re-auditar C2 en el PR [#8](https://github.com/fermalenoski86/dev/pull/8) sobre `cf7f23e756b01de9d7f419c4e0ec8a07f2825fde` ([respuesta al AUDIT #1](https://github.com/fermalenoski86/dev/pull/8#issuecomment-6046564747)).
+**Fase:** M3A.1 Fase C2 — evidencia y approve/reject con cuatro ojos (corrección AUDIT #1 entregada)
+**Estado:** [P1] corregido: OTHER fuera de la allowlist de C2 (ninguna imagen se acepta por firma: 415; `type=OTHER` → 400; trigger sin MIME para OTHER) y descarga con nombre generado `evidence-<id>.<ext>` según el MIME validado. Regresiones con el payload del dictamen, PNG real y `payload.exe`; 2 mutaciones nuevas. Gates locales reales: verify 637+1, build, PG 174+6, bootstrap 6/6, media 63/63, mutaciones 177/177. E2E M2C no ejecutado localmente (sin Chrome H.264): CI del PR sobre este HEAD. C3 sigue bloqueada. Propuesta derivada BL-16 (reabrir OTHER con decodificación completa + re-codificación) para debatir aparte.
 
 ## Entrega activa para auditar
 - PR: [#8](https://github.com/fermalenoski86/dev/pull/8) · issue [#9](https://github.com/fermalenoski86/dev/issues/9) · base `main`
-- Rama: `fase/m3a1-c2` · HEAD entregado: `0cb79b797eb4b9c83f0117e1e8ce1802974eb674` (comprobar antes de auditar).
-- Reporte: `docs/reviews/M3A1_FASE_C2.md` · salida: `docs/reviews/M3A1_FASE_C2_SALIDA.txt` · diseño: `docs/platform/APPROVAL.md`, ADR-058.
-- Punto a validar primero: interpretación de "INTERNAL_APPROVER fuera de scope" frente a la decisión 4 de C1 (decisión 1 del reporte).
-- Propuestas nuevas: BL-14 (PDF sin contenido activo) y BL-15 (sello RFC 3161, decisión de producto), más la evaluación de las tres ideas iniciales.
+- Rama: `fase/m3a1-c2` · HEAD entregado: `cf7f23e756b01de9d7f419c4e0ec8a07f2825fde` (comprobar antes de auditar).
+- Respuesta: `docs/reviews/M3A1_FASE_C2_AUDIT1.md` · salida: `docs/reviews/M3A1_FASE_C2_AUDIT1_SALIDA.txt` · reporte de fase: `docs/reviews/M3A1_FASE_C2.md` · diseño: `docs/platform/APPROVAL.md`, ADR-058.
+- Sigue pendiente de validar: interpretación de "INTERNAL_APPROVER fuera de scope" frente a la decisión 4 de C1 (decisión 1 del reporte).
 
 ## Objetivo autorizado por Fer — 2026-10-06
 Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
@@ -115,6 +114,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-07 20:48 UTC — Claude: AUDIT #1 de C2 corregido en `cf7f23e` (OTHER retirado, filename de descarga del servidor, regresiones, 177/177 mutaciones). Respuesta en el PR #8. Pelota a ChatGPT.
 - 2026-10-07 — ChatGPT: C2 `AUDIT: CAMBIOS` sobre `0cb79b7`; P1 porque OTHER clasifica como JPEG/PNG por firma solamente y descarga con el nombre/extensión original. Reproducción: `FF D8 FF + MZ/payload` → JPEG. Local verify/build verdes; pelota a Claude, C3 bloqueada.
 - 2026-10-07 19:53 UTC — Claude: C2 entregada en PR #8 @0cb79b7 (0003, platform-approval, rutas de aprobación, 27 tests HTTP, 23 mutaciones nuevas; locales verify/build/PG/bootstrap/media/mutaciones 176/176 en verde, E2E en CI). Issue #9 de auditoría. Pelota a ChatGPT.
 - 2026-10-07 — ChatGPT: C1 `AUDIT: APROBADO` sobre `8c4709a`; P1 cerrado con barrido, tope duro, validación y regresiones. Prueba específica local 9/9, reproducción 20k→20k y CI exacta completa verde. Pelota a Claude para C2.
