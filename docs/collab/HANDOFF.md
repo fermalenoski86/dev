@@ -1,8 +1,8 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor). Re-auditar D2 en el PR [#18](https://github.com/fermalenoski86/dev/pull/18), rama `fase/m3a1-d2`, HEAD `54bbe928ec493b5c6cdabae838abc372e25bc967`. El P1 está corregido en `8dc228f`; el HEAD solo suma docs de la respuesta. Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
-**Fase:** M3A.1 Fase D2 — re-auditoría tras AUDIT 1
-**Estado:** P1 corregido: `escribir` lanza `LOCAL_STORAGE_UNAVAILABLE` si `saveDraft` devuelve false, antes de la metadata y del PUT. `save`/`keepLocal` actualizan su estado recién después de guardar local. Hay 3 regresiones unitarias (en rojo antes del fix), 1 PG con cero `DRAFT_UPDATED` y 2 mutaciones nuevas. CI 37761119482 de `8dc228f` completa y en verde, postgres incluido. Local: verify 662+1, PG 216+6, bootstrap 6/6, media 63, mutaciones 211/211. E2E solo en CI. Respuesta: https://github.com/fermalenoski86/dev/pull/18#issuecomment-6058229045. D3 sigue bloqueado por [#15](https://github.com/fermalenoski86/dev/issues/15).
+**Pelota en:** Claude (implementador). Corregir D2 en el PR [#18](https://github.com/fermalenoski86/dev/pull/18) tras la re-auditoría 2 sobre HEAD `54bbe928ec493b5c6cdabae838abc372e25bc967` (issue [#19](https://github.com/fermalenoski86/dev/issues/19)). Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
+**Fase:** M3A.1 Fase D2 — cambios solicitados (AUDIT 2)
+**Estado:** El P1 original está cerrado y CI `37761119482` completa verde. Nuevo [P1]: si `saveDraft` escribe la clave M2C pero falla la segunda escritura de `syncKey`, queda draft nuevo + metadata vieja; al reabrir, `leer` ignora el draft nuevo y `adoptarServidor` puede sobrescribirlo. Agregar regresión de fallo sólo en `syncKey`, reinicio y recuperación sin pérdida, y un protocolo recuperable entre ambas claves. Auditoría: https://github.com/fermalenoski86/dev/pull/18#issuecomment-6059301811. D3 sigue bloqueado por [#15](https://github.com/fermalenoski86/dev/issues/15).
 
 ## Entrega activa para auditar
 - PR: [#18](https://github.com/fermalenoski86/dev/pull/18) · issue [#19](https://github.com/fermalenoski86/dev/issues/19) · base `main`
@@ -115,6 +115,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-08 — ChatGPT: re-auditoría D2 `AUDIT: CAMBIOS` sobre `54bbe92`; P1 original cerrado y CI completa verde. Nuevo P1 por falla parcial entre draft M2C y metadata sync que puede perder el draft al reabrir. Pelota a Claude.
 - 2026-10-08 11:10 UTC — Claude: P1 de D2 corregido en `8dc228f` (no se sube un draft que no quedó guardado localmente; las 4 regresiones dan cero PUT). Hay 2 mutaciones nuevas (211/211) y la CI 37761119482 está completa y en verde, postgres incluido. HEAD `54bbe92` con docs. No se pudo empujar el tag `m3a1-d1` porque el proxy deniega la escritura de refs/tags; queda pendiente para Fer o ChatGPT. Pelota a ChatGPT.
 - 2026-10-08 — ChatGPT: D2 `AUDIT: CAMBIOS` sobre `38c98e0`; P1 porque Syncing ignora el fallo booleano de `saveDraft` y puede subir sin copia local. CI: cuatro jobs verdes; PostgreSQL cancelado antes de PG/bootstrap. Pelota a Claude; D3 sigue bloqueada por #15.
 - 2026-10-08 09:15 UTC — Claude: D1 `AUDIT: APROBADO`; issue #17 cerrado. Tag no creado: pendiente de la autorización de Fer, igual que los anteriores. D2 entregada en el PR #18 @38c98e0 (`@trust/builder-repository`, 17 unitarios, 7 tests contra la API real, 9 mutaciones nuevas, 209/209). Issue #19. Pelota a ChatGPT.
