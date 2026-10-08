@@ -1,4 +1,4 @@
-import { type DraftStorage, type TakeoverDraft, safeParseTakeoverDraft, saveDraft } from '@trust/show-authoring';
+import { type DraftStorage, type TakeoverDraft, loadDraft, safeParseTakeoverDraft, saveDraft } from '@trust/show-authoring';
 import { z } from 'zod';
 import type { ApiCampaignRepository } from './api';
 import {
@@ -28,10 +28,11 @@ import {
  *                              del servidor. Sin escritura remota (decisión 7
  *                              del brief D): crear la campaña nueva es de D3/E.
  *
- * Persistencia local: el draft se sigue escribiendo en `trust.builder.draft.v1`
- * con `saveDraft` (formato sin cambios). Lo que sync necesita —campaña,
- * revisión base y si está pendiente— va en una clave APARTE por campaña,
- * `trust.builder.sync.v1:<campaignId>`, validada con Zod al leer.
+ * Persistencia local: el registro de sync por campaña,
+ * `trust.builder.sync.v1:<campaignId>` (draft + revisión base + pendiente,
+ * validado con Zod al leer), es la fuente de verdad y se escribe PRIMERO; el
+ * draft se espeja después en `trust.builder.draft.v1` con `saveDraft` (formato
+ * M2C sin cambios). Protocolo y recuperación: ver `escribir`.
  */
 export const SYNC_KEY_PREFIX = 'trust.builder.sync.v1:';
 export const syncKey = (campaignId: string) => `${SYNC_KEY_PREFIX}${campaignId}`;
@@ -186,7 +187,7 @@ export class SyncingCampaignRepository implements CampaignRepository {
     this.draft = draft;
     this.revision = revision;
     this.pending = false;
-    this.escribir({ campaignId, baseRevision: revision, pending: false, draft });
+    this.escribir({ campaignId, baseRevision: revision, pending: false, draft }, 'si-es-nuestro');
   }
 
   private abierta(): string {
@@ -195,21 +196,65 @@ export class SyncingCampaignRepository implements CampaignRepository {
   }
 
   /**
-   * El draft en la clave de siempre (formato M2C) + la metadata de sync aparte.
-   * Lanza `LOCAL_STORAGE_UNAVAILABLE` si cualquiera de las dos escrituras falla.
-   * `saveDraft` no lanza: devuelve `false` (cuota, modo privado), y eso también
-   * corta acá, antes de escribir la metadata y antes de cualquier PUT
-   * (AUDIT D2 P1: "guarda local siempre" no puede subir lo que no guardó).
+   * Escritura local en dos claves con un protocolo RECUPERABLE (AUDIT D2 P1, re-auditoría 2):
+   *
+   *   1. primero el registro de sync (`trust.builder.sync.v1:<id>`): es la fuente
+   *      de verdad del repositorio y CONTIENE el draft;
+   *   2. después el espejo en `trust.builder.draft.v1` (formato M2C, para el
+   *      Builder sin backend);
+   *   3. si el espejo falla, se restaura el registro anterior y se lanza.
+   *
+   * Invariante: todo draft que el repositorio dejó en la clave M2C está también
+   * en su registro. Así un `open` posterior nunca descarta trabajo que llegó a
+   * disco: si falla (1) no se escribió nada; si falla (2) se vuelve al estado
+   * anterior en las dos claves; y si además falla la restauración, el registro
+   * queda con el draft nuevo `pending` y el próximo `open` lo conserva y lo sube.
+   *
+   * `espejo: 'si-es-nuestro'` (al adoptar el servidor) no pisa la clave M2C si
+   * su contenido no es el que el repositorio escribió la última vez (lo cambió
+   * otro escritor, p. ej. el Builder actual sin repositorio): ese draft se
+   * conserva tal cual en vez de perderse en silencio.
+   *
+   * Cualquier falla lanza `LOCAL_STORAGE_UNAVAILABLE` ANTES de cualquier PUT y
+   * antes de tocar el estado en memoria.
    */
-  private escribir(r: SyncRecord) {
-    if (!saveDraft(this.deps.storage, r.draft)) {
-      throw new RepositoryError(0, 'LOCAL_STORAGE_UNAVAILABLE', 'El navegador no deja guardar el draft localmente.');
-    }
+  private escribir(r: SyncRecord, espejo: 'siempre' | 'si-es-nuestro' = 'siempre') {
+    const st = this.deps.storage;
+    const clave = syncKey(r.campaignId);
+    const fallo = () => new RepositoryError(0, 'LOCAL_STORAGE_UNAVAILABLE', 'El navegador no deja guardar el draft localmente.');
+    let anterior: string | null;
     try {
-      this.deps.storage.setItem(syncKey(r.campaignId), JSON.stringify({ v: 1, ...r }));
+      anterior = st.getItem(clave);
     } catch {
-      throw new RepositoryError(0, 'LOCAL_STORAGE_UNAVAILABLE', 'El navegador no deja guardar el draft localmente.');
+      throw fallo();
     }
+    const previo = this.leer(r.campaignId);
+    // (1) registro primero
+    try {
+      st.setItem(clave, JSON.stringify({ v: 1, ...r }));
+    } catch {
+      throw fallo();
+    }
+    // (2) espejo M2C
+    if (espejo === 'si-es-nuestro' && !this.espejoEsNuestro(previo)) return;
+    if (!saveDraft(st, r.draft)) {
+      // (3) volver al registro anterior; si eso también falla, el registro nuevo
+      // queda y es recuperable (el draft está ahí).
+      try {
+        if (anterior === null) st.removeItem(clave);
+        else st.setItem(clave, anterior);
+      } catch {
+        /* recuperable: ver invariante */
+      }
+      throw fallo();
+    }
+  }
+
+  /** ¿La clave M2C tiene lo que este repositorio escribió (o nada)? */
+  private espejoEsNuestro(previo: SyncRecord | null): boolean {
+    const actual = loadDraft(this.deps.storage);
+    if (actual === null) return true;
+    return previo !== null && mismoDraft(actual, previo.draft);
   }
 
   private leer(campaignId: string): SyncRecord | null {

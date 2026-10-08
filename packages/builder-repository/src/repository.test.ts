@@ -1,4 +1,4 @@
-import { DRAFT_STORAGE_KEY, MemoryDraftStorage, PRESET_EMPTY, PRESET_TAKEOVER_15S, type TakeoverDraft, loadDraft } from '@trust/show-authoring';
+import { DRAFT_STORAGE_KEY, MemoryDraftStorage, PRESET_EMPTY, PRESET_TAKEOVER_15S, type TakeoverDraft, loadDraft, saveDraft } from '@trust/show-authoring';
 import { describe, expect, it } from 'vitest';
 import { ApiCampaignRepository, LocalCampaignRepository, OfflineError, RepositoryError, SyncingCampaignRepository, mismoDraft, syncKey } from './index';
 
@@ -320,6 +320,98 @@ describe('D2 · SyncingCampaignRepository — offline, sync y conflicto (§9)', 
     expect(f.s.csrfVisto).toHaveLength(intentos);
     expect((f.s.draft as TakeoverDraft).name).toBe('remoto');
     expect(repo.status()).toMatchObject({ conflict: { serverRevision: 2 }, revision: 1 });
+  });
+
+  /**
+   * Storage con fallas por clave para la re-auditoría 2: `sync` rechaza la clave
+   * de sync; `syncDespuesDe` deja pasar N escrituras de sync y después rechaza
+   * (falla la RESTAURACIÓN); `draft` rechaza la clave M2C.
+   */
+  const conFallas = () => {
+    const f = apiFalsa();
+    const st = new MemoryDraftStorage();
+    const ctl = { draft: false, sync: false, syncDespuesDe: Number.POSITIVE_INFINITY, removeRoto: false };
+    const storage = {
+      getItem: (k: string) => st.getItem(k),
+      setItem: (k: string, v: string) => {
+        if (k === DRAFT_STORAGE_KEY && ctl.draft) throw new Error('QuotaExceededError');
+        if (k.startsWith('trust.builder.sync.v1:')) {
+          if (ctl.sync || ctl.syncDespuesDe <= 0) throw new Error('QuotaExceededError');
+          ctl.syncDespuesDe -= 1;
+        }
+        st.setItem(k, v);
+      },
+      removeItem: (k: string) => { if (ctl.removeRoto) throw new Error('SecurityError'); st.removeItem(k); },
+    };
+    const nuevo = () => new SyncingCampaignRepository({ storage, api: api(f.fetch) });
+    return { f, st, ctl, repo: nuevo(), nuevo };
+  };
+
+  it('AUDIT D2 re-auditoría 2: falla SOLO la clave de sync → no queda en M2C un draft que el registro no tenga; reabrir no pierde nada', async () => {
+    const { f, st, ctl, repo, nuevo } = conFallas();
+    await repo.open(CID);
+    const metaAntes = st.getItem(syncKey(CID));
+    ctl.sync = true;
+    await expect(repo.save(draft('nuevo'), 1)).rejects.toMatchObject({ code: 'LOCAL_STORAGE_UNAVAILABLE' });
+    expect(f.s.csrfVisto).toHaveLength(0);
+    // el registro se escribe PRIMERO: si falla, la clave M2C no se toca
+    expect(loadDraft(st)?.name).toBe('servidor');
+    expect(st.getItem(syncKey(CID))).toBe(metaAntes);
+    expect(repo.status()).toMatchObject({ pending: false, revision: 1 });
+    // reinicio del Builder: el repositorio nuevo ve exactamente lo que hay en disco
+    ctl.sync = false;
+    const otro = nuevo();
+    expect((await otro.open(CID)).draft.name).toBe('servidor');
+    expect(loadDraft(st)?.name).toBe('servidor');
+    expect(f.s.csrfVisto).toHaveLength(0);
+  });
+
+  it('AUDIT D2 re-auditoría 2: falla el espejo M2C Y la restauración del registro → el registro conserva el draft nuevo pendiente y el próximo open lo recupera y lo sube', async () => {
+    const { f, st, ctl, repo, nuevo } = conFallas();
+    await repo.open(CID);
+    ctl.draft = true;
+    ctl.syncDespuesDe = 1; // pasa la escritura del registro nuevo, falla la restauración
+    await expect(repo.save(draft('recuperable'), 1)).rejects.toMatchObject({ code: 'LOCAL_STORAGE_UNAVAILABLE' });
+    expect(f.s.csrfVisto).toHaveLength(0); // nada se sube en esta llamada
+    expect(JSON.parse(st.getItem(syncKey(CID))!)).toMatchObject({ baseRevision: 1, pending: true, draft: { name: 'recuperable' } });
+    // reinicio con el storage sano: el trabajo está en el registro y no se descarta
+    ctl.draft = false;
+    ctl.syncDespuesDe = Number.POSITIVE_INFINITY;
+    const otro = nuevo();
+    const o = await otro.open(CID);
+    expect(o.draft.name).toBe('recuperable');
+    expect((f.s.draft as TakeoverDraft).name).toBe('recuperable');
+    expect(otro.status()).toMatchObject({ pending: false, revision: 2 });
+    expect(loadDraft(st)?.name).toBe('recuperable');
+  });
+
+  it('AUDIT D2 re-auditoría 2: falla el espejo M2C de un registro NUEVO y no se puede borrar → igual recuperable al reabrir', async () => {
+    const { f, st, ctl, nuevo } = conFallas();
+    const repo = nuevo();
+    // primera vez para esta campaña: no hay registro previo, la restauración es un removeItem
+    st.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft('servidor')));
+    await repo.open(CID);
+    st.removeItem(syncKey(CID));
+    ctl.draft = true;
+    ctl.removeRoto = true;
+    await expect(repo.save(draft('primera'), 1)).rejects.toMatchObject({ code: 'LOCAL_STORAGE_UNAVAILABLE' });
+    ctl.draft = false;
+    ctl.removeRoto = false;
+    expect((await nuevo().open(CID)).draft.name).toBe('primera');
+    expect((f.s.draft as TakeoverDraft).name).toBe('primera');
+  });
+
+  it('AUDIT D2 re-auditoría 2: al adoptar el servidor NO se pisa una clave M2C escrita por otro (Builder sin repositorio)', async () => {
+    const { f, st, repo, nuevo } = conFallas();
+    await repo.open(CID);
+    saveDraft(st, draft('escrito por el Builder actual'));
+    f.otroCliente('remoto');
+    const otro = nuevo();
+    expect((await otro.open(CID)).draft.name).toBe('remoto');
+    expect(loadDraft(st)?.name).toBe('escrito por el Builder actual'); // se conserva, no se pierde en silencio
+    // una edición propia del repositorio sí actualiza el espejo
+    expect(await otro.save(draft('mío'), 2)).toMatchObject({ kind: 'saved', revision: 3 });
+    expect(loadDraft(st)?.name).toBe('mío');
   });
 
   it('metadata de sync corrupta o de otra campaña se ignora (Zod al leer)', async () => {

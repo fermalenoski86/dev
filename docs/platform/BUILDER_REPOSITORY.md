@@ -33,10 +33,29 @@ devolvió 502, 503 o 504.
 
 ## Offline y conflicto (§9)
 
-1. `save` escribe primero el draft local, en la clave de siempre. La metadata
-   de sync va en una clave **aparte**, `trust.builder.sync.v1:<campaignId>`:
-   `{v, campaignId, baseRevision, pending, draft}`, validada con Zod al leer.
-   Si está corrupta o es de otra campaña, se ignora.
+1. `save` guarda local en dos claves con un protocolo recuperable
+   (AUDIT D2, re-auditoría 2):
+   1. primero el **registro de sync** `trust.builder.sync.v1:<campaignId>`
+      (`{v, campaignId, baseRevision, pending, draft}`, validado con Zod al
+      leer; si está corrupto o es de otra campaña, se ignora). Es la fuente de
+      verdad del repositorio y **contiene el draft**;
+   2. después el espejo en `trust.builder.draft.v1` (formato M2C, sin cambios);
+   3. si el espejo falla, se restaura el registro anterior y se lanza
+      `LOCAL_STORAGE_UNAVAILABLE`.
+
+   Invariante: todo draft que el repositorio dejó en la clave M2C está
+   también en su registro, así que un `open` posterior nunca descarta trabajo
+   que llegó a disco. Hay tres casos de falla:
+   - falla el registro → no se escribió nada;
+   - falla el espejo → las dos claves vuelven al estado anterior;
+   - falla también la restauración → el registro queda con el draft nuevo
+     `pending`, y el próximo `open` lo conserva y lo sube.
+
+   Al adoptar el draft del servidor (`open`, `recoverServer`), la clave M2C se
+   pisa **solo si** tiene lo que el repositorio escribió la última vez (o está
+   vacía). Si la cambió otro escritor, como el Builder actual sin repositorio,
+   se conserva. Cualquier falla de storage corta antes del PUT y antes de
+   tocar el estado en memoria.
 2. Después hace el PUT con `expectedRevision = baseRevision`. Si no hay
    conexión, devuelve `pending`.
 3. Si vuelve un 409, queda `conflict`. Mientras el conflicto esté abierto,
