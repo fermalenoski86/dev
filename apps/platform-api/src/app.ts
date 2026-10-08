@@ -63,6 +63,8 @@ export interface AppDeps {
   uploadLimiter?: UploadLimiter;
   /** false = sin logs (tests que no los miran). Siempre JSON y siempre con redacción. */
   log?: false | { level?: string; stream?: NodeJS.WritableStream };
+  /** E1 · BL-11: observa cada ruta registrada (el test de contrato compara contra la tabla OpenAPI). */
+  onRoute?: (route: { method: string; url: string }) => void;
 }
 
 /** §22: los Assets los suben y leen OPERATOR o ADMIN. */
@@ -102,6 +104,13 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     bodyLimit: 64 * 1024, // JSON chico; el archivo va por multipart con su propio límite
     disableRequestLogging: false,
   });
+
+  if (deps.onRoute) {
+    const observar = deps.onRoute;
+    app.addHook('onRoute', (r) => {
+      for (const m of Array.isArray(r.method) ? r.method : [r.method]) observar({ method: m, url: r.url });
+    });
+  }
 
   await app.register(cookie); // solo parseo; sin secreto: la cookie es un token opaco validado contra la base
 

@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
+    "docs:contract": "pnpm --filter @trust/platform-api docs:contract",
     "dev": "pnpm --filter @trust/previs dev",
     "build": "pnpm -r build",
     "test": "vitest run",
