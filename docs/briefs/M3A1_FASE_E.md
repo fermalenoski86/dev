@@ -118,25 +118,16 @@ Diferido: IndexedDB transaccional para el repositorio del Builder. No hace
 falta para cerrar E, y migrarlo ahora tocaría el formato y la arquitectura
 congelados; el protocolo recuperable de D2 ya está probado.
 
-## Decisiones a validar (❓), texto original del brief
+## Pendiente de decisión de producto (única)
 
-1. **¿E1 y E2 pueden avanzar mientras #15 sigue abierto?** Son independientes
-   de `apps/control`. Propuesta: sí, E1 primero y después E2.
-2. **¿Dónde vive la UI de login, campaña y aprobación que §41 exige?** El
-   master no lo dice, y `apps/control` está congelado salvo "adaptación
-   mínima para navegación/backend" (§42). Opciones:
-   - (a) una app nueva, `apps/platform-web`;
-   - (b) pantallas mínimas dentro de `apps/control` (requiere la decisión de #15);
-   - (c) posponer la UI a M3A.2 y cerrar M3A.1 con E2E de API más D3.
+- **Dónde vive la UI de login, campaña y aprobación que §41 exige, y si se
+  puede tocar el Builder.** Opciones: (a) una app nueva `apps/platform-web`,
+  (b) pantallas mínimas en `apps/control`, o (c) pasar la UI a M3A.2 y cerrar
+  M3A.1 con E2E de API más D3. Es la decisión de producto #15 de Fer; **E3 no
+  se inicia sin ella**.
 
-   Es una decisión de producto: se sumará a #15 o irá a un issue propio, y
-   E3 no avanza sin ella.
-3. **BL-21** (estado de la última versión en la lista de campañas) quedó
-   aceptada "después de D1/D2". Propuesta: un PR chico propio, antes o en
-   paralelo a E1, sin mezclarlo con el hardening.
-4. **OpenAPI:** se acepta el resultado del spike de BL-11, sea
-   `zod-to-openapi` o un `openapi.json` a mano validado por tests, según
-   cubra o no multipart, el contrato de error y los headers.
+Todo lo demás de este brief está decidido en la sección anterior, que es la
+única lista autoritativa.
 
 ## Fuera de alcance
 
