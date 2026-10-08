@@ -9,7 +9,7 @@ import { type SurfaceFormats, remediationFor } from '@trust/platform-media';
 import type { MediaRuntime } from '@trust/platform-media';
 import type { ObjectStorage } from '@trust/platform-storage';
 import { EL_TRUST } from '@trust/show-engine';
-import Fastify, { type FastifyInstance } from 'fastify';
+import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
 import { type Kysely, sql } from 'kysely';
 import type { z } from 'zod';
 import { type ActorProvider, CSRF_HEADER, DEV_ACTOR_HEADER, requireActor } from './actor';
@@ -28,6 +28,7 @@ import {
   UploadHeadersSchema,
 } from './contracts';
 import { ApiError, toErrorResponse } from './errors';
+import { UploadLimiter } from './upload-limiter';
 
 /**
  * platform-api — M3A.1 Fase B4 (§18–24, §26).
@@ -58,6 +59,8 @@ export interface AppDeps {
   formats?: SurfaceFormats;
   /** Resultado cacheado de "¿están ffprobe/ffmpeg?": /ready no lanza procesos por probe (§24). */
   mediaBinariesOk: () => boolean;
+  /** BL-10: concurrencia y tasa de uploads por actor. Default: `new UploadLimiter()`. */
+  uploadLimiter?: UploadLimiter;
   /** false = sin logs (tests que no los miran). Siempre JSON y siempre con redacción. */
   log?: false | { level?: string; stream?: NodeJS.WritableStream };
 }
@@ -79,6 +82,7 @@ export function statusForAsset(a: AssetView): number {
 
 export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   const formats = deps.formats ?? deriveSurfaceFormats(EL_TRUST);
+  const uploadLimiter = deps.uploadLimiter ?? new UploadLimiter();
   const service = new AssetUploadService({ db: deps.db, storage: deps.storage, media: deps.media, config: { maxUploadBytes: deps.maxUploadBytes, formats } });
 
   const app = Fastify({
@@ -165,6 +169,24 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     if (!hdr.success) throw new ApiError(400, 'IDEMPOTENCY_KEY_REQUIRED', 'Falta una Idempotency-Key válida (8–200 caracteres ASCII).');
     if (!req.isMultipart()) throw new ApiError(415, 'UNSUPPORTED_MEDIA_TYPE', 'El cuerpo tiene que ser multipart/form-data.');
 
+    // BL-10: ANTES de leer el cuerpo y de reservar la Idempotency-Key (un 429 no deja nada).
+    const cupo = uploadLimiter.acquire(actor.userId);
+    if (!cupo.ok) {
+      const segundos = Math.max(1, Math.ceil(cupo.retryAfterMs / 1000));
+      reply.header('retry-after', String(segundos));
+      req.log.info({ event: 'asset.upload.limited', requestId: req.id, reason: cupo.reason, retryAfterS: segundos }, 'upload limitado');
+      throw new ApiError(429, 'RATE_LIMITED', cupo.reason === 'CONCURRENCY' ? 'Demasiados uploads en curso para este usuario. Esperá a que termine uno.' : 'Demasiados uploads en poco tiempo. Probá de nuevo más tarde.', {
+        reason: cupo.reason, retryAfterSeconds: segundos,
+      });
+    }
+    try {
+      return await subirAsset(req, reply, actor, hdr.data['idempotency-key']);
+    } finally {
+      cupo.release();
+    }
+  });
+
+  const subirAsset = async (req: FastifyRequest, reply: FastifyReply, actor: { userId: string; source: string }, idempotencyKey: string) => {
     const inicio = process.hrtime.bigint();
     const campos: Record<string, string> = {};
     // Iterador explícito: después del archivo hay que seguir leyendo para
@@ -206,7 +228,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
         surfaceType: f.data.surfaceType,
         originalFilename: part.filename ?? '',
         body: part.file,
-        idempotencyKey: hdr.data['idempotency-key'],
+        idempotencyKey,
         requiredDurationMs: f.data.requiredDurationMs,
         afterBody: nadaDespuesDelArchivo,
       });
@@ -229,7 +251,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
         .send(enviar(ErrorResponseSchema, { code: rej.code, message: rej.message, details: { asset }, requestId: String(req.id) }));
     }
     throw new ApiError(400, 'VALIDATION_ERROR', 'Falta el archivo (campo "file").');
-  });
+  };
 
   const buscar = async (id: string, actorId: string) => {
     // Con rol de Assets, cada actor ve solo los que creó (sin cambio respecto de B4; compartir entre operadores es decisión aparte). Lo ajeno es 404, no 403: no se revela existencia.

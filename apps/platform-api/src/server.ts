@@ -8,6 +8,7 @@ import { LoginRateLimiter } from '@trust/platform-auth';
 import { SESSION_COOKIE_DEV, SESSION_COOKIE_PROD, SessionActorProvider } from './actor';
 import { buildApp } from './app';
 import type { AuthConfig } from './auth-routes';
+import { UploadLimiter, uploadLimitsFromEnv } from './upload-limiter';
 
 /**
  * Arranque desde el entorno (.env.example). Desde C1 la identidad sale SIEMPRE
@@ -59,6 +60,7 @@ export async function createServer(env: NodeJS.ProcessEnv = process.env) {
   const binarios = (await binarioPresente(media.ffprobePath)) && (await binarioPresente(media.ffmpegPath));
   const app = await buildApp({
     db, storage, media, actors: new SessionActorProvider(db, { cookieName: auth.cookieName, externalApprovalEnabled }), auth, trustProxyHops: hops, maxUploadBytes: maxUploadBytesFromEnv(env), maxEvidenceBytes: maxEvidenceBytesFromEnv(env), mediaBinariesOk: () => binarios,
+    uploadLimiter: new UploadLimiter(uploadLimitsFromEnv(env)),
     log: { level: env.LOG_LEVEL ?? 'info' },
   });
   app.addHook('onClose', async () => { await db.destroy(); }); // el pool es de este servidor
