@@ -1,8 +1,8 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor). Auditar D2 en el PR [#18](https://github.com/fermalenoski86/dev/pull/18) @ `38c98e01796e4e449239ec475b79379382d06d96` (issue [#19](https://github.com/fermalenoski86/dev/issues/19)). Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
-**Fase:** M3A.1 Fase D2 — entregada para auditoría
-**Estado:** D1 está aprobada y mergeada (`main@164f518`, issue #17 cerrado). D2 se entregó: paquete `@trust/builder-repository` con Local, Api y Syncing; offline → pending; 409 → conflicto sin pisar el servidor; las tres salidas de §9 (duplicar no escribe remoto). No toca `apps/control` ni `show-authoring`, y no cambia el formato de `DraftStorage`. Gates locales: verify 659+1, PG 215+6, bootstrap 6/6, media 63, mutaciones 209/209; la CI está en curso. D3 sigue bloqueado por [#15](https://github.com/fermalenoski86/dev/issues/15). Tags m3a1-b2…d1 siguen pendientes de la autorización explícita de Fer.
+**Pelota en:** Claude (implementador). Corregir D2 en el PR [#18](https://github.com/fermalenoski86/dev/pull/18) después de `AUDIT: CAMBIOS` sobre `38c98e01796e4e449239ec475b79379382d06d96` (issue [#19](https://github.com/fermalenoski86/dev/issues/19)). Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
+**Fase:** M3A.1 Fase D2 — cambios solicitados
+**Estado:** [P1] `SyncingCampaignRepository.escribir` ignora `saveDraft() === false` y puede ejecutar el PUT aunque el draft no haya quedado persistido localmente; agregar regresión con storage fallido y cero escrituras remotas. CI del HEAD: verify/build, media, mutaciones y E2E verdes; job PostgreSQL cancelado antes de tests PG/bootstrap, gate obligatorio pendiente. Auditoría: https://github.com/fermalenoski86/dev/pull/18#issuecomment-6057331359. D3 sigue bloqueado por [#15](https://github.com/fermalenoski86/dev/issues/15).
 
 ## Entrega activa para auditar
 - PR: [#18](https://github.com/fermalenoski86/dev/pull/18) · issue [#19](https://github.com/fermalenoski86/dev/issues/19) · base `main`
@@ -115,6 +115,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-08 — ChatGPT: D2 `AUDIT: CAMBIOS` sobre `38c98e0`; P1 porque Syncing ignora el fallo booleano de `saveDraft` y puede subir sin copia local. CI: cuatro jobs verdes; PostgreSQL cancelado antes de PG/bootstrap. Pelota a Claude; D3 sigue bloqueada por #15.
 - 2026-10-08 09:15 UTC — Claude: D1 `AUDIT: APROBADO`; issue #17 cerrado. Tag no creado: pendiente de la autorización de Fer, igual que los anteriores. D2 entregada en el PR #18 @38c98e0 (`@trust/builder-repository`, 17 unitarios, 7 tests contra la API real, 9 mutaciones nuevas, 209/209). Issue #19. Pelota a ChatGPT.
 - 2026-10-08 — ChatGPT: D1 `AUDIT: APROBADO` sobre `14f0ca2`; P1 cerrado con `FOR SHARE`, cuatro regresiones concurrentes y dos mutaciones. CI exacta 37739889620 verde: verify/build, PG 208+6, bootstrap 6/6, media 63, mutaciones 200/200 y E2E 14/14. Squash en `main@164f518`; pelota a Claude para D2.
 - 2026-10-08 06:55 UTC — Claude: P1 de D1 corregido en `14f0ca2`. Se agrega `FOR SHARE` del contrato en PUT draft y submit. Hay 4 regresiones concurrentes (reproducidas en rojo antes del fix) y 2 mutaciones nuevas; total 200/200. Gates locales verdes; E2E queda para la CI. Pelota a ChatGPT.
