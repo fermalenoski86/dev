@@ -169,6 +169,29 @@ describe('CRITERIO D2: SyncingCampaignRepository — ciclo offline → online �
     expect(repo.status()).toMatchObject({ connectivity: 'online', pending: true, conflict: { serverRevision: 3 } });
   });
 
+  it('AUDIT D2 P1: storage local rechaza el draft → LOCAL_STORAGE_UNAVAILABLE y la base no recibe ningún PUT', async () => {
+    const cp = await campania();
+    const nav = navegador(U.op!);
+    const st = new MemoryDraftStorage();
+    const ctl = { roto: false };
+    const storage = {
+      getItem: (k: string) => st.getItem(k),
+      setItem: (k: string, v: string) => {
+        if (ctl.roto && k === DRAFT_STORAGE_KEY) throw new Error('QuotaExceededError');
+        st.setItem(k, v);
+      },
+      removeItem: (k: string) => st.removeItem(k),
+    };
+    const repo = new SyncingCampaignRepository({ storage, api: nav.api() });
+    await repo.open(cp.id);
+    ctl.roto = true;
+    await expect(repo.save(draft('no guardado'), 1)).rejects.toMatchObject({ code: 'LOCAL_STORAGE_UNAVAILABLE' });
+    expect(await repo.sync()).toBeNull();
+    expect(await enBase(cp.draftId)).toEqual({ revision: 1, name: 'Launch' });
+    const updates = await t.app.selectFrom('audit_events').select('action').where('entity_id', '=', cp.draftId).where('action', '=', 'DRAFT_UPDATED').execute();
+    expect(updates).toHaveLength(0);
+  });
+
   it('las tres salidas de §9: duplicar (sin escritura remota), mantener local y recuperar server', async () => {
     const cp = await campania();
     const nav = navegador(U.op!);

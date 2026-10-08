@@ -264,6 +264,64 @@ describe('D2 · SyncingCampaignRepository — offline, sync y conflicto (§9)', 
     expect(repo.status()).toMatchObject({ pending: false, conflict: null });
   });
 
+  /** Storage que, con `roto = true`, rechaza SOLO la clave del draft (cuota/bloqueo) y deja pasar la de sync. */
+  const conDraftRoto = () => {
+    const f = apiFalsa();
+    const st = new MemoryDraftStorage();
+    const ctl = { roto: false };
+    const storage = {
+      getItem: (k: string) => st.getItem(k),
+      setItem: (k: string, v: string) => {
+        if (ctl.roto && k === DRAFT_STORAGE_KEY) throw new Error('QuotaExceededError');
+        st.setItem(k, v);
+      },
+      removeItem: (k: string) => st.removeItem(k),
+    };
+    return { f, st, ctl, repo: new SyncingCampaignRepository({ storage, api: api(f.fetch) }) };
+  };
+
+  it('AUDIT D2 P1: si el draft no se guarda local → LOCAL_STORAGE_UNAVAILABLE, CERO PUT y nada queda pendiente', async () => {
+    const { f, st, ctl, repo } = conDraftRoto();
+    await repo.open(CID);
+    const metaAntes = st.getItem(syncKey(CID));
+    ctl.roto = true;
+    await expect(repo.save(draft('no-guardado'), 1)).rejects.toMatchObject({ code: 'LOCAL_STORAGE_UNAVAILABLE' });
+    expect(f.s.csrfVisto).toHaveLength(0); // ningún PUT intentado (ni siquiera uno que diera 409)
+    expect(f.s.puts).toBe(0);
+    expect((f.s.draft as TakeoverDraft).name).toBe('servidor');
+    expect(loadDraft(st)?.name).toBe('servidor');
+    expect(st.getItem(syncKey(CID))).toBe(metaAntes); // la metadata tampoco se tocó
+    expect(repo.status()).toMatchObject({ pending: false, revision: 1, conflict: null });
+    expect(await repo.sync()).toBeNull(); // nada pendiente: un sync posterior tampoco lo sube
+    expect(f.s.csrfVisto).toHaveLength(0);
+  });
+
+  it('AUDIT D2 P1: sin red tampoco queda pendiente un draft que no se guardó; al volver, sync no sube nada', async () => {
+    const { f, ctl, repo } = conDraftRoto();
+    await repo.open(CID);
+    f.s.online = false;
+    ctl.roto = true;
+    await expect(repo.save(draft('no-guardado'), 1)).rejects.toMatchObject({ code: 'LOCAL_STORAGE_UNAVAILABLE' });
+    f.s.online = true;
+    expect(await repo.sync()).toBeNull();
+    expect(f.s.csrfVisto).toHaveLength(0);
+    ctl.roto = false;
+    expect(await repo.save(draft('ahora sí'), 1)).toMatchObject({ kind: 'saved', revision: 2 });
+  });
+
+  it('AUDIT D2 P1: mantener local con el storage roto no sube nada y el conflicto sigue abierto', async () => {
+    const { f, ctl, repo } = conDraftRoto();
+    await repo.open(CID);
+    f.otroCliente('remoto');
+    expect(await repo.save(draft('local'), 1)).toMatchObject({ kind: 'conflict' });
+    const intentos = f.s.csrfVisto.length;
+    ctl.roto = true;
+    await expect(repo.keepLocal()).rejects.toMatchObject({ code: 'LOCAL_STORAGE_UNAVAILABLE' });
+    expect(f.s.csrfVisto).toHaveLength(intentos);
+    expect((f.s.draft as TakeoverDraft).name).toBe('remoto');
+    expect(repo.status()).toMatchObject({ conflict: { serverRevision: 2 }, revision: 1 });
+  });
+
   it('metadata de sync corrupta o de otra campaña se ignora (Zod al leer)', async () => {
     const { st, repo } = armar();
     st.setItem(syncKey(CID), JSON.stringify({ v: 1, campaignId: 'otra', baseRevision: 1, pending: true, draft: draft('de otra campaña') }));

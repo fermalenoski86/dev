@@ -89,10 +89,12 @@ export class SyncingCampaignRepository implements CampaignRepository {
   async save(draft: TakeoverDraft, expectedRevision: number): Promise<SaveResult> {
     const campaignId = this.abierta();
     // 1) local primero, siempre: aunque el PUT falle, el trabajo no se pierde.
+    //    Si el storage no lo acepta, `escribir` lanza ANTES de tocar el estado:
+    //    nada queda pendiente y nada se sube (AUDIT D2 P1).
+    this.escribir({ campaignId, baseRevision: expectedRevision, pending: true, draft });
     this.draft = draft;
     this.revision = expectedRevision;
     this.pending = true;
-    this.escribir({ campaignId, baseRevision: expectedRevision, pending: true, draft });
     // 2) con un conflicto abierto no se sube nada: lo resuelve el usuario (§9).
     if (this.conflict) return { kind: 'conflict', conflict: this.conflict };
     return this.push();
@@ -120,9 +122,11 @@ export class SyncingCampaignRepository implements CampaignRepository {
   async keepLocal(): Promise<SaveResult> {
     const campaignId = this.abierta();
     if (!this.conflict || !this.draft) throw new RepositoryError(0, 'NO_CONFLICT', 'No hay un conflicto para resolver.');
-    this.revision = this.conflict.serverRevision;
+    const base = this.conflict.serverRevision;
+    // Sin copia local no se sube: si el storage falla, el conflicto sigue abierto.
+    this.escribir({ campaignId, baseRevision: base, pending: true, draft: this.draft });
+    this.revision = base;
     this.conflict = null;
-    this.escribir({ campaignId, baseRevision: this.revision, pending: true, draft: this.draft });
     return this.push();
   }
 
@@ -190,9 +194,17 @@ export class SyncingCampaignRepository implements CampaignRepository {
     return this.campaignId;
   }
 
+  /**
+   * El draft en la clave de siempre (formato M2C) + la metadata de sync aparte.
+   * Lanza `LOCAL_STORAGE_UNAVAILABLE` si cualquiera de las dos escrituras falla.
+   * `saveDraft` no lanza: devuelve `false` (cuota, modo privado), y eso también
+   * corta acá, antes de escribir la metadata y antes de cualquier PUT
+   * (AUDIT D2 P1: "guarda local siempre" no puede subir lo que no guardó).
+   */
   private escribir(r: SyncRecord) {
-    // El draft en la clave de siempre (formato M2C) + la metadata de sync aparte.
-    saveDraft(this.deps.storage, r.draft);
+    if (!saveDraft(this.deps.storage, r.draft)) {
+      throw new RepositoryError(0, 'LOCAL_STORAGE_UNAVAILABLE', 'El navegador no deja guardar el draft localmente.');
+    }
     try {
       this.deps.storage.setItem(syncKey(r.campaignId), JSON.stringify({ v: 1, ...r }));
     } catch {
