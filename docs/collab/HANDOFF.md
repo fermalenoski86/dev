@@ -1,14 +1,13 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). Iniciar Fase D según `docs/briefs/M3A1_MASTER.md` §44: Builder repository integration y revisión offline/conflictos. Inspeccionar primero el repo completo y derivar un brief verificable antes de codificar. Mantener aparte el fix B1 del PR [#12](https://github.com/fermalenoski86/dev/pull/12).
-**Fase:** M3A.1 Fase D — Builder repository integration · offline revision/conflict
-**Estado:** Fase C completa. C3 aprobada sobre `1e9e9652f76f3fd02c3c7704ba069f013f5d4c01` y fusionada por ChatGPT en `main@053318df64d19677e61fd6d9f90d8c059a6b8eee`. Todos los gates obligatorios del commit auditado quedaron verdes. Claude debe preparar/implementar el siguiente alcance documentado sin incorporar silenciosamente BL-17/BL-18.
+**Pelota en:** ChatGPT (auditor). Auditar el brief de Fase D en el PR [#13](https://github.com/fermalenoski86/dev/pull/13) (issue [#14](https://github.com/fermalenoski86/dev/issues/14)). Aparte, el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
+**Fase:** M3A.1 Fase D: Builder repository integration y revisión offline/conflictos (brief para acordar)
+**Estado:** Fase C cerrada: C3 aprobada y mergeada (#10), issues #9 y #11 cerrados. Brief D derivado del master: D1 API de campaign/draft con `DRAFT_CONFLICT`, D2 `CampaignRepository` en un paquete nuevo, D3 integración en el Builder. D3 choca con la regla "no se toca apps/control" y quedó para Fer en el issue [#15](https://github.com/fermalenoski86/dev/issues/15) (`decisión-producto`); D1 y D2 no dependen de eso. Decisión 1 del brief: §6 del master exige validar `allowed_surfaces` del lado del servidor (lo que proponía BL-17), explícito para aprobar o sacar. Los tags m3a1-b2/b3/b4/c1/c2/c3 siguen pendientes de autorización de Fer.
 
-## Próxima entrega
-- Derivar el brief de Fase D desde `docs/briefs/M3A1_MASTER.md` y el código real, con criterios y gates explícitos.
-- Implementar Builder repository integration y manejo de revisión offline/conflictos en una rama/PR de Claude; devolver un HEAD exacto a ChatGPT para auditoría.
-- BL-17 (`allowed_surfaces`) y BL-18 (vigencia contractual) siguen como decisiones comerciales pendientes. Debatir y registrar decisión antes de implementar.
-- PR #12 corrige un bug B1 preexistente y se mantiene fuera del alcance de C3/Fase D hasta su auditoría separada.
+## Entrega activa para auditar
+- PR: [#13](https://github.com/fermalenoski86/dev/pull/13) · issue [#14](https://github.com/fermalenoski86/dev/issues/14) · base `main` · solo docs: `docs/briefs/M3A1_FASE_D.md`.
+- Pendiente aparte: PR [#12](https://github.com/fermalenoski86/dev/pull/12) (fix B1 de `cleanupTemporaryObjects`, CI verde).
+- Decisión de Fer: issue [#15](https://github.com/fermalenoski86/dev/issues/15) (tocar `apps/control` para D3).
 
 ## Objetivo autorizado por Fer — 2026-10-06
 Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
@@ -114,6 +113,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-08 02:02 UTC — Claude: C3 aprobada y mergeada (#10), Fase C cerrada, #11 cerrado. Brief de Fase D en el PR #13 (issue #14). Issue #15 `decisión-producto` para Fer: D3 toca `apps/control`. Pelota a ChatGPT.
 - 2026-10-08 — ChatGPT: C3 `AUDIT: APROBADO` sobre `1e9e965`; reconstrucción limpia de 17 archivos, contenido equivalente al C3 revisado y CI exacta completa verde (verify 637+1, PG 188+6, bootstrap 6/6, media 63, mutaciones 186/186, E2E 14/14). Squash en `main@053318d`; Fase C completa y pelota a Claude para Fase D. S3/MinIO no ejecutado y fuera del gate C3.
 - 2026-10-08 00:06 UTC — Claude: AUDIT: CAMBIOS de C3 (base no integrable) corregido. Rama reconstruida desde main con solo el commit de C3 en `1e9e965`: 17 archivos, mergeable, verify 637+1 y PG 188+6 locales; CI exacto en curso. Fix B1 fuera de #10 (va por #12). Pelota a ChatGPT.
 - 2026-10-08 00:04 UTC — Claude: CI de #10 rojo por un bug real de B1 (`cleanupTemporaryObjects` con TTL 0 y mtime fraccionario, no es código de C3). Fix en PR #12 con regresión determinística y mutación; portado a #10 en `b358192`. Pelota sigue en ChatGPT.
