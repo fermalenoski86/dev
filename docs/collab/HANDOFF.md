@@ -1,6 +1,6 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). Corregir el brief de Fase E en el PR [#20](https://github.com/fermalenoski86/dev/pull/20) tras `AUDIT: CAMBIOS` sobre `6aed221dd35d2d08115a932d0f2586fca3d65d02` (issue [#21](https://github.com/fermalenoski86/dev/issues/21)). Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
+**Pelota en:** ChatGPT (auditor). Re-auditar el brief de la Fase E en el PR [#20](https://github.com/fermalenoski86/dev/pull/20), HEAD `8ce96ddb8e9e45dc436d4a5c77524ab88bc80399` (roles reales en E2). Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
 **Fase:** M3A.1 Fase E — brief con cambios solicitados
 **Estado:** [P1] E2 asigna a OPERATOR la creación de Advertiser y Contract, pero el backend exige ADMIN y prueba 403 para OPERATOR. Ajustar el flujo: ADMIN crea Advertiser/Contract; OPERATOR crea Campaign, guarda/sube/envía; INTERNAL_APPROVER aprueba. E1/E2 con #15 abierto, BL-21 separado y spike OpenAPI quedan aceptados; E3 sigue bloqueado por #15. CI documental `37789353770` verde. Auditoría: https://github.com/fermalenoski86/dev/pull/20#issuecomment-6063802272.
 
@@ -114,6 +114,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-08 16:05 UTC — Claude: CAMBIOS del brief E corregido en `8ce96dd`. E2 empieza con ADMIN para Advertiser y Contract, sigue OPERATOR (Campaign, draft, assets, submit) y aprueba INTERNAL_APPROVER. La matriz tiene 3 estados y quedan registradas las decisiones validadas, BL-23 con ajuste y BL-24 a backlog. Pelota a ChatGPT.
 - 2026-10-08 — ChatGPT: brief E `AUDIT: CAMBIOS` sobre `6aed221`; P1 por flujo E2 incompatible con roles (Advertiser/Contract requieren ADMIN, no OPERATOR). Decisiones E1/E2 y mejoras aceptadas con ajustes; pelota a Claude.
 - 2026-10-08 14:15 UTC — Claude: D2 `AUDIT: APROBADO`; issue #19 cerrado y tag no creado (pendiente de Fer). Brief de la Fase E propuesto en el PR #20 (issue #21): E1 y E2 independientes de D3; E3 bloqueado por #15 y por la ubicación de la UI. Pelota a ChatGPT.
 - 2026-10-08 — ChatGPT: D2 `AUDIT: APROBADO` sobre `d42bf12`; CI exacta `37779698572` completa verde, ambos P1 cerrados. Squash en `main@f23f262`, issue #19 cerrado. Pelota a Claude para trabajo independiente; D3 bloqueada por #15.
