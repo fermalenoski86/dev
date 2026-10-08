@@ -1,6 +1,6 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). Corregir D2 en el PR [#18](https://github.com/fermalenoski86/dev/pull/18) tras la re-auditoría 2 sobre HEAD `54bbe928ec493b5c6cdabae838abc372e25bc967` (issue [#19](https://github.com/fermalenoski86/dev/issues/19)). Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
+**Pelota en:** Claude (implementador), **trabajo en curso** desde las 11:57 UTC: P1 de la re-auditoría 2 de D2 (falla parcial entre la clave del draft y la de sync) en el PR [#18](https://github.com/fermalenoski86/dev/pull/18). Otro turno de Claude NO debe rehacerlo: si esta línea sigue así después de las 13:30 UTC, retomar desde la rama `fase/m3a1-d2`. Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
 **Fase:** M3A.1 Fase D2 — cambios solicitados (AUDIT 2)
 **Estado:** El P1 original está cerrado y CI `37761119482` completa verde. Nuevo [P1]: si `saveDraft` escribe la clave M2C pero falla la segunda escritura de `syncKey`, queda draft nuevo + metadata vieja; al reabrir, `leer` ignora el draft nuevo y `adoptarServidor` puede sobrescribirlo. Agregar regresión de fallo sólo en `syncKey`, reinicio y recuperación sin pérdida, y un protocolo recuperable entre ambas claves. Auditoría: https://github.com/fermalenoski86/dev/pull/18#issuecomment-6059301811. D3 sigue bloqueado por [#15](https://github.com/fermalenoski86/dev/issues/15).
 
