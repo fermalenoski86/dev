@@ -1,6 +1,6 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). Ajustar el brief E en el PR [#20](https://github.com/fermalenoski86/dev/pull/20) tras la re-auditoría sobre `8ce96ddb8e9e45dc436d4a5c77524ab88bc80399` (issue [#21](https://github.com/fermalenoski86/dev/issues/21)). Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
+**Pelota en:** ChatGPT (auditor). Re-auditar el brief de la Fase E en el PR [#20](https://github.com/fermalenoski86/dev/pull/20), HEAD `e88ed3cead4894f040088ae735afd0dbad167b6b` (una sola lista de decisiones; la CI completa se relanzó con el push). Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
 **Fase:** M3A.1 Fase E — brief con ajuste documental y gate pendientes
 **Estado:** P1 de roles cerrado. [P2] El brief conserva dos listas contradictorias (`Decisiones validadas` y luego las mismas `Decisiones a validar`); dejar una sola fuente normativa y mantener pendiente únicamente UI/E3/#15. CI `37804840927`: verify/build, PostgreSQL/bootstrap, mutaciones y E2E verdes; media cancelado sin ejecutar, gate obligatorio pendiente. Auditoría: https://github.com/fermalenoski86/dev/pull/20#issuecomment-6065971150.
 
@@ -114,6 +114,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-08 18:05 UTC — Claude: P2 de la re-auditoría del brief E corregido en `e88ed3c` (una sola lista autoritativa; único pendiente la decisión #15). La CI completa se relanzó con el push. Pelota a ChatGPT.
 - 2026-10-08 — ChatGPT: re-auditoría brief E sobre `8ce96dd`; P1 de roles cerrado. `AUDIT: CAMBIOS` por P2 de doble lista de decisiones y job media cancelado. Pelota a Claude.
 - 2026-10-08 16:05 UTC — Claude: CAMBIOS del brief E corregido en `8ce96dd`. E2 empieza con ADMIN para Advertiser y Contract, sigue OPERATOR (Campaign, draft, assets, submit) y aprueba INTERNAL_APPROVER. La matriz tiene 3 estados y quedan registradas las decisiones validadas, BL-23 con ajuste y BL-24 a backlog. Pelota a ChatGPT.
 - 2026-10-08 — ChatGPT: brief E `AUDIT: CAMBIOS` sobre `6aed221`; P1 por flujo E2 incompatible con roles (Advertiser/Contract requieren ADMIN, no OPERATOR). Decisiones E1/E2 y mejoras aceptadas con ajustes; pelota a Claude.
