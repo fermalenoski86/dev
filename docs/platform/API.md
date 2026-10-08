@@ -150,6 +150,11 @@ corre en CI, job `compose-smoke` (`scripts/ci/compose-smoke.sh`): bootstrap
 con psql (dos veces), `pnpm db:migrate` como `trust_owner` (dos veces),
 `/ready` con database, storage y media en `ok` y login inválido = 401.
 
-MinIO queda detrás del perfil `s3` y no arranca por defecto: la imagen ya no
-se puede bajar sin login (sondeo real en CI). El reemplazo para dev/CI es la
-decisión de producto #22; hasta entonces el contrato S3 no corre en CI.
+S3 de dev/CI: **SeaweedFS 4.48** fijado por digest, detrás del perfil `s3`
+(`docker compose --profile s3 up`; S3 en `127.0.0.1:9000`, credenciales de
+ejemplo en `docker/seaweedfs/s3.json`). Reemplaza a MinIO, que ya no se
+distribuye sin login (decisión de Fer en #22). **Solo dev/CI**: no elige el
+proveedor de producción, que tiene que cumplir versioning y Object Lock
+(`docs/ops/BACKUPS.md`). `compose-smoke` crea el bucket, corre el contrato S3
+completo (`s3.contract.test.ts`, 15 tests) contra SeaweedFS y levanta
+platform-api también con `STORAGE_DRIVER=s3` (`/ready` en `ok`).

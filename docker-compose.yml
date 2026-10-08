@@ -22,7 +22,7 @@ services:
 
   seaweedfs:
     profiles: ["s3"]
-    # resuelto de chrislusf/seaweedfs:latest en CI (run 37839307934); la versión la imprime compose-smoke
+    # SeaweedFS 4.48 (530be3e37), resuelto de chrislusf/seaweedfs:latest en CI (run 37839307934); compose-smoke imprime la versión
     image: chrislusf/seaweedfs@sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d
     command: ["server", "-dir=/data", "-ip.bind=0.0.0.0", "-s3", "-s3.port=8333", "-s3.config=/etc/seaweedfs/s3.json"]
     volumes: ["./docker/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro"]

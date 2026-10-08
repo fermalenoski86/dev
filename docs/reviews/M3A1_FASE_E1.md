@@ -22,7 +22,7 @@ CI: acá no hay daemon.
 | `bootstrap-smoke.sh` | 6 passed |
 | media | 63 passed |
 | mutaciones (226 reglas) | **CI: 226/226** (job `mutations`, run 37840201397, verde). Local: corrida completa interrumpida en 39/226 (0 sobrevivientes) para no dejar mutaciones aplicadas; no se cuenta como completa. Las 11 nuevas `e1:` dan **11/11 atrapadas**. Una sobrevivió en la primera corrida y se cerró con un test (abajo) |
-| compose-smoke (CI) | `/ready` en `ready` (database, storage y media `ok`), bootstrap y migraciones idempotentes, login inválido 401. Imágenes fijadas por digest |
+| compose-smoke (CI) | Imágenes fijadas por digest (postgres, node, SeaweedFS 4.48). **Contrato S3 contra SeaweedFS: 15/15.** Bootstrap y migraciones idempotentes. `/ready` en `ok` y login 401 con storage local **y** con S3 |
 | E2E M2C | Solo en CI: acá no hay Chrome con H.264 |
 
 ## Qué se entrega, punto por punto del brief
@@ -84,7 +84,9 @@ No se adoptó `zod-to-openapi`. Su línea 7.x para Zod 3 no tiene soporte activo
   - `minio/minio` y `quay.io/minio/minio` ya no se pueden bajar sin login;
   - SeaweedFS, RustFS y Garage sí.
 - MinIO quedó detrás del perfil `s3`, sin cambiar la arquitectura de storage. El reemplazo para dev/CI es la **decisión de producto #22**, con opciones y recomendación.
-- Mientras siga abierta, el contrato S3 (`s3.contract.test.ts`) **sigue sin ejecutarse nunca**. Lo digo explícitamente: el punto 3 está cumplido para postgres + platform-api y pendiente para S3.
+- **Re-entrega tras `AUDIT: CAMBIOS` (P1 gate S3):** Fer decidió #22 = SeaweedFS solo para dev/CI. Servicio `seaweedfs` (perfil `s3`) fijado por digest (`chrislusf/seaweedfs@sha256:4e61d15f…`, versión 4.48 impresa por el smoke), credenciales de ejemplo en `docker/seaweedfs/s3.json`.
+- `compose-smoke` ahora exige digest en **todas** las imágenes (perfil `s3` incluido), crea el bucket, corre el **contrato S3 completo contra SeaweedFS: 15/15 passed** (primera ejecución real del contrato desde B1) y levanta platform-api con `STORAGE_DRIVER=local` y con `STORAGE_DRIVER=s3`: `/ready` en `ok` y login 401 en los dos.
+- No se tocó `S3CompatibleStorage` ni el contrato (arquitectura B1 intacta): SeaweedFS cumple `If-None-Match: *`, checksums SHA-256 y copia con checksum tal como el contrato los exige.
 
 ### 4. §33: `docs/ops/BACKUPS.md`
 
@@ -136,7 +138,7 @@ Generado, no escrito a mano.
 
 ## No hecho a propósito
 
-- **S3 en compose y el contrato S3:** dependen de #22. No elegí reemplazo por mi cuenta.
+- **Proveedor S3 de producción:** fuera de alcance; #22 solo eligió dev/CI. Tiene que cumplir versioning + Object Lock (BACKUPS.md).
 - **Store compartido para el límite de uploads:** con más de una instancia cada una cuenta por separado. Está documentado. Hoy el despliegue es de una instancia.
 - **Ensayo de restore sobre un backup real:** es BL-24 (backlog). El de E1 prueba el procedimiento, no el tamaño.
 - **El contenedor de platform-api instala ffmpeg con `apt-get` en cada arranque:** las imágenes base están fijadas, pero los paquetes de apt no. Va como propuesta 1.
