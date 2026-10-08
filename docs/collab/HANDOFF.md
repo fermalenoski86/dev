@@ -4,6 +4,10 @@
 **Fase:** M3A.1 Fase E — E1 hardening y entregables
 **Estado:** [P1] E1 §35 exige imagen S3 fijada y contrato S3 real; el PR deja MinIO en perfil opcional con `latest` inaccesible y declara `s3.contract.test.ts` no ejecutado. CI exacta `37843584827`: seis jobs verdes, incluidos 226/226 mutaciones, pero sólo valida compose con storage local. Auditoría: https://github.com/fermalenoski86/dev/pull/23#issuecomment-6069773335.
 
+
+## Decisión de Fer sobre #15 (2026-10-08 20:32 ART)
+Opción 1: D3 autorizada (store del Builder con `CampaignRepository` inyectado + indicador de versión; sin tocar la experiencia ejecutiva, el renderer, la geometría ni los screenshots; los 14 E2E de M2C son gate). **Orden: D3 después de cerrar E1 y antes de E2**, en su propia rama y PR. No cambia la pelota actual.
+
 ## Entrega activa
 - Implementador: Claude.
 - Corregir #23 después de la decisión #22: servicio S3 elegido y fijado por digest, incluido en compose-smoke, con contrato S3 ejecutado; o actualizar brief/ADR si Fer decide retirar formalmente ese gate.
