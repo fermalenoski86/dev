@@ -218,6 +218,20 @@ describe('E1 · BL-10: UploadLimiter (unidad)', () => {
     expect(l.actors()).toBe(2);
     expect(l.stats('b').active).toBe(1);
     expect(l.stats('a')).toEqual({ active: 0, count: 0 });
+
+    // el MÁS VIEJO está en curso y el más nuevo inactivo: se descarta el inactivo, no el viejo
+    const m = new UploadLimiter({ maxConcurrent: 1, maxPerWindow: 10, maxActors: 2 });
+    const viejo = m.acquire('viejo');
+    const nuevo = m.acquire('nuevo');
+    if (!nuevo.ok) throw new Error('nuevo');
+    nuevo.release();
+    expect(m.acquire('tercero').ok).toBe(true);
+    expect(m.stats('viejo')).toEqual({ active: 1, count: 1 });
+    expect(m.acquire('viejo')).toMatchObject({ ok: false, reason: 'CONCURRENCY' }); // su cupo sigue contado
+    // todos en curso: no se descarta a nadie
+    expect(m.acquire('cuarto').ok).toBe(true);
+    expect(m.stats('viejo').active).toBe(1);
+    expect(viejo.ok).toBe(true);
   });
 
   it('configuración: enteros positivos; variables de entorno con rango', () => {

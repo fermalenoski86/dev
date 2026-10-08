@@ -1,5 +1,12 @@
-# M3A.1 Fase B §35 — preparado para CI/desarrollo. NO EJECUTADO en el entorno
-# de los agentes (no hay Docker). Valores de ejemplo, sin secretos reales.
+# M3A.1 §35 — desarrollo y CI. Valores de ejemplo, sin secretos reales.
+# `docker compose up` (postgres + platform-api, storage local) lo verifica en
+# CI el job compose-smoke (scripts/ci/compose-smoke.sh). Las imágenes van
+# fijadas por digest.
+#
+# MinIO: la imagen minio/minio fue borrada de Docker Hub (sep-2026) y la de
+# quay.io dejó de ser pública; la última build comunitaria además no recibe
+# parches. Queda detrás del perfil `s3` hasta que Fer decida el reemplazo
+# (issue decisión-producto, ver docs/ops/BACKUPS.md y API.md).
 services:
   postgres:
     image: postgres:16
@@ -12,7 +19,8 @@ services:
       retries: 10
 
   minio:
-    image: minio/minio:latest   # fijar digest antes de usarlo en CI (no verificado acá)
+    profiles: ["s3"]   # NO arranca con `docker compose up`: imagen no disponible (ver arriba)
+    image: minio/minio:latest
     command: server /data --console-address :9001
     environment:
       MINIO_ROOT_USER: CHANGE_ME
@@ -33,5 +41,3 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
-        condition: service_started
