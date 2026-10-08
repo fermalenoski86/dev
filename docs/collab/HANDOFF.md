@@ -1,8 +1,8 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor). Re-auditar D2 en el PR [#18](https://github.com/fermalenoski86/dev/pull/18), rama `fase/m3a1-d2`, HEAD `d42bf121d400ec84d6777f2686abbebca774399e` (respuesta a la re-auditoría 2). Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
-**Fase:** M3A.1 Fase D2 — re-auditoría tras AUDIT 2
-**Estado:** P1 de la re-auditoría 2 corregido en `d42bf12`. El registro de sync (fuente de verdad, contiene el draft) se escribe primero, el espejo M2C después, y si el espejo falla se restaura el registro anterior. Invariante: todo draft que el repositorio dejó en M2C está en su registro. Además, adoptar el servidor no pisa una clave M2C escrita por otro. Hay 4 regresiones (rojas con el código auditado) y 4 mutaciones nuevas. Gates locales: verify 666+1, PG 216+6, bootstrap 6/6, media 63, mutaciones 215/215; la CI está en curso. D3 sigue bloqueado por [#15](https://github.com/fermalenoski86/dev/issues/15).
+**Pelota en:** Claude (implementador). D2 aprobada y mergeada en `main@f23f262`; issue #19 cerrado. D3 continúa bloqueada por la decisión de Fer en [#15](https://github.com/fermalenoski86/dev/issues/15): no tocar `apps/control`. Mientras tanto, avanzar únicamente trabajo independiente ya documentado/autorizado; el fix B1 sigue separado en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
+**Fase:** M3A.1 Fase D2 — cerrada; D3 bloqueada por decisión de producto
+**Estado:** `AUDIT: APROBADO` sobre `d42bf121d400ec84d6777f2686abbebca774399e`; squash `f23f2623e1c611477e0eb842af313af0acf7ce9f`. Los dos P1 de persistencia quedaron cerrados con protocolo recuperable, 7 regresiones acumuladas y 6 mutaciones acumuladas de auditoría. CI exacta `37779698572` completa verde: verify/build, PostgreSQL/bootstrap, media, mutaciones 215/215 y E2E M2C. Auditoría: https://github.com/fermalenoski86/dev/pull/18#issuecomment-6061535285.
 
 ## Entrega activa para auditar
 - PR: [#18](https://github.com/fermalenoski86/dev/pull/18) · issue [#19](https://github.com/fermalenoski86/dev/issues/19) · base `main`
@@ -115,6 +115,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-08 — ChatGPT: D2 `AUDIT: APROBADO` sobre `d42bf12`; CI exacta `37779698572` completa verde, ambos P1 cerrados. Squash en `main@f23f262`, issue #19 cerrado. Pelota a Claude para trabajo independiente; D3 bloqueada por #15.
 - 2026-10-08 12:55 UTC — Claude: re-auditoría 2 de D2 (falla parcial entre claves) corregida en `d42bf12` con un protocolo recuperable: registro primero y luego espejo con restauración, más un guard al adoptar el servidor. 4 regresiones, 4 mutaciones, 215/215. Respondido en #18. Pelota a ChatGPT.
 - 2026-10-08 — ChatGPT: re-auditoría D2 `AUDIT: CAMBIOS` sobre `54bbe92`; P1 original cerrado y CI completa verde. Nuevo P1 por falla parcial entre draft M2C y metadata sync que puede perder el draft al reabrir. Pelota a Claude.
 - 2026-10-08 11:10 UTC — Claude: P1 de D2 corregido en `8dc228f` (no se sube un draft que no quedó guardado localmente; las 4 regresiones dan cero PUT). Hay 2 mutaciones nuevas (211/211) y la CI 37761119482 está completa y en verde, postgres incluido. HEAD `54bbe92` con docs. No se pudo empujar el tag `m3a1-d1` porque el proxy deniega la escritura de refs/tags; queda pendiente para Fer o ChatGPT. Pelota a ChatGPT.
