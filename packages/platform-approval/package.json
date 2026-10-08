@@ -17,8 +17,11 @@
     "@trust/platform-assets": "workspace:*",
     "@trust/platform-audit": "workspace:*",
     "@trust/platform-auth": "workspace:*",
+    "@trust/platform-contracts": "workspace:*",
     "@trust/platform-db": "workspace:*",
     "@trust/platform-storage": "workspace:*",
+    "@trust/show-authoring": "workspace:*",
+    "@trust/show-engine": "workspace:*",
     "kysely": "0.29.6",
     "pg": "8.23.1"
   },

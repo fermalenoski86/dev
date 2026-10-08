@@ -1,4 +1,4 @@
-import { ApprovalService, DECIDE_ROLES, READ_ROLES, downloadFilename } from '@trust/platform-approval';
+import { ApprovalService, DECIDE_ROLES, READ_ROLES, SUBMIT_ROLES, downloadFilename, submitCampaign } from '@trust/platform-approval';
 import { displayFilename } from '@trust/platform-assets';
 import type { Database } from '@trust/platform-db';
 import type { ObjectStorage } from '@trust/platform-storage';
@@ -7,6 +7,7 @@ import type { Kysely } from 'kysely';
 import { type ActorProvider, requireActor } from './actor';
 import {
   ApproveBodySchema,
+  CampaignParamsSchema,
   ContractParamsSchema,
   EvidenceFieldsSchema,
   EvidenceParamsSchema,
@@ -16,6 +17,7 @@ import {
   IdempotencyHeadersSchema,
   RejectBodySchema,
   ShowVersionResponseSchema,
+  SubmitBodySchema,
   VersionParamsSchema,
 } from './contracts';
 import { ApiError } from './errors';
@@ -29,6 +31,7 @@ import { ApiError } from './errors';
  *   POST /api/v1/show-versions/:id/approve                { evidenceId, versionHash }
  *   POST /api/v1/show-versions/:id/reject                 { reason, versionHash }
  *   PUT  /api/v1/contracts/:id/four-eyes                  { fourEyesRequired } — solo ADMIN
+ *   POST /api/v1/campaigns/:id/submit                     { draftRevision } — C3
  *
  * El rol se chequea en la ruta (403 antes de leer el cuerpo) y el scope de
  * contrato en el servicio. Las mutaciones exigen CSRF (requireActor) y las de
@@ -142,6 +145,18 @@ export function registerApprovalRoutes(app: FastifyInstance, deps: ApprovalRoute
     const body = RejectBodySchema.parse(req.body);
     const r = await service.reject({ actor, versionId: id, reason: body.reason, versionHash: body.versionHash, idempotencyKey: key });
     req.log.info({ event: 'version.reject', requestId: req.id, showVersionId: id, replayed: r.replayed }, 'decisión');
+    reply.header('idempotent-replayed', String(r.replayed));
+    return reply.status(r.replayed ? 200 : 201).send(ShowVersionResponseSchema.parse(r.version));
+  });
+
+  app.post('/api/v1/campaigns/:id/submit', async (req, reply) => {
+    const actor = await requireActor(deps.actors, req, SUBMIT_ROLES);
+    const { id } = CampaignParamsSchema.parse(req.params);
+    const key = idempotencyKey(req.headers);
+    exigirJson(req.headers['content-type']);
+    const body = SubmitBodySchema.parse(req.body);
+    const r = await submitCampaign({ db: deps.db, approvals: service }, { actor, campaignId: id, draftRevision: body.draftRevision, idempotencyKey: key });
+    req.log.info({ event: 'campaign.submit', requestId: req.id, campaignId: id, showVersionId: r.version.id, versionNumber: r.version.versionNumber, replayed: r.replayed }, 'submit');
     reply.header('idempotent-replayed', String(r.replayed));
     return reply.status(r.replayed ? 200 : 201).send(ShowVersionResponseSchema.parse(r.version));
   });

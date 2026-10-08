@@ -103,3 +103,35 @@ Rechazar no está alcanzado por cuatro ojos (§18 habla de aprobar).
 bloqueado. Desactivar → `FOUR_EYES_DISABLED`; reactivar → `CONTRACT_UPDATED`
 con `{ fourEyesRequired, previous }`. Sin cambio → `changed: false` y sin
 evento. La política vale en el momento de aprobar (el trigger lee el contrato).
+
+## Submit (C3, §17 "Enviar")
+
+`POST /api/v1/campaigns/:id/submit { draftRevision }` · OPERATOR o ADMIN ·
+CSRF · `Idempotency-Key` obligatoria. Código: `packages/platform-approval/src/submit.ts`.
+Sin CRUD de Campaign ni sync del Builder (Fase D): opera sobre el Draft que ya
+está en `campaign_drafts`.
+
+Una transacción con la campaña bloqueada (`FOR UPDATE`):
+
+1. Campaña `ACTIVE` (archivada → 409 `INVALID_STATE_TRANSITION`) con draft
+   actual (si no, 409 `DRAFT_NOT_FOUND`).
+2. `draftRevision` = revisión actual; si no, 409 `DRAFT_REVISION_MISMATCH`
+   con `details.currentRevision` (concurrencia optimista, §48.3).
+3. Esa revisión no se envió antes; si ya, 409 `INVALID_STATE_TRANSITION` con
+   la versión existente ("nueva edición → SUBMITTED nuevo", §17).
+4. `TakeoverDraftSchema` (422 `DRAFT_INVALID`).
+5. Cada ranura con asset (`masterAssetId`→`towers_ab`, `corrientesAssetId`→`screen_a`,
+   `pellegriniAssetId`→`screen_b`, `horizontalAssetId`→`horizontal`) apunta a un
+   Asset **READY** de esa superficie (422 `ASSET_NOT_READY` / `ASSET_SURFACE_MISMATCH`).
+6. Compilación + preflight **server-side** con el mismo código del Builder
+   (`validateDraft` → `compileTakeoverDraft` + `preflightShow`) contra `EL_TRUST`
+   y `DEMO_SCENES`; cualquier error (compilador, assets, preflight) → 422
+   `PREFLIGHT_FAILED` con la lista de errores. Las advertencias no bloquean.
+7. Hash del sobre (punto 8): ShowPackage + `[logicalRef, sha256]`. El `source`
+   de cada asset en el paquete es `/assets/sha256/<sha256>.mp4`: el hash depende
+   del contenido, nunca de UUIDs ni nombres.
+8. `createShowVersion` (versión + manifiesto sellado, función atómica) +
+   `VERSION_SUBMITTED` (`afterHash` = hash) en la misma transacción.
+
+Respuesta 201 con la ShowVersion (mismo contrato que `GET /show-versions/:id`);
+el retry con la misma key devuelve 200 y la misma versión.

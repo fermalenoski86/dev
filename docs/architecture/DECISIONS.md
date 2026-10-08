@@ -918,3 +918,18 @@ escriben audit en la misma transacción. Cuatro ojos: chequeo en la app con el
 trigger de 0001 como segunda barrera; la política la cambia solo ADMIN por
 `PUT /contracts/:id/four-eyes` con `FOUR_EYES_DISABLED`. Detalle:
 `docs/platform/APPROVAL.md`.
+
+## ADR-059 — Submit server-side sobre el Draft persistido
+**Fecha:** 2026-10 · **Estado:** propuesto (auditoría C3) · **Origen:** M3A.1 Fase C3 + decisión 1 del brief C
+`submitCampaign` en `@trust/platform-approval`. El servidor no confía en un
+paquete compilado por el cliente: relee el Draft de la base, lo valida con
+`TakeoverDraftSchema`, arma el registro de assets desde Assets READY de la
+superficie de cada ranura y corre `validateDraft` (el mismo compilador y el
+mismo `preflightShow` del Builder) contra el modelo real del edificio. El
+`source` de cada asset en el ShowPackage es `/assets/sha256/<sha256>.mp4`, así
+el hash (sobre del punto 8) depende solo del contenido. La revisión del draft
+la cita el cliente (concurrencia optimista) y una revisión se envía una sola
+vez; la campaña bloqueada `FOR UPDATE` serializa envíos y decisiones. La
+versión se crea por `createShowVersion` con `VERSION_SUBMITTED` en la misma
+transacción, detrás de `withIdempotency`.
+
