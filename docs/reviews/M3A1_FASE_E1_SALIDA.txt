@@ -97,4 +97,9 @@ GATE sondeo S3: dxflrs/garage:v2.1.0 → dxflrs/garage@sha256:4c9b34c113e6135846
 ## compose-smoke run 37838522557 (primera corrida, compose original)
 minio Error pull access denied for minio/minio, repository does not exist or may require 'docker login'
 
-## mutaciones: corrida completa local en curso al abrir el PR; resultado se agrega abajo
+## mutaciones: corrida completa
+- Local: interrumpida a propósito en la regla 39 de 226 (39 atrapadas · 0 sobreviven) para no dejar el árbol
+  con una mutación aplicada; restaurada con --restore (árbol limpio). NO se cuenta como corrida completa.
+- CI (evidencia independiente): job `mutations` del run 37840201397 sobre f84a31e, 226 reglas, conclusion=success
+  (https://github.com/fermalenoski86/dev/actions/runs/37840201397/job/113537733030), seguido de `git diff --exit-code` limpio.
+- Las 11 reglas e1: atrapadas localmente (tanda 215:226 + re-corrida de la sobreviviente, arriba).

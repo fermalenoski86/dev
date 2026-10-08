@@ -21,7 +21,7 @@ CI: acá no hay daemon.
 | PostgreSQL 16 | **232 passed + 6 skipped**. Nuevos: upload-limits 6, logs-sin-secretos 1, contract 8, restore-drill 1 |
 | `bootstrap-smoke.sh` | 6 passed |
 | media | 63 passed |
-| mutaciones (226 reglas) | ver `_SALIDA.txt`. Las 11 nuevas `e1:` dan **11/11 atrapadas**. Una sobrevivió en la primera corrida y se cerró con un test (abajo) |
+| mutaciones (226 reglas) | **CI: 226/226** (job `mutations`, run 37840201397, verde). Local: corrida completa interrumpida en 39/226 (0 sobrevivientes) para no dejar mutaciones aplicadas; no se cuenta como completa. Las 11 nuevas `e1:` dan **11/11 atrapadas**. Una sobrevivió en la primera corrida y se cerró con un test (abajo) |
 | compose-smoke (CI) | `/ready` en `ready` (database, storage y media `ok`), bootstrap y migraciones idempotentes, login inválido 401. Imágenes fijadas por digest |
 | E2E M2C | Solo en CI: acá no hay Chrome con H.264 |
 
