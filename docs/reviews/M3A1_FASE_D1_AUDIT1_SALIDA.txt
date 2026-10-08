@@ -1,0 +1,53 @@
+# M3A.1 D1 — AUDIT 1: salida REAL de gates (base 37f6471 + corrección P1, árbol de trabajo antes del commit)
+# 2026-10-08T06:50:33Z · node v22.22.0 · pnpm 12.5.1 · psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)
+
+## Reproducción: 4 regresiones nuevas con el código AUDITADO (service.ts/submit.ts sin cambios)
+× campaigns: recorte sin confirmar vs PUT → esperarBloqueados: 0/1 backends esperando transactionid|tuple tras 5000 ms
+× campaigns: PUT en curso vs PATCH → esperarBloqueados: 0/1 backends esperando transactionid|tuple tras 5000 ms
+× submit: recorte sin confirmar vs submit → esperarBloqueados: 0/1 backends esperando transactionid|tuple tras 5000 ms
+× submit: submit en curso vs recorte → esperarBloqueados: 0/1 backends esperando transactionid|tuple tras 5000 ms
+Failed Tests 4
+
+## Con la corrección: campaigns.db + submit.db, 5 corridas
+      Tests  34 passed (34)
+      Tests  34 passed (34)
+      Tests  34 passed (34)
+      Tests  34 passed (34)
+      Tests  34 passed (34)
+
+## pnpm install --frozen-lockfile
+✓ Lockfile passes supply-chain policies (verified 2h ago)
+Lockfile is up to date, resolution step is skipped
+Done in 99ms using pnpm v12.5.1
+
+## pnpm verify
+ Test Files  34 passed | 1 skipped (35)
+      Tests  642 passed | 1 skipped (643)
+
+## pnpm build
+apps/control build: ○  (Static)  prerendered as static content
+apps/control build: 
+apps/control build: Done
+
+## PG: npx vitest run -c vitest.platform.config.ts
+ Test Files  13 passed | 1 skipped (14)
+      Tests  208 passed | 6 skipped (214)
+
+## bootstrap-smoke.sh
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+
+## media: npx vitest run -c vitest.media.config.ts
+ Test Files  3 passed (3)
+      Tests  63 passed (63)
+
+## python3 scripts/mutation-check.py (completo)
+ATRAPADA   d1: §6 sin chequeo en PUT    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 �
+ATRAPADA   d1: PUT sin FOR SHARE del contrato (AUDIT D1 P1) ⎯⎯⎯⎯⎯⎯�
+ATRAPADA   d1: submit sin FOR SHARE del contrato (AUDIT D1 P1) ⎯⎯⎯⎯⎯�
+ATRAPADA   d1: §6 sin chequeo al crear  ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 �
+ATRAPADA   d1: §6 sin chequeo en submit ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 �
+atrapadas 200 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+
+## No ejecutado local: E2E M2C (sin Chrome H.264) → job e2e-m2c de CI. S3/MinIO fuera del cambio.

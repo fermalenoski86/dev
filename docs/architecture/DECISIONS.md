@@ -918,3 +918,53 @@ escriben audit en la misma transacción. Cuatro ojos: chequeo en la app con el
 trigger de 0001 como segunda barrera; la política la cambia solo ADMIN por
 `PUT /contracts/:id/four-eyes` con `FOUR_EYES_DISABLED`. Detalle:
 `docs/platform/APPROVAL.md`.
+
+## ADR-059 — Submit server-side sobre el Draft persistido
+**Fecha:** 2026-10 · **Estado:** propuesto (auditoría C3) · **Origen:** M3A.1 Fase C3 + decisión 1 del brief C
+`submitCampaign` en `@trust/platform-approval`. El servidor no confía en un
+paquete compilado por el cliente: relee el Draft de la base, lo valida con
+`TakeoverDraftSchema`, arma el registro de assets desde Assets READY de la
+superficie de cada ranura y corre `validateDraft` (el mismo compilador y el
+mismo `preflightShow` del Builder) contra el modelo real del edificio. El
+`source` de cada asset en el ShowPackage es `/assets/sha256/<sha256>.mp4`, así
+el hash (sobre del punto 8) depende solo del contenido. La revisión del draft
+la cita el cliente (concurrencia optimista) y una revisión se envía una sola
+vez; la campaña bloqueada `FOR UPDATE` serializa envíos y decisiones. La
+versión se crea por `createShowVersion` con `VERSION_SUBMITTED` en la misma
+transacción, detrás de `withIdempotency`.
+
+## ADR-060 — Draft con concurrencia optimista y superficies del contrato en el servidor
+**Fecha:** 2026-10 · **Estado:** propuesto (auditoría D1) · **Origen:** M3A.1 Fase D1 + brief D aprobado (#13)
+`@trust/platform-campaigns`. `PUT /campaigns/:id/draft` escribe con un único
+`UPDATE … WHERE revision = expectedRevision` dentro de una transacción. Si no
+coincide, 409 `DRAFT_CONFLICT` con `serverRevision`, `clientRevision` y
+`serverUpdatedAt`, sin escribir ni hacer merge. No hay Idempotency-Key: la
+revisión es el único contrato de concurrencia. La regla de superficies del
+master §6 se calcula desde el draft (directivas que no son `hold`, traducidas
+a pantallas como lo hace el compilador) y se aplica al crear, en el PUT y en
+el submit, siempre contra el contrato vigente. No reescribe datos históricos.
+Advertiser/Contract los escribe solo ADMIN. El audit guarda hashes del draft,
+no su contenido.
+
+
+## ADR-061 — Repositorio del Builder: local siempre, sync con revisión, conflicto sin pisar
+**Fecha:** 2026-10 · **Estado:** propuesto (auditoría D2) · **Origen:** M3A.1 Fase D2 + brief D aprobado (#13)
+Paquete nuevo `@trust/builder-repository`, sin tocar `show-authoring` ni
+`apps/control`. Tiene una interfaz `CampaignRepository` y tres
+implementaciones:
+- Local: la de hoy, con el mismo formato de `trust.builder.draft.v1`.
+- Api: `fetch` inyectado, cookie y CSRF de C1, respuestas validadas con Zod.
+- Syncing: guarda local primero y sube con `expectedRevision`.
+
+Un 409 es un resultado. Mientras el conflicto esté abierto no se sube nada,
+hasta que el usuario elija recuperar el server, mantener lo local o duplicar.
+"Mantener local" sube sobre la `serverRevision` que el usuario vio, así que es
+una decisión explícita y nunca last-write-wins. "Duplicar" no escribe remoto.
+
+La metadata de sync va en una clave aparte por campaña. Un 409 que en realidad
+es nuestro propio PUT ya confirmado (la respuesta se perdió) se reconoce
+comparando el contenido del servidor, y no se presenta como conflicto.
+Alternativas descartadas:
+- guardar la revisión dentro de `trust.builder.draft.v1`, porque cambia el formato;
+- reintentar con la `serverRevision` automáticamente, porque es last-write-wins;
+- un merge por moments, porque §8 no lo permite.

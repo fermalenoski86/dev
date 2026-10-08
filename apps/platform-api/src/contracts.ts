@@ -103,6 +103,9 @@ export const EvidenceFieldsSchema = z.object({ type: z.enum(['EMAIL', 'PDF', 'ME
 /** El cliente cita el hash que vio: la decisión es sobre la versión EXACTA. Nada de contractId: el scope lo deriva el backend. */
 export const ApproveBodySchema = z.object({ evidenceId: Uuid, versionHash: Sha }).strict();
 export const RejectBodySchema = z.object({ reason: z.string().trim().min(1).max(2000), versionHash: Sha }).strict();
+/** C3: el cliente cita la revisión del draft que vio (concurrencia optimista). */
+export const SubmitBodySchema = z.object({ draftRevision: z.number().int().min(1) }).strict();
+export const CampaignParamsSchema = z.object({ id: Uuid }).strict();
 export const FourEyesBodySchema = z.object({ fourEyesRequired: z.boolean() }).strict();
 
 export const EvidenceResponseSchema = z.object({
@@ -150,3 +153,59 @@ export const ShowVersionResponseSchema = z.object({
 });
 
 export const FourEyesResponseSchema = z.object({ contractId: Uuid, fourEyesRequired: z.boolean(), changed: z.boolean() });
+
+/* ── campaigns y drafts (D1, §5–9, §30) ─────────────────────────────── */
+const Texto = (max: number) => z.string().trim().min(1).max(max);
+export const IdParamsSchema = z.object({ id: Uuid }).strict();
+export const ListQuerySchema = z
+  .object({ limit: z.coerce.number().int().min(1).max(100).default(50), cursor: Uuid.optional(), advertiserId: Uuid.optional(), contractId: Uuid.optional() })
+  .strict();
+
+export const AdvertiserBodySchema = z
+  .object({
+    legalName: Texto(200),
+    taxId: Texto(32),
+    commercialName: Texto(200).nullable().optional(),
+    contacts: z.array(z.object({ name: Texto(200), email: z.string().email().max(320).optional(), phone: z.string().max(40).optional(), role: z.string().max(100).optional() }).strict()).max(20).optional(),
+  })
+  .strict();
+
+const ContractStatus = z.enum(['DRAFT', 'ACTIVE', 'ENDED', 'CANCELLED']);
+const Metadata = z.record(z.string().max(64), z.union([z.string().max(500), z.number(), z.boolean(), z.null()])).refine((m) => Object.keys(m).length <= 50, 'máximo 50 claves');
+export const ContractBodySchema = z
+  .object({
+    advertiserId: Uuid,
+    name: Texto(200),
+    startsAt: IsoDate,
+    endsAt: IsoDate,
+    status: ContractStatus.optional(),
+    allowedSurfaces: z.array(z.string().min(1).max(64)).min(1).max(20),
+    externalApprovalEnabled: z.boolean().optional(),
+    metadata: Metadata.optional(),
+  })
+  .strict();
+export const ContractPatchSchema = ContractBodySchema.omit({ advertiserId: true }).partial().strict();
+
+export const CampaignBodySchema = z.object({ contractId: Uuid, name: Texto(200), takeoverDraft: z.unknown().optional() }).strict();
+/** §8: toda actualización lleva expectedRevision. El draft lo valida el servicio con TakeoverDraftSchema. */
+export const DraftPutBodySchema = z.object({ takeoverDraft: z.unknown(), expectedRevision: z.number().int().min(1) }).strict();
+
+export const AdvertiserResponseSchema = z.object({
+  id: Uuid, legalName: z.string(), taxId: z.string(), commercialName: z.string().nullable(), contacts: z.array(z.unknown()),
+  status: z.enum(['ACTIVE', 'INACTIVE']), createdAt: IsoDate, updatedAt: IsoDate,
+});
+export const ContractResponseSchema = z.object({
+  id: Uuid, advertiserId: Uuid, name: z.string(), startsAt: IsoDate, endsAt: IsoDate, status: ContractStatus,
+  allowedSurfaces: z.array(z.string()), fourEyesRequired: z.boolean(), externalApprovalEnabled: z.boolean(),
+  metadata: z.record(z.string(), z.unknown()), createdAt: IsoDate, updatedAt: IsoDate,
+});
+export const CampaignResponseSchema = z.object({
+  id: Uuid, contractId: Uuid, name: z.string(), lifecycleStatus: z.enum(['ACTIVE', 'ARCHIVED']),
+  currentDraft: z.object({ id: Uuid, revision: z.number().int().positive(), updatedAt: IsoDate }).nullable(),
+  latestApprovedVersion: z.object({ id: Uuid, versionNumber: z.number().int().positive(), versionHash: Sha }).nullable(),
+  createdAt: IsoDate, updatedAt: IsoDate,
+});
+export const DraftResponseSchema = z.object({
+  campaignId: Uuid, draftId: Uuid, revision: z.number().int().positive(), updatedAt: IsoDate, takeoverDraft: z.record(z.string(), z.unknown()),
+});
+export const pageOf = <T extends z.ZodTypeAny>(item: T) => z.object({ items: z.array(item), nextCursor: Uuid.nullable() });

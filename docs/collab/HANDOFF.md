@@ -1,14 +1,21 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador) — sincronizar C3 en el PR [#10](https://github.com/fermalenoski86/dev/pull/10) según [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/10#issuecomment-6049279397). No iniciar Fase D.
-**Fase:** M3A.1 Fase C3 — submit server-side (cambios solicitados: base no integrable)
-**Estado:** C2 mergeada por ChatGPT en `main@4a75fa4c9ead88b61a0809d46183d6fb2ad4c5a3`. C3 `efe3609` funciona preliminarmente y su CI exacta está verde, pero la rama conserva el stack pre-squash: merge-base `4d9292d`, GitHub `mergeable=false`, diff 40 archivos en vez de los 17 propios. Reconstruir/rebasear desde main y reentregar HEAD con CI completa y diff limpio. C3/Fase D bloqueadas.
+**Pelota en:** Claude (implementador), **trabajo en curso** desde las 22:58 UTC: Fer decidió #22 (SeaweedFS solo para dev/CI). Claude integra SeaweedFS por digest en compose-smoke y corre el contrato S3 en la rama `fase/m3a1-e1` (PR [#23](https://github.com/fermalenoski86/dev/pull/23)). Otro turno de Claude NO debe rehacerlo; si esta línea sigue así después de las 02:30 UTC del 2026-10-09, retomar desde esa rama. Para ChatGPT, aparte: PR [#25](https://github.com/fermalenoski86/dev/pull/25) (fix de fixtures de media). E2 NO arranca.
+**Fase:** M3A.1 Fase E — E1 hardening y entregables
+**Estado:** [P1] E1 §35 exige imagen S3 fijada y contrato S3 real; el PR deja MinIO en perfil opcional con `latest` inaccesible y declara `s3.contract.test.ts` no ejecutado. CI exacta `37843584827`: seis jobs verdes, incluidos 226/226 mutaciones, pero sólo valida compose con storage local. Auditoría: https://github.com/fermalenoski86/dev/pull/23#issuecomment-6069773335.
 
-## Entrega activa para auditar
-- PR: [#10](https://github.com/fermalenoski86/dev/pull/10) · issue [#11](https://github.com/fermalenoski86/dev/issues/11) · base `main`
-- Rama: `fase/m3a1-c3` · HEAD entregado: `309d783` (igual a `efe3609` + sincronización con main, solo HANDOFF) (comprobar antes de auditar).
-- Reporte: `docs/reviews/M3A1_FASE_C3.md` · salida: `docs/reviews/M3A1_FASE_C3_SALIDA.txt` · diseño: `docs/platform/APPROVAL.md` §Submit, ADR-059.
-- Propuestas nuevas: BL-17 (`allowed_surfaces` al enviar) y BL-18 (vigencia del contrato). Son reglas comerciales: necesitan OK antes de implementarlas.
+
+## Decisión de Fer sobre #15 (2026-10-08 20:32 ART)
+Opción 1: D3 autorizada (store del Builder con `CampaignRepository` inyectado + indicador de versión; sin tocar la experiencia ejecutiva, el renderer, la geometría ni los screenshots; los 14 E2E de M2C son gate). **Orden: D3 después de cerrar E1 y antes de E2**, en su propia rama y PR. No cambia la pelota actual.
+
+## Entrega activa
+- Implementador: Claude.
+- Corregir #23 después de la decisión #22: servicio S3 elegido y fijado por digest, incluido en compose-smoke, con contrato S3 ejecutado; o actualizar brief/ADR si Fer decide retirar formalmente ese gate.
+- No iniciar E2 antes de aprobar E1.
+- E3 y `apps/control` siguen bloqueados por #15.
+- Trabajo independiente permitido mientras #22 está abierto: PR pequeño para la carrera de `mediaFixtures()` con regresión concurrente, o BL-21 separado.
+- Propuestas aceptadas para backlog: imagen multi-stage fijada; reconciliación DB↔bucket condicionada a #22; sondeo semanal de digests como P2 operativo.
+- Pendiente aparte: PR #12 (fix B1).
 
 ## Objetivo autorizado por Fer — 2026-10-06
 Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
@@ -114,6 +121,31 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-08 22:58 UTC — Claude: Fer decidió #22 = SeaweedFS para dev/CI (no elige proveedor de producción). Empiezo la integración en #23 (digest, compose-smoke, contrato S3).
+- 2026-10-08 22:02 UTC — Claude: E1 `AUDIT: CAMBIOS` (P1: gate S3 de §35 sin cumplir) respondido en #23: no se cambia sin la decisión #22 (no se elige producto unilateralmente). Abierto el PR #25 con el fix de la carrera de fixtures de media (regresión roja→verde, mutación nueva), aceptado como PR aparte por el auditor. Pelota: Fer (#22) para E1; ChatGPT para #25.
+- 2026-10-08 — ChatGPT: E1 `AUDIT: CAMBIOS` sobre `55df505`. BL-10, OpenAPI, restore, logs y DELIVERY sin hallazgos; CI `37843584827` con seis jobs verdes y 226/226 mutaciones. [P1] gate S3 del brief no ejecutado: MinIO quedó opcional/inaccesible y sólo se probó storage local. Pelota a Claude; E2 bloqueada hasta resolver #22 y completar o modificar formalmente el gate.
+- 2026-10-08 20:32 UTC — Claude: E1 entregada en el PR #23 (issue `AUDIT: M3A.1 Fase E1` #24) sobre `f84a31e`. Incluye BL-10, BL-11 (OpenAPI generado de Zod, matriz rol × ruta), DELIVERY.md desde el registro de Fastify, BACKUPS.md con restore probado, logs sin secretos, compose-smoke en CI con digests y `pnpm db:migrate`. MinIO no disponible: abierto #22 (decisión-producto). Gates locales verdes; la corrida completa de mutaciones local seguía en curso, con las 11 `e1:` atrapadas. Pelota a ChatGPT.
+- 2026-10-08 — ChatGPT: brief E `AUDIT: APROBADO` sobre `e88ed3c`; P1 de roles y P2 de doble lista cerrados. CI exacta `37821057210` completa verde (verify/build, PostgreSQL/bootstrap, media, mutaciones y E2E). Squash en `main@8debee5`, issue #21 cerrado. Pelota a Claude para E1; E2 después de su auditoría y E3 bloqueada por #15.
+- 2026-10-08 18:05 UTC — Claude: P2 de la re-auditoría del brief E corregido en `e88ed3c` (una sola lista autoritativa; único pendiente la decisión #15). La CI completa se relanzó con el push. Pelota a ChatGPT.
+- 2026-10-08 — ChatGPT: re-auditoría brief E sobre `8ce96dd`; P1 de roles cerrado. `AUDIT: CAMBIOS` por P2 de doble lista de decisiones y job media cancelado. Pelota a Claude.
+- 2026-10-08 16:05 UTC — Claude: CAMBIOS del brief E corregido en `8ce96dd`. E2 empieza con ADMIN para Advertiser y Contract, sigue OPERATOR (Campaign, draft, assets, submit) y aprueba INTERNAL_APPROVER. La matriz tiene 3 estados y quedan registradas las decisiones validadas, BL-23 con ajuste y BL-24 a backlog. Pelota a ChatGPT.
+- 2026-10-08 — ChatGPT: brief E `AUDIT: CAMBIOS` sobre `6aed221`; P1 por flujo E2 incompatible con roles (Advertiser/Contract requieren ADMIN, no OPERATOR). Decisiones E1/E2 y mejoras aceptadas con ajustes; pelota a Claude.
+- 2026-10-08 14:15 UTC — Claude: D2 `AUDIT: APROBADO`; issue #19 cerrado y tag no creado (pendiente de Fer). Brief de la Fase E propuesto en el PR #20 (issue #21): E1 y E2 independientes de D3; E3 bloqueado por #15 y por la ubicación de la UI. Pelota a ChatGPT.
+- 2026-10-08 — ChatGPT: D2 `AUDIT: APROBADO` sobre `d42bf12`; CI exacta `37779698572` completa verde, ambos P1 cerrados. Squash en `main@f23f262`, issue #19 cerrado. Pelota a Claude para trabajo independiente; D3 bloqueada por #15.
+- 2026-10-08 12:55 UTC — Claude: re-auditoría 2 de D2 (falla parcial entre claves) corregida en `d42bf12` con un protocolo recuperable: registro primero y luego espejo con restauración, más un guard al adoptar el servidor. 4 regresiones, 4 mutaciones, 215/215. Respondido en #18. Pelota a ChatGPT.
+- 2026-10-08 — ChatGPT: re-auditoría D2 `AUDIT: CAMBIOS` sobre `54bbe92`; P1 original cerrado y CI completa verde. Nuevo P1 por falla parcial entre draft M2C y metadata sync que puede perder el draft al reabrir. Pelota a Claude.
+- 2026-10-08 11:10 UTC — Claude: P1 de D2 corregido en `8dc228f` (no se sube un draft que no quedó guardado localmente; las 4 regresiones dan cero PUT). Hay 2 mutaciones nuevas (211/211) y la CI 37761119482 está completa y en verde, postgres incluido. HEAD `54bbe92` con docs. No se pudo empujar el tag `m3a1-d1` porque el proxy deniega la escritura de refs/tags; queda pendiente para Fer o ChatGPT. Pelota a ChatGPT.
+- 2026-10-08 — ChatGPT: D2 `AUDIT: CAMBIOS` sobre `38c98e0`; P1 porque Syncing ignora el fallo booleano de `saveDraft` y puede subir sin copia local. CI: cuatro jobs verdes; PostgreSQL cancelado antes de PG/bootstrap. Pelota a Claude; D3 sigue bloqueada por #15.
+- 2026-10-08 09:15 UTC — Claude: D1 `AUDIT: APROBADO`; issue #17 cerrado. Tag no creado: pendiente de la autorización de Fer, igual que los anteriores. D2 entregada en el PR #18 @38c98e0 (`@trust/builder-repository`, 17 unitarios, 7 tests contra la API real, 9 mutaciones nuevas, 209/209). Issue #19. Pelota a ChatGPT.
+- 2026-10-08 — ChatGPT: D1 `AUDIT: APROBADO` sobre `14f0ca2`; P1 cerrado con `FOR SHARE`, cuatro regresiones concurrentes y dos mutaciones. CI exacta 37739889620 verde: verify/build, PG 208+6, bootstrap 6/6, media 63, mutaciones 200/200 y E2E 14/14. Squash en `main@164f518`; pelota a Claude para D2.
+- 2026-10-08 06:55 UTC — Claude: P1 de D1 corregido en `14f0ca2`. Se agrega `FOR SHARE` del contrato en PUT draft y submit. Hay 4 regresiones concurrentes (reproducidas en rojo antes del fix) y 2 mutaciones nuevas; total 200/200. Gates locales verdes; E2E queda para la CI. Pelota a ChatGPT.
+- 2026-10-08 — ChatGPT: D1 `AUDIT: CAMBIOS` sobre `37f6471`; P1 TOCTOU entre recorte de `allowed_surfaces` y PUT/submit. CI exacta 37728848078 completa verde; prueba local de superficies 5/5, PostgreSQL local no disponible. Pelota a Claude; D2 bloqueada.
+- 2026-10-08 04:44 UTC — Claude: D1 entregada en el PR #16 @37f6471 (API de campaign/draft, `DRAFT_CONFLICT`, §6 en PUT/creación/submit, 16 tests HTTP, 12 mutaciones nuevas, 198/198). Issue #17. Pelota a ChatGPT.
+- 2026-10-08 — ChatGPT: brief D `AUDIT: APROBADO` sobre `5135901`; CI documental exacta verde y squash en `main@c845f35`. D1/D2 habilitados; D3 pendiente de #15. `allowed_surfaces` aprobado por requisito expreso del master; BL-19/20 diferidas. Pelota a Claude para D1.
+- 2026-10-08 02:02 UTC — Claude: C3 aprobada y mergeada (#10), Fase C cerrada, #11 cerrado. Brief de Fase D en el PR #13 (issue #14). Issue #15 `decisión-producto` para Fer: D3 toca `apps/control`. Pelota a ChatGPT.
+- 2026-10-08 — ChatGPT: C3 `AUDIT: APROBADO` sobre `1e9e965`; reconstrucción limpia de 17 archivos, contenido equivalente al C3 revisado y CI exacta completa verde (verify 637+1, PG 188+6, bootstrap 6/6, media 63, mutaciones 186/186, E2E 14/14). Squash en `main@053318d`; Fase C completa y pelota a Claude para Fase D. S3/MinIO no ejecutado y fuera del gate C3.
+- 2026-10-08 00:06 UTC — Claude: AUDIT: CAMBIOS de C3 (base no integrable) corregido. Rama reconstruida desde main con solo el commit de C3 en `1e9e965`: 17 archivos, mergeable, verify 637+1 y PG 188+6 locales; CI exacto en curso. Fix B1 fuera de #10 (va por #12). Pelota a ChatGPT.
+- 2026-10-08 00:04 UTC — Claude: CI de #10 rojo por un bug real de B1 (`cleanupTemporaryObjects` con TTL 0 y mtime fraccionario, no es código de C3). Fix en PR #12 con regresión determinística y mutación; portado a #10 en `b358192`. Pelota sigue en ChatGPT.
 - 2026-10-07 — ChatGPT: mergea C2 PR #8 en `main@4a75fa4`, reapunta #10 y publica C3 `AUDIT: CAMBIOS`: rama apilada no integrable tras squash (merge-base viejo, 40 archivos, mergeable=false). Funcional preliminar y CI del stack verdes; pelota a Claude para base limpia.
 - 2026-10-07 23:58 UTC — Claude: #8 mergeado; #10 reapuntado a `main` y sincronizado en `309d783` (contenido de C3 sin cambios). Pelota sigue en ChatGPT.
 - 2026-10-07 22:49 UTC — Claude: C2 aprobada (issue #9 cerrado; merge de #8 denegado por permisos del entorno, pendiente). C3 entregada en PR #10 @efe3609, apilado sobre #8 (submit server-side, 14 tests HTTP, 9 mutaciones nuevas, 186/186). Issue #11 de auditoría. Pelota a ChatGPT.

@@ -123,6 +123,9 @@ la base** (compilador y preflight existentes, `createShowVersion`,
 sincronización del Builder, que quedan para D. Se testea sobre un Draft
 persistido por fixture/servicio, sin UI.
 
+**Estado C3:** implementado en `fase/m3a1-c3`; detalle en `docs/platform/APPROVAL.md`
+§Submit y `docs/reviews/M3A1_FASE_C3.md`.
+
 ## Fuera de alcance
 
 Portal externo, Builder sync, Campaign CRUD completo, Scheduler, EDGE,
