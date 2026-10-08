@@ -1,15 +1,15 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). Implementar D2 según `docs/briefs/M3A1_FASE_D.md`: paquete `@trust/builder-repository`, sin tocar `apps/control`. Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
-**Fase:** M3A.1 Fase D2 — CampaignRepository y sincronización offline/conflictos sin UI
-**Estado:** D1 aprobada sobre `14f0ca2c1d57b5959647be88f879a800949cdeb9` y fusionada por ChatGPT en `main@164f5189617667b264fdf9adfac60c381910f47f`. El P1 quedó cerrado con locks compartidos y cuatro regresiones concurrentes. Todos los gates obligatorios del HEAD exacto están verdes. D2 habilitada; D3 sigue bloqueada por [#15](https://github.com/fermalenoski86/dev/issues/15).
+**Pelota en:** ChatGPT (auditor). Auditar D2 en el PR [#18](https://github.com/fermalenoski86/dev/pull/18) @ `38c98e01796e4e449239ec475b79379382d06d96` (issue [#19](https://github.com/fermalenoski86/dev/issues/19)). Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
+**Fase:** M3A.1 Fase D2 — entregada para auditoría
+**Estado:** D1 está aprobada y mergeada (`main@164f518`, issue #17 cerrado). D2 se entregó: paquete `@trust/builder-repository` con Local, Api y Syncing; offline → pending; 409 → conflicto sin pisar el servidor; las tres salidas de §9 (duplicar no escribe remoto). No toca `apps/control` ni `show-authoring`, y no cambia el formato de `DraftStorage`. Gates locales: verify 659+1, PG 215+6, bootstrap 6/6, media 63, mutaciones 209/209; la CI está en curso. D3 sigue bloqueado por [#15](https://github.com/fermalenoski86/dev/issues/15). Tags m3a1-b2…d1 siguen pendientes de la autorización explícita de Fer.
 
-## Próxima entrega
-- D2: `CampaignRepository`, `LocalCampaignRepository`, `ApiCampaignRepository` y sincronización offline → online → conflicto, con fetch inyectado y tests contra D1 real.
-- No tocar `apps/control`, no cambiar el formato de `DraftStorage` y no inventar un endpoint remoto para “duplicar draft”.
-- Entregar HEAD exacto, reporte, salida real y todos los gates. D3 espera la decisión #15.
-- BL-21 sigue aceptada para backlog operativo después de D2; no mezclarla con el checkpoint.
-- PR #12 permanece separado.
+## Entrega activa para auditar
+- PR: [#18](https://github.com/fermalenoski86/dev/pull/18) · issue [#19](https://github.com/fermalenoski86/dev/issues/19) · base `main`
+- Rama: `fase/m3a1-d2` · HEAD entregado: `38c98e01796e4e449239ec475b79379382d06d96` (comprobar antes de auditar).
+- Reporte: `docs/reviews/M3A1_FASE_D2.md` · salida: `docs/reviews/M3A1_FASE_D2_SALIDA.txt` · diseño: `docs/platform/BUILDER_REPOSITORY.md`, ADR-061.
+- Pendientes aparte: PR [#12](https://github.com/fermalenoski86/dev/pull/12) (fix B1) e issue [#15](https://github.com/fermalenoski86/dev/issues/15) (D3, Fer).
+- BL-21 sigue aceptada para el backlog después de D2; BL-22 se propone en el reporte de D2 (pertenece a D3).
 
 ## Objetivo autorizado por Fer — 2026-10-06
 Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
@@ -115,6 +115,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-08 09:15 UTC — Claude: D1 `AUDIT: APROBADO`; issue #17 cerrado. Tag no creado: pendiente de la autorización de Fer, igual que los anteriores. D2 entregada en el PR #18 @38c98e0 (`@trust/builder-repository`, 17 unitarios, 7 tests contra la API real, 9 mutaciones nuevas, 209/209). Issue #19. Pelota a ChatGPT.
 - 2026-10-08 — ChatGPT: D1 `AUDIT: APROBADO` sobre `14f0ca2`; P1 cerrado con `FOR SHARE`, cuatro regresiones concurrentes y dos mutaciones. CI exacta 37739889620 verde: verify/build, PG 208+6, bootstrap 6/6, media 63, mutaciones 200/200 y E2E 14/14. Squash en `main@164f518`; pelota a Claude para D2.
 - 2026-10-08 06:55 UTC — Claude: P1 de D1 corregido en `14f0ca2`. Se agrega `FOR SHARE` del contrato en PUT draft y submit. Hay 4 regresiones concurrentes (reproducidas en rojo antes del fix) y 2 mutaciones nuevas; total 200/200. Gates locales verdes; E2E queda para la CI. Pelota a ChatGPT.
 - 2026-10-08 — ChatGPT: D1 `AUDIT: CAMBIOS` sobre `37f6471`; P1 TOCTOU entre recorte de `allowed_surfaces` y PUT/submit. CI exacta 37728848078 completa verde; prueba local de superficies 5/5, PostgreSQL local no disponible. Pelota a Claude; D2 bloqueada.
