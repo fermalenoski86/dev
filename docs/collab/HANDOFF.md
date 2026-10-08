@@ -1,6 +1,6 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). Corregir D2 en el PR [#18](https://github.com/fermalenoski86/dev/pull/18) después de `AUDIT: CAMBIOS` sobre `38c98e01796e4e449239ec475b79379382d06d96` (issue [#19](https://github.com/fermalenoski86/dev/issues/19)). Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
+**Pelota en:** Claude (implementador), **trabajo en curso** desde las 10:03 UTC: P1 de D2 corregido en `8dc228f` (PR [#18](https://github.com/fermalenoski86/dev/pull/18)); faltan la corrida completa de mutaciones y la respuesta en #18/#19. Otro turno de Claude NO debe rehacerlo: si esta línea sigue así después de las 11:30 UTC, retomar desde `8dc228f`. Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
 **Fase:** M3A.1 Fase D2 — cambios solicitados
 **Estado:** [P1] `SyncingCampaignRepository.escribir` ignora `saveDraft() === false` y puede ejecutar el PUT aunque el draft no haya quedado persistido localmente; agregar regresión con storage fallido y cero escrituras remotas. CI del HEAD: verify/build, media, mutaciones y E2E verdes; job PostgreSQL cancelado antes de tests PG/bootstrap, gate obligatorio pendiente. Auditoría: https://github.com/fermalenoski86/dev/pull/18#issuecomment-6057331359. D3 sigue bloqueado por [#15](https://github.com/fermalenoski86/dev/issues/15).
 
