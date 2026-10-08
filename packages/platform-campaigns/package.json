@@ -1,12 +1,11 @@
 {
-  "name": "@trust/platform-approval",
+  "name": "@trust/platform-campaigns",
   "version": "0.1.0",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./testing": "./src/testing.ts"
+    ".": "./src/index.ts"
   },
   "scripts": {
     "test": "vitest run --passWithNoTests",
@@ -14,15 +13,13 @@
     "build": "echo 'source-only package'"
   },
   "dependencies": {
-    "@trust/platform-assets": "workspace:*",
     "@trust/platform-audit": "workspace:*",
     "@trust/platform-auth": "workspace:*",
-    "@trust/platform-campaigns": "workspace:*",
     "@trust/platform-contracts": "workspace:*",
     "@trust/platform-db": "workspace:*",
-    "@trust/platform-storage": "workspace:*",
     "@trust/show-authoring": "workspace:*",
     "@trust/show-engine": "workspace:*",
+    "@trust/shared-types": "workspace:*",
     "kysely": "0.29.6",
     "pg": "8.23.1"
   },

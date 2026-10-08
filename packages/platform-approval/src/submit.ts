@@ -1,5 +1,6 @@
 import { appendAuditEvent } from '@trust/platform-audit';
 import { type Principal, type Role, hasAnyRole } from '@trust/platform-auth';
+import { exigirSuperficies } from '@trust/platform-campaigns';
 import { SHOW_AUTHORING_VERSION, type SurfaceFormatId, computeVersionHash } from '@trust/platform-contracts';
 import { type Database, type ManifestEntry, createShowVersion, requestFingerprint, withIdempotency } from '@trust/platform-db';
 import { AssetRegistry, type CampaignSurfaces, safeParseTakeoverDraft, validateDraft } from '@trust/show-authoring';
@@ -19,7 +20,9 @@ import type { ApprovalService, ShowVersionView } from './service';
  *      haber visto (`draftRevision`): si no, 409 DRAFT_REVISION_MISMATCH;
  *   2. esa revisión no se envió todavía (otra vez → 409 INVALID_STATE_TRANSITION:
  *      "nueva edición → SUBMITTED nuevo");
- *   3. el draft parsea contra TakeoverDraftSchema (422 DRAFT_INVALID);
+ *   3. el draft parsea contra TakeoverDraftSchema (422 DRAFT_INVALID) y no usa
+ *      pantallas fuera de `allowed_surfaces` del contrato (master §6, D1:
+ *      422 SURFACE_NOT_CONTRACTED);
  *   4. cada ranura de asset apunta a un Asset READY de la superficie que le
  *      corresponde (422 ASSET_NOT_READY / ASSET_SURFACE_MISMATCH);
  *   5. COMPILA y corre el PREFLIGHT server-side con el mismo código que el
@@ -97,6 +100,12 @@ export async function submitCampaign(
       });
     }
     const draft = parsed.data;
+
+    // §6 (D1): el draft no usa pantallas fuera del contrato VIGENTE al enviar.
+    // FOR SHARE hasta el commit: un recorte concurrente del contrato espera a este
+    // submit o este ve la lista recortada. Orden: campaña → contrato → audit.
+    const ct = await trx.selectFrom('contracts').select('allowed_surfaces').where('id', '=', cp.contract_id).forShare().executeTakeFirstOrThrow();
+    exigirSuperficies(draft, ct.allowed_surfaces);
 
     // Ranuras usadas → Assets READY de la superficie correcta.
     const slots = (Object.keys(SLOT_SURFACE) as Array<keyof typeof SLOT_SURFACE>)

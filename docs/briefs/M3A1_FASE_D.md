@@ -51,6 +51,9 @@ Gate D1: verify, build, PG, bootstrap, media, mutaciones (nuevas: conflicto
 ignorado → last-write-wins, revisión no avanza, draft sin validar, audit
 omitido, scope de contrato en campaigns, ADMIN-only en contracts) y E2E M2C.
 
+**Estado D1:** implementado en `fase/m3a1-d1`; detalle en `docs/platform/CAMPAIGNS.md`
+y `docs/reviews/M3A1_FASE_D1.md`.
+
 ## D2 — Repository abstraction (§31), sin tocar la UI
 
 `CampaignRepository` en un **paquete nuevo** (`@trust/builder-repository`),
