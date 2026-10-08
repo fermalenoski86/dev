@@ -1,14 +1,17 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor). Re-auditar el brief de la Fase E en el PR [#20](https://github.com/fermalenoski86/dev/pull/20), HEAD `e88ed3cead4894f040088ae735afd0dbad167b6b` (una sola lista de decisiones; la CI completa se relanzó con el push). Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
-**Fase:** M3A.1 Fase E — brief con ajuste documental y gate pendientes
-**Estado:** P1 de roles cerrado. [P2] El brief conserva dos listas contradictorias (`Decisiones validadas` y luego las mismas `Decisiones a validar`); dejar una sola fuente normativa y mantener pendiente únicamente UI/E3/#15. CI `37804840927`: verify/build, PostgreSQL/bootstrap, mutaciones y E2E verdes; media cancelado sin ejecutar, gate obligatorio pendiente. Auditoría: https://github.com/fermalenoski86/dev/pull/20#issuecomment-6065971150.
+**Pelota en:** Claude (implementador). Implementar Fase E1 según el brief aprobado y fusionado en PR [#20](https://github.com/fermalenoski86/dev/pull/20). Después entregar E1 a ChatGPT antes de iniciar E2. Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
+**Fase:** M3A.1 Fase E — E1 hardening y entregables
+**Estado:** Brief E `AUDIT: APROBADO` sobre `e88ed3cead4894f040088ae735afd0dbad167b6b`; squash en `main@8debee5b5c97ceaba4dd8ee925b63e08c112b4ef`. CI exacta `37821057210`: los cinco jobs obligatorios completos y verdes. Issue #21 cerrado. E1 y luego E2 habilitadas; E3 permanece bloqueada por la decisión de producto #15.
 
-## Entrega activa para auditar
-- PR: [#20](https://github.com/fermalenoski86/dev/pull/20) · issue [#21](https://github.com/fermalenoski86/dev/issues/21) · base `main`
-- Rama: `fase/m3a1-e` · HEAD: `6aed221dd35d2d08115a932d0f2586fca3d65d02` · solo docs (`docs/briefs/M3A1_FASE_E.md`).
-- Pendientes aparte: PR [#12](https://github.com/fermalenoski86/dev/pull/12) (fix B1) e issue [#15](https://github.com/fermalenoski86/dev/issues/15) (D3, Fer).
-- BL-21 aceptada; el brief propone hacerla en un PR chico aparte (❓3). BL-22 pertenece a D3.
+## Entrega activa
+- Implementador: Claude.
+- Siguiente checkpoint: **E1 — Hardening y entregables**, conforme a `docs/briefs/M3A1_FASE_E.md`.
+- Al terminar E1: abrir PR/issue de auditoría, ejecutar gates completos y transferir la pelota en esta copia de `main` con el HEAD exacto.
+- No iniciar E2 antes de la auditoría de E1.
+- No iniciar E3 ni tocar `apps/control` mientras #15 siga pendiente.
+- BL-21 permanece como PR pequeño separado; BL-24 queda en backlog.
+- Pendiente aparte: PR [#12](https://github.com/fermalenoski86/dev/pull/12) (fix B1).
 
 ## Objetivo autorizado por Fer — 2026-10-06
 Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
@@ -114,6 +117,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-08 — ChatGPT: brief E `AUDIT: APROBADO` sobre `e88ed3c`; P1 de roles y P2 de doble lista cerrados. CI exacta `37821057210` completa verde (verify/build, PostgreSQL/bootstrap, media, mutaciones y E2E). Squash en `main@8debee5`, issue #21 cerrado. Pelota a Claude para E1; E2 después de su auditoría y E3 bloqueada por #15.
 - 2026-10-08 18:05 UTC — Claude: P2 de la re-auditoría del brief E corregido en `e88ed3c` (una sola lista autoritativa; único pendiente la decisión #15). La CI completa se relanzó con el push. Pelota a ChatGPT.
 - 2026-10-08 — ChatGPT: re-auditoría brief E sobre `8ce96dd`; P1 de roles cerrado. `AUDIT: CAMBIOS` por P2 de doble lista de decisiones y job media cancelado. Pelota a Claude.
 - 2026-10-08 16:05 UTC — Claude: CAMBIOS del brief E corregido en `8ce96dd`. E2 empieza con ADMIN para Advertiser y Contract, sigue OPERATOR (Campaign, draft, assets, submit) y aprueba INTERNAL_APPROVER. La matriz tiene 3 estados y quedan registradas las decisiones validadas, BL-23 con ajuste y BL-24 a backlog. Pelota a ChatGPT.
