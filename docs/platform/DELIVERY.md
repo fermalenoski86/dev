@@ -6,19 +6,15 @@
 Contrato HTTP: [`openapi.json`](openapi.json) (OpenAPI 3.1, mismo origen). Modelo de datos: [ERD.md](ERD.md).
 Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [../ops/BACKUPS.md](../ops/BACKUPS.md).
 
-## Rutas (27)
+## Rutas (27, del registro de Fastify)
 
-| Método | Ruta | Roles | CSRF | Idempotency-Key | Éxito |
+| Método | Ruta | Roles | CSRF | Idempotency-Key | Respuestas |
 |---|---|---|---|---|---|
 | GET | `/health` | pública | — | — | 200 |
 | GET | `/ready` | pública | — | — | 200, 503 |
 | POST | `/api/v1/auth/login` | pública | — | — | 200 |
 | POST | `/api/v1/auth/logout` | cualquier sesión | sí | — | 204 |
 | GET | `/api/v1/auth/me` | cualquier sesión | — | — | 200 |
-| POST | `/api/v1/assets` | OPERATOR, ADMIN | sí | sí | 200, 201 |
-| GET | `/api/v1/assets` | OPERATOR, ADMIN | — | — | 200 |
-| GET | `/api/v1/assets/:id` | OPERATOR, ADMIN | — | — | 200 |
-| GET | `/api/v1/assets/:id/status` | OPERATOR, ADMIN | — | — | 200 |
 | GET | `/api/v1/show-versions/:id` | OPERATOR, INTERNAL_APPROVER, ADMIN, EXTERNAL_APPROVER | — | — | 200 |
 | POST | `/api/v1/show-versions/:id/evidence` | INTERNAL_APPROVER, EXTERNAL_APPROVER | sí | sí | 200, 201 |
 | GET | `/api/v1/show-versions/:id/evidence/:evidenceId` | OPERATOR, INTERNAL_APPROVER, ADMIN, EXTERNAL_APPROVER | — | — | 200 |
@@ -37,6 +33,10 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | GET | `/api/v1/campaigns/:id` | OPERATOR, INTERNAL_APPROVER, ADMIN | — | — | 200 |
 | GET | `/api/v1/campaigns/:id/draft` | OPERATOR, INTERNAL_APPROVER, ADMIN | — | — | 200 |
 | PUT | `/api/v1/campaigns/:id/draft` | OPERATOR, ADMIN | sí | — | 200 |
+| POST | `/api/v1/assets` | OPERATOR, ADMIN | sí | sí | 200, 201 |
+| GET | `/api/v1/assets/:id` | OPERATOR, ADMIN | — | — | 200 |
+| GET | `/api/v1/assets/:id/status` | OPERATOR, ADMIN | — | — | 200 |
+| GET | `/api/v1/assets` | OPERATOR, ADMIN | — | — | 200 |
 
 ## Migraciones (3)
 

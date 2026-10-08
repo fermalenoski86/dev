@@ -28,7 +28,7 @@ const UUID = '00000000-0000-4000-8000-000000000000';
 let t: TestDatabase;
 let root: string;
 let app: FastifyInstance;
-const registradas: string[] = [];
+const registradas: Array<{ method: string; url: string }> = [];
 const usuario: Partial<Record<Role, string>> = {};
 
 beforeAll(async () => {
@@ -49,7 +49,7 @@ beforeAll(async () => {
     actors: new DevelopmentActorProvider(t.app, { externalApprovalEnabled: true }),
     auth: { limiter: new LoginRateLimiter(), sessionTtlMs: 60_000, cookieName: SESSION_COOKIE_DEV, secureCookie: false },
     log: false,
-    onRoute: (r) => { if (r.method !== 'HEAD') registradas.push(`${r.method} ${r.url}`); },
+    onRoute: (r) => { if (r.method !== 'HEAD') registradas.push(r); },
   });
   await app.ready();
 });
@@ -68,13 +68,13 @@ describe('E1 · BL-11: contrato OpenAPI = rutas reales', () => {
   it('la tabla tiene exactamente las rutas registradas por Fastify (sin faltantes ni sobrantes)', () => {
     const tabla = ROUTES.map((r) => `${r.method} ${r.path}`).sort();
     expect(new Set(tabla).size).toBe(tabla.length);
-    expect(tabla).toEqual([...registradas].sort());
+    expect(tabla).toEqual(registradas.map((r) => `${r.method} ${r.url}`).sort());
     expect(tabla.length).toBeGreaterThanOrEqual(27);
   });
 
   it('docs/platform/openapi.json y DELIVERY.md versionados = generados (diff vacío)', () => {
     expect(readFileSync(path.join(ROOT, 'docs/platform/openapi.json'), 'utf8'), 'regenerar con `pnpm docs:contract`').toBe(openApiText());
-    expect(readFileSync(path.join(ROOT, 'docs/platform/DELIVERY.md'), 'utf8'), 'regenerar con `pnpm docs:contract`').toBe(deliveryText(ROOT));
+    expect(readFileSync(path.join(ROOT, 'docs/platform/DELIVERY.md'), 'utf8'), 'regenerar con `pnpm docs:contract`').toBe(deliveryText(ROOT, registradas));
   });
 
   it('el documento es OpenAPI 3.1 coherente: cada $ref resuelve, multipart, errores y headers declarados', () => {

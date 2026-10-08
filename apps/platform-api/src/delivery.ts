@@ -44,7 +44,20 @@ function variablesEnv(root: string): string[] {
     .filter((v): v is string => Boolean(v));
 }
 
-export function deliveryText(root: string): string {
+/**
+ * `registradas`: las rutas tal como las registró Fastify (hook onRoute, sin HEAD
+ * automático), en orden de registro. La lista sale de ahí, no de la tabla: la
+ * tabla OpenAPI solo aporta roles/CSRF/idempotencia, y una ruta registrada que
+ * no esté en la tabla hace fallar la generación.
+ */
+export function deliveryText(root: string, registradas: Array<{ method: string; url: string }>): string {
+  const filas = registradas.map(({ method, url }) => {
+    const r = ROUTES.find((x) => x.method === method && x.path === url);
+    if (!r) throw new Error(`ruta registrada sin documentar en ROUTES (openapi.ts): ${method} ${url}`);
+    return r;
+  });
+  const sobrantes = ROUTES.filter((r) => !registradas.some((x) => x.method === r.method && x.url === r.path));
+  if (sobrantes.length) throw new Error(`ROUTES documenta rutas que Fastify no registró: ${sobrantes.map((r) => `${r.method} ${r.path}`).join(', ')}`);
   const L: string[] = [];
   L.push('# DELIVERY — inventario de entrega de platform-api');
   L.push('');
@@ -54,11 +67,11 @@ export function deliveryText(root: string): string {
   L.push('Contrato HTTP: [`openapi.json`](openapi.json) (OpenAPI 3.1, mismo origen). Modelo de datos: [ERD.md](ERD.md).');
   L.push('Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [../ops/BACKUPS.md](../ops/BACKUPS.md).');
   L.push('');
-  L.push(`## Rutas (${ROUTES.length})`);
+  L.push(`## Rutas (${filas.length}, del registro de Fastify)`);
   L.push('');
-  L.push('| Método | Ruta | Roles | CSRF | Idempotency-Key | Éxito |');
+  L.push('| Método | Ruta | Roles | CSRF | Idempotency-Key | Respuestas |');
   L.push('|---|---|---|---|---|---|');
-  for (const r of ROUTES) {
+  for (const r of filas) {
     const roles = r.roles === null ? 'pública' : r.roles.length === 0 ? 'cualquier sesión' : r.roles.join(', ');
     L.push(`| ${r.method} | \`${r.path}\` | ${roles} | ${r.csrf ? 'sí' : '—'} | ${r.idempotency ? 'sí' : '—'} | ${Object.keys(r.responses).join(', ')} |`);
   }
