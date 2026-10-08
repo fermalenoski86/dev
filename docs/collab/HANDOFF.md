@@ -1,16 +1,14 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). Implementar D1 y después D2 según `docs/briefs/M3A1_FASE_D.md`. D3 permanece bloqueado por la decisión de producto [#15](https://github.com/fermalenoski86/dev/issues/15). Mantener aparte el fix B1 del PR [#12](https://github.com/fermalenoski86/dev/pull/12).
-**Fase:** M3A.1 Fase D1 — API Campaign/Draft con concurrencia optimista
-**Estado:** Brief D aprobado sobre `5135901048077df59168acd3301b4b3055c830e5` y fusionado por ChatGPT en `main@c845f356c7b7ad8fd58f156377fe807b4c92f0a0`. D1/D2 habilitados; D3 no se inicia hasta resolver #15. `allowed_surfaces` se valida server-side en PUT draft y submit porque el master §6 lo exige; BL-18 sigue fuera.
+**Pelota en:** ChatGPT (auditor). Auditar D1 en el PR [#16](https://github.com/fermalenoski86/dev/pull/16) (issue [#17](https://github.com/fermalenoski86/dev/issues/17)), rama `fase/m3a1-d1`, HEAD `37f647157ff50d843c8f6ef01f9b4bc4b4d87dbc`. Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
+**Fase:** M3A.1 Fase D1: API de Campaign y Draft con concurrencia optimista
+**Estado:** Brief D aprobado y mergeado (#13). D1 entregada: `@trust/platform-campaigns`, CRUD mínimo de Advertiser/Contract/Campaign (ADMIN escribe contratos), `PUT /campaigns/:id/draft` condicionado a `expectedRevision` → 409 `DRAFT_CONFLICT` {serverRevision, clientRevision, serverUpdatedAt}, §6 server-side al crear, en el PUT y en el submit, y audit con hashes. Gates locales reales: verify 642+1, build, PG 204+6, bootstrap 6/6, media 63/63, mutaciones 198/198. E2E M2C no ejecutado localmente (sin Chrome H.264), lo cubre el CI del PR. D2 empieza después del gate de D1. D3 sigue bloqueado por el issue [#15](https://github.com/fermalenoski86/dev/issues/15) (decisión de Fer). Los tags b2–c3 siguen pendientes de autorización de Fer.
 
-## Próxima entrega
-- D1: CRUD mínimo de Advertiser/Contract/Campaign y GET/PUT Draft con `expectedRevision`, 409 `DRAFT_CONFLICT`, scope, auditoría y validación `allowed_surfaces` en draft y submit.
-- No agregar `Idempotency-Key` a PUT draft en D1; `expectedRevision` es el contrato autoritativo.
-- Al reducir superficies del contrato no reescribir versiones aprobadas ni drafts históricos; aplicar la regla vigente a las próximas escrituras/submits.
-- Entregar HEAD exacto, reporte, salida real y todos los gates. Tras aprobar D1, avanzar D2 (`@trust/builder-repository`).
-- D2 no debe inventar persistencia remota para “duplicar draft”; hoy es una capacidad de resolución futura. BL-19 y BL-20 quedan diferidas hasta medir conflictos reales/hardening.
-- PR #12 permanece separado; D3 espera la decisión #15.
+## Entrega activa para auditar
+- PR: [#16](https://github.com/fermalenoski86/dev/pull/16) · issue [#17](https://github.com/fermalenoski86/dev/issues/17) · base `main`
+- Rama: `fase/m3a1-d1` · HEAD entregado: `37f647157ff50d843c8f6ef01f9b4bc4b4d87dbc` (comprobar antes de auditar).
+- Reporte: `docs/reviews/M3A1_FASE_D1.md` · salida: `docs/reviews/M3A1_FASE_D1_SALIDA.txt` · diseño: `docs/platform/CAMPAIGNS.md`, ADR-060.
+- Pendientes aparte: PR [#12](https://github.com/fermalenoski86/dev/pull/12) (fix B1) e issue [#15](https://github.com/fermalenoski86/dev/issues/15) (D3, Fer).
 
 ## Objetivo autorizado por Fer — 2026-10-06
 Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
@@ -116,6 +114,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-08 04:44 UTC — Claude: D1 entregada en el PR #16 @37f6471 (API de campaign/draft, `DRAFT_CONFLICT`, §6 en PUT/creación/submit, 16 tests HTTP, 12 mutaciones nuevas, 198/198). Issue #17. Pelota a ChatGPT.
 - 2026-10-08 — ChatGPT: brief D `AUDIT: APROBADO` sobre `5135901`; CI documental exacta verde y squash en `main@c845f35`. D1/D2 habilitados; D3 pendiente de #15. `allowed_surfaces` aprobado por requisito expreso del master; BL-19/20 diferidas. Pelota a Claude para D1.
 - 2026-10-08 02:02 UTC — Claude: C3 aprobada y mergeada (#10), Fase C cerrada, #11 cerrado. Brief de Fase D en el PR #13 (issue #14). Issue #15 `decisión-producto` para Fer: D3 toca `apps/control`. Pelota a ChatGPT.
 - 2026-10-08 — ChatGPT: C3 `AUDIT: APROBADO` sobre `1e9e965`; reconstrucción limpia de 17 archivos, contenido equivalente al C3 revisado y CI exacta completa verde (verify 637+1, PG 188+6, bootstrap 6/6, media 63, mutaciones 186/186, E2E 14/14). Squash en `main@053318d`; Fase C completa y pelota a Claude para Fase D. S3/MinIO no ejecutado y fuera del gate C3.
