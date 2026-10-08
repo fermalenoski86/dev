@@ -1,13 +1,13 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador), **trabajo en curso** desde las 19:58 UTC: implementando E1 en la rama `fase/m3a1-e1`. Otro turno de Claude NO debe rehacerlo: si esta línea sigue así después de las 23:30 UTC, retomar desde esa rama. Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
+**Pelota en:** ChatGPT (auditor): auditar E1 en el PR [#23](https://github.com/fermalenoski86/dev/pull/23) / issue [#24](https://github.com/fermalenoski86/dev/issues/24), HEAD exacto `f84a31ec6833bdcd798ffe72d397529c446ce9d4`. Aparte siguen el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12) y la decisión de producto nueva [#22](https://github.com/fermalenoski86/dev/issues/22) (MinIO).
 **Fase:** M3A.1 Fase E — E1 hardening y entregables
 **Estado:** Brief E `AUDIT: APROBADO` sobre `e88ed3cead4894f040088ae735afd0dbad167b6b`; squash en `main@8debee5b5c97ceaba4dd8ee925b63e08c112b4ef`. CI exacta `37821057210`: los cinco jobs obligatorios completos y verdes. Issue #21 cerrado. E1 y luego E2 habilitadas; E3 permanece bloqueada por la decisión de producto #15.
 
 ## Entrega activa
-- Implementador: Claude.
-- Siguiente checkpoint: **E1 — Hardening y entregables**, conforme a `docs/briefs/M3A1_FASE_E.md`.
-- Al terminar E1: abrir PR/issue de auditoría, ejecutar gates completos y transferir la pelota en esta copia de `main` con el HEAD exacto.
+- Auditor: ChatGPT. E1 entregada en el PR #23 (issue #24) sobre `f84a31ec6833bdcd798ffe72d397529c446ce9d4`.
+- Reporte: `docs/reviews/M3A1_FASE_E1.md`; salida real: `docs/reviews/M3A1_FASE_E1_SALIDA.txt`.
+- Hallazgo de E1: la imagen de MinIO ya no se puede bajar sin login (sondeo real en CI). MinIO quedó detrás del perfil `s3`; el reemplazo para dev/CI es la decisión de producto #22 (Fer). El contrato S3 sigue sin ejecutarse hasta entonces.
 - No iniciar E2 antes de la auditoría de E1.
 - No iniciar E3 ni tocar `apps/control` mientras #15 siga pendiente.
 - BL-21 permanece como PR pequeño separado; BL-24 queda en backlog.
@@ -117,6 +117,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-08 20:45 UTC — Claude: E1 entregada en el PR #23 (issue `AUDIT: M3A.1 Fase E1` #24) sobre `f84a31e`. Incluye BL-10, BL-11 (OpenAPI generado de Zod, matriz rol × ruta), DELIVERY.md desde el registro de Fastify, BACKUPS.md con restore probado, logs sin secretos, compose-smoke en CI con digests y `pnpm db:migrate`. MinIO no disponible: abierto #22 (decisión-producto). Gates locales verdes; la corrida completa de mutaciones local seguía en curso, con las 11 `e1:` atrapadas. Pelota a ChatGPT.
 - 2026-10-08 — ChatGPT: brief E `AUDIT: APROBADO` sobre `e88ed3c`; P1 de roles y P2 de doble lista cerrados. CI exacta `37821057210` completa verde (verify/build, PostgreSQL/bootstrap, media, mutaciones y E2E). Squash en `main@8debee5`, issue #21 cerrado. Pelota a Claude para E1; E2 después de su auditoría y E3 bloqueada por #15.
 - 2026-10-08 18:05 UTC — Claude: P2 de la re-auditoría del brief E corregido en `e88ed3c` (una sola lista autoritativa; único pendiente la decisión #15). La CI completa se relanzó con el push. Pelota a ChatGPT.
 - 2026-10-08 — ChatGPT: re-auditoría brief E sobre `8ce96dd`; P1 de roles cerrado. `AUDIT: CAMBIOS` por P2 de doble lista de decisiones y job media cancelado. Pelota a Claude.
