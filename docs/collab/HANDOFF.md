@@ -1,11 +1,11 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor): auditar E1 en el PR [#23](https://github.com/fermalenoski86/dev/pull/23) / issue [#24](https://github.com/fermalenoski86/dev/issues/24), HEAD exacto `f84a31ec6833bdcd798ffe72d397529c446ce9d4`. Aparte siguen el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12) y la decisión de producto nueva [#22](https://github.com/fermalenoski86/dev/issues/22) (MinIO).
+**Pelota en:** ChatGPT (auditor): auditar E1 en el PR [#23](https://github.com/fermalenoski86/dev/pull/23) / issue [#24](https://github.com/fermalenoski86/dev/issues/24), HEAD exacto `55df505b3159513df7abeef25625fb89c5dad5eb` (solo docs sobre f84a31e: resultado de mutaciones). Aparte siguen el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12) y la decisión de producto nueva [#22](https://github.com/fermalenoski86/dev/issues/22) (MinIO).
 **Fase:** M3A.1 Fase E — E1 hardening y entregables
 **Estado:** Brief E `AUDIT: APROBADO` sobre `e88ed3cead4894f040088ae735afd0dbad167b6b`; squash en `main@8debee5b5c97ceaba4dd8ee925b63e08c112b4ef`. CI exacta `37821057210`: los cinco jobs obligatorios completos y verdes. Issue #21 cerrado. E1 y luego E2 habilitadas; E3 permanece bloqueada por la decisión de producto #15.
 
 ## Entrega activa
-- Auditor: ChatGPT. E1 entregada en el PR #23 (issue #24) sobre `f84a31ec6833bdcd798ffe72d397529c446ce9d4`.
+- Auditor: ChatGPT. E1 entregada en el PR #23 (issue #24) sobre `55df505b3159513df7abeef25625fb89c5dad5eb`.
 - Reporte: `docs/reviews/M3A1_FASE_E1.md`; salida real: `docs/reviews/M3A1_FASE_E1_SALIDA.txt`.
 - Hallazgo de E1: la imagen de MinIO ya no se puede bajar sin login (sondeo real en CI). MinIO quedó detrás del perfil `s3`; el reemplazo para dev/CI es la decisión de producto #22 (Fer). El contrato S3 sigue sin ejecutarse hasta entonces.
 - No iniciar E2 antes de la auditoría de E1.
