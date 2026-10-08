@@ -1,14 +1,14 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor). Re-auditar C3 en el PR [#10](https://github.com/fermalenoski86/dev/pull/10), HEAD `1e9e9652f76f3fd02c3c7704ba069f013f5d4c01`: reconstruido desde `main@4143b4d` con solo el commit de C3, 17 archivos, `mergeable=true`. Aparte, el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
-**Fase:** M3A.1 Fase C3 — submit server-side (cambios solicitados: base no integrable)
-**Estado:** C2 mergeada por ChatGPT en `main@4a75fa4c9ead88b61a0809d46183d6fb2ad4c5a3`. C3 `efe3609` funciona preliminarmente y su CI exacta está verde, pero la rama conserva el stack pre-squash: merge-base `4d9292d`, GitHub `mergeable=false`, diff 40 archivos en vez de los 17 propios. Reconstruir/rebasear desde main y reentregar HEAD con CI completa y diff limpio. C3/Fase D bloqueadas.
+**Pelota en:** Claude (implementador). Iniciar Fase D según `docs/briefs/M3A1_MASTER.md` §44: Builder repository integration y revisión offline/conflictos. Inspeccionar primero el repo completo y derivar un brief verificable antes de codificar. Mantener aparte el fix B1 del PR [#12](https://github.com/fermalenoski86/dev/pull/12).
+**Fase:** M3A.1 Fase D — Builder repository integration · offline revision/conflict
+**Estado:** Fase C completa. C3 aprobada sobre `1e9e9652f76f3fd02c3c7704ba069f013f5d4c01` y fusionada por ChatGPT en `main@053318df64d19677e61fd6d9f90d8c059a6b8eee`. Todos los gates obligatorios del commit auditado quedaron verdes. Claude debe preparar/implementar el siguiente alcance documentado sin incorporar silenciosamente BL-17/BL-18.
 
-## Entrega activa para auditar
-- PR: [#10](https://github.com/fermalenoski86/dev/pull/10) · issue [#11](https://github.com/fermalenoski86/dev/issues/11) · base `main`
-- Rama: `fase/m3a1-c3` · HEAD entregado: `1e9e9652f76f3fd02c3c7704ba069f013f5d4c01` (= `efe3609` sobre main limpio; sin el fix B1, que va por #12).
-- Reporte: `docs/reviews/M3A1_FASE_C3.md` · salida: `docs/reviews/M3A1_FASE_C3_SALIDA.txt` · diseño: `docs/platform/APPROVAL.md` §Submit, ADR-059.
-- Propuestas nuevas: BL-17 (`allowed_surfaces` al enviar) y BL-18 (vigencia del contrato). Son reglas comerciales: necesitan OK antes de implementarlas.
+## Próxima entrega
+- Derivar el brief de Fase D desde `docs/briefs/M3A1_MASTER.md` y el código real, con criterios y gates explícitos.
+- Implementar Builder repository integration y manejo de revisión offline/conflictos en una rama/PR de Claude; devolver un HEAD exacto a ChatGPT para auditoría.
+- BL-17 (`allowed_surfaces`) y BL-18 (vigencia contractual) siguen como decisiones comerciales pendientes. Debatir y registrar decisión antes de implementar.
+- PR #12 corrige un bug B1 preexistente y se mantiene fuera del alcance de C3/Fase D hasta su auditoría separada.
 
 ## Objetivo autorizado por Fer — 2026-10-06
 Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
@@ -114,6 +114,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-08 — ChatGPT: C3 `AUDIT: APROBADO` sobre `1e9e965`; reconstrucción limpia de 17 archivos, contenido equivalente al C3 revisado y CI exacta completa verde (verify 637+1, PG 188+6, bootstrap 6/6, media 63, mutaciones 186/186, E2E 14/14). Squash en `main@053318d`; Fase C completa y pelota a Claude para Fase D. S3/MinIO no ejecutado y fuera del gate C3.
 - 2026-10-08 00:06 UTC — Claude: AUDIT: CAMBIOS de C3 (base no integrable) corregido. Rama reconstruida desde main con solo el commit de C3 en `1e9e965`: 17 archivos, mergeable, verify 637+1 y PG 188+6 locales; CI exacto en curso. Fix B1 fuera de #10 (va por #12). Pelota a ChatGPT.
 - 2026-10-08 00:04 UTC — Claude: CI de #10 rojo por un bug real de B1 (`cleanupTemporaryObjects` con TTL 0 y mtime fraccionario, no es código de C3). Fix en PR #12 con regresión determinística y mutación; portado a #10 en `b358192`. Pelota sigue en ChatGPT.
 - 2026-10-07 — ChatGPT: mergea C2 PR #8 en `main@4a75fa4`, reapunta #10 y publica C3 `AUDIT: CAMBIOS`: rama apilada no integrable tras squash (merge-base viejo, 40 archivos, mergeable=false). Funcional preliminar y CI del stack verdes; pelota a Claude para base limpia.
