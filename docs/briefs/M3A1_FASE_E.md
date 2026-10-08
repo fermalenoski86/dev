@@ -72,21 +72,29 @@ Un test (`apps/platform-api/src/e2e-flow.db.test.ts`) recorre **por HTTP
 real** (Fastify en un puerto, PostgreSQL real, ffprobe real, sesiones y CSRF
 reales) el flujo de §41 y los 19 puntos de §48 que no dependen de la UI:
 
-1. login del operador; crea anunciante, contrato y campaña;
-2. guarda el draft por `@trust/builder-repository` (el mismo código que va a
-   usar el Builder en D3);
-3. sube assets válidos (fixtures reales de B2), que ffprobe valida, y verifica
-   el SHA-256;
-4. submit, que recompila y corre el preflight; verifica el hash;
-5. logout. Login de otro approver: ve la versión, adjunta evidencia y aprueba;
-6. login del operador: la campaña muestra la versión APROBADA con el hash
+Cada paso lo ejecuta el rol que el backend exige (AUDIT del brief: Advertiser
+y Contract son solo ADMIN, `exigir(actor, ADMIN_ROLES)`):
+
+1. **ADMIN**: login; crea Advertiser y Contract; logout;
+2. **OPERATOR**: login; crea la Campaign; guarda el draft por
+   `@trust/builder-repository` (el mismo código que va a usar el Builder en D3);
+3. **OPERATOR**: sube assets válidos (fixtures reales de B2), que ffprobe
+   valida, y verifica el SHA-256;
+4. **OPERATOR**: submit, que recompila y corre el preflight; verifica el hash;
+   logout;
+5. **INTERNAL_APPROVER** (otro usuario, cuatro ojos): login; ve la versión,
+   adjunta evidencia y aprueba; logout;
+6. **OPERATOR**: login; la campaña muestra la versión APROBADA con el hash
    exacto y el draft de trabajo aparte;
-7. edita el draft; la versión aprobada no cambia (ni la fila ni el hash);
-8. `verifyChain` OK y los audit events esperados presentes.
+7. **OPERATOR**: edita el draft; la versión aprobada no cambia (ni la fila ni
+   el hash);
+8. `verifyChain` OK, y cada audit event esperado presente con el actor del
+   rol que corresponde.
 
 Además: `docs/reviews/M3A1_ACEPTACION.md`, una matriz de los 19 puntos de
-§48, cada uno con el test que lo prueba. Los que dependen de D3 quedan
-marcados como pendientes, no como hechos.
+§48, cada uno con el test que lo prueba **y el rol real que ejecuta el paso**.
+Cada punto queda en uno de tres estados: **cubierto**, **pendiente por #15**
+o **no aplicable**. Un pendiente nunca se cuenta como cubierto.
 
 ## E3 — E2E Playwright de §41 (bloqueado)
 
@@ -97,7 +105,20 @@ Requiere:
 
 **No se inicia** hasta que Fer decida #15 y el ❓ 2.
 
-## Decisiones a validar (❓)
+## Decisiones validadas (AUDIT del brief sobre `6aed221`)
+
+1. E1 y E2 avanzan con #15 abierto: **aceptado** (no tocan `apps/control`).
+2. E3 sigue bloqueado: **correcto**. La ubicación de la UI y el permiso para
+   tocar el Builder son la decisión de producto #15.
+3. BL-21 como PR independiente: **aceptado**, sin mezclarlo con el hardening.
+4. OpenAPI según el spike: **aceptado**. El resultado tiene que cubrir
+   multipart, errores y headers, y mantenerse con un diff vacío en CI.
+
+Diferido: IndexedDB transaccional para el repositorio del Builder. No hace
+falta para cerrar E, y migrarlo ahora tocaría el formato y la arquitectura
+congelados; el protocolo recuperable de D2 ya está probado.
+
+## Decisiones a validar (❓), texto original del brief
 
 1. **¿E1 y E2 pueden avanzar mientras #15 sigue abierto?** Son independientes
    de `apps/control`. Propuesta: sí, E1 primero y después E2.
@@ -125,13 +146,16 @@ y BL-14/15/16/18/19/20/22.
 
 ## Propuestas de mejora (≤ 3)
 
-- **BL-23 · Matriz de aceptación ejecutable.** Que `M3A1_ACEPTACION.md` se
-  genere desde tags en los nombres de los tests (`[§48.7]`) y que CI falle si
-  un punto queda sin test. Evita que la matriz se desactualice. Solo usa
+- **BL-23 · Matriz de aceptación ejecutable** (aceptada con ajuste). Que
+  `M3A1_ACEPTACION.md` se genere desde tags en los nombres de los tests
+  (`[§48.7]`). CI distingue tres estados, **cubierto**, **pendiente por #15**
+  y **no aplicable**, y falla si un punto queda sin test y sin estado
+  declarado. Un pendiente reconocido nunca se muestra como verde. Solo usa
   vitest, sin dependencias nuevas, ~0,5 día.
-- **BL-24 · Restore probado en CI, no solo documentado.** Un job semanal (o
-  manual) que haga `pg_dump` y un restore en una base nueva, y corra
-  `verifyChain` y el smoke de migraciones sobre lo restaurado. Fuente: la
+- **BL-24 · Restore probado en CI, no solo documentado** (aceptada para
+  backlog). Un job semanal (o manual) que haga `pg_dump` y un restore en una
+  **base nueva**, corra `verifyChain` y el smoke de migraciones sobre lo
+  restaurado, y registre la duración y el tamaño. Fuente: la
   documentación de PostgreSQL 16 sobre backup y restore
   (https://www.postgresql.org/docs/16/backup.html), que recomienda probar los
   restores periódicamente. ~0,5 día.
