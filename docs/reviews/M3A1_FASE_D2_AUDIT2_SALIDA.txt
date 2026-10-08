@@ -1,0 +1,56 @@
+# M3A.1 D2 — AUDIT 2: salida REAL de gates (base 54bbe92 + corrección, árbol antes del commit)
+# 2026-10-08T12:49:47Z · node v22.22.0 · pnpm 12.5.1 · psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)
+
+## Reproducción con el syncing.ts AUDITADO (8dc228f) y los tests nuevos
+   × ... falla SOLO la clave de sync → ... → expected 'nuevo' to be 'servidor'
+   × ... falla el espejo M2C Y la restauración ... → expected { v: 1, …(4) } to match object { Object (baseRevision, pending, ...) }
+   × ... registro NUEVO y no se puede borrar ... → expected 'servidor' to be 'primera'
+   × ... NO se pisa una clave M2C escrita por otro ... → expected 'remoto' to be 'escrito por el Builder actual'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+## Con la corrección: npx vitest run packages/builder-repository
+      Tests  24 passed (24)
+
+## pnpm install --frozen-lockfile
+Lockfile is up to date, resolution step is skipped
+Done in 119ms using pnpm v12.5.1
+
+## pnpm verify
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  35 passed | 1 skipped (36)
+      Tests  666 passed | 1 skipped (667)
+
+## pnpm build
+apps/control build: Done
+
+## PG
+ ✓ apps/platform-api/src/builder-repository.db.test.ts (8 tests) 1198ms
+ Test Files  14 passed | 1 skipped (15)
+      Tests  216 passed | 6 skipped (222)
+
+## bootstrap-smoke.sh
+      Tests  6 passed (6)
+
+## media
+      Tests  63 passed (63)
+
+## mutation-check.py (completo, 215 reglas)
+ATRAPADA   d2: last-write-wins ante 409 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯
+ATRAPADA   d2: save sin guardar local primero ⎯⎯⎯⎯⎯⎯⎯ Failed Tests
+ATRAPADA   d2: PUT sin token CSRF       ⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯�
+ATRAPADA   d2: mantener local sin rebasar ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 �
+ATRAPADA   d2: PUT perdido tomado como conflicto ⎯⎯⎯⎯⎯⎯⎯ Failed Te
+ATRAPADA   d2: conflicto real tomado como propio ⎯⎯⎯⎯⎯⎯⎯ Failed Te
+ATRAPADA   d2: local sin chequeo de revision ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 
+ATRAPADA   d2: metadata de otra campania ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 �
+ATRAPADA   d2: draft local fallido se sube igual (AUDIT D2 P1) ⎯⎯⎯⎯⎯�
+ATRAPADA   d2: estado pendiente antes de guardar local (AUDIT D2 P1) ⎯⎯⎯�
+ATRAPADA   d2: offline sin pendiente    ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯
+ATRAPADA   d2: espejo M2C antes del registro (AUDIT D2 R2) ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   d2: sin restaurar el registro (AUDIT D2 R2) ⎯⎯⎯⎯⎯⎯⎯ Fai
+ATRAPADA   d2: adoptar servidor pisa M2C ajeno (AUDIT D2 R2) ⎯⎯⎯⎯⎯⎯�
+ATRAPADA   d2: espejo ajeno tomado como propio (AUDIT D2 R2) ⎯⎯⎯⎯⎯⎯�
+atrapadas 215 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+
+## No ejecutado local: E2E M2C (sin Chrome H.264) → job e2e-m2c de CI.
