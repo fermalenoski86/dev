@@ -54,6 +54,15 @@ con draft, en el `PUT` del draft y en el submit (C3). Reducir las superficies
 de un contrato **no reescribe** drafts ni versiones: la regla vale para las
 escrituras y submits siguientes.
 
+**Bajo concurrencia** (AUDIT D1 P1): crear, `PUT` del draft y submit leen el
+contrato con `SELECT … FOR SHARE` y retienen ese lock hasta el commit; el
+`PATCH` del contrato toma la fila con `FOR UPDATE`. Resultado serializado: o la
+escritura/submit confirma antes del recorte (y el recorte espera), o espera al
+recorte y lee la lista nueva → `SURFACE_NOT_CONTRACTED`. Nunca se confirma un
+draft o una ShowVersion validados contra una lista vieja. Orden de locks en
+todos los caminos: campaña → contrato → lock del audit (ningún camino toma el
+contrato y después la campaña), así que no se introduce un ciclo de espera.
+
 `allowedSurfaces` de un contrato se valida contra las pantallas del modelo del
 edificio (`buildingSurfaceIds`) y se guarda ordenado y sin repetidos.
 

@@ -234,17 +234,21 @@ export class CampaignService {
     const draft = parseDraft(input.takeoverDraft);
     return this.db.transaction().execute(async (trx) => {
       const cp = await trx
-        .selectFrom('campaigns as c')
-        .innerJoin('contracts as ct', 'ct.id', 'c.contract_id')
-        .select(['c.id', 'c.current_draft_id', 'c.lifecycle_status', 'ct.allowed_surfaces'])
-        .where('c.id', '=', campaignId)
+        .selectFrom('campaigns')
+        .select(['id', 'contract_id', 'current_draft_id', 'lifecycle_status'])
+        .where('id', '=', campaignId)
         .executeTakeFirst();
       if (!cp) throw new CampaignError(404, 'CAMPAIGN_NOT_FOUND', 'La campaña no existe.');
       if (!cp.current_draft_id) throw new CampaignError(404, 'DRAFT_NOT_FOUND', 'La campaña no tiene draft.');
       if (cp.lifecycle_status !== 'ACTIVE') {
         throw new CampaignError(409, 'INVALID_STATE_TRANSITION', 'La campaña está archivada: su draft no se edita.', { lifecycleStatus: cp.lifecycle_status });
       }
-      exigirSuperficies(draft, cp.allowed_surfaces);
+      // §6 bajo concurrencia: FOR SHARE sobre el contrato hasta el commit. Un PATCH
+      // que recorta superficies (FOR UPDATE) espera a esta escritura, o esta lee
+      // la lista ya recortada: nunca se confirma un draft contra una lista vieja.
+      // Orden de locks: campaña → contrato → audit (igual que submit).
+      const ct = await trx.selectFrom('contracts').select('allowed_surfaces').where('id', '=', cp.contract_id).forShare().executeTakeFirstOrThrow();
+      exigirSuperficies(draft, ct.allowed_surfaces);
       const previo = await trx.selectFrom('campaign_drafts').select(['takeover_draft']).where('id', '=', cp.current_draft_id).executeTakeFirstOrThrow();
       // UPDATE condicionado a la revisión esperada: atómico, sin last-write-wins.
       const escrito = await trx

@@ -102,7 +102,9 @@ export async function submitCampaign(
     const draft = parsed.data;
 
     // §6 (D1): el draft no usa pantallas fuera del contrato VIGENTE al enviar.
-    const ct = await trx.selectFrom('contracts').select('allowed_surfaces').where('id', '=', cp.contract_id).executeTakeFirstOrThrow();
+    // FOR SHARE hasta el commit: un recorte concurrente del contrato espera a este
+    // submit o este ve la lista recortada. Orden: campaña → contrato → audit.
+    const ct = await trx.selectFrom('contracts').select('allowed_surfaces').where('id', '=', cp.contract_id).forShare().executeTakeFirstOrThrow();
     exigirSuperficies(draft, ct.allowed_surfaces);
 
     // Ranuras usadas → Assets READY de la superficie correcta.

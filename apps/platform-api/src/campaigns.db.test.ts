@@ -3,9 +3,10 @@ import os from 'node:os';
 import path from 'node:path';
 import { Writable } from 'node:stream';
 import { draftHash } from '@trust/platform-campaigns';
-import { verifyChain } from '@trust/platform-audit';
+import { AUDIT_LOCK_KEY, verifyChain } from '@trust/platform-audit';
 import { type Role, createUser, issueSession } from '@trust/platform-auth';
-import { type TestDatabase, createTestDatabase, seedApproval, seedVersion, sha } from '@trust/platform-db/testing';
+import { sql } from 'kysely';
+import { LOCK_FILA, type TestDatabase, createTestDatabase, esperarBloqueados, retenerTransaccion, seedApproval, seedVersion, sha } from '@trust/platform-db/testing';
 import { mediaRuntimeFromEnv } from '@trust/platform-media';
 import { LocalDiskStorage } from '@trust/platform-storage';
 import { PRESET_EMPTY, PRESET_TAKEOVER_15S, type TakeoverDraft } from '@trust/show-authoring';
@@ -244,6 +245,52 @@ describe('CRITERIO D1: draft con concurrencia optimista (§8, §9)', () => {
     expect(r.statusCode).toBe(422);
     expect(ErrorResponseSchema.parse(r.json())).toMatchObject({ code: 'SURFACE_NOT_CONTRACTED', details: { screens: ['horizontal'] } });
     expect((await putDraft(cp.id, sinHorizontal(), 2)).statusCode).toBe(200);
+  });
+
+  it('§6 bajo concurrencia (AUDIT D1 P1): recorte sin confirmar del contrato → el PUT espera el lock y, tras el commit, falla SURFACE_NOT_CONTRACTED', async () => {
+    const { ct, cp } = await campaniaOk(['screen_a', 'screen_b', 'horizontal'], PRESET_TAKEOVER_15S());
+    // T2: el recorte toma la fila del contrato y NO confirma todavía.
+    const recorte = await retenerTransaccion(t.app, (trx) =>
+      trx.updateTable('contracts').set({ allowed_surfaces: ['screen_a', 'screen_b'] }).where('id', '=', ct.id).execute());
+    let pendiente: ReturnType<typeof putDraft> | undefined;
+    try {
+      pendiente = putDraft(cp.id, PRESET_TAKEOVER_15S(), 1);
+      // El PUT queda esperando la fila del contrato (FOR SHARE vs. la escritura de T2): no valida contra la lista vieja.
+      await esperarBloqueados(t.app, LOCK_FILA);
+    } finally {
+      await recorte.soltar();
+    }
+    const r = await pendiente!;
+    expect(r.statusCode, r.body).toBe(422);
+    expect(ErrorResponseSchema.parse(r.json())).toMatchObject({ code: 'SURFACE_NOT_CONTRACTED', details: { screens: ['horizontal'] } });
+    expect((await leerDraft(cp.id)).revision).toBe(1);
+  });
+
+  it('§6 bajo concurrencia (AUDIT D1 P1): PUT en curso → el PATCH que recorta espera su commit; queda serializado PUT → recorte', async () => {
+    const { ct, cp } = await campaniaOk(['screen_a', 'screen_b', 'horizontal'], PRESET_TAKEOVER_15S());
+    // Retener el lock del audit pausa al PUT DESPUÉS de validar y escribir, con el contrato ya en FOR SHARE.
+    const audit = await retenerTransaccion(t.app, (trx) => sql`SELECT pg_advisory_xact_lock(${AUDIT_LOCK_KEY})`.execute(trx));
+    let put: ReturnType<typeof putDraft> | undefined;
+    let patch: ReturnType<typeof req> | undefined;
+    try {
+      put = putDraft(cp.id, PRESET_TAKEOVER_15S(), 1);
+      await esperarBloqueados(t.app, ['advisory']);
+      patch = req('PATCH', `/api/v1/contracts/${ct.id}`, U.admin!, { allowedSurfaces: ['screen_a', 'screen_b'] });
+      // El PATCH espera la FILA del contrato (no el audit): no puede confirmar el recorte antes que el PUT.
+      await esperarBloqueados(t.app, LOCK_FILA);
+    } finally {
+      await audit.soltar();
+    }
+    const [rp, rc] = await Promise.all([put!, patch!]);
+    expect(rp.statusCode, rp.body).toBe(200);
+    expect(rc.statusCode, rc.body).toBe(200);
+    expect(ContractResponseSchema.parse(rc.json()).allowedSurfaces).toEqual(['screen_a', 'screen_b']);
+    const ev = await t.app.selectFrom('audit_events').select(['action', 'seq']).where('entity_id', 'in', [ct.id, cp.currentDraft!.id]).where('action', 'in', ['DRAFT_UPDATED', 'CONTRACT_UPDATED']).orderBy('seq').execute();
+    expect(ev.map((e) => e.action)).toEqual(['DRAFT_UPDATED', 'CONTRACT_UPDATED']);
+    // y desde ahí, la regla aplica al próximo PUT
+    const r = await putDraft(cp.id, PRESET_TAKEOVER_15S(), 2);
+    expect(r.statusCode).toBe(422);
+    esError(r.json(), 'SURFACE_NOT_CONTRACTED');
   });
 
   it('autorización y estado: INTERNAL_APPROVER 403, sin CSRF 403, campaña archivada 409, inexistente 404', async () => {

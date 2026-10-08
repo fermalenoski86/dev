@@ -3,15 +3,16 @@ import os from 'node:os';
 import path from 'node:path';
 import { Writable } from 'node:stream';
 import { assetSourceFor } from '@trust/platform-approval';
-import { verifyChain } from '@trust/platform-audit';
+import { AUDIT_LOCK_KEY, verifyChain } from '@trust/platform-audit';
 import { type Role, createUser, issueSession } from '@trust/platform-auth';
 import { computeVersionHash } from '@trust/platform-contracts';
-import { type TestDatabase, createTestDatabase, seedContract, seedStoredObject } from '@trust/platform-db/testing';
+import { LOCK_FILA, type TestDatabase, createTestDatabase, esperarBloqueados, retenerTransaccion, seedContract, seedStoredObject } from '@trust/platform-db/testing';
 import { mediaRuntimeFromEnv } from '@trust/platform-media';
 import { LocalDiskStorage } from '@trust/platform-storage';
 import { AssetRegistry, PRESET_TAKEOVER_15S, type TakeoverDraft, validateDraft } from '@trust/show-authoring';
 import { DEMO_SCENES, EL_TRUST } from '@trust/show-engine';
 import type { FastifyInstance } from 'fastify';
+import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { SESSION_COOKIE_DEV, SessionActorProvider } from './actor';
 import { buildApp } from './app';
@@ -299,6 +300,55 @@ describe('CRITERIO C3: preflight y assets server-side — sin versión si falla'
     expect(r.statusCode).toBe(422);
     expect(ErrorResponseSchema.parse(r.json())).toMatchObject({ code: 'SURFACE_NOT_CONTRACTED', details: { screens: ['horizontal'] } });
     expect(await versiones(c.campaignId)).toBe(0);
+  });
+
+  it('§6 bajo concurrencia (AUDIT D1 P1): recorte sin confirmar del contrato → el submit espera el lock y, tras el commit, falla SURFACE_NOT_CONTRACTED', async () => {
+    const ct = (await seedContract(t.app)).id;
+    const m = await master();
+    const h = await horizontal();
+    const c = await campania(draftCon(m.id, h.id), ct);
+    const recorte = await retenerTransaccion(t.app, (trx) =>
+      trx.updateTable('contracts').set({ allowed_surfaces: ['screen_a', 'screen_b'] }).where('id', '=', ct).execute());
+    let pendiente: ReturnType<typeof enviar> | undefined;
+    try {
+      pendiente = enviar(c.campaignId, U.op!);
+      await esperarBloqueados(t.app, LOCK_FILA);
+    } finally {
+      await recorte.soltar();
+    }
+    const r = await pendiente!;
+    expect(r.statusCode, r.body).toBe(422);
+    expect(ErrorResponseSchema.parse(r.json())).toMatchObject({ code: 'SURFACE_NOT_CONTRACTED', details: { screens: ['horizontal'] } });
+    expect(await versiones(c.campaignId)).toBe(0);
+  });
+
+  it('§6 bajo concurrencia (AUDIT D1 P1): submit en curso → el recorte del contrato espera su commit; queda serializado submit → recorte', async () => {
+    const ct = (await seedContract(t.app)).id;
+    const m = await master();
+    const h = await horizontal();
+    const c = await campania(draftCon(m.id, h.id), ct);
+    // El lock del audit pausa al submit DESPUÉS de validar superficies y crear la versión, con el contrato en FOR SHARE.
+    const audit = await retenerTransaccion(t.app, (trx) => sql`SELECT pg_advisory_xact_lock(${AUDIT_LOCK_KEY})`.execute(trx));
+    let sub: ReturnType<typeof enviar> | undefined;
+    let recorte: Promise<unknown> | undefined;
+    try {
+      sub = enviar(c.campaignId, U.op!);
+      await esperarBloqueados(t.app, ['advisory']);
+      // mismo SQL que el PATCH de contrato: FOR UPDATE de la fila y UPDATE
+      recorte = t.app.transaction().execute(async (trx) => {
+        await trx.selectFrom('contracts').select('id').where('id', '=', ct).forUpdate().execute();
+        await trx.updateTable('contracts').set({ allowed_surfaces: ['screen_a', 'screen_b'] }).where('id', '=', ct).execute();
+      });
+      await esperarBloqueados(t.app, LOCK_FILA);
+    } finally {
+      await audit.soltar();
+    }
+    const r = await sub!;
+    await recorte!;
+    expect(r.statusCode, r.body).toBe(201);
+    expect(await versiones(c.campaignId)).toBe(1);
+    const fila = await t.app.selectFrom('contracts').select('allowed_surfaces').where('id', '=', ct).executeTakeFirstOrThrow();
+    expect(fila.allowed_surfaces).toEqual(['screen_a', 'screen_b']);
   });
 
   it('draft guardado que no es un TakeoverDraft → 422 DRAFT_INVALID', async () => {
