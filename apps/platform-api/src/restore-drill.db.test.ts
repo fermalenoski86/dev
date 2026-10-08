@@ -94,6 +94,6 @@ describe('E1 · §33: restore probado contra el PostgreSQL local', () => {
       await restoredOwner.destroy();
       await restoredApp.destroy();
     }
-    console.log(`GATE restore-drill: dump ${bytes} bytes en ${tDump} ms · restore en ${tRestore} ms · ${Object.keys(origen).length} tablas · ${origen.audit_events} audit events · verifyChain ok`);
+    process.stdout.write(`GATE restore-drill: dump ${bytes} bytes en ${tDump} ms · restore en ${tRestore} ms · ${Object.keys(origen).length} tablas · ${origen.audit_events} audit events · verifyChain ok\n`);
   });
 });

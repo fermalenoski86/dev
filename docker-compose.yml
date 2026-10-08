@@ -6,10 +6,10 @@
 # MinIO: la imagen minio/minio fue borrada de Docker Hub (sep-2026) y la de
 # quay.io dejó de ser pública; la última build comunitaria además no recibe
 # parches. Queda detrás del perfil `s3` hasta que Fer decida el reemplazo
-# (issue decisión-producto, ver docs/ops/BACKUPS.md y API.md).
+# (issue #22, decisión-producto).
 services:
   postgres:
-    image: postgres:16
+    image: postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d   # 16.15 (Debian), digest resuelto en CI run 37839307934
     environment:
       POSTGRES_PASSWORD: CHANGE_ME
     ports: ["5433:5432"]
@@ -28,7 +28,7 @@ services:
     ports: ["9000:9000", "9001:9001"]
 
   platform-api:
-    image: node:22-bookworm
+    image: node:22-bookworm@sha256:0e5f906573693feaa1e21057ebdcfdb5bd5021f050b2dc7c9deceb629c7da2a8   # digest resuelto en CI run 37839307934
     working_dir: /repo
     volumes: [".:/repo"]
     # ffmpeg/ffprobe del sistema; pnpm fijado como en AGENTS.md

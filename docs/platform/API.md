@@ -143,9 +143,13 @@ el contenido del archivo.
 
 ## Docker Compose (§35)
 
-`docker-compose.yml` (postgres 16, minio, platform-api) con imágenes fijadas
-por digest. El entorno de los agentes no tiene daemon de Docker: el smoke
-real corre en CI, job `compose-smoke` (`scripts/ci/compose-smoke.sh`):
-bootstrap con psql, `pnpm db:migrate` como `trust_owner`, contrato S3 contra
-el MinIO del compose y `/ready` de platform-api con database, storage y media
-en `ok`.
+`docker-compose.yml`: `docker compose up` levanta postgres 16 y platform-api
+(storage local, el default de `.env.example`), con imágenes fijadas por
+digest. El entorno de los agentes no tiene daemon de Docker: el smoke real
+corre en CI, job `compose-smoke` (`scripts/ci/compose-smoke.sh`): bootstrap
+con psql (dos veces), `pnpm db:migrate` como `trust_owner` (dos veces),
+`/ready` con database, storage y media en `ok` y login inválido = 401.
+
+MinIO queda detrás del perfil `s3` y no arranca por defecto: la imagen ya no
+se puede bajar sin login (sondeo real en CI). El reemplazo para dev/CI es la
+decisión de producto #22; hasta entonces el contrato S3 no corre en CI.
