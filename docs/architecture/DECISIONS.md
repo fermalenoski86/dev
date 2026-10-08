@@ -946,3 +946,25 @@ el submit, siempre contra el contrato vigente. No reescribe datos históricos.
 Advertiser/Contract los escribe solo ADMIN. El audit guarda hashes del draft,
 no su contenido.
 
+
+## ADR-061 — Repositorio del Builder: local siempre, sync con revisión, conflicto sin pisar
+**Fecha:** 2026-10 · **Estado:** propuesto (auditoría D2) · **Origen:** M3A.1 Fase D2 + brief D aprobado (#13)
+Paquete nuevo `@trust/builder-repository`, sin tocar `show-authoring` ni
+`apps/control`. Tiene una interfaz `CampaignRepository` y tres
+implementaciones:
+- Local: la de hoy, con el mismo formato de `trust.builder.draft.v1`.
+- Api: `fetch` inyectado, cookie y CSRF de C1, respuestas validadas con Zod.
+- Syncing: guarda local primero y sube con `expectedRevision`.
+
+Un 409 es un resultado. Mientras el conflicto esté abierto no se sube nada,
+hasta que el usuario elija recuperar el server, mantener lo local o duplicar.
+"Mantener local" sube sobre la `serverRevision` que el usuario vio, así que es
+una decisión explícita y nunca last-write-wins. "Duplicar" no escribe remoto.
+
+La metadata de sync va en una clave aparte por campaña. Un 409 que en realidad
+es nuestro propio PUT ya confirmado (la respuesta se perdió) se reconoce
+comparando el contenido del servidor, y no se presenta como conflicto.
+Alternativas descartadas:
+- guardar la revisión dentro de `trust.builder.draft.v1`, porque cambia el formato;
+- reintentar con la `serverRevision` automáticamente, porque es last-write-wins;
+- un merge por moments, porque §8 no lo permite.

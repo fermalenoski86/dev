@@ -73,6 +73,9 @@ para no tocar `show-authoring` (M2C) ni `apps/control`:
 - Tests: unitarios con storage en memoria y tests contra la API real de D1
   (Fastify + PostgreSQL), incluido el ciclo offline → online → conflicto.
 
+**Estado D2:** implementado en `fase/m3a1-d2`; detalle en
+`docs/platform/BUILDER_REPOSITORY.md` y `docs/reviews/M3A1_FASE_D2.md`.
+
 ## D3 — Builder usa el repositorio (§31, §32) ❓ choca con una regla vigente
 
 §31 pide que el Builder abra la campaña del backend, haga autosave con

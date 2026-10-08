@@ -99,6 +99,9 @@ importers:
       '@fastify/multipart':
         specifier: 9.2.1
         version: 9.2.1
+      '@trust/builder-repository':
+        specifier: workspace:*
+        version: link:../../packages/builder-repository
       '@trust/platform-approval':
         specifier: workspace:*
         version: link:../../packages/platform-approval
@@ -209,6 +212,15 @@ importers:
       typescript:
         specifier: ^5.6.3
         version: 5.9.3
+
+  packages/builder-repository:
+    dependencies:
+      '@trust/show-authoring':
+        specifier: workspace:*
+        version: link:../show-authoring
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
 
   packages/control-core:
     dependencies:
