@@ -3,14 +3,17 @@
 #
 #   1. genera un .env descartable desde .env.example (contraseñas aleatorias;
 #      nunca pisa un .env existente);
-#   2. baja las imágenes e imprime su digest; exige que estén fijadas por digest;
-#   3. levanta postgres + minio, corre bootstrap.sql con psql (el camino de
-#      operaciones), crea el bucket y migra como trust_owner (`pnpm db:migrate`);
-#   4. corre el contrato S3 (packages/platform-storage) contra ese MinIO;
-#   5. levanta platform-api desde el compose y exige /ready = ready con
-#      database, storage (S3 → MinIO) y media en ok.
+#   2. baja las imágenes del `docker compose up` por defecto, imprime su digest
+#      y exige que estén fijadas por digest;
+#   3. levanta postgres, corre bootstrap.sql con psql (el camino de
+#      operaciones, dos veces: idempotente) y migra como trust_owner
+#      (`pnpm db:migrate`, dos veces: la segunda no aplica nada);
+#   4. levanta platform-api desde el compose y exige /ready = ready con
+#      database, storage y media en ok, y un login inválido = 401;
+#   5. sondea (solo informa) qué imágenes S3 se pueden bajar sin login, como
+#      evidencia para la decisión de producto sobre el reemplazo de MinIO.
 #
-# Requiere docker compose v2, aws CLI, node 22 y pnpm instalados en el host.
+# Requiere docker compose v2, node 22 y pnpm instalados en el host.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
@@ -21,22 +24,15 @@ fi
 
 OWNER_PW=$(openssl rand -hex 16)
 APP_PW=$(openssl rand -hex 16)
-S3_USER=CHANGE_ME        # = MINIO_ROOT_USER del compose (valores de ejemplo, sin secretos reales)
-S3_PASS=CHANGE_ME_TOO    # = MINIO_ROOT_PASSWORD del compose
-BUCKET=trust-assets
 
 # .env.example sin comentarios en línea, con los valores del smoke
 sed -E 's/[[:space:]]+#.*$//' .env.example | grep -E '^[A-Z]' \
-  | grep -vE '^(DATABASE_URL|STORAGE_DRIVER|S3_ENDPOINT|S3_ACCESS_KEY|S3_SECRET_KEY|S3_BUCKET|LOCAL_STORAGE_ROOT|MEDIA_SCRATCH_DIR|TRUST_PG_[A-Z_]+|S3_TEST_ENDPOINT)=' > .env
+  | grep -vE '^(DATABASE_URL|STORAGE_DRIVER|LOCAL_STORAGE_ROOT|MEDIA_SCRATCH_DIR|TRUST_PG_[A-Z_]+|S3_[A-Z_]+)=' > .env
 cat >> .env <<EOF
 DATABASE_URL=postgres://trust_app:${APP_PW}@postgres:5432/trust
-STORAGE_DRIVER=s3
-S3_ENDPOINT=http://minio:9000
-S3_BUCKET=${BUCKET}
-S3_ACCESS_KEY=${S3_USER}
-S3_SECRET_KEY=${S3_PASS}
-LOCAL_STORAGE_ROOT=/tmp/trust-storage
-MEDIA_SCRATCH_DIR=/tmp/trust-media-scratch
+STORAGE_DRIVER=local
+LOCAL_STORAGE_ROOT=/var/lib/trust/storage
+MEDIA_SCRATCH_DIR=/var/lib/trust/media-scratch
 EOF
 
 limpiar() {
@@ -47,11 +43,11 @@ limpiar() {
 }
 trap limpiar EXIT
 
-echo "== imágenes"
-docker compose pull -q postgres minio
+echo "== imágenes de \`docker compose up\`"
+docker compose pull -q postgres platform-api
 SIN_DIGEST=0
 DIGESTS=""
-for svc in postgres minio; do
+for svc in postgres platform-api; do
   img=$(docker compose config --format json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).services[process.argv[1]].image))" "$svc")
   digest=$(docker image inspect --format '{{index .RepoDigests 0}}' "$img")
   echo "$svc: declarada=$img resuelta=$digest"
@@ -59,28 +55,22 @@ for svc in postgres minio; do
 GATE imagen $svc: $digest"
   case "$img" in *@sha256:*) ;; *) echo "   ✗ $svc NO está fijada por digest"; SIN_DIGEST=1 ;; esac
 done
-docker compose run --rm --no-deps --entrypoint minio minio --version | head -1
 
-echo "== postgres + minio"
-docker compose up -d --wait postgres minio
+echo "== postgres"
+docker compose up -d --wait postgres
+docker compose exec -T postgres postgres --version
 
 echo "== bootstrap.sql (psql, dos veces: idempotente)"
 for _ in 1 2; do
   docker compose exec -T postgres psql -U postgres -q -v ON_ERROR_STOP=1 \
     -v owner_password="$OWNER_PW" -v app_password="$APP_PW" -v db_name=trust < packages/platform-db/src/bootstrap.sql
 done
+echo "roles: $(docker compose exec -T postgres psql -U postgres -tAc "SELECT string_agg(rolname, ',' ORDER BY rolname) FROM pg_roles WHERE rolname LIKE 'trust_%'")"
 
-echo "== bucket"
-export AWS_ACCESS_KEY_ID=$S3_USER AWS_SECRET_ACCESS_KEY=$S3_PASS AWS_DEFAULT_REGION=us-east-1
-for i in $(seq 1 30); do aws --endpoint-url http://127.0.0.1:9000 s3api list-buckets > /dev/null 2>&1 && break; sleep 1; done
-aws --endpoint-url http://127.0.0.1:9000 s3 mb "s3://$BUCKET"
-
-echo "== migraciones (trust_owner)"
-TRUST_MIGRATION_DATABASE_URL="postgres://trust_owner:${OWNER_PW}@127.0.0.1:5433/trust" pnpm db:migrate
-
-echo "== contrato S3 contra MinIO"
-S3_TEST_ENDPOINT=http://127.0.0.1:9000 S3_REGION=us-east-1 S3_BUCKET=$BUCKET S3_ACCESS_KEY=$S3_USER S3_SECRET_KEY=$S3_PASS S3_FORCE_PATH_STYLE=true \
-  npx vitest run packages/platform-storage/src/s3.contract.test.ts
+echo "== migraciones (trust_owner, dos veces)"
+for _ in 1 2; do
+  TRUST_MIGRATION_DATABASE_URL="postgres://trust_owner:${OWNER_PW}@127.0.0.1:5433/trust" pnpm db:migrate | tail -1
+done
 
 echo "== platform-api (compose)"
 # el contenedor instala sus propias dependencias sobre el repo montado: sin los
@@ -88,7 +78,7 @@ echo "== platform-api (compose)"
 find . -name node_modules -type d -prune -exec rm -rf {} +
 docker compose up -d platform-api
 READY=""
-for i in $(seq 1 120); do
+for _ in $(seq 1 120); do
   READY=$(curl -s http://127.0.0.1:4000/ready || true)
   case "$READY" in *'"status":"ready"'*) break ;; esac
   sleep 5
@@ -99,14 +89,23 @@ node -e '
 const r = JSON.parse(process.argv[1] || "{}");
 const ok = r.status === "ready" && r.checks && Object.values(r.checks).every((v) => v === "ok");
 if (!ok) { console.error("✗ /ready no está ready con todo en ok"); process.exit(1); }
-console.log("✓ /ready: database, storage (MinIO) y media ok");' "$READY"
+console.log("GATE compose-smoke: /ready con database, storage y media ok");' "$READY"
 CODE=$(curl -s -o /dev/null -w '%{http_code}' -H 'content-type: application/json' -d '{"email":"nadie@ejemplo.com","password":"incorrecta-123"}' http://127.0.0.1:4000/api/v1/auth/login)
-echo "login con usuario inexistente: HTTP $CODE (esperado 401: trust_app consulta la base)"
+echo "GATE compose-smoke: login con usuario inexistente HTTP $CODE (esperado 401: trust_app consulta la base)"
 [ "$CODE" = 401 ]
+
+echo "== sondeo S3 (informativo, no falla el smoke)"
+for cand in minio/minio:latest quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z chrislusf/seaweedfs:latest rustfs/rustfs:latest dxflrs/garage:v2.1.0; do
+  if docker pull -q "$cand" > /dev/null 2>&1; then
+    echo "GATE sondeo S3: $cand → $(docker image inspect --format '{{index .RepoDigests 0}}' "$cand")"
+  else
+    echo "GATE sondeo S3: $cand → NO se puede bajar sin login"
+  fi
+done
 
 echo "$DIGESTS"
 if [ "$SIN_DIGEST" = 1 ]; then
   echo "✗ smoke OK pero hay imágenes sin digest: fijarlas en docker-compose.yml con los digests de arriba" >&2
   exit 1
 fi
-echo "✓ compose-smoke completo"
+echo "GATE compose-smoke completo"
