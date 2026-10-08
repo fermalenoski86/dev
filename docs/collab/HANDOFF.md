@@ -1,15 +1,15 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). Corregir el P1 de concurrencia de D1 en el PR [#16](https://github.com/fermalenoski86/dev/pull/16): serializar el recorte de `allowed_surfaces` contra PUT draft y submit, con dos regresiones concurrentes. Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
-**Fase:** M3A.1 Fase D1 — AUDIT: CAMBIOS #1
-**Estado:** HEAD `37f647157ff50d843c8f6ef01f9b4bc4b4d87dbc` tiene CI completa verde y la lógica nominal correcta, pero PUT/submit leen el contrato sin mantener un lock hasta commit. Un PATCH concurrente puede retirar una superficie y aun así confirmar un draft o ShowVersion nuevo que la usa. D2 queda bloqueada hasta corregirlo. D3 sigue bloqueado por [#15](https://github.com/fermalenoski86/dev/issues/15).
+**Pelota en:** ChatGPT (auditor). Re-auditar D1 en el PR [#16](https://github.com/fermalenoski86/dev/pull/16) @ `14f0ca2c1d57b5959647be88f879a800949cdeb9` (corrección del P1). Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
+**Fase:** M3A.1 Fase D1 — respuesta a AUDIT: CAMBIOS #1
+**Estado:** P1 corregido en `14f0ca2`. PUT draft y submit leen el contrato con `FOR SHARE` hasta el commit; el PATCH (`FOR UPDATE`) queda serializado. El orden de locks es campaña → contrato → audit. Hay 4 regresiones concurrentes determinísticas: fallan con el código auditado y pasan con la corrección. Gates locales: verify 642+1, PG 208+6, bootstrap 6/6, media 63, mutaciones 200/200; la CI del HEAD nuevo está en curso. D2 sigue bloqueada hasta el APROBADO. D3 sigue bloqueado por [#15](https://github.com/fermalenoski86/dev/issues/15).
 
 ## Entrega activa para auditar
 - PR: [#16](https://github.com/fermalenoski86/dev/pull/16) · issue [#17](https://github.com/fermalenoski86/dev/issues/17) · base `main`
-- Rama: `fase/m3a1-d1` · HEAD entregado: `37f647157ff50d843c8f6ef01f9b4bc4b4d87dbc` (comprobar antes de auditar).
-- Reporte: `docs/reviews/M3A1_FASE_D1.md` · salida: `docs/reviews/M3A1_FASE_D1_SALIDA.txt` · diseño: `docs/platform/CAMPAIGNS.md`, ADR-060.
+- Rama: `fase/m3a1-d1` · HEAD entregado: `14f0ca2c1d57b5959647be88f879a800949cdeb9` (comprobar antes de auditar).
+- Reporte: `docs/reviews/M3A1_FASE_D1.md` + `M3A1_FASE_D1_AUDIT1.md` · salida: `docs/reviews/M3A1_FASE_D1_SALIDA.txt` + `M3A1_FASE_D1_AUDIT1_SALIDA.txt` · diseño: `docs/platform/CAMPAIGNS.md`, ADR-060.
 - Pendientes aparte: PR [#12](https://github.com/fermalenoski86/dev/pull/12) (fix B1) e issue [#15](https://github.com/fermalenoski86/dev/issues/15) (D3, Fer).
-- Hallazgo: tomar lock compartido del contrato (o garantía equivalente) durante validación + escritura/submit y demostrar serialización con regresiones concurrentes para ambos caminos.
+- Hallazgo P1: corregido en `14f0ca2` (respuesta en el PR #16).
 - BL-21 aceptada para backlog operativo después de D1/D2; no mezclar con la corrección.
 
 ## Objetivo autorizado por Fer — 2026-10-06
@@ -116,6 +116,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-08 06:55 UTC — Claude: P1 de D1 corregido en `14f0ca2`. Se agrega `FOR SHARE` del contrato en PUT draft y submit. Hay 4 regresiones concurrentes (reproducidas en rojo antes del fix) y 2 mutaciones nuevas; total 200/200. Gates locales verdes; E2E queda para la CI. Pelota a ChatGPT.
 - 2026-10-08 — ChatGPT: D1 `AUDIT: CAMBIOS` sobre `37f6471`; P1 TOCTOU entre recorte de `allowed_surfaces` y PUT/submit. CI exacta 37728848078 completa verde; prueba local de superficies 5/5, PostgreSQL local no disponible. Pelota a Claude; D2 bloqueada.
 - 2026-10-08 04:44 UTC — Claude: D1 entregada en el PR #16 @37f6471 (API de campaign/draft, `DRAFT_CONFLICT`, §6 en PUT/creación/submit, 16 tests HTTP, 12 mutaciones nuevas, 198/198). Issue #17. Pelota a ChatGPT.
 - 2026-10-08 — ChatGPT: brief D `AUDIT: APROBADO` sobre `5135901`; CI documental exacta verde y squash en `main@c845f35`. D1/D2 habilitados; D3 pendiente de #15. `allowed_surfaces` aprobado por requisito expreso del master; BL-19/20 diferidas. Pelota a Claude para D1.
