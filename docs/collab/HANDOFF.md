@@ -1,8 +1,8 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor). Auditar el brief de la Fase E en el PR [#20](https://github.com/fermalenoski86/dev/pull/20) (`docs/briefs/M3A1_FASE_E.md`, HEAD `6aed221dd35d2d08115a932d0f2586fca3d65d02`, issue [#21](https://github.com/fermalenoski86/dev/issues/21)). Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
-**Fase:** M3A.1 Fase E — brief para acordar
-**Estado:** D2 está aprobada y mergeada (`main@f23f262`, issue #19 cerrado). El brief E propone: E1 hardening y entregables (BL-10, BL-11, compose fijado, backups, logs sin secretos, inventario de entrega), E2 E2E de plataforma sin navegador con la matriz de §48, y E3 Playwright de §41, bloqueado por #15 y por dónde vive la UI (❓2, decisión de producto). Tags m3a1-b2…d2 siguen pendientes de la autorización explícita de Fer.
+**Pelota en:** Claude (implementador). Corregir el brief de Fase E en el PR [#20](https://github.com/fermalenoski86/dev/pull/20) tras `AUDIT: CAMBIOS` sobre `6aed221dd35d2d08115a932d0f2586fca3d65d02` (issue [#21](https://github.com/fermalenoski86/dev/issues/21)). Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
+**Fase:** M3A.1 Fase E — brief con cambios solicitados
+**Estado:** [P1] E2 asigna a OPERATOR la creación de Advertiser y Contract, pero el backend exige ADMIN y prueba 403 para OPERATOR. Ajustar el flujo: ADMIN crea Advertiser/Contract; OPERATOR crea Campaign, guarda/sube/envía; INTERNAL_APPROVER aprueba. E1/E2 con #15 abierto, BL-21 separado y spike OpenAPI quedan aceptados; E3 sigue bloqueado por #15. CI documental `37789353770` verde. Auditoría: https://github.com/fermalenoski86/dev/pull/20#issuecomment-6063802272.
 
 ## Entrega activa para auditar
 - PR: [#20](https://github.com/fermalenoski86/dev/pull/20) · issue [#21](https://github.com/fermalenoski86/dev/issues/21) · base `main`
@@ -114,6 +114,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-08 — ChatGPT: brief E `AUDIT: CAMBIOS` sobre `6aed221`; P1 por flujo E2 incompatible con roles (Advertiser/Contract requieren ADMIN, no OPERATOR). Decisiones E1/E2 y mejoras aceptadas con ajustes; pelota a Claude.
 - 2026-10-08 14:15 UTC — Claude: D2 `AUDIT: APROBADO`; issue #19 cerrado y tag no creado (pendiente de Fer). Brief de la Fase E propuesto en el PR #20 (issue #21): E1 y E2 independientes de D3; E3 bloqueado por #15 y por la ubicación de la UI. Pelota a ChatGPT.
 - 2026-10-08 — ChatGPT: D2 `AUDIT: APROBADO` sobre `d42bf12`; CI exacta `37779698572` completa verde, ambos P1 cerrados. Squash en `main@f23f262`, issue #19 cerrado. Pelota a Claude para trabajo independiente; D3 bloqueada por #15.
 - 2026-10-08 12:55 UTC — Claude: re-auditoría 2 de D2 (falla parcial entre claves) corregida en `d42bf12` con un protocolo recuperable: registro primero y luego espejo con restauración, más un guard al adoptar el servidor. 4 regresiones, 4 mutaciones, 215/215. Respondido en #18. Pelota a ChatGPT.
