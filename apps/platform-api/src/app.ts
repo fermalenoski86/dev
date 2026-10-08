@@ -14,6 +14,7 @@ import { type Kysely, sql } from 'kysely';
 import type { z } from 'zod';
 import { type ActorProvider, CSRF_HEADER, DEV_ACTOR_HEADER, requireActor } from './actor';
 import { registerApprovalRoutes } from './approval-routes';
+import { registerCampaignRoutes } from './campaign-routes';
 import { type AuthConfig, registerAuthRoutes } from './auth-routes';
 import {
   AssetListQuerySchema,
@@ -155,6 +156,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 
   if (deps.auth) registerAuthRoutes(app, { db: deps.db, actors: deps.actors, auth: deps.auth });
   registerApprovalRoutes(app, { db: deps.db, storage: deps.storage, actors: deps.actors, maxEvidenceBytes: deps.maxEvidenceBytes ?? DEFAULT_MAX_EVIDENCE_BYTES });
+  registerCampaignRoutes(app, { db: deps.db, actors: deps.actors });
 
   /* ── assets (§18) ─────────────────────────────────────────────────── */
   app.post('/api/v1/assets', async (req, reply) => {

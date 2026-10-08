@@ -289,6 +289,18 @@ describe('CRITERIO C3: preflight y assets server-side — sin versión si falla'
     expect(ErrorResponseSchema.parse(r.json())).toMatchObject({ code: 'ASSET_SURFACE_MISMATCH', details: { logicalRef: 'masterAssetId', expected: 'towers_ab', actual: 'horizontal' } });
   });
 
+  it('§6 (D1): el contrato vigente no incluye una pantalla que el draft usa → 422 SURFACE_NOT_CONTRACTED, sin versión', async () => {
+    const soloTorres = (await seedContract(t.app)).id;
+    await t.app.updateTable('contracts').set({ allowed_surfaces: ['screen_a', 'screen_b'] }).where('id', '=', soloTorres).execute();
+    const m = await master();
+    const h = await horizontal();
+    const c = await campania(draftCon(m.id, h.id), soloTorres);
+    const r = await enviar(c.campaignId, U.op!);
+    expect(r.statusCode).toBe(422);
+    expect(ErrorResponseSchema.parse(r.json())).toMatchObject({ code: 'SURFACE_NOT_CONTRACTED', details: { screens: ['horizontal'] } });
+    expect(await versiones(c.campaignId)).toBe(0);
+  });
+
   it('draft guardado que no es un TakeoverDraft → 422 DRAFT_INVALID', async () => {
     const c = await campania({ name: 'no soy un draft' });
     const r = await enviar(c.campaignId, U.op!);

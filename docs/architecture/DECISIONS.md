@@ -933,3 +933,16 @@ vez; la campaña bloqueada `FOR UPDATE` serializa envíos y decisiones. La
 versión se crea por `createShowVersion` con `VERSION_SUBMITTED` en la misma
 transacción, detrás de `withIdempotency`.
 
+## ADR-060 — Draft con concurrencia optimista y superficies del contrato en el servidor
+**Fecha:** 2026-10 · **Estado:** propuesto (auditoría D1) · **Origen:** M3A.1 Fase D1 + brief D aprobado (#13)
+`@trust/platform-campaigns`. `PUT /campaigns/:id/draft` escribe con un único
+`UPDATE … WHERE revision = expectedRevision` dentro de una transacción. Si no
+coincide, 409 `DRAFT_CONFLICT` con `serverRevision`, `clientRevision` y
+`serverUpdatedAt`, sin escribir ni hacer merge. No hay Idempotency-Key: la
+revisión es el único contrato de concurrencia. La regla de superficies del
+master §6 se calcula desde el draft (directivas que no son `hold`, traducidas
+a pantallas como lo hace el compilador) y se aplica al crear, en el PUT y en
+el submit, siempre contra el contrato vigente. No reescribe datos históricos.
+Advertiser/Contract los escribe solo ADMIN. El audit guarda hashes del draft,
+no su contenido.
+
