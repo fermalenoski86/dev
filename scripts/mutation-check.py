@@ -182,6 +182,7 @@ M = [
  ('c2: desactivar cuatro ojos sin evento explícito', 'packages/platform-approval/src/service.ts', "        action: input.required ? 'CONTRACT_UPDATED' : 'FOUR_EYES_DISABLED',", "        action: 'CONTRACT_UPDATED',", 'npx vitest run -c vitest.platform.config.ts packages/platform-db apps/platform-api/src/approval.db.test.ts'),
  ('c2: última aprobada retrocede', 'packages/platform-approval/src/service.ts', "                eb('latest_approved_version_id', 'is', null),\n", '                eb.val(true),\n', 'npx vitest run -c vitest.platform.config.ts packages/platform-db apps/platform-api/src/approval.db.test.ts'),
  ('c2: evidencia de otra versión (base)', 'packages/platform-db/src/migrations/0003_approval.ts', 'ALTER TABLE approvals ADD CONSTRAINT approvals_evidence_same_version\n  FOREIGN KEY (evidence_id, show_version_id) REFERENCES approval_evidence(id, show_version_id);', '', 'npx vitest run -c vitest.platform.config.ts packages/platform-db apps/platform-api/src/approval.db.test.ts'),
+ ('storage: limpieza compara con fracción de ms', 'packages/platform-storage/src/local-disk.ts', '      if (Math.floor(ultima) > limite) continue;', '      if (ultima > limite) continue;', 'npx vitest run packages/platform-storage'),
 ]
 # Restauracion garantizada: si esto se interrumpe a mitad (Ctrl-C, timeout,
 # SIGTERM), el repo NO puede quedar con una mutacion aplicada. Pasa, y el

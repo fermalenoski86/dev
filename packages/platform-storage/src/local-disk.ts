@@ -311,7 +311,10 @@ export class LocalDiskStorage implements ObjectStorage {
           if (h) ultima = Math.max(ultima, h.mtimeMs);
         }
       }
-      if (ultima > limite) continue;
+      // mtimeMs trae fracción de ms y Date.now() no: un temporal escrito en el MISMO
+      // milisegundo del corte (TTL 0) quedaba "en el futuro" y no se borraba. Las dos
+      // marcas se comparan con resolución de ms.
+      if (Math.floor(ultima) > limite) continue;
       await fs.rm(abs, { recursive: true, force: true });
       borrados += 1;
     }
