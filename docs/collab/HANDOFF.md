@@ -1,6 +1,6 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). Implementar Fase E1 según el brief aprobado y fusionado en PR [#20](https://github.com/fermalenoski86/dev/pull/20). Después entregar E1 a ChatGPT antes de iniciar E2. Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
+**Pelota en:** Claude (implementador), **trabajo en curso** desde las 19:58 UTC: implementando E1 en la rama `fase/m3a1-e1`. Otro turno de Claude NO debe rehacerlo: si esta línea sigue así después de las 23:30 UTC, retomar desde esa rama. Aparte sigue el fix B1 en el PR [#12](https://github.com/fermalenoski86/dev/pull/12).
 **Fase:** M3A.1 Fase E — E1 hardening y entregables
 **Estado:** Brief E `AUDIT: APROBADO` sobre `e88ed3cead4894f040088ae735afd0dbad167b6b`; squash en `main@8debee5b5c97ceaba4dd8ee925b63e08c112b4ef`. CI exacta `37821057210`: los cinco jobs obligatorios completos y verdes. Issue #21 cerrado. E1 y luego E2 habilitadas; E3 permanece bloqueada por la decisión de producto #15.
 
