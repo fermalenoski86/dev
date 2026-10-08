@@ -1,0 +1,100 @@
+# M3A.1 E1 — salida REAL de gates (fase/m3a1-e1 desde main@78ad284)
+# 2026-10-08T20:31:47Z · node v22.22.0 · pnpm 12.5.1 · psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)
+
+## pnpm install --frozen-lockfile
+Update available! 12.5.1 → 12.10.1.
+Changelog: https://pnpm.io/v/12.10.1
+To update, run: curl -fsSL https://get.pnpm.io/install.sh | sh -
+Done in 334ms using pnpm v12.5.1
+
+## pnpm verify
+✖ 13 problems (0 errors, 13 warnings)
+ Test Files  35 passed | 1 skipped (36)
+      Tests  666 passed | 1 skipped (667)
+(lint recontado después de quitar el console.log del restore drill:)
+
+
+## pnpm build
+apps/control build: 
+apps/control build: Done
+
+## PG: npx vitest run -c vitest.platform.config.ts
+ ✓ apps/platform-api/src/approval.db.test.ts (28 tests) 1487ms
+ ✓ apps/platform-api/src/submit.db.test.ts (17 tests) 964ms
+ ✓ packages/platform-db/src/schema.db.test.ts (31 tests) 919ms
+   ✓ migraciones > up sobre base vacía, down y up de nuevo (smoke test reversible) 361ms
+ ✓ apps/platform-api/src/campaigns.db.test.ts (17 tests) 902ms
+ ✓ apps/platform-api/src/api.db.test.ts (25 tests) 2972ms
+   ✓ CRITERIO: POST /api/v1/assets — upload real (§18, §20, §22) > MP4 válido → 201 READY con contrato Zod, x-request-id y sin paths 511ms
+   ✓ CRITERIO: POST /api/v1/assets — upload real (§18, §20, §22) > misma key + otro contenido → 409 IDEMPOTENCY_KEY_REUSED 307ms
+ ✓ packages/platform-assets/src/upload.db.test.ts (29 tests) 4703ms
+   ✓ CRITERIO: inválidos → REJECTED con código exacto, sin basura > bad_resolution.mp4 (horizontal) → ASSET_BAD_RESOLUTION 313ms
+   ✓ CRITERIO: deduplicación (§15, §32) > mismo MP4 dos veces: 2 Assets READY, 1 StoredObject, 1 archivo físico 303ms
+   ✓ CRITERIO: fallo de la base DESPUÉS del commit de storage (§16, §33) > blob final queda seguro, Asset no queda READY, y el retry idempotente recupera 391ms
+ ✓ apps/platform-api/src/builder-repository.db.test.ts (8 tests) 1066ms
+ ✓ apps/platform-api/src/auth.db.test.ts (14 tests) 1271ms
+ ✓ apps/platform-api/src/upload-limits.db.test.ts (6 tests) 1605ms
+   ✓ E1 · BL-10: límite de uploads por actor > N+1 uploads simultáneos del mismo actor → 429 con Retry-After, sin temporal, sin Asset y sin key; otro actor no se ve afectado 646ms
+   ✓ E1 · BL-10: límite de uploads por actor > tasa por ventana: el tercero dentro del minuto → 429 RATE con Retry-After real; al vencer la ventana vuelve a entrar 482ms
+ ✓ packages/platform-auth/src/auth.db.test.ts (12 tests) 765ms
+ ✓ apps/platform-api/src/logs-sin-secretos.db.test.ts (1 test) 891ms
+   ✓ E1 · §34: los logs no contienen secretos > login, upload, submit, evidencia, approve y pedidos con secretos falsos → ningún secreto en la salida 457ms
+ ✓ apps/platform-api/src/contract.db.test.ts (8 tests) 732ms
+ ✓ packages/platform-audit/src/audit.db.test.ts (8 tests) 884ms
+ ✓ packages/platform-db/src/idempotency.db.test.ts (9 tests) 705ms
+GATE restore-drill: dump 80076 bytes en 93 ms · restore en 162 ms · 18 tablas · 3 audit events · verifyChain ok
+ ✓ apps/platform-api/src/restore-drill.db.test.ts (1 test) 1048ms
+   ✓ E1 · §33: restore probado contra el PostgreSQL local > pg_dump -Fc → pg_restore en una base nueva: mismas filas, cadena OK, migraciones al día, permisos e inmutabilidad intactos 500ms
+ ✓ packages/platform-db/src/asset-consistency.db.test.ts (10 tests) 369ms
+ ✓ packages/platform-db/src/approval-schema.db.test.ts (5 tests) 472ms
+ ↓ packages/platform-db/src/bootstrap.smoke.db.test.ts (6 tests | 6 skipped)
+ ✓ apps/platform-api/src/cli/user-create.db.test.ts (3 tests) 415ms
+ Test Files  18 passed | 1 skipped (19)
+      Tests  232 passed | 6 skipped (238)
+
+## bootstrap-smoke.sh
+== roles antes del bootstrap: 0
+== bootstrap corrido dos veces (idempotente)
+== roles después: trust_app,trust_owner
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+
+## media: npx vitest run -c vitest.media.config.ts
+ Test Files  3 passed (3)
+      Tests  63 passed (63)
+
+## mutaciones e1 (tanda 215:226, antes del test de evicción nuevo)
+atrapadas 10 · sobreviven 1 (e1: descarta actores con uploads en curso)
+## mutación sobreviviente, después del test nuevo (tanda 220:221)
+ATRAPADA   e1: descarta actores con uploads en curso — atrapadas 1 · sobreviven 0 · TODAS ATRAPADAS
+
+## pnpm docs:contract (regenerado = versionado)
+docs/platform/openapi.json y docs/platform/DELIVERY.md regenerados (27 rutas registradas)
+git diff: vacío
+
+## pnpm db:migrate sobre una base recién creada con bootstrap.sql (dos veces)
+{"migrated":["0001_initial:Success","0002_asset_pipeline:Success","0003_approval:Success"]}
+{"migrated":[]}
+
+## compose-smoke (CI, run 37839307934, job 113524463100 — imágenes aún sin digest; el pin vino después)
+postgres: declarada=postgres:16 resuelta=postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d
+platform-api: declarada=node:22-bookworm resuelta=node@sha256:0e5f906573693feaa1e21057ebdcfdb5bd5021f050b2dc7c9deceb629c7da2a8
+postgres (PostgreSQL) 16.15 (Debian 16.15-1.pgdg13+2)
+roles: trust_app,trust_owner
+{"migrated":["0001_initial:Success","0002_asset_pipeline:Success","0003_approval:Success"]}
+{"migrated":[]}
+/health: {"status":"ok"}
+/ready:  {"status":"ready","checks":{"database":"ok","storage":"ok","media":"ok"}}
+GATE compose-smoke: /ready con database, storage y media ok
+GATE compose-smoke: login con usuario inexistente HTTP 401 (esperado 401: trust_app consulta la base)
+GATE sondeo S3: minio/minio:latest → NO se puede bajar sin login
+GATE sondeo S3: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z → NO se puede bajar sin login
+GATE sondeo S3: chrislusf/seaweedfs:latest → chrislusf/seaweedfs@sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d
+GATE sondeo S3: rustfs/rustfs:latest → rustfs/rustfs@sha256:1803faef57627e2d9c2e7d89d655d712ddded5389040054987163043fecb6a3c
+GATE sondeo S3: dxflrs/garage:v2.1.0 → dxflrs/garage@sha256:4c9b34c113e61358466e83fd6e7d66e6d18657ede14b776eb78a93ee8da7cf6a
+✗ smoke OK pero hay imágenes sin digest  ← esperado en esta corrida; corregido en el commit siguiente (pin)
+
+## compose-smoke run 37838522557 (primera corrida, compose original)
+minio Error pull access denied for minio/minio, repository does not exist or may require 'docker login'
+
+## mutaciones: corrida completa local en curso al abrir el PR; resultado se agrega abajo
