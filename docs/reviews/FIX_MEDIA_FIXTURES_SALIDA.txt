@@ -20,5 +20,5 @@ AssertionError: expected 'A' to be 'B' // Object.is equality
  Test Files  36 passed | 1 skipped (37)
       Tests  668 passed | 1 skipped (669)
 
-## mutación nueva (216/216 del archivo)
+## mutación nueva (regla 216 del archivo; corrida sola con --tanda 215:216)
 ATRAPADA   media: caché de fixtures borra el directorio publicado por otro worker — atrapadas 1 · sobreviven 0
