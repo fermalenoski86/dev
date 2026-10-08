@@ -1,0 +1,9 @@
+{
+  "identities": [
+    {
+      "name": "trust-dev",
+      "credentials": [{ "accessKey": "CHANGE_ME", "secretKey": "CHANGE_ME" }],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}

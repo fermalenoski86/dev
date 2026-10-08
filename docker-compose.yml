@@ -3,10 +3,12 @@
 # CI el job compose-smoke (scripts/ci/compose-smoke.sh). Las imágenes van
 # fijadas por digest.
 #
-# MinIO: la imagen minio/minio fue borrada de Docker Hub (sep-2026) y la de
-# quay.io dejó de ser pública; la última build comunitaria además no recibe
-# parches. Queda detrás del perfil `s3` hasta que Fer decida el reemplazo
-# (issue #22, decisión-producto).
+# S3 de desarrollo/CI: SeaweedFS (decisión de Fer en #22; MinIO ya no se
+# distribuye sin login). Solo dev/CI: NO elige el proveedor de producción, que
+# tiene que cumplir versioning + Object Lock (docs/ops/BACKUPS.md). Va detrás
+# del perfil `s3`: `docker compose --profile s3 up` (el default usa storage
+# local, como .env.example). compose-smoke corre el contrato S3 contra este
+# servicio y platform-api con STORAGE_DRIVER=s3.
 services:
   postgres:
     image: postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d   # 16.15 (Debian), digest resuelto en CI run 37839307934
@@ -18,14 +20,13 @@ services:
       interval: 5s
       retries: 10
 
-  minio:
-    profiles: ["s3"]   # NO arranca con `docker compose up`: imagen no disponible (ver arriba)
-    image: minio/minio:latest
-    command: server /data --console-address :9001
-    environment:
-      MINIO_ROOT_USER: CHANGE_ME
-      MINIO_ROOT_PASSWORD: CHANGE_ME_TOO
-    ports: ["9000:9000", "9001:9001"]
+  seaweedfs:
+    profiles: ["s3"]
+    # resuelto de chrislusf/seaweedfs:latest en CI (run 37839307934); la versión la imprime compose-smoke
+    image: chrislusf/seaweedfs@sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d
+    command: ["server", "-dir=/data", "-ip.bind=0.0.0.0", "-s3", "-s3.port=8333", "-s3.config=/etc/seaweedfs/s3.json"]
+    volumes: ["./docker/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro"]
+    ports: ["9000:8333"]   # S3 en 127.0.0.1:9000, el S3_ENDPOINT de .env.example
 
   platform-api:
     image: node:22-bookworm@sha256:0e5f906573693feaa1e21057ebdcfdb5bd5021f050b2dc7c9deceb629c7da2a8   # digest resuelto en CI run 37839307934

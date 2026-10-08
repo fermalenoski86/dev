@@ -47,7 +47,7 @@ jobs:
       - run: scripts/ci/run.sh postgres npx vitest run -c vitest.platform.config.ts
       - run: scripts/ci/run.sh bootstrap bash packages/platform-db/scripts/bootstrap-smoke.sh
 
-  # E1 · §35: `docker compose up` reproducible e imágenes por digest
+  # E1 · §35: `docker compose up` reproducible, imágenes por digest y contrato S3 contra SeaweedFS (#22)
   compose-smoke:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
@@ -56,7 +56,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
-      - run: docker compose version
+      - run: docker compose version && aws --version
       - run: scripts/ci/run.sh compose-smoke bash scripts/ci/compose-smoke.sh
       - name: logs del compose
         if: always()
