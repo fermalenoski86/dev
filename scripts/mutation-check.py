@@ -221,6 +221,7 @@ M = [
  ('d2: espejo ajeno tomado como propio (AUDIT D2 R2)', 'packages/builder-repository/src/syncing.ts', '    return previo !== null && mismoDraft(actual, previo.draft);', '    return true;', 'npx vitest run packages/builder-repository'),
  ('d1: black no usa la pantalla', 'packages/platform-campaigns/src/surfaces.ts', "  const activa = (d: { mode: string }) => d.mode !== 'hold';", "  const activa = (d: { mode: string }) => d.mode === 'play';", 'npx vitest run packages/platform-campaigns'),
  ('d1: master no arrastra la horizontal', 'packages/platform-campaigns/src/surfaces.ts', "        if (draft.surfaces.includeHorizontalInMaster) usadas.add('horizontal');\n", '', 'npx vitest run packages/platform-campaigns'),
+ ('media: caché de fixtures borra el directorio publicado por otro worker', 'packages/platform-media/src/fixtures.ts', '    try {\n      renameSync(tmp, dir);', '    rmSync(dir, { recursive: true, force: true });\n    try {\n      renameSync(tmp, dir);', 'npx vitest run packages/platform-media/src/fixtures.test.ts'),
 ]
 # Restauracion garantizada: si esto se interrumpe a mitad (Ctrl-C, timeout,
 # SIGTERM), el repo NO puede quedar con una mutacion aplicada. Pasa, y el

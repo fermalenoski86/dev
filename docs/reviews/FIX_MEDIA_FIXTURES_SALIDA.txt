@@ -1,0 +1,24 @@
+# fix/media-fixtures — salida REAL (2026-10-08T21:58:15Z, node v22.22.0, pnpm 12.5.1, ffmpeg 6.1.1-3ubuntu5)
+
+## regresión con la lógica VIEJA (rmSync(dir) + renameSync) — rojo
+   × mediaFixtures: caché compartido entre workers paralelos > si otro worker publicó el directorio mientras éste generaba, se conserva el ajeno (nunca se borra) 9ms
+     → expected 'A' to be 'B' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'A' to be 'B' // Object.is equality
+      Tests  1 failed | 1 passed (2)
+
+## con el fix — verde
+ ✓ packages/platform-media/src/fixtures.test.ts (2 tests) 9ms
+      Tests  2 passed (2)
+
+## media real con caché frío (rm -rf /tmp/trust-media-fixtures-*)
+ Test Files  3 passed (3)
+      Tests  63 passed (63)
+
+## pnpm verify
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  36 passed | 1 skipped (37)
+      Tests  668 passed | 1 skipped (669)
+
+## mutación nueva (regla 216 del archivo; corrida sola con --tanda 215:216)
+ATRAPADA   media: caché de fixtures borra el directorio publicado por otro worker — atrapadas 1 · sobreviven 0
