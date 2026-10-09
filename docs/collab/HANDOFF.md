@@ -1,8 +1,12 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor). Auditoría de **E2**: PR [#29](https://github.com/fermalenoski86/dev/pull/29), rama `fase/m3a1-e2`, HEAD `69975d4`. Issue [#30](https://github.com/fermalenoski86/dev/issues/30). CI del PR 37904012565: 6/6 verde a la primera (mutaciones 244, M2C 14/14). E3 sigue sin autorización. Pendiente de Fer: #26 y tags.
+**Pelota en:** ChatGPT (auditor). Auditoría de **E2**: PR [#29](https://github.com/fermalenoski86/dev/pull/29), rama `fase/m3a1-e2`, HEAD `69975d4`. Issue [#30](https://github.com/fermalenoski86/dev/issues/30). CI del PR 37904012565: 6/6 verde a la primera (mutaciones 244, M2C 14/14). E3 AUTORIZADA por Fer (#31, opción a: `apps/platform-web`); arranca después de aprobar E2, con brief corto primero. Pendiente de Fer: #26 y tags.
 **Fase:** M3A.1 Fase E — E2 E2E de plataforma sin navegador.
 **Estado:** D3 [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/27#issuecomment-6076998058) sobre `66b1f44c2689d5ba3547f59b2e91654dbca30279`; squash en `main@2e39d3fbdf991fcf6884713b403ab3c5100610c8`. CI exacta [37892977654](https://github.com/fermalenoski86/dev/actions/runs/37892977654): 6/6 verde al primer intento; verify 693+1, PostgreSQL 238+6, bootstrap 6, media 63, mutaciones 240/240, M2C 14/14 y compose-smoke local/S3. Issue #28 cerrado.
+
+
+## Decisión de Fer sobre E3 (2026-10-09 06:48 ART, #31)
+Opción (a): la UI de login, campaña y aprobación vive en una app nueva `apps/platform-web`. `apps/control` sigue congelada. **E3 arranca después de `AUDIT: APROBADO` de E2**, con un brief corto de E3 para acordar con el auditor antes de implementar. No cambia la pelota actual.
 
 ## Decisión de Fer sobre #15 (2026-10-08 20:32 ART)
 Opción 1: D3 autorizada (store del Builder con `CampaignRepository` inyectado + indicador de versión; sin tocar la experiencia ejecutiva, el renderer, la geometría ni los screenshots; los 14 E2E de M2C son gate). **Orden: D3 después de cerrar E1 y antes de E2**, en su propia rama y PR. No cambia la pelota actual.
@@ -10,7 +14,7 @@ Opción 1: D3 autorizada (store del Builder con `CampaignRepository` inyectado +
 ## Entrega activa
 - Implementador: Claude. Crear `fase/m3a1-e2` desde `main@2e39d3fbdf991fcf6884713b403ab3c5100610c8` o posterior y entregar PR + issue de auditoría.
 - E2: ejecutar por HTTP real, PostgreSQL real, ffprobe real, sesiones/CSRF y roles reales el flujo definido en `docs/briefs/M3A1_FASE_E.md` §E2. Generar `docs/reviews/M3A1_ACEPTACION.md` con los 19 puntos y los estados autoritativos; un pendiente nunca cuenta como cubierto.
-- Gates obligatorios: todos los de AGENTS.md. Mantener los 14 E2E M2C congelados. No iniciar E3 ni construir UI de login/campaña/aprobación: su ubicación sigue pendiente de decisión de producto.
+- Gates obligatorios: todos los de AGENTS.md. Mantener los 14 E2E M2C congelados. E3 autorizada por Fer (#31): UI en `apps/platform-web`, después de aprobar E2.
 - D3 queda cerrada. No reabrir store/indicador salvo bug demostrado con reproducción y test.
 - Debate de mejoras D3: BL-25 se ajusta y difiere a E3 (no es trabajo independiente de E2); cuando se autorice, usar autenticación Playwright por API/storageState sin persistir cookies y aislar datos por worker. BL-26 queda aceptada para backlog después de E2, prioridad P2: retry solo de pending, backoff exponencial acotado con jitter, una sync en vuelo y cancelación en éxito/conflicto/cierre; criterio verificable: backend vuelve sin evento `online`, una sola revisión/audit y límite de intentos. Fuente primaria: https://html.spec.whatwg.org/multipage/system-state.html#browser-state.
 - #26/BL-09 continúa como PR pequeño separado de observabilidad, sin cambiar asserts, timeouts ni retries. No mezclar con E2.
