@@ -1,6 +1,6 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). Iniciar **E2** desde el `main` vigente, que contiene D3 aprobada y fusionada. No iniciar E3.
+**Pelota en:** Claude (implementador). E2 entregada en el PR [#29](https://github.com/fermalenoski86/dev/pull/29) (rama `fase/m3a1-e2`, HEAD `69975d4`), issue [#30](https://github.com/fermalenoski86/dev/issues/30). Esperando la CI; cuando dé verde, pelota a ChatGPT. Si esta línea sigue así después de las 12:00 UTC del 2026-10-09, otro turno retoma desde esa rama. E3 sigue sin autorización. Pendiente de Fer: #26 y tags.
 **Fase:** M3A.1 Fase E — E2 E2E de plataforma sin navegador.
 **Estado:** D3 [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/27#issuecomment-6076998058) sobre `66b1f44c2689d5ba3547f59b2e91654dbca30279`; squash en `main@2e39d3fbdf991fcf6884713b403ab3c5100610c8`. CI exacta [37892977654](https://github.com/fermalenoski86/dev/actions/runs/37892977654): 6/6 verde al primer intento; verify 693+1, PostgreSQL 238+6, bootstrap 6, media 63, mutaciones 240/240, M2C 14/14 y compose-smoke local/S3. Issue #28 cerrado.
 
@@ -120,6 +120,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-09 08:25 UTC — Claude: D3 mergeada (`main@2e39d3f`); #28 cerrado sin tag. E2 entregada en #29 (issue #30): `e2e-flow.db.test.ts`, §41 por HTTP real rol por rol, y la matriz `M3A1_ACEPTACION.md` de los 19 puntos de §48 (M3A.1 no se declara cerrado: falta E3). Gates locales: verify 693+1, PG 247+6, bootstrap 6, media 63, build, 4/4 mutaciones `e2:`. E2E M2C y las 244 mutaciones completas quedan para CI.
 - 2026-10-09 — ChatGPT: D3 `AUDIT: APROBADO` sobre `66b1f44c2689d5ba3547f59b2e91654dbca30279`; CI 37892977654 inspeccionada completa: verify693+1, PG238+6, bootstrap6, restore18 tablas/verifyChain, media63, mutaciones240, M2C14 y compose local/S3, seis jobs verdes a la primera. Auditor local: delta completo y 24/24 focalizadas; full gates no repetidos localmente y cubiertos por CI. Squash en `main@2e39d3fbdf991fcf6884713b403ab3c5100610c8`; #28 cerrado. BL-25 diferida a E3; BL-26 aceptada con ajustes para después de E2. Pelota a Claude para E2; E3 sin autorización.
 - 2026-10-09 06:47 UTC — Claude: CI de #27 6/6 verde a la primera (37892977654). La corrida local completa de mutaciones se cortó en 15/240 (0 sobrevivientes) y se restauró limpia; las 240 están en CI y las 12 `d3:` corrieron completas localmente. Auditoría pedida en #27/#28. Pelota a ChatGPT.
 - 2026-10-09 06:25 UTC — Claude: D3 entregada en #27 (issue #28): `CampaignSession` en `@trust/builder-repository`, store del Builder con sesión inyectada (sin `?campaign=` M2C no cambia) e indicador APPROVED VERSION / WORKING DRAFT. Gates locales: verify 693+1, PG 238+6, bootstrap 6, media 63, build, 12/12 mutaciones `d3:`; la corrida completa local sigue en curso. E2E solo en CI.
