@@ -181,14 +181,14 @@ pero no demuestra por sí sola una causa de rendimiento o codecs.
 
 
 ## BL-23 · Matriz de aceptación ejecutable — seguimiento E2, 2026-10-09
-**Estado: aceptada con ajuste en #20; pendiente de implementar en PR #29.**
+**Estado: verificada y mergeada en PR #29 (`main@0234055a572107ca3623363bcb8e45d7dfe6326c`, ChatGPT 2026-10-09).**
 Acuerdo de Claude: https://github.com/fermalenoski86/dev/pull/20#issuecomment-6063828202.
-Auditoría E2: https://github.com/fermalenoski86/dev/pull/29#issuecomment-6078625925.
+Auditoría inicial: https://github.com/fermalenoski86/dev/pull/29#issuecomment-6078625925. Aprobación: https://github.com/fermalenoski86/dev/pull/29#issuecomment-6080498773.
 - Problema: matriz manual sin vínculo comprobado con tests/CI; puede conservar cobertura obsoleta.
 - Beneficio: trazabilidad verificable de los 19 puntos de §48, con pendientes explícitos.
-- Prioridad P2, esfuerzo original ~0,5 día. Responsable: Claude, misma rama E2.
+- Implementada por Claude y revalidada por ChatGPT: 12 tests etiquetados, 19 puntos, estados explícitos y resultado JSON real de Vitest.
 - Acuerdo vigente: generación desde tags de tests y validación de estados cubierto/pendiente/no aplicable; no convertir pendientes en verde. No alterar M2C congelado.
-- Criterio: punto sin test ni estado declarado, referencia inexistente o documento desactualizado falla; negativo controlado + recuperación; CI completa sobre nuevo HEAD.
+- Verificación: negativo real sin `[§48.17]` falló y se recuperó; 9/9 tests del validador; 3/3 mutaciones nuevas atrapadas; CI 37915601096 completa, 247/247 mutaciones y M2C 14/14.
 - Fuente primaria consultada 2026-10-09: https://v2.vitest.dev/guide/reporters#json-reporter. Vitest 2 puede emitir nombre completo y estado en JSON. Aplicación propuesta: relacionar resultados con tags; límite: no demuestra suficiencia de asserts ni reemplaza gates de navegador. Es seguimiento del acuerdo existente, no una mejora nueva ni verificada.
 
 ## BL-27 · Alta de usuarios por API solo ADMIN — debate E2, 2026-10-09
@@ -197,3 +197,36 @@ Auditoría E2: https://github.com/fermalenoski86/dev/pull/29#issuecomment-607862
 - ChatGPT: difiere. La preparación de usuarios de tests no justifica por sí sola ampliar la API; E3 autorizada en #31 cubre login/campañas/aprobación, no alta administrativa.
 - Beneficio potencial: operación del alta sin CLI. Prioridad posterior a E3; depende de necesidad de producto confirmada por Fer.
 - Si se autoriza: criterio mínimo de acceso ADMIN, rechazo de otros roles y auditoría sin secretos. Alcance detallado en brief propio antes de implementar.
+
+## BL-28 · Accesibilidad operativa de E3 — *Claude, ajustada por ChatGPT*
+**Estado: aceptada con ajuste para E3; pendiente de respuesta/implementación de Claude.**
+Debate: https://github.com/fermalenoski86/dev/pull/32#issuecomment-6084515242.
+- Problema: la UI nueva puede ser operable visualmente y aun fallar con teclado,
+  foco, nombres accesibles o anuncio de errores.
+- Acuerdo propuesto: axe en login, campañas y revisión, más recorridos Playwright
+  de teclado, foco visible, nombres accesibles y errores anunciados. No afirmar
+  conformidad WCAG completa solo por un escaneo automático.
+- Prioridad/esfuerzo: P1, ~0,5 día, dentro de E3.
+- Criterio medible: cero violaciones axe en las vistas acordadas y el flujo
+  principal se completa solo con teclado; los checks no relajan §41 ni M2C.
+- Fuente primaria consultada 2026-10-09:
+  https://playwright.dev/docs/accessibility-testing. Playwright documenta que
+  axe mezcla reglas ligadas a WCAG y best practices; límite: automatización no
+  sustituye evaluación manual completa.
+
+## BL-29 · Manifest y retención de evidencia E3 — *ChatGPT*
+**Estado: propuesta del auditor; pendiente de respuesta de Claude.**
+Debate: https://github.com/fermalenoski86/dev/pull/32#issuecomment-6084515242.
+- Problema: un enlace a un run no identifica por sí solo qué commit, navegador,
+  roles, campaña, versión y hash produjeron cada screenshot/video; los artifacts
+  se eliminan según la retención configurada.
+- Beneficio: evidencia técnica y comercial auditable sin versionar binarios.
+- Prioridad/esfuerzo: P2, <0,5 día, dentro de E3c.
+- Criterio medible: artifact con manifest JSON validado por CI que incluya SHA,
+  navegador, roles, campaignId, versionId/hash, specs y resultado, y
+  `retention-days` explícito.
+- Fuente primaria consultada 2026-10-09:
+  https://docs.github.com/en/actions/tutorials/store-and-share-data#configuring-a-custom-artifact-retention-period.
+  Límite: el manifest mejora trazabilidad, pero no prueba por sí solo la
+  corrección visual ni sustituye el E2E.
+
