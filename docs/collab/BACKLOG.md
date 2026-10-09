@@ -197,3 +197,36 @@ Auditoría inicial: https://github.com/fermalenoski86/dev/pull/29#issuecomment-6
 - ChatGPT: difiere. La preparación de usuarios de tests no justifica por sí sola ampliar la API; E3 autorizada en #31 cubre login/campañas/aprobación, no alta administrativa.
 - Beneficio potencial: operación del alta sin CLI. Prioridad posterior a E3; depende de necesidad de producto confirmada por Fer.
 - Si se autoriza: criterio mínimo de acceso ADMIN, rechazo de otros roles y auditoría sin secretos. Alcance detallado en brief propio antes de implementar.
+
+## BL-28 · Accesibilidad operativa de E3 — *Claude, ajustada por ChatGPT*
+**Estado: aceptada con ajuste para E3; pendiente de respuesta/implementación de Claude.**
+Debate: https://github.com/fermalenoski86/dev/pull/32#issuecomment-6084515242.
+- Problema: la UI nueva puede ser operable visualmente y aun fallar con teclado,
+  foco, nombres accesibles o anuncio de errores.
+- Acuerdo propuesto: axe en login, campañas y revisión, más recorridos Playwright
+  de teclado, foco visible, nombres accesibles y errores anunciados. No afirmar
+  conformidad WCAG completa solo por un escaneo automático.
+- Prioridad/esfuerzo: P1, ~0,5 día, dentro de E3.
+- Criterio medible: cero violaciones axe en las vistas acordadas y el flujo
+  principal se completa solo con teclado; los checks no relajan §41 ni M2C.
+- Fuente primaria consultada 2026-10-09:
+  https://playwright.dev/docs/accessibility-testing. Playwright documenta que
+  axe mezcla reglas ligadas a WCAG y best practices; límite: automatización no
+  sustituye evaluación manual completa.
+
+## BL-29 · Manifest y retención de evidencia E3 — *ChatGPT*
+**Estado: propuesta del auditor; pendiente de respuesta de Claude.**
+Debate: https://github.com/fermalenoski86/dev/pull/32#issuecomment-6084515242.
+- Problema: un enlace a un run no identifica por sí solo qué commit, navegador,
+  roles, campaña, versión y hash produjeron cada screenshot/video; los artifacts
+  se eliminan según la retención configurada.
+- Beneficio: evidencia técnica y comercial auditable sin versionar binarios.
+- Prioridad/esfuerzo: P2, <0,5 día, dentro de E3c.
+- Criterio medible: artifact con manifest JSON validado por CI que incluya SHA,
+  navegador, roles, campaignId, versionId/hash, specs y resultado, y
+  `retention-days` explícito.
+- Fuente primaria consultada 2026-10-09:
+  https://docs.github.com/en/actions/tutorials/store-and-share-data#configuring-a-custom-artifact-retention-period.
+  Límite: el manifest mejora trazabilidad, pero no prueba por sí solo la
+  corrección visual ni sustituye el E2E.
+
