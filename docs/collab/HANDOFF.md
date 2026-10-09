@@ -1,8 +1,8 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). Corregir el **brief de E3** en PR [#32](https://github.com/fermalenoski86/dev/pull/32), issue [#33](https://github.com/fermalenoski86/dev/issues/33), según [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/32#issuecomment-6084515242) sobre `cf3b5a00a3ca91a2f7fc4146c689e5c8625b4aeb`. No implementar E3a antes de aprobar el brief.
-**Fase:** M3A.1 Fase E — E3, corrección del brief de UI + Playwright §41/§47.
-**Estado:** [P1] pendiente: el login por proxy de `platform-web` emite una cookie `__Host-` host-only que el Builder no puede reutilizar al llamar directamente a otro host de API. Elegir una topología de sesión concreta y agregar E2E multihost. Decisiones aceptadas con ajuste: cuenta por rol/worker (BL-25), artifact con manifest/retención (BL-29) y accesibilidad automática + teclado/foco sin prometer conformidad total (BL-28). Pendiente de Fer: #26 y tags.
+**Pelota en:** ChatGPT (auditor). Reauditar el **brief de E3** en PR [#32](https://github.com/fermalenoski86/dev/pull/32) sobre `29f527d361ef3a3f289c7f6fdab8824d8f9e0a19` ([re-entrega 1](https://github.com/fermalenoski86/dev/pull/32#issuecomment-6084584549)), issue [#33](https://github.com/fermalenoski86/dev/issues/33). No implementar E3a antes de aprobar el brief.
+**Fase:** M3A.1 Fase E — E3, reauditoría del brief de UI + Playwright §41/§47.
+**Estado:** [P1] corregido en el brief: sin proxy; `platform-web` y `apps/control` van directo a `platform-api` en hosts HTTPS del mismo site, CORS por allowlist exacta (`TRUST_CORS_ORIGINS`, sin `*`, credentials, `Vary: Origin`, 403 `ORIGIN_NOT_ALLOWED` a mutaciones con origen no listado), CSRF intacto; gate `session-multihost.spec.ts` con hosts distintos, TLS de test y cookie `__Host-` real. Incorporados: cuenta por rol y worker (BL-25), manifest §47 validado + `retention-days` (BL-29), BL-28 (axe + teclado/foco/alertas). Pendiente de Fer: #26 y tags.
 
 ## Auditoría inicial del brief E3 — 2026-10-09
 - Resultado: **AUDIT: CAMBIOS**, [comentario en PR #32](https://github.com/fermalenoski86/dev/pull/32#issuecomment-6084515242).
@@ -139,6 +139,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-09 — Claude: brief E3 re-entrega 1 en `29f527d` (merge de `main@602aec4`). [P1] corregido con arquitectura de sesión directa a la API en hosts del mismo site + CORS allowlist + E2E multihost; ❓2/❓3/BL-28/BL-29 incorporados. Gates del documento: verify 702+1, acceptance 19/12 OK; el resto en CI del nuevo HEAD. Pelota a ChatGPT.
 - 2026-10-09 12:15 UTC — Claude: E2 `AUDIT: APROBADO` y mergeada (`main@0234055`); #30 cerrado sin tag. Brief corto de E3 propuesto en #32 (issue #33): `apps/platform-web` (E3a sesión y campañas, E3b campaña/assets/envío/aprobación, E3c Playwright §41 por rol + §47 como artifact + BL-23 para E3-41/E3-47). Pelota a ChatGPT.
 - 2026-10-09 — ChatGPT: E2 `AUDIT: APROBADO` sobre `ea635b1`; BL-23 verificada, CI 6/6, squash `0234055`, issue #30 cerrado. Pelota a Claude para brief corto E3 (`apps/platform-web`) antes de implementar.
 - 2026-10-09 10:37 UTC — Claude: CI de `ea635b1` 6/6 verde a la primera (37915601096), con la matriz BL-23 verificada contra el reporte JSON de la suite PG en CI. Re-auditoría de E2 pedida. Pelota a ChatGPT.
