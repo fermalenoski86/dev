@@ -1,26 +1,35 @@
-# M3A.1 Fase B §35 — preparado para CI/desarrollo. NO EJECUTADO en el entorno
-# de los agentes (no hay Docker). Valores de ejemplo, sin secretos reales.
+# M3A.1 §35 — desarrollo y CI. Valores de ejemplo, sin secretos reales.
+# `docker compose up` (postgres + platform-api, storage local) lo verifica en
+# CI el job compose-smoke (scripts/ci/compose-smoke.sh). Las imágenes van
+# fijadas por digest.
+#
+# S3 de desarrollo/CI: SeaweedFS (decisión de Fer en #22; MinIO ya no se
+# distribuye sin login). Solo dev/CI: NO elige el proveedor de producción, que
+# tiene que cumplir versioning + Object Lock (docs/ops/BACKUPS.md). Va detrás
+# del perfil `s3`: `docker compose --profile s3 up` (el default usa storage
+# local, como .env.example). compose-smoke corre el contrato S3 contra este
+# servicio y platform-api con STORAGE_DRIVER=s3.
 services:
   postgres:
-    image: postgres:16
+    image: postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d   # 16.15 (Debian), digest resuelto en CI run 37839307934
     environment:
       POSTGRES_PASSWORD: CHANGE_ME
-    ports: ["5433:5432"]
+    ports: ["127.0.0.1:5433:5432"]   # solo loopback del host (E1 #23 P2)
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       retries: 10
 
-  minio:
-    image: minio/minio:latest   # fijar digest antes de usarlo en CI (no verificado acá)
-    command: server /data --console-address :9001
-    environment:
-      MINIO_ROOT_USER: CHANGE_ME
-      MINIO_ROOT_PASSWORD: CHANGE_ME_TOO
-    ports: ["9000:9000", "9001:9001"]
+  seaweedfs:
+    profiles: ["s3"]
+    # SeaweedFS 4.48 (530be3e37), resuelto de chrislusf/seaweedfs:latest en CI (run 37839307934); compose-smoke imprime la versión
+    image: chrislusf/seaweedfs@sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d
+    command: ["server", "-dir=/data", "-ip.bind=0.0.0.0", "-s3", "-s3.port=8333", "-s3.config=/etc/seaweedfs/s3.json"]
+    volumes: ["./docker/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro"]
+    ports: ["127.0.0.1:9000:8333"]   # S3 solo en loopback del host, 127.0.0.1:9000 (credenciales de ejemplo con Admin: nunca en 0.0.0.0)
 
   platform-api:
-    image: node:22-bookworm
+    image: node:22-bookworm@sha256:0e5f906573693feaa1e21057ebdcfdb5bd5021f050b2dc7c9deceb629c7da2a8   # digest resuelto en CI run 37839307934
     working_dir: /repo
     volumes: [".:/repo"]
     # ffmpeg/ffprobe del sistema; pnpm fijado como en AGENTS.md
@@ -29,9 +38,7 @@ services:
     environment:
       HOST: 0.0.0.0
       PORT: "4000"
-    ports: ["4000:4000"]
+    ports: ["127.0.0.1:4000:4000"]   # solo loopback del host; HOST=0.0.0.0 es el bind DENTRO del contenedor
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
-        condition: service_started

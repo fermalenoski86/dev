@@ -5,6 +5,8 @@
   "type": "module",
   "main": "./src/index.ts",
   "scripts": {
+    "db:migrate": "tsx scripts/db-migrate.ts",
+    "docs:contract": "tsx scripts/docs-contract.ts",
     "start": "tsx src/server.ts",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",

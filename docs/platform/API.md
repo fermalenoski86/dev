@@ -5,6 +5,10 @@ Arranque: `pnpm --filter @trust/platform-api start` (variables en `.env.example`
 
 ## Rutas
 
+Contrato completo y verificado contra el registro de Fastify (E1 · BL-11):
+[`openapi.json`](openapi.json) e inventario en [`DELIVERY.md`](DELIVERY.md),
+regenerados con `pnpm docs:contract` (CI exige diff vacío).
+
 | Método | Ruta | Qué hace | Respuestas |
 |---|---|---|---|
 | GET | `/health` | proceso vivo | 200 `{status:"ok"}` |
@@ -76,6 +80,7 @@ Salida real de estos comandos (login, CSRF, READY, replay, REJECTED, logout, 401
 | demás rechazos de media | 422 | ídem |
 | Idempotency-Key reusada con otro contenido | 409 `IDEMPOTENCY_KEY_REUSED` | — |
 | sin Idempotency-Key | 400 `IDEMPOTENCY_KEY_REQUIRED` | — |
+| límite por actor (BL-10) | 429 `RATE_LIMITED` + header `Retry-After` (s) | `details: { reason: "CONCURRENCY" \| "RATE", retryAfterSeconds }` |
 | cuerpo no multipart | 415 `UNSUPPORTED_MEDIA_TYPE` | — |
 | `surfaceType` inexistente | 400 `INVALID_SURFACE_TYPE` | `details.accepted` |
 | input inválido | 400 `VALIDATION_ERROR` | `details.issues[]` (path + mensaje) |
@@ -91,6 +96,29 @@ transcodificando, `ffmpeg.args` (arreglo con los marcadores `{input}` y
 `{output}`; el servidor no interpola ni ejecuta nada) y `displayCommand`. Se
 deriva de la misma autoridad que valida; un test real aplica la receta a cada
 fixture rechazable y el resultado pasa `checkMedia`.
+
+## Límite de uploads por actor (BL-10, E1 · §39)
+
+Por **actor autenticado** (no por IP), en `POST /api/v1/assets`:
+
+- concurrencia: `UPLOAD_MAX_CONCURRENT_PER_ACTOR` (default 2, rango 1–32)
+  uploads/inspecciones a la vez; un 429 `CONCURRENCY` trae `Retry-After: 1`;
+- tasa: `UPLOAD_MAX_PER_MINUTE_PER_ACTOR` (default 30, rango 1–10000) uploads
+  empezados por ventana fija de 60 s; un 429 `RATE` trae los segundos que
+  faltan para que se abra la ventana.
+
+Se consulta después de autenticar y validar la Idempotency-Key y el
+`content-type`, y **antes de leer el cuerpo y de reservar la key**: un 429 no
+deja temporal, ni Asset, ni key reservada (la misma key sirve al reintentar).
+Los 400/401/403/415 no consumen cupo. El cupo de concurrencia se devuelve
+siempre, también si el upload falla. Tests: `upload-limits.db.test.ts`.
+
+**Límite conocido**: el contador vive en memoria del proceso. Con varias
+instancias detrás de un balanceador cada una cuenta por su lado (el límite
+efectivo es N × el configurado). Un store compartido es trabajo futuro; hasta
+entonces, desplegar una instancia o dividir los valores por la cantidad de
+instancias. La concurrencia de procesos ffprobe/ffmpeg ya está acotada por
+proceso con `MEDIA_INSPECTION_CONCURRENCY`.
 
 ## Identidad (§19) — sesión desde C1
 
@@ -115,5 +143,26 @@ el contenido del archivo.
 
 ## Docker Compose (§35)
 
-`docker-compose.yml` (postgres 16, minio, platform-api) queda preparado y **no
-fue ejecutado**: el entorno de los agentes no tiene Docker.
+`docker-compose.yml`: `docker compose up` levanta postgres 16 y platform-api
+(storage local, el default de `.env.example`), con imágenes fijadas por
+digest. El entorno de los agentes no tiene daemon de Docker: el smoke real
+corre en CI, job `compose-smoke` (`scripts/ci/compose-smoke.sh`): bootstrap
+con psql (dos veces), `pnpm db:migrate` como `trust_owner` (dos veces),
+`/ready` con database, storage y media en `ok` y login inválido = 401.
+
+S3 de dev/CI: **SeaweedFS 4.48** fijado por digest, detrás del perfil `s3`
+(`docker compose --profile s3 up`; S3 en `127.0.0.1:9000`, credenciales de
+ejemplo en `docker/seaweedfs/s3.json`). Reemplaza a MinIO, que ya no se
+distribuye sin login (decisión de Fer en #22). **Solo dev/CI**: no elige el
+proveedor de producción, que tiene que cumplir versioning y Object Lock
+(`docs/ops/BACKUPS.md`). `compose-smoke` crea el bucket, corre el contrato S3
+completo (`s3.contract.test.ts`, 15 tests) contra SeaweedFS y levanta
+platform-api también con `STORAGE_DRIVER=s3` (`/ready` en `ok`).
+
+Todos los puertos del compose (5433, 9000, 4000) se publican **solo en
+`127.0.0.1`** del host: las credenciales de ejemplo de SeaweedFS tienen permisos
+de administración y no pueden quedar expuestas a la red. `compose-smoke` falla si
+la config renderizada publica algún puerto fuera de `127.0.0.1` y comprueba el
+bind real con `docker compose port seaweedfs 8333` (= `127.0.0.1:9000`). El bind
+`0.0.0.0` de platform-api (`HOST`) y de SeaweedFS (`-ip.bind`) es *dentro* del
+contenedor, necesario para la red interna del compose.
