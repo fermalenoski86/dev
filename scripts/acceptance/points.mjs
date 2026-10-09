@@ -40,8 +40,8 @@ export const POINTS = [
 
 /** Lo que §41/§47 piden en navegador y todavía no existe (E3, #31). Siempre pendiente. */
 export const PENDIENTES_NAVEGADOR = [
-  { id: 'E3-41', texto: '§41 E2E Playwright: login, campaña, envío, aprobación por otro usuario y versión aprobada vs. working draft, en navegador', motivo: 'E3 autorizada por Fer en #31 (`apps/platform-web`); brief corto pendiente de acuerdo; no implementada ni verificada.' },
-  { id: 'E3-47', texto: '§47 screenshots y video del flujo', motivo: 'Dependen de la UI de E3.' },
+  { id: 'E3-41', texto: '§41 E2E Playwright: login, campaña, envío, aprobación por otro usuario y versión aprobada vs. working draft, en navegador', motivo: 'Brief E3 aprobado (#32). E3a entrega `apps/platform-web` (login y campañas) y CORS; el E2E Playwright de §41 por rol es E3c: no implementado ni verificado.' },
+  { id: 'E3-47', texto: '§47 screenshots y video del flujo', motivo: 'Dependen del flujo completo de E3b y del job `e2e-platform` de E3c.' },
 ];
 
 /** Suite cuyos resultados verifica CI (job postgres): solo ahí puede haber tags. */

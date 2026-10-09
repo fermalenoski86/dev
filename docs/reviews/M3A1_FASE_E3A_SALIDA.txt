@@ -1,0 +1,100 @@
+# M3A.1 Fase E3a — salida REAL de los gates (2026-10-09, este entorno)
+
+Rama fase/m3a1-e3a desde main@8b448ad. Salida filtrada a las líneas de resultado; nada editado a mano.
+
+## 2026-10-09T20:14:18Z · node v22.22.0 · pnpm 12.5.1 · psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) · ffprobe version 6.1.1-3ubuntu5
+$ pnpm install --frozen-lockfile
+✓ Lockfile passes supply-chain policies (verified 5m ago)
+Lockfile is up to date, resolution step is skipped
+Done in 30ms using pnpm v12.5.1
+
+$ pnpm verify
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  43 passed | 1 skipped (44)
+      Tests  719 passed | 1 skipped (720)
+
+$ pnpm build   (primeras 20 líneas filtradas; exit code y rutas en la re-corrida de abajo)
+apps/platform-web build$ next build
+packages/platform-storage build: Done
+packages/shared-types build: Done
+packages/telemetry build: Done
+packages/timeline build: Done
+packages/show-engine build: Done
+packages/control-core build: Done
+packages/show-authoring build: Done
+packages/trust-3d build: Done
+packages/builder-repository build: Done
+packages/experience-core build: Done
+packages/platform-contracts build: Done
+apps/platform-web build:   ▲ Next.js 14.2.35
+apps/platform-web build: 
+apps/platform-web build:    Creating an optimized production build ...
+apps/platform-web build:  ✓ Compiled successfully
+apps/platform-web build:    Skipping linting
+apps/platform-web build:    Checking validity of types ...
+apps/previs build:  ✓ Compiled successfully
+apps/platform-web build:    Collecting page data ...
+
+$ npx vitest run -c vitest.platform.config.ts
+ Test Files  22 passed | 1 skipped (23)
+      Tests  264 passed | 6 skipped (270)
+
+$ bash packages/platform-db/scripts/bootstrap-smoke.sh
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+
+$ npx vitest run -c vitest.media.config.ts
+ Test Files  3 passed (3)
+      Tests  63 passed (63)
+
+$ pnpm build   (re-corrida para confirmar el exit code y las rutas)
+exit=0
+apps/platform-web build: ┌ ○ /                                    692 B            88 kB
+apps/platform-web build: ├ ○ /_not-found                          872 B          88.2 kB
+apps/platform-web build: ├ ○ /campaigns                           3.85 kB         105 kB
+apps/platform-web build: └ ○ /login                               3.11 kB         104 kB
+
+$ pnpm acceptance:check
+GATE acceptance: 19 puntos, 12 tests etiquetados; docs/reviews/M3A1_ACEPTACION.md al día
+
+$ pnpm docs:contract && git diff --stat docs/platform/openapi.json
+docs/platform/openapi.json y docs/platform/DELIVERY.md regenerados (27 rutas registradas)
+(sin diff en openapi.json: E3a no agrega rutas; DELIVERY.md suma los 5 archivos de test nuevos)
+
+$ python3 scripts/mutation-check.py --tanda 247:258   (las 11 reglas nuevas e3a:)
+tanda 247:258 — 11 de 258 reglas
+ATRAPADA   e3a: CORS responde `*` en vez del origen exacto (ADR-063) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3a: CORS sin Vary: Origin (caché cruzada) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3a: mutación con Origin no listado no se corta (defensa en profundidad) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3a: preflight no habilita X-CSRF-Token ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3a: TRUST_CORS_ORIGINS acepta orígenes no exactos ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3a: TRUST_CORS_ORIGINS acepta http en producción ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3a: el cliente web no manda credenciales (la cookie del host de la API no viaja) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3a: el cliente web no manda X-CSRF-Token en mutaciones ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3a: el cliente web conserva el CSRF después de un 401 ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3a: open redirect en `next` del login ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3a: sin sesión no se redirige a /login ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+atrapadas 11 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+
+$ python3 scripts/mutation-check.py --autoprueba
+autoprueba OK
+
+La corrida completa de las 258 reglas queda en CI (job mutations): localmente tarda ~30 min y el entorno la cortó en fases anteriores.
+
+$ npx playwright test e2e/experience.spec.ts e2e/builder.spec.ts   (M2C 14)
+NO EJECUTADO localmente: no hay Google Chrome con H.264 en este entorno. La evidencia es el job e2e-m2c de CI.
+
+## Smoke de navegador real (NO es gate: el gate multihost con TLS es E3c)
+
+Chromium 1194 headless con --host-resolver-rules (web.trust.test, api.trust.test y evil.trust.test → 127.0.0.1), por http (cookie de desarrollo trust_session, sin Secure ni __Host-). platform-api real (Fastify + PostgreSQL) en :4100 con TRUST_CORS_ORIGINS=http://web.trust.test:3002; platform-web con `next build` + `next start` en :3002 y NEXT_PUBLIC_TRUST_API_URL=http://api.trust.test:4100. Hosts distintos, no solo puertos.
+
+1. sin sesión /campaigns → http://web.trust.test:3002/login?next=%2Fcampaigns
+2. credenciales malas → alert: Email o contraseña incorrectos. (INVALID_CREDENTIALS · fddcf191-1ab2-4eb6-88c7-b09f1a472f83)
+3. login →  http://web.trust.test:3002/campaigns · header: Operadora Smoke · OPERATOR
+4. cookies del contexto: [{"name":"trust_session","domain":"api.trust.test","httpOnly":true,"sameSite":"Lax"}]
+5. alta → Campaña «Smoke E3a navegador» creada. · fila: 2
+6. logout → http://web.trust.test:3002/login?next=%2Fcampaigns · cookies: []
+7. /auth/me después del logout → 401
+8. desde evil.trust.test (la app no puede ni leer /auth/me) → alert: No se pudo conectar con la API. (NETWORK_ERROR) · formulario visible: 0 · cookies: []
+llamadas a la API (web): ["GET /api/v1/auth/me → 401","POST /api/v1/auth/login → 401","POST /api/v1/auth/login → 200","GET /api/v1/campaigns → 200","GET /api/v1/contracts → 200","POST /api/v1/campaigns → 201","GET /api/v1/contracts → 200","GET /api/v1/campaigns → 200","POST /api/v1/auth/logout → 204","GET /api/v1/auth/me → 401"]

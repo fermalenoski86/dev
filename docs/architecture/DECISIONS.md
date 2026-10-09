@@ -899,6 +899,8 @@ password, cookie ni token (inexistente → actor null). Roles efectivos y
 contratos externos los deriva el backend; EXTERNAL_APPROVER solo cuenta con el
 flag global y el contrato habilitados. Alta de usuarios solo por CLI. El
 provider DEV queda solo para tests. Detalle: `docs/platform/AUTH.md`.
+Desde E3a, las UIs de navegador usan esta sesión directo contra la API, en
+hosts del mismo site y con CORS por allowlist: ver ADR-063.
 
 ## ADR-058 — Aprobación: evidencia atada a la versión, decisión sobre el hash exacto
 **Fecha:** 2026-10 · **Estado:** propuesto (auditoría C2) · **Origen:** M3A.1 Fase C2 + decisiones 2 y 4 del brief C
@@ -989,3 +991,71 @@ Alternativas descartadas:
   `apps/control` de la que autoriza #15);
 - crear la campaña nueva al "duplicar" (necesita UI de contrato: Fase E).
 
+
+## ADR-063 — Dos UIs de navegador directas contra la API cross-origin
+**Fecha:** 2026-10 · **Estado:** propuesto (auditoría E3a) · **Origen:** M3A.1 Fase E3 (brief aprobado en #32, decisión de Fer en #31) · Extiende ADR-057
+`apps/platform-web` (login, campañas, revisión) y `apps/control` (el Builder
+de D3) son dos apps de navegador en hosts propios, y las dos llaman **directo**
+a `platform-api`:
+
+| Host (producción) | App |
+|---|---|
+| `web.<site>` | `apps/platform-web` |
+| `control.<site>` | `apps/control` |
+| `api.<site>` | `platform-api` |
+
+**Por qué la cookie vive en el host de la API.** La sesión de C1 (ADR-057) es
+una cookie host-only: sin `Domain` y, en producción, `__Host-trust_session`. La
+recibe solo el host que la emitió. Si `platform-web` hiciera login a través de
+un proxy de mismo origen, la cookie quedaría en `web.<site>` y el Builder, que
+habla con `api.<site>`, recibiría 401 (hallazgo [P1] de la auditoría del brief
+E3). Con login directo a la API, la única cookie de sesión es la de
+`api.<site>` y le sirve a las dos UIs.
+
+**Requisito de despliegue: mismo site y HTTPS.** La cookie es `SameSite=Lax`:
+viaja en `fetch(..., { credentials: 'include' })` entre hosts del mismo site
+(`web.<site>` → `api.<site>`), no entre sites distintos. `Secure` y `__Host-`
+exigen HTTPS. No se cambia `SameSite` ni el nombre de la cookie.
+
+**CORS por allowlist exacta** (`apps/platform-api/src/cors.ts`,
+`TRUST_CORS_ORIGINS`):
+- orígenes exactos validados al arrancar: `*`, `null`, paths y barra final
+  hacen fallar el arranque, y en producción también `http:`;
+- origen permitido → `Access-Control-Allow-Origin: <origen>` (nunca `*`) y
+  `Access-Control-Allow-Credentials: true`; `Vary: Origin` siempre que llegue
+  `Origin`;
+- preflight con métodos y headers explícitos (`Content-Type`, `X-CSRF-Token`,
+  `Idempotency-Key`, `X-Request-Id`) y `Max-Age` de 600 s;
+- origen no listado: preflight 403 sin headers CORS, y toda mutación con
+  `Origin` no listado → `403 ORIGIN_NOT_ALLOWED` antes de mirar la sesión
+  (defensa en profundidad). Sin `Origin` (CLI, tests, servidor a servidor) no
+  cambia nada; con la lista vacía la API se comporta como antes de E3a.
+
+**CSRF no cambia.** CORS solo decide quién puede *leer* respuestas con
+credenciales; la protección de las escrituras sigue siendo `X-CSRF-Token`
+atado a la sesión. Cada UI lo obtiene de `login` o de `/auth/me` y lo guarda
+solo en memoria.
+
+**Consecuencias.** En `platform-web` las llamadas a la API salen del
+navegador: los Server Components no ven la cookie (es de otro host), así que
+la guarda de sesión es del lado del cliente (`GET /auth/me` → 401 →
+`/login?next=…`, con `next` restringido a rutas internas). `apps/control` no
+cambia de código: se levanta con `NEXT_PUBLIC_TRUST_API_URL=https://api.<site>`.
+
+**Gate.** Unidad y PostgreSQL desde E3a: `cors.db.test.ts` (preflight, 403,
+credenciales, `Vary`, CSRF intacto) y `platform-web-client.db.test.ts` (el
+cliente de la web contra la API real por HTTP). Navegador real desde E3c:
+`e2e-platform/session-multihost.spec.ts` con `web.trust.test`,
+`control.trust.test` y `api.trust.test` (hosts distintos, no solo puertos), TLS
+de test y la cookie `__Host-` real: login en la web → la cookie existe solo
+para el host de la API → `/auth/me` desde el Builder → `PUT` con CSRF → un
+origen no listado queda bloqueado → logout → 401.
+
+Alternativas descartadas:
+- proxy de mismo origen en `platform-web` con CORS solo para el Builder: la
+  cookie queda en el host de la web y el Builder no tiene sesión ([P1]);
+- rewrite `/api/v1` en `apps/control`: toca la app congelada y deja otra cookie
+  en el host de control;
+- cookie con `Domain=<site>`: pierde el prefijo `__Host-` y la expone a todos
+  los subdominios;
+- editor mínimo de draft en `platform-web` sin el Builder: no cumple §41.

@@ -19,5 +19,5 @@ export default defineConfig({
   },
   // JSX de React 17+ (runtime automático), igual que Next en apps/control.
   esbuild: { jsx: 'automatic' },
-  test: { include: ['packages/**/*.test.ts', 'apps/control/src/**/*.test.ts', 'scripts/**/*.test.ts'], exclude: ['**/node_modules/**', '**/*.db.test.ts', '**/*.real.test.ts'], environment: 'node' },
+  test: { include: ['packages/**/*.test.ts', 'apps/control/src/**/*.test.ts', 'apps/platform-web/src/**/*.test.ts', 'scripts/**/*.test.ts'], exclude: ['**/node_modules/**', '**/*.db.test.ts', '**/*.real.test.ts'], environment: 'node' },
 });
