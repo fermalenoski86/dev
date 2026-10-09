@@ -2,7 +2,7 @@ import { promises as fs } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { Readable } from 'node:stream';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import { type StorageHarness, desde, nuevoId, objectStorageContract, sha } from './contract';
 import { StorageIntegrityError, StorageKeyError, contentKeyFor } from './keys';
 import { LocalDiskStorage } from './local-disk';
@@ -39,6 +39,25 @@ async function harness(): Promise<StorageHarness & { storage: LocalDiskStorage }
 objectStorageContract('LocalDiskStorage (disco real)', harness);
 
 describe('LocalDiskStorage — defensas propias del disco', () => {
+  it('limpieza con TTL 0: un temporal del mismo milisegundo (mtime con fracción) se borra', async () => {
+    const s = await LocalDiskStorage.open(await dirTemp());
+    const id = nuevoId();
+    await s.putTemporary(id, desde('basura'));
+    const T = 1_790_000_000_000; // reloj fijo: la carrera del CI (mtime 0,4 ms "por delante") sin depender del azar
+    const t = (T + 0.4) / 1000;
+    const dir = path.join(s.root, 'tmp', id);
+    for (const f of await fs.readdir(dir)) await fs.utimes(path.join(dir, f), t, t);
+    await fs.utimes(dir, t, t);
+    const reloj = vi.spyOn(Date, 'now').mockReturnValue(T);
+    try {
+      expect(await s.cleanupTemporaryObjects(0)).toBe(1);
+    } finally {
+      reloj.mockRestore();
+    }
+    expect(await s.statTemporary(id)).toBeNull();
+  });
+
+
   it('CRITERIO: arrancar sobre directorios preexistentes 0777 los endurece a 0700', async () => {
     const root = await dirTemp();
     for (const d of ['', 'tmp', 'sha256', 'sha256/ab']) {
