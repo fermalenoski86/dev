@@ -1,21 +1,20 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor). Re-auditoría de **E1**: PR [#23](https://github.com/fermalenoski86/dev/pull/23), rama `fase/m3a1-e1`, HEAD `2f361d1` (el código es igual a `aabd501`; ese commit solo agrega la salida de CI). Issue [#24](https://github.com/fermalenoski86/dev/issues/24). #12 (fix B1) ya está aprobado y mergeado en `87591f0`; E1 mergea limpio con ese main (merge-tree sin conflictos). Decisión pendiente de Fer: **#26**, el E2E de M2C intermitente en corridas `pull_request` de #23. Orden después de aprobar E1: **D3 (#15) → E2**. E2 no arranca antes.
-**Fase:** M3A.1 Fase E — E1 hardening y entregables
-**Estado:** P1 de E1 (gate S3) corregido con SeaweedFS fijado por digest, solo para dev/CI según #22. Contrato S3 15/15 dentro de compose-smoke. CI sobre `aabd501`: dispatch 37863613267 verde completo, incluidas 227/227 mutaciones. La corrida PR 37863120895 tuvo e2e-m2c rojo en el attempt 1 (`experience.spec.ts:17`) y verde en el re-run único (#26). No se tocó `apps/control`. Pendiente: borrar las ramas remotas `bisect/e1-*`, porque el proxy deniega borrar refs (403); que las borre Fer o ChatGPT.
-
+**Pelota en:** Claude (implementador). Corregir el [P2] de la re-auditoría E1 en PR [#23](https://github.com/fermalenoski86/dev/pull/23), rama `fase/m3a1-e1`, HEAD auditado `2f361d17aa261681550e621a443b7884e3b61ef0`. [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/23#issuecomment-6074027758), reflejado en [#24](https://github.com/fermalenoski86/dev/issues/24#issuecomment-6074032179). #12 aprobado y mergeado en `87591f069bb880aa1348996caeaae41ecb5fde5f`. Orden después de aprobar E1: **D3 (#15, opción 1) → E2**; no iniciar antes.
+**Fase:** M3A.1 Fase E — E1 hardening y entregables.
+**Estado:** P1 del gate S3 cerrado: SeaweedFS por digest, contrato S3 15/15 y API lista con storage local/S3 verificados en CI. El HEAD de entrega tiene seis jobs verdes en [37865758107](https://github.com/fermalenoski86/dev/actions/runs/37865758107), incluidos 227/227 mutaciones y M2C 14/14 a la primera. E1 aún NO aprobada: [P2] `docker-compose.yml:29` publica S3 en todas las interfaces con credenciales administrativas de ejemplo; limitar el puerto del host a loopback y comprobarlo en compose-smoke. #26 mantiene los fallos históricos y la decisión pendiente sobre modificar el gate M2C. No se tocó `apps/control`.
 
 ## Decisión de Fer sobre #15 (2026-10-08 20:32 ART)
 Opción 1: D3 autorizada (store del Builder con `CampaignRepository` inyectado + indicador de versión; sin tocar la experiencia ejecutiva, el renderer, la geometría ni los screenshots; los 14 E2E de M2C son gate). **Orden: D3 después de cerrar E1 y antes de E2**, en su propia rama y PR. No cambia la pelota actual.
 
 ## Entrega activa
-- Implementador: Claude.
-- Corregir #23 después de la decisión #22: servicio S3 elegido y fijado por digest, incluido en compose-smoke, con contrato S3 ejecutado; o actualizar brief/ADR si Fer decide retirar formalmente ese gate.
-- No iniciar E2 antes de aprobar E1.
-- E3 y `apps/control` siguen bloqueados por #15.
-- Trabajo independiente permitido mientras #22 está abierto: PR pequeño para la carrera de `mediaFixtures()` con regresión concurrente, o BL-21 separado.
-- Propuestas aceptadas para backlog: imagen multi-stage fijada; reconciliación DB↔bucket condicionada a #22; sondeo semanal de digests como P2 operativo.
-- Pendiente aparte: PR #12 (fix B1).
+- Implementador: Claude. Corregir el bind del S3 de dev/CI (`127.0.0.1:9000:8333`) y verificar HostIp + contrato 15/15; revisar por coherencia los otros puertos de ejemplo. Mantener el bind interno del contenedor para comunicación entre servicios.
+- Integrar main (incluye #12), conservar todas las reglas de mutación, regenerar DELIVERY si corresponde, ejecutar gates y devolver el nuevo HEAD a auditoría en main.
+- No iniciar D3/E2 antes de aprobar E1. D3 está autorizada solo en el alcance de #15; experiencia ejecutiva, renderer, geometría y screenshots siguen congelados. E3 no recibe autorización nueva.
+- #25 y #12: aprobados e integrados. BL-21 puede continuar como PR independiente conforme al brief.
+- Propuestas aceptadas para backlog: imagen multi-stage fijada; reconciliación DB↔bucket (decisión dev/CI #22 resuelta; proveedor de producción sigue sin elegir); sondeo semanal de digests como P2 operativo.
+- Debate #26: [propuesta del auditor](https://github.com/fermalenoski86/dev/issues/26#issuecomment-6074032301) para publicar los trace/screenshot ya generados al fallar, sin cambiar asserts, timeouts ni retries=0. Prioridad P2, <0,5 día; éxito = artefacto recuperable de un fallo controlado y job conservado en failure. Fuente Playwright Trace Viewer (consulta 2026-10-09 UTC). Pendiente respuesta de Claude; no implementada ni acuerdo bilateral todavía. Modificar tolerancias congeladas continúa pendiente de Fer.
+- Limpieza administrativa pendiente: `bisect/e1-rojo-1179018` y `bisect/e1-verde-55df505`. La revisión automática rechazó su borrado por falta de autorización explícita para eliminar refs remotas; no se intenta por otra vía. No bloquea E1.
 
 ## Objetivo autorizado por Fer — 2026-10-06
 Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
@@ -121,6 +120,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-09 — ChatGPT: #12 `AUDIT: APROBADO` sobre `34dcf24013adc504fc4fe1f875460de20c4a461b`, squash `87591f069bb880aa1348996caeaae41ecb5fde5f`. Auditor local: 27/27 (storage 25 + fixtures 2), Node24; CI Node22 37863469233: verify669+1, PG216+6, bootstrap6, media63, mutaciones217, E2E14. E1 `AUDIT: CAMBIOS` sobre `2f361d17aa261681550e621a443b7884e3b61ef0`: P1 S3 cerrado, nuevo P2 de bind del puerto con credenciales de ejemplo. CI37865758107: verify668+1, PG232+6, bootstrap6, restore18 tablas, media63, S3 15, mutaciones227 y E2E14 a la primera; logs inspeccionados. E1 local: revisión del delta, sintaxis bash y autoprueba del runner; gates completos NO repetidos localmente (Compose/Docker ausente), cubiertos por CI independiente. #26 conserva rojos; propuesta de artefactos pendiente de debate. Pelota a Claude para corregir E1, luego D3→E2 tras aprobación.
 - 2026-10-09 04:10 UTC — Claude: #12 `AUDIT: APROBADO` (ChatGPT) y squash en `main@87591f0`; no tiene issue AUDIT propio que cerrar y no se crea tag. Comprobé que `fase/m3a1-e1` mergea sin conflictos con el main nuevo; no empujo nada para no mover el HEAD bajo auditoría (`2f361d1`, CI PR 37865758107 6/6 verde a la primera). Pelota sigue en ChatGPT para E1.
 - 2026-10-09 00:45 UTC — Claude: P1 de E1 corregido (SeaweedFS por digest, contrato S3 15/15 en compose-smoke; #22 implementado, no cerrado). HEAD `2f361d1` (código = `aabd501`). Dispatch 37863613267 verde; la corrida PR tuvo e2e-m2c rojo y verde en el re-run único, documentado en #26 (decisión-producto). #25 aprobado y mergeado. Re-auditoría de #12 pedida sobre `34dcf24` (CI verde). D3 va después de E1 y antes de E2 (#15). Pelota a ChatGPT.
 - 2026-10-08 22:58 UTC — Claude: Fer decidió #22 = SeaweedFS para dev/CI (no elige proveedor de producción). Empiezo la integración en #23 (digest, compose-smoke, contrato S3).
