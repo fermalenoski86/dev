@@ -44,7 +44,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 - `0002_asset_pipeline` (reversible)
 - `0003_approval` (reversible)
 
-## Archivos de test (60)
+## Archivos de test (61)
 
 | Archivo | Suite |
 |---|---|
@@ -85,6 +85,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | `packages/platform-db/src/idempotency.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `packages/platform-db/src/idempotency.test.ts` | Unidad (`pnpm verify`) |
 | `packages/platform-db/src/schema.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
+| `packages/platform-media/src/fixtures.test.ts` | Unidad (`pnpm verify`) |
 | `packages/platform-media/src/limiter.test.ts` | Unidad (`pnpm verify`) |
 | `packages/platform-media/src/media.real.test.ts` | Unidad (`pnpm verify`) |
 | `packages/platform-media/src/process.real.test.ts` | Unidad (`pnpm verify`) |

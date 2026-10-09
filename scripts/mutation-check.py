@@ -231,6 +231,7 @@ M = [
  ('e1: conversor pierde strict (BL-11)', 'apps/platform-api/src/openapi.ts', "      if (def.unknownKeys === 'strict') out.additionalProperties = false;\n", '', 'npx vitest run -c vitest.platform.config.ts apps/platform-api/src/contract.db.test.ts'),
  ('e1: ruta registrada sin documentar (BL-11)', 'apps/platform-api/src/openapi.ts', "  { method: 'GET', path: '/health',", "  { method: 'GET', path: '/healthz',", 'npx vitest run -c vitest.platform.config.ts apps/platform-api/src/contract.db.test.ts'),
  ('e1: login loguea el cuerpo (§34)', 'apps/platform-api/src/auth-routes.ts', "req.log.info({ event: 'auth.login', requestId: req.id, userId: r.userId }, 'login');", "req.log.info({ event: 'auth.login', requestId: req.id, userId: r.userId, body: req.body }, 'login');", 'npx vitest run -c vitest.platform.config.ts apps/platform-api/src/logs-sin-secretos.db.test.ts'),
+ ('media: caché de fixtures borra el directorio publicado por otro worker', 'packages/platform-media/src/fixtures.ts', '    try {\n      renameSync(tmp, dir);', '    rmSync(dir, { recursive: true, force: true });\n    try {\n      renameSync(tmp, dir);', 'npx vitest run packages/platform-media/src/fixtures.test.ts'),
 ]
 # Restauracion garantizada: si esto se interrumpe a mitad (Ctrl-C, timeout,
 # SIGTERM), el repo NO puede quedar con una mutacion aplicada. Pasa, y el
