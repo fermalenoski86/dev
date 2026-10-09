@@ -42,7 +42,9 @@ export function CampaignsView(p: CampaignsViewProps) {
           <tbody>
             {p.campaigns.map((c) => (
               <tr key={c.id}>
-                <td>{c.name}</td>
+                <td>
+                  <a href={`/campaigns/${c.id}`}>{c.name}</a>
+                </td>
                 <td>{nombreContrato(c.contractId)}</td>
                 <td>{c.currentDraft ? `rev ${c.currentDraft.revision}` : '—'}</td>
                 <td>

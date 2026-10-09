@@ -44,7 +44,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 - `0002_asset_pipeline` (reversible)
 - `0003_approval` (reversible)
 
-## Archivos de test (72)
+## Archivos de test (76)
 
 | Archivo | Suite |
 |---|---|
@@ -62,11 +62,15 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | `apps/platform-api/src/e2e-flow.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/logs-sin-secretos.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/platform-web-client.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
+| `apps/platform-api/src/platform-web-e3b.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/restore-drill.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/submit.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/upload-limits.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
+| `apps/platform-web/src/components/views-e3b.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/components/views.test.ts` | Unidad de app (vitest del paquete) |
+| `apps/platform-web/src/lib/api-e3b.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/api.test.ts` | Unidad de app (vitest del paquete) |
+| `apps/platform-web/src/lib/draft-assets.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/session.test.ts` | Unidad de app (vitest del paquete) |
 | `e2e/builder.spec.ts` | E2E (Playwright, CI) |
 | `e2e/experience.spec.ts` | E2E (Playwright, CI) |

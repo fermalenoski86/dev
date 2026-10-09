@@ -17,3 +17,12 @@ export function browserClient(): PlatformClient | null {
   if (!cliente) cliente = new PlatformClient({ baseUrl: base, fetch: (input, init) => window.fetch(input, init) });
   return cliente;
 }
+
+/**
+ * E3b · `NEXT_PUBLIC_TRUST_BUILDER_URL`: base absoluta de apps/control (Builder,
+ * D3). El enlace abre `<base>/?campaign=<id>`. Sin la variable no hay enlace.
+ */
+export function builderUrlFor(campaignId: string): string | null {
+  const base = normalizeBaseUrl(process.env.NEXT_PUBLIC_TRUST_BUILDER_URL);
+  return base ? `${base}/?campaign=${encodeURIComponent(campaignId)}` : null;
+}

@@ -1,0 +1,100 @@
+# M3A.1 Fase E3b — salida REAL de los gates (2026-10-09, este entorno)
+
+Rama fase/m3a1-e3b desde main@4034ac2. Salida filtrada a las líneas de resultado; nada editado a mano.
+
+## 2026-10-09T22:11:22Z · node v22.22.0 · pnpm 12.5.1 · psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) · ffprobe version 6.1.1-3ubuntu5
+$ pnpm install --frozen-lockfile
+To update, run: curl -fsSL https://get.pnpm.io/install.sh | sh -
+Done in 236ms using pnpm v12.5.1
+
+$ pnpm verify
+✖ 14 problems (0 errors, 14 warnings)
+ Test Files  46 passed | 1 skipped (47)
+      Tests  740 passed | 1 skipped (741)
+
+$ pnpm build
+exit=0
+apps/platform-web build: ┌ ○ /                                    703 B            88 kB
+apps/platform-web build: ├ ○ /_not-found                          872 B          88.2 kB
+apps/platform-web build: ├ ○ /campaigns                           1.66 kB         106 kB
+apps/platform-web build: ├ ƒ /campaigns/[id]                      3.17 kB         108 kB
+apps/platform-web build: ├ ○ /login                               777 B           106 kB
+apps/platform-web build: └ ƒ /versions/[id]                       2.3 kB          107 kB
+
+$ npx vitest run -c vitest.platform.config.ts
+ Test Files  23 passed | 1 skipped (24)
+      Tests  267 passed | 6 skipped (273)
+
+$ bash packages/platform-db/scripts/bootstrap-smoke.sh
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+
+$ npx vitest run -c vitest.media.config.ts
+ Test Files  3 passed (3)
+      Tests  63 passed (63)
+
+$ pnpm acceptance:check
+GATE acceptance: 19 puntos, 12 tests etiquetados; docs/reviews/M3A1_ACEPTACION.md al día
+
+$ pnpm docs:contract && git diff --stat docs/platform/openapi.json
+docs/platform/openapi.json y docs/platform/DELIVERY.md regenerados (27 rutas registradas)
+(sin diff en openapi.json)
+
+Nota: la primera corrida de verify dio 14 warnings (2 nuevos: non-null assertions en randomKey de api.ts). Se corrigieron y se re-corrió:
+
+$ pnpm verify   (re-corrida después de quitar 2 warnings nuevos de api.ts)
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  46 passed | 1 skipped (47)
+      Tests  740 passed | 1 skipped (741)
+
+$ python3 scripts/mutation-check.py --tanda 258:267   (las 9 reglas nuevas e3b:)
+tanda 258:267 — 9 de 267 reglas
+ATRAPADA   e3b: asignar un asset pisa todas las superficies del draft ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3b: un asset no READY se puede asignar al draft ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3b: upload de asset sin Idempotency-Key ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3b: asset REJECTED por ffprobe tratado como error de la UI ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3b: submit cita otra revisión del draft ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3b: aprobar sin confirmar el hash mostrado ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3b: §32 la versión aprobada muestra la revisión del draft ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3b: §41 el hash de la versión enviada no se muestra ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3b: Idempotency-Key depende de crypto.randomUUID (falla en http de desarrollo) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+atrapadas 9 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+
+$ python3 scripts/mutation-check.py --autoprueba
+autoprueba OK
+
+La corrida completa de las 267 reglas queda en CI (job mutations, ~28 min).
+
+$ npx playwright test e2e/experience.spec.ts e2e/builder.spec.ts   (M2C 14)
+NO EJECUTADO localmente: no hay Google Chrome con H.264 en este entorno. La evidencia es el job e2e-m2c de CI.
+
+## Smoke de navegador real del flujo §41 (NO es gate: el E2E Playwright con TLS y __Host- es E3c)
+
+Chromium 1194 headless, --host-resolver-rules (web.trust.test y api.trust.test → 127.0.0.1), http con la cookie de desarrollo. platform-api real (Fastify + PostgreSQL + ffprobe 6.1) en :4100 con TRUST_CORS_ORIGINS=http://web.trust.test:3002; platform-web con next build + next start (NEXT_PUBLIC_TRUST_API_URL=http://api.trust.test:4100, NEXT_PUBLIC_TRUST_BUILDER_URL=http://control.trust.test:3001). El paso 2 simula lo que guarda el Builder (D3) con un PUT desde la misma pestaña: apps/control no se levantó. Uploads reales de los fixtures valid_towers_ab_25.mp4 y valid_horizontal_30.mp4. Screenshots solo locales (no se versionan binarios).
+
+La primera corrida falló en el upload con «Error inesperado»: crypto.randomUUID no existe en un origen http que no es localhost (contexto no seguro). Se corrigió con randomKey (getRandomValues) y su test y mutación; esta es la corrida posterior:
+
+1. detalle → /campaigns/55f084a6-b0ec-41e7-976b-538b0451d683
+    Sin versión aprobada | WORKING DRAFT · rev 1 · actualizado 2026-10-09T22:09:42.994Z
+    Builder: http://control.trust.test:3001/?campaign=55f084a6-b0ec-41e7-976b-538b0451d683
+2. (Builder simulado por la API) draft guardado → rev 2
+3. upload master  → «valid_towers_ab_25.mp4» READY · SHA-256 b3cfffd3a3df65d9513694cfc1459182502025d8397d35525bd3ba0538760ab5
+   upload horiz.  → «valid_horizontal_30.mp4» READY · SHA-256 9a831948ce482c1dbcb62a9f6ad9c1965f0e0d6fa6a23a4e83b936d2c683fd48
+   upload trucho  → «trucho.mp4» REJECTED · El archivo no se pudo leer como video.
+4. asignados → WORKING DRAFT · rev 4 · actualizado 2026-10-09T22:09:44.483Z
+5. enviado → Versión v1 enviada (SUBMITTED) · hash 6954d5fdcbca5cbfe3d8215de874d2a8889fa663b41fc4d850ee4a93cf75d711Enlace para revisión: /versions/b74b74
+[failed] POST http://api.trust.test:4100/api/v1/auth/logout net::ERR_ABORTED
+6. approver ve → Estado: SUBMITTED · cuatro ojos: quien envió no puede aprobar | hash igual: true
+7. decisión → APPROVED el 2026-10-09T22:09:45.588Z sobre el hash 6954d5fdcbca5cbfe3d8215de874d2a8889fa663b41fc4d850ee4a93cf75d711
+8. operador ve → APPROVED VERSION v1 · hash 6954d5fdcbca5cbfe3d8215de874d2a8889fa663b41fc4d850ee4a93cf75d711 | mismo hash: true | WORKING DRAFT · rev 4 · actualizado 2026-10-09T22:09:44.483Z
+
+Sobre la línea `[failed] … /auth/logout net::ERR_ABORTED`: es el evento `requestfailed` de Playwright cuando la pestaña navega a /login sin que nadie lea el cuerpo vacío del 204. Una corrida posterior agregó un listener de respuestas y un `/auth/me` desde la misma pestaña después de salir. La salida es la misma en los pasos 1-8 (otra campaña, el mismo hash porque el contenido es idéntico, §48.11), con estas líneas en el logout:
+
+5. enviado → Versión v1 enviada (SUBMITTED) · hash 6954d5fdcbca5cbfe3d8215de874d2a8889fa663b41fc4d850ee4a93cf75d711Enlace para revisión: /versions/81a7e3
+[resp] POST 204
+[failed] POST http://api.trust.test:4100/api/v1/auth/logout net::ERR_ABORTED
+   logout → /auth/me con la misma pestaña: 401
+6. approver ve → Estado: SUBMITTED · cuatro ojos: quien envió no puede aprobar | hash igual: true
+7. decisión → APPROVED el 2026-10-09T22:10:27.855Z sobre el hash 6954d5fdcbca5cbfe3d8215de874d2a8889fa663b41fc4d850ee4a93cf75d711
+8. operador ve → APPROVED VERSION v1 · hash 6954d5fdcbca5cbfe3d8215de874d2a8889fa663b41fc4d850ee4a93cf75d711 | mismo hash: true | WORKING DRAFT · rev 4 · actualizado 2026-10-09T22:10:26.150Z

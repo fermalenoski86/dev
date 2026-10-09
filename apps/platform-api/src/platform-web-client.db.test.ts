@@ -7,9 +7,10 @@ import { mediaRuntimeFromEnv } from '@trust/platform-media';
 import { LocalDiskStorage } from '@trust/platform-storage';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { type FetchLike, PlatformApiError, PlatformClient } from '../../platform-web/src/lib/api';
+import { PlatformApiError, PlatformClient } from '../../platform-web/src/lib/api';
 import { SESSION_COOKIE_DEV, SessionActorProvider } from './actor';
 import { buildApp } from './app';
+import { navegador as crearNavegador } from './navegador.testkit';
 
 /**
  * E3a · el cliente de `apps/platform-web` contra la API REAL: Fastify
@@ -28,30 +29,7 @@ let app: FastifyInstance;
 let base: string;
 let contractId: string;
 
-/** "Navegador" mínimo: jar de la cookie de la API + Origin + chequeo CORS. */
-function navegador(origin: string) {
-  let cookie: string | null = null;
-  const vistas: { method: string; url: string; status: number }[] = [];
-  const fetchNav: FetchLike = async (url, init) => {
-    expect(init.credentials).toBe('include');
-    const headers = new Headers(init.headers);
-    headers.set('origin', origin);
-    if (cookie) headers.set('cookie', cookie);
-    const res = await fetch(url, { ...init, headers });
-    const set = res.headers.get('set-cookie');
-    if (set?.startsWith(`${SESSION_COOKIE_DEV}=`)) {
-      const par = set.split(';')[0] ?? '';
-      cookie = /Expires=Thu, 01 Jan 1970/i.test(set) || par.endsWith('=') ? null : par;
-    }
-    vistas.push({ method: init.method ?? 'GET', url, status: res.status });
-    // Lo que haría el navegador: sin estos headers, la respuesta no se puede leer.
-    if (res.headers.get('access-control-allow-origin') !== origin || res.headers.get('access-control-allow-credentials') !== 'true') {
-      throw new TypeError('Failed to fetch (CORS)');
-    }
-    return res;
-  };
-  return { fetch: fetchNav, vistas, cookie: () => cookie };
-}
+const navegador = (origin: string) => crearNavegador(origin, SESSION_COOKIE_DEV);
 
 beforeAll(async () => {
   t = await createTestDatabase();

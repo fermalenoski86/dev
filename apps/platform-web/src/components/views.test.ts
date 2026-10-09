@@ -51,7 +51,7 @@ describe('E3a · login', () => {
 describe('E3a · campañas', () => {
   it('lista con contrato, working draft y APPROVED VERSION con el hash completo', () => {
     const h = html(createElement(CampaignsView, props()));
-    expect(h).toContain('<td>Launch</td>');
+    expect(h).toContain('<td><a href="/campaigns/22222222-2222-4222-8222-222222222222">Launch</a></td>');
     expect(h).toContain('<td>Takeover 2026</td>');
     expect(h).toContain('rev 2');
     expect(h).toContain(`APPROVED VERSION v3 · <code class="hash">${'ab'.repeat(32)}</code>`);
