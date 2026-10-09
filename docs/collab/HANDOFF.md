@@ -1,8 +1,17 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor). Reauditar el **brief de E3** en PR [#32](https://github.com/fermalenoski86/dev/pull/32) sobre `29f527d361ef3a3f289c7f6fdab8824d8f9e0a19` ([re-entrega 1](https://github.com/fermalenoski86/dev/pull/32#issuecomment-6084584549)), issue [#33](https://github.com/fermalenoski86/dev/issues/33). No implementar E3a antes de aprobar el brief.
-**Fase:** M3A.1 Fase E — E3, reauditoría del brief de UI + Playwright §41/§47.
-**Estado:** [P1] corregido en el brief: sin proxy; `platform-web` y `apps/control` van directo a `platform-api` en hosts HTTPS del mismo site, CORS por allowlist exacta (`TRUST_CORS_ORIGINS`, sin `*`, credentials, `Vary: Origin`, 403 `ORIGIN_NOT_ALLOWED` a mutaciones con origen no listado), CSRF intacto; gate `session-multihost.spec.ts` con hosts distintos, TLS de test y cookie `__Host-` real. Incorporados: cuenta por rol y worker (BL-25), manifest §47 validado + `retention-days` (BL-29), BL-28 (axe + teclado/foco/alertas). Pendiente de Fer: #26 y tags.
+**Pelota en:** Claude (implementador). Corregir la **re-entrega 1 del brief E3** en PR [#32](https://github.com/fermalenoski86/dev/pull/32), issue [#33](https://github.com/fermalenoski86/dev/issues/33), según la [segunda AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/32#issuecomment-6086497095) sobre `29f527d361ef3a3f289c7f6fdab8824d8f9e0a19`. No implementar E3a antes de aprobar el brief.
+**Fase:** M3A.1 Fase E — E3, segunda corrección del brief de UI + Playwright §41/§47.
+**Estado:** el [P1] original de cookie/proxy quedó resuelto. Restan dos correcciones documentales: [P1] exigir un login nuevo del operador después del logout y de la aprobación, como manda §41; [P2] registrar la arquitectura multihost/CORS en ADR-057 o un ADR nuevo. Pendiente de Fer: #26 y tags.
+
+## Reauditoría 1 del brief E3 — 2026-10-09
+- Resultado: **AUDIT: CAMBIOS**, [comentario en PR #32](https://github.com/fermalenoski86/dev/pull/32#issuecomment-6086497095).
+- HEAD auditado: `29f527d361ef3a3f289c7f6fdab8824d8f9e0a19`. La solución multihost del [P1] anterior quedó validada: ambas UIs directas a la API, cookie `__Host-` en el host API, same-site HTTPS, allowlist exacta, CSRF y gate con hosts distintos.
+- [P1] nuevo: `flow-41.spec.ts` termina el primer tramo con logout pero omite el segundo `LOGIN operador` explícito de §41. Reusar su `storageState` revocado produce 401. Debe iniciar una sesión nueva antes de comprobar versión/hash/draft y editar.
+- [P2]: la arquitectura de sesión/CORS es una decisión de arquitectura; `AGENTS.md` exige ADR. Agregar actualización de ADR-057 o ADR nuevo como entregable E3a.
+- CI exacta [37956488526](https://github.com/fermalenoski86/dev/actions/runs/37956488526), 6/6 success al primer intento: verify 702+1, PostgreSQL 247+6, bootstrap 6, media 63, mutaciones 247/247, M2C 14/14, compose 15/15 y acceptance 19 puntos/12 tags. Integración con el main vigente y diff-check limpios.
+- No ejecutado localmente: infraestructura y navegador; se inspeccionaron logs completos de CI. Los gates nuevos E3 aún no existen por ser un PR documental.
+- Próximo paso: Claude actualiza el brief, responde ambos hallazgos y devuelve un nuevo SHA a ChatGPT. E3a no empieza todavía.
 
 ## Auditoría inicial del brief E3 — 2026-10-09
 - Resultado: **AUDIT: CAMBIOS**, [comentario en PR #32](https://github.com/fermalenoski86/dev/pull/32#issuecomment-6084515242).
