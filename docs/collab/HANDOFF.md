@@ -1,8 +1,8 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). Iniciar **E3b** desde `main@4034ac248193df64ace91ccfbdb75e0332c9a81b` según `docs/briefs/M3A1_FASE_E3.md`; entregar rama/PR, reporte, salida real e issue `AUDIT:` a ChatGPT.
-**Fase:** M3A.1 Fase E — E3b (detalle de campaña, assets, envío, revisión y aprobación web).
-**Estado:** E3a **AUDIT: APROBADO** sobre `f8ff978eceac109d5b308f8ba59c5914d3a405ce`, [aprobación](https://github.com/fermalenoski86/dev/pull/34#issuecomment-6089938993), squash en `main@88f8a9a56239552a8678ecf226e3e3b0338d8f52`; issue #35 cerrado. BL-30 aceptada con ajuste para E3c. Pendiente de Fer: #26 y tags.
+**Pelota en:** ChatGPT (auditor). Auditar **E3b** en PR [#36](https://github.com/fermalenoski86/dev/pull/36) (rama `fase/m3a1-e3b`, HEAD `24336db`), issue [#37](https://github.com/fermalenoski86/dev/issues/37). E3c no arranca antes de `AUDIT: APROBADO`.
+**Fase:** M3A.1 Fase E — E3b (campaña, assets, envío y aprobación de cuatro ojos en `apps/platform-web`).
+**Estado:** E3a aprobada y mergeada (#34, `main@88f8a9a`; #35 cerrado). E3b entregada: `/campaigns/[id]` (versión aprobada + hash y working draft separados, assets, asignación a ranura con expectedRevision, envío con hash visible) y `/versions/[id]` (evidencia, aprobar citando el hash, rechazar). Gates locales: verify 740+1, build OK, PG 267+6, bootstrap 6, media 63, 9/9 mutaciones e3b + autoprueba, acceptance OK; M2C y mutaciones completas en CI. Smoke de navegador del flujo §41 completo OK (encontró y corrigió randomUUID en http). Decisión a validar: asignación de assets desde platform-web; BL-31 propuesta. Pendiente de Fer: #26 y tags.
 
 ## Cierre E3a — 2026-10-09
 - Resultado: **AUDIT: APROBADO**, [comentario en PR #34](https://github.com/fermalenoski86/dev/pull/34#issuecomment-6089938993).
@@ -159,6 +159,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-09 22:20 UTC — Claude: E3a aprobada (ChatGPT) y mergeada; #35 cerrado. E3b entregada en #36 (`24336db`), issue #37. Gates locales verdes (M2C y mutaciones completas en CI). Propuesta BL-31. Pelota a ChatGPT.
 - 2026-10-09 — ChatGPT: E3a `AUDIT: APROBADO` sobre `f8ff978`; CI 37986634244 6/6, mutaciones 258/258 y M2C 14/14; squash `88f8a9a`, #35 cerrado. BL-30 aceptada con ajuste para E3c. Pelota a Claude para E3b.
 - 2026-10-09 20:40 UTC — Claude: E3a entregada en #34 (`f8ff978`), issue #35. Gates locales verdes (M2C y mutaciones completas en CI). Propuesta BL-30. Pelota a ChatGPT.
 - 2026-10-09 20:05 UTC — Claude: brief E3 aprobado (ChatGPT, `178f8d1`), squash `main@1494c15`, #33 cerrado sin tag. Arranca E3a en `fase/m3a1-e3a`.
