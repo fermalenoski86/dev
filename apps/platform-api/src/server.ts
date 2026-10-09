@@ -7,6 +7,7 @@ import { storageFromEnv } from '@trust/platform-storage';
 import { LoginRateLimiter } from '@trust/platform-auth';
 import { SESSION_COOKIE_DEV, SESSION_COOKIE_PROD, SessionActorProvider } from './actor';
 import { buildApp } from './app';
+import { parseCorsOrigins } from './cors';
 import type { AuthConfig } from './auth-routes';
 import { UploadLimiter, uploadLimitsFromEnv } from './upload-limiter';
 
@@ -52,6 +53,7 @@ export async function createServer(env: NodeJS.ProcessEnv = process.env) {
   const { auth, externalApprovalEnabled } = authFromEnv(env);
   const hops = env.TRUST_PROXY_HOPS === undefined ? 0 : Number(env.TRUST_PROXY_HOPS);
   if (!Number.isInteger(hops) || hops < 0 || hops > 5) throw new Error('TRUST_PROXY_HOPS tiene que ser un entero entre 0 y 5');
+  const corsOrigins = parseCorsOrigins(env.TRUST_CORS_ORIGINS, { production: env.NODE_ENV === 'production' });
   if (!env.DATABASE_URL) throw new Error('falta DATABASE_URL');
   const db = connect(env.DATABASE_URL);
   const storage = await storageFromEnv(env);
@@ -59,7 +61,7 @@ export async function createServer(env: NodeJS.ProcessEnv = process.env) {
   // Se verifica UNA vez al arrancar: /ready no lanza procesos por cada probe.
   const binarios = (await binarioPresente(media.ffprobePath)) && (await binarioPresente(media.ffmpegPath));
   const app = await buildApp({
-    db, storage, media, actors: new SessionActorProvider(db, { cookieName: auth.cookieName, externalApprovalEnabled }), auth, trustProxyHops: hops, maxUploadBytes: maxUploadBytesFromEnv(env), maxEvidenceBytes: maxEvidenceBytesFromEnv(env), mediaBinariesOk: () => binarios,
+    db, storage, media, actors: new SessionActorProvider(db, { cookieName: auth.cookieName, externalApprovalEnabled }), auth, corsOrigins, trustProxyHops: hops, maxUploadBytes: maxUploadBytesFromEnv(env), maxEvidenceBytes: maxEvidenceBytesFromEnv(env), mediaBinariesOk: () => binarios,
     uploadLimiter: new UploadLimiter(uploadLimitsFromEnv(env)),
     log: { level: env.LOG_LEVEL ?? 'info' },
   });

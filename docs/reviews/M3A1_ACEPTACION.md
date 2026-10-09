@@ -35,8 +35,8 @@ los usuarios (no hay endpoint de alta: es el CLI de C1).
 
 | Id | Qué | Estado |
 |---|---|---|
-| E3-41 | §41 E2E Playwright: login, campaña, envío, aprobación por otro usuario y versión aprobada vs. working draft, en navegador | ⏳ **pendiente**: E3 autorizada por Fer en #31 (`apps/platform-web`); brief corto pendiente de acuerdo; no implementada ni verificada. |
-| E3-47 | §47 screenshots y video del flujo | ⏳ **pendiente**: Dependen de la UI de E3. |
+| E3-41 | §41 E2E Playwright: login, campaña, envío, aprobación por otro usuario y versión aprobada vs. working draft, en navegador | ⏳ **pendiente**: Brief E3 aprobado (#32). E3a entrega `apps/platform-web` (login y campañas) y CORS; el E2E Playwright de §41 por rol es E3c: no implementado ni verificado. |
+| E3-47 | §47 screenshots y video del flujo | ⏳ **pendiente**: Dependen del flujo completo de E3b y del job `e2e-platform` de E3c. |
 
 **Resumen:** 19/19 puntos de §48 cubiertos a nivel plataforma; 2 pendientes de navegador.
 M3A.1 **no se declara cerrado** mientras haya pendientes de navegador.

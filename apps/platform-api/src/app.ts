@@ -16,6 +16,7 @@ import { type ActorProvider, CSRF_HEADER, DEV_ACTOR_HEADER, requireActor } from 
 import { registerApprovalRoutes } from './approval-routes';
 import { registerCampaignRoutes } from './campaign-routes';
 import { type AuthConfig, registerAuthRoutes } from './auth-routes';
+import { registerCors } from './cors';
 import {
   AssetListQuerySchema,
   AssetListResponseSchema,
@@ -63,6 +64,11 @@ export interface AppDeps {
   uploadLimiter?: UploadLimiter;
   /** false = sin logs (tests que no los miran). Siempre JSON y siempre con redacción. */
   log?: false | { level?: string; stream?: NodeJS.WritableStream };
+  /**
+   * E3a · orígenes exactos con CORS y credenciales (ADR-063). Vacío o ausente =
+   * sin CORS. Viene de `TRUST_CORS_ORIGINS` validado por `parseCorsOrigins`.
+   */
+  corsOrigins?: readonly string[];
   /** E1 · BL-11: observa cada ruta registrada (el test de contrato compara contra la tabla OpenAPI). */
   onRoute?: (route: { method: string; url: string }) => void;
 }
@@ -111,6 +117,9 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
       for (const m of Array.isArray(r.method) ? r.method : [r.method]) observar({ method: m, url: r.url });
     });
   }
+
+  // Antes de toda ruta: el preflight y el 403 por Origin no llegan a la sesión.
+  registerCors(app, deps.corsOrigins ?? []);
 
   await app.register(cookie); // solo parseo; sin secreto: la cookie es un token opaco validado contra la base
 

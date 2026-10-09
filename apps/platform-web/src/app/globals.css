@@ -1,0 +1,35 @@
+/* platform-web — UI funcional y sobria (❓4 del brief E3): sin design system nuevo. */
+:root {
+  color-scheme: light dark;
+  --fg: #111;
+  --bg: #fafafa;
+  --muted: #555;
+  --line: #ccc;
+  --accent: #0b57d0;
+  --error: #b3261e;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --fg: #eee; --bg: #121212; --muted: #aaa; --line: #444; --accent: #8ab4f8; --error: #f2b8b5; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; color: var(--fg); background: var(--bg); line-height: 1.5; }
+.page { max-width: 64rem; margin: 0 auto; padding: 1.5rem 1rem; }
+.page.narrow { max-width: 26rem; }
+.header { display: flex; gap: 1rem; align-items: center; padding: 0.75rem 1rem; border-bottom: 1px solid var(--line); }
+.brand { font-weight: 600; }
+.who { margin-left: auto; color: var(--muted); }
+.card { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1.5rem; padding: 1rem; border: 1px solid var(--line); border-radius: 6px; }
+label { font-weight: 600; }
+input, select, button { font: inherit; padding: 0.5rem 0.75rem; border: 1px solid var(--line); border-radius: 4px; background: transparent; color: inherit; }
+button { cursor: pointer; background: var(--accent); color: var(--bg); border-color: var(--accent); }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+/* BL-28: foco siempre visible */
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.error { color: var(--error); font-weight: 600; margin: 0; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 0.5rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+.hash { font-family: ui-monospace, monospace; font-size: 0.8rem; word-break: break-all; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.skip { position: absolute; left: -999px; }
+.skip:focus { left: 1rem; top: 1rem; background: var(--bg); padding: 0.5rem; }

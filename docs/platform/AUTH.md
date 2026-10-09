@@ -45,6 +45,38 @@ antes de mirar roles o leer el cuerpo. El login no tiene sesión todavía: exige
 `application/json` (`415` si no), que un formulario cross-site no puede mandar
 sin preflight CORS, y la cookie es SameSite=Lax.
 
+## UIs de navegador y CORS (E3a, ADR-063)
+
+`apps/platform-web` y `apps/control` (Builder) llaman a la API **directo desde
+el navegador**, con `credentials: 'include'`. La cookie de sesión es del host de
+la API (host-only; `__Host-` en producción), así que **no hay proxy**: el login
+también va directo a la API y esa única cookie le sirve a las dos UIs.
+
+Despliegue: hosts HTTPS del **mismo site** (`web.<site>`, `control.<site>`,
+`api.<site>`). Con `SameSite=Lax` la cookie viaja entre hosts del mismo site y
+no entre sites distintos.
+
+`TRUST_CORS_ORIGINS` (orígenes exactos separados por coma; vacío = sin CORS):
+
+| Caso | Respuesta |
+|---|---|
+| Arranque con `*`, `null`, path, barra final o credenciales en la URL | falla el arranque |
+| Arranque en producción con un origen `http:` | falla el arranque |
+| Preflight de un origen listado | `204` con `Access-Control-Allow-Origin: <origen>`, `Allow-Credentials: true`, métodos `GET, POST, PUT, PATCH, OPTIONS`, headers `Content-Type, X-CSRF-Token, Idempotency-Key, X-Request-Id`, `Max-Age: 600` |
+| Solicitud de un origen listado | headers CORS con credenciales; expone `X-Request-Id`, `Idempotent-Replayed`, `Retry-After` |
+| Preflight de un origen no listado | `403 ORIGIN_NOT_ALLOWED`, sin headers CORS |
+| Mutación con `Origin` no listado (aunque traiga cookie y CSRF válidos) | `403 ORIGIN_NOT_ALLOWED` antes de mirar la sesión; no escribe |
+| GET con `Origin` no listado | la respuesta normal, **sin** headers CORS (el navegador no deja leerla) |
+| Sin `Origin` (CLI, tests, servidor a servidor) | igual que antes de E3a |
+
+Siempre que llega `Origin`, la respuesta lleva `Vary: Origin`. **CSRF no
+cambia**: un origen permitido sin `X-CSRF-Token` sigue recibiendo
+`403 CSRF_TOKEN_INVALID`. CORS decide quién lee; CSRF protege las escrituras.
+
+En desarrollo por `http://localhost` la cookie no es `Secure` ni `__Host-` y los
+puertos no separan cookies: eso no prueba la topología de producción. El gate
+de navegador multihost (hosts distintos, TLS, cookie `__Host-` real) es de E3c.
+
 ## Login y rate limit
 
 `POST /api/v1/auth/login` `{email, password}`:
