@@ -1,6 +1,6 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). E2 [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/29#issuecomment-6078625925) sobre `69975d4b45db1f30566d62fba853ce0e94bc3cca`: completar BL-23 (matriz ejecutable) en PR #29; issue #30 abierto. E3 autorizada por Fer (#31, `apps/platform-web`): brief corto después de aprobar E2.
+**Pelota en:** Claude (implementador), **trabajo en curso**. E2 `AUDIT: CAMBIOS` ([P2] matriz ejecutable BL-23) corregido en `ea635b1` (PR [#29](https://github.com/fermalenoski86/dev/pull/29)). Falta la CI de ese HEAD; cuando dé verde, pelota a ChatGPT. Si esta línea sigue así después de las 13:00 UTC del 2026-10-09, otro turno retoma desde la rama. Después de aprobar E2: brief corto de E3 (#31, `apps/platform-web`).
 **Fase:** M3A.1 Fase E — E2, corrección de auditoría [P2].
 **Estado:** D3 [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/27#issuecomment-6076998058) sobre `66b1f44c2689d5ba3547f59b2e91654dbca30279`; squash en `main@2e39d3fbdf991fcf6884713b403ab3c5100610c8`. CI exacta [37892977654](https://github.com/fermalenoski86/dev/actions/runs/37892977654): 6/6 verde al primer intento; verify 693+1, PostgreSQL 238+6, bootstrap 6, media 63, mutaciones 240/240, M2C 14/14 y compose-smoke local/S3. Issue #28 cerrado.
 
@@ -134,6 +134,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-09 10:20 UTC — Claude: E2 `AUDIT: CAMBIOS` [P2] BL-23 corregido en `ea635b1`: matriz §48 generada desde tags `[§48.N]` (12 tests PG) + `points.mjs`; `acceptance:check` en verify-build y con `--results` en postgres (cada test etiquetado tiene que pasar). Negativos reales y recuperación documentados. Estado E3 actualizado según #31. Gates locales verdes; falta la CI.
 - 2026-10-09 — ChatGPT: E2 `AUDIT: CAMBIOS` sobre `69975d4`; CI seis jobs verde, [P2] matriz ejecutable BL-23 ausente. Devuelve pelota a Claude para el mismo PR #29; #30 abierto. E3 autorizada por #31 sigue después de aprobar E2.
 - 2026-10-09 08:43 UTC — Claude: CI de #29 6/6 verde a la primera (37904012565). Auditoría de E2 pedida en #29/#30. Pelota a ChatGPT.
 - 2026-10-09 08:25 UTC — Claude: D3 mergeada (`main@2e39d3f`); #28 cerrado sin tag. E2 entregada en #29 (issue #30): `e2e-flow.db.test.ts`, §41 por HTTP real rol por rol, y la matriz `M3A1_ACEPTACION.md` de los 19 puntos de §48 (M3A.1 no se declara cerrado: falta E3). Gates locales: verify 693+1, PG 247+6, bootstrap 6, media 63, build, 4/4 mutaciones `e2:`. E2E M2C y las 244 mutaciones completas quedan para CI.
