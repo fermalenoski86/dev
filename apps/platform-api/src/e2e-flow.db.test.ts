@@ -33,7 +33,9 @@ import { AssetResponseSchema, CampaignResponseSchema, EvidenceResponseSchema, Sh
  * El draft se guarda con `@trust/builder-repository` (`connectBuilderBackend`
  * + `CampaignSession`): el mismo código que usa el Builder desde D3.
  *
- * La matriz de los 19 puntos de §48 está en docs/reviews/M3A1_ACEPTACION.md.
+ * La matriz de los 19 puntos de §48 (docs/reviews/M3A1_ACEPTACION.md) se GENERA desde los
+ * tags `[§48.N]` de estos títulos (BL-23, scripts/acceptance/): renombrar un test o sacarle
+ * el tag hace fallar CI.
  */
 let t: TestDatabase;
 let root: string;
@@ -162,7 +164,7 @@ describe('E2 · §41 por HTTP real, rol por rol (sin navegador)', () => {
     await admin.logout();
   });
 
-  it('2 · OPERATOR: login → crea la Campaign → el Builder (builder-repository) guarda el draft; la revisión protege la concurrencia', async () => {
+  it('2 · OPERATOR: login → crea la Campaign → el Builder (builder-repository) guarda el draft; la revisión protege la concurrencia [§48.1] [§48.2] [§48.3]', async () => {
     const op = await login('op');
     const cp = await op.json('POST', '/api/v1/campaigns', { contractId: E.contractId, name: 'Lanzamiento' });
     expect(cp.status, JSON.stringify(cp.body)).toBe(201);
@@ -185,7 +187,7 @@ describe('E2 · §41 por HTTP real, rol por rol (sin navegador)', () => {
     await op.logout();
   });
 
-  it('3 · OPERATOR: sube assets válidos; ffprobe los valida de verdad; quedan identificados por SHA-256', async () => {
+  it('3 · OPERATOR: sube assets válidos; ffprobe los valida de verdad; quedan identificados por SHA-256 [§48.4] [§48.5] [§48.6]', async () => {
     const op = await login('op');
     const subir = async (fixture: string, surfaceType: string) => {
       const bytes = readFileSync(fx(fixture));
@@ -221,7 +223,7 @@ describe('E2 · §41 por HTTP real, rol por rol (sin navegador)', () => {
     await op.logout();
   });
 
-  it('4 · OPERATOR: submit → el servidor recompila, corre el preflight y crea la ShowVersion con hash determinista', async () => {
+  it('4 · OPERATOR: submit → el servidor recompila, corre el preflight y crea la ShowVersion con hash determinista [§48.7] [§48.8] [§48.9] [§48.10] [§48.11]', async () => {
     const op = await login('op');
     const r = await op.json('POST', `/api/v1/campaigns/${E.campaignId}/submit`, { draftRevision: E.revisionSubmit }, { 'idempotency-key': clave() });
     expect(r.status, JSON.stringify(r.body)).toBe(201);
@@ -250,7 +252,7 @@ describe('E2 · §41 por HTTP real, rol por rol (sin navegador)', () => {
     await op.logout();
   });
 
-  it('5 · INTERNAL_APPROVER (otro usuario): login → ve la versión → adjunta evidencia → aprueba el hash exacto → logout', async () => {
+  it('5 · INTERNAL_APPROVER (otro usuario): login → ve la versión → adjunta evidencia → aprueba el hash exacto → logout [§48.12] [§48.13] [§48.14]', async () => {
     const apr = await login('apr');
     const leida = await apr.json('GET', `/api/v1/show-versions/${E.versionId}`);
     expect(leida.status).toBe(200);
@@ -281,7 +283,7 @@ describe('E2 · §41 por HTTP real, rol por rol (sin navegador)', () => {
     await apr.logout();
   });
 
-  it('6 · OPERATOR: la campaña muestra APPROVED VERSION con el hash exacto y el WORKING DRAFT aparte', async () => {
+  it('6 · OPERATOR: la campaña muestra APPROVED VERSION con el hash exacto y el WORKING DRAFT aparte [§48.16]', async () => {
     const op = await login('op');
     const c = await op.json('GET', `/api/v1/campaigns/${E.campaignId}`);
     const campania = CampaignResponseSchema.parse(c.body);
@@ -295,7 +297,7 @@ describe('E2 · §41 por HTTP real, rol por rol (sin navegador)', () => {
     await op.logout();
   });
 
-  it('7 · OPERATOR: edita la campaña; la versión aprobada NO cambia (ni la fila ni el hash)', async () => {
+  it('7 · OPERATOR: edita la campaña; la versión aprobada NO cambia (ni la fila ni el hash) [§48.10] [§48.15] [§48.16]', async () => {
     const antes = await t.app.selectFrom('show_versions').selectAll().where('id', '=', E.versionId!).executeTakeFirstOrThrow();
     const aprobacionAntes = await t.app.selectFrom('approvals').selectAll().where('show_version_id', '=', E.versionId!).execute();
     const op = await login('op');
@@ -312,7 +314,7 @@ describe('E2 · §41 por HTTP real, rol por rol (sin navegador)', () => {
     await op.logout();
   });
 
-  it('8 · audit: verifyChain OK y cada evento esperado con el actor del rol que corresponde', async () => {
+  it('8 · audit: verifyChain OK y cada evento esperado con el actor del rol que corresponde [§48.17]', async () => {
     const cadena = await verifyChain(t.app);
     expect(cadena.ok).toBe(true);
     const ev = await t.app.selectFrom('audit_events').select(['action', 'actor_user_id', 'entity_id']).orderBy('seq').execute();
@@ -331,7 +333,7 @@ describe('E2 · §41 por HTTP real, rol por rol (sin navegador)', () => {
     expect(de('VERSION_APPROVED')).toEqual([{ action: 'VERSION_APPROVED', actor_user_id: ID.apr, entity_id: E.versionId }]);
   });
 
-  it('§48.18 · ningún endpoint puede modificar una ShowVersion, y la base lo rechaza aunque alguien lo intente', async () => {
+  it('ningún endpoint puede modificar una ShowVersion, y la base lo rechaza aunque alguien lo intente [§48.18]', async () => {
     const sobreVersiones = rutas.filter((r) => r.url.startsWith('/api/v1/show-versions'));
     const escrituras = sobreVersiones.filter((r) => r.method !== 'GET' && r.method !== 'HEAD');
     // las únicas escrituras crean filas NUEVAS (evidencia, decisión); ninguna es PUT/PATCH/DELETE

@@ -5,6 +5,8 @@
   "scripts": {
     "db:migrate": "pnpm --filter @trust/platform-api db:migrate",
     "docs:contract": "pnpm --filter @trust/platform-api docs:contract",
+    "acceptance:generate": "node scripts/acceptance/cli.mjs generate",
+    "acceptance:check": "node scripts/acceptance/cli.mjs check",
     "dev": "pnpm --filter @trust/previs dev",
     "build": "pnpm -r build",
     "test": "vitest run",

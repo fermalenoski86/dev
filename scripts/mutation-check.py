@@ -249,6 +249,9 @@ M = [
  ('e2: logout no revoca la sesión (§41 logout)', 'apps/platform-api/src/auth-routes.ts', '    if (actor.session) await revokeSession(deps.db, actor.session.id);\n    reply.clearCookie', '    reply.clearCookie', 'npx vitest run -c vitest.platform.config.ts apps/platform-api/src/e2e-flow.db.test.ts'),
  ('e2: submit audita con otro actor (§48.17)', 'packages/platform-approval/src/submit.ts', "          actorUserId: input.actor.userId, action: 'VERSION_SUBMITTED'", "          actorUserId: null, action: 'VERSION_SUBMITTED'", 'npx vitest run -c vitest.platform.config.ts apps/platform-api/src/e2e-flow.db.test.ts'),
  ('e2: validación de asset sin audit (§48.17)', 'packages/platform-assets/src/service.ts', "        actorUserId: input.actorId, action: 'ASSET_VALIDATED'", "        actorUserId: input.actorId, action: 'ASSET_UPLOADED'", 'npx vitest run -c vitest.platform.config.ts apps/platform-api/src/e2e-flow.db.test.ts'),
+ ('e2: un punto de §48 pierde su test y la matriz no se entera (BL-23)', 'apps/platform-api/src/e2e-flow.db.test.ts', "verifyChain OK y cada evento esperado con el actor del rol que corresponde [§48.17]'", "verifyChain OK y cada evento esperado con el actor del rol que corresponde'", 'npx vitest run scripts/acceptance/matrix.test.ts'),
+ ('e2: un test etiquetado salteado cuenta como cubierto (BL-23)', 'scripts/acceptance/matrix.mjs', "if (a.status !== 'passed')", "if (a.status === 'failed')", 'npx vitest run scripts/acceptance/matrix.test.ts'),
+ ('e2: punto cubierto sin test pasa la validación (BL-23)', 'scripts/acceptance/matrix.mjs', '      } else if (conTag.length === 0) {', '      } else if (conTag.length < 0) {', 'npx vitest run scripts/acceptance/matrix.test.ts'),
 ]
 # Restauracion garantizada: si esto se interrumpe a mitad (Ctrl-C, timeout,
 # SIGTERM), el repo NO puede quedar con una mutacion aplicada. Pasa, y el

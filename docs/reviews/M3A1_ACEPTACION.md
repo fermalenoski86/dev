@@ -1,54 +1,42 @@
 # M3A.1 — Matriz de aceptación (master §48)
 
-**Origen:** brief E §E2. Cada punto de §48 tiene el test que lo prueba, el rol
-real que ejecuta el paso y un estado. Los estados posibles son **cubierto**,
-**pendiente** (con el motivo) o **no aplicable**. Un pendiente nunca cuenta como
-cubierto.
+> **Generado** por `pnpm acceptance:generate` (`scripts/acceptance/`) desde la lista de
+> puntos (`points.mjs`) y los tags `[§48.N]` en los nombres de los tests. No editar a mano:
+> CI exige diff vacío y que cada test etiquetado haya **pasado** en el job `postgres`
+> (reporte JSON de vitest). Un pendiente nunca cuenta como cubierto (BL-23).
 
-El recorrido principal es `apps/platform-api/src/e2e-flow.db.test.ts` (E2):
-- HTTP real: Fastify escuchando en un puerto;
-- PostgreSQL real;
-- ffprobe real sobre fixtures reales;
-- login con contraseña, cookie y CSRF de C1, y logout por rol.
+Recorrido principal: `apps/platform-api/src/e2e-flow.db.test.ts` (E2), por HTTP real con
+PostgreSQL, ffprobe, login, cookie, CSRF y logout por rol. Lo único sembrado por la base son
+los usuarios (no hay endpoint de alta: es el CLI de C1).
 
-Nada salta la base, el hashing, la validación de assets ni la aprobación
-(§48: "No declarar M3A.1 cerrado si alguno depende de mocks…"). El único dato
-sembrado por la base son los tres usuarios: no existe endpoint de alta, porque
-el alta es el CLI de C1.
+| # | §48 | Rol | Estado | Evidencia |
+|---|---|---|---|---|
+| 1 | creo Campaign | OPERATOR (Advertiser y Contract: ADMIN) | **cubierto** | `e2e-flow.db.test.ts` › 2 · OPERATOR: login → crea la Campaign → el Builder (builder-repository) guarda el draft; la revisión protege la concurrencia |
+| 2 | Builder guarda un Draft en PostgreSQL | OPERATOR | **cubierto** | `builder-d3.db.test.ts` › open muestra APPROVED VERSION vN y WORKING DRAFT; guardar no toca la versión aprobada (§32)<br>`e2e-flow.db.test.ts` › 2 · OPERATOR: login → crea la Campaign → el Builder (builder-repository) guarda el draft; la revisión protege la concurrencia<br>_A nivel API, sesión y store (`@trust/builder-repository`, el código del Builder desde D3). El E2E de navegador es E3: ver «Pendientes de navegador»._ |
+| 3 | revision protege concurrencia | OPERATOR | **cubierto** | `builder-d3.db.test.ts` › otro operador escribe → CONFLICTO visible, el servidor no se pisa; "mantener la mía" es explícito<br>`e2e-flow.db.test.ts` › 2 · OPERATOR: login → crea la Campaign → el Builder (builder-repository) guarda el draft; la revisión protege la concurrencia |
+| 4 | subo assets | OPERATOR | **cubierto** | `e2e-flow.db.test.ts` › 3 · OPERATOR: sube assets válidos; ffprobe los valida de verdad; quedan identificados por SHA-256 |
+| 5 | ffprobe los valida realmente | OPERATOR | **cubierto** | `e2e-flow.db.test.ts` › 3 · OPERATOR: sube assets válidos; ffprobe los valida de verdad; quedan identificados por SHA-256 |
+| 6 | assets quedan identificados por SHA-256 | OPERATOR | **cubierto** | `e2e-flow.db.test.ts` › 3 · OPERATOR: sube assets válidos; ffprobe los valida de verdad; quedan identificados por SHA-256 |
+| 7 | envío Draft | OPERATOR | **cubierto** | `e2e-flow.db.test.ts` › 4 · OPERATOR: submit → el servidor recompila, corre el preflight y crea la ShowVersion con hash determinista |
+| 8 | servidor recompila | OPERATOR → servidor | **cubierto** | `e2e-flow.db.test.ts` › 4 · OPERATOR: submit → el servidor recompila, corre el preflight y crea la ShowVersion con hash determinista |
+| 9 | servidor ejecuta preflight | OPERATOR → servidor | **cubierto** | `e2e-flow.db.test.ts` › 4 · OPERATOR: submit → el servidor recompila, corre el preflight y crea la ShowVersion con hash determinista |
+| 10 | crea ShowVersion inmutable | OPERATOR → servidor | **cubierto** | `e2e-flow.db.test.ts` › 4 · OPERATOR: submit → el servidor recompila, corre el preflight y crea la ShowVersion con hash determinista<br>`e2e-flow.db.test.ts` › 7 · OPERATOR: edita la campaña; la versión aprobada NO cambia (ni la fila ni el hash) |
+| 11 | calcula hash determinista | servidor | **cubierto** | `e2e-flow.db.test.ts` › 4 · OPERATOR: submit → el servidor recompila, corre el preflight y crea la ShowVersion con hash determinista<br>`submit.db.test.ts` › mismo draft y mismos bytes en dos campañas (assets distintos, mismo contenido) → mismo hash, dos versiones |
+| 12 | otro usuario la aprueba | INTERNAL_APPROVER (≠ OPERATOR del submit) | **cubierto** | `approval.db.test.ts` › cuatro ojos: quien envió (con los dos roles) no aprueba → 403 FOUR_EYES_VIOLATION<br>`e2e-flow.db.test.ts` › 5 · INTERNAL_APPROVER (otro usuario): login → ve la versión → adjunta evidencia → aprueba el hash exacto → logout |
+| 13 | evidencia queda congelada | INTERNAL_APPROVER | **cubierto** | `e2e-flow.db.test.ts` › 5 · INTERNAL_APPROVER (otro usuario): login → ve la versión → adjunta evidencia → aprueba el hash exacto → logout |
+| 14 | aprobación refiere al hash exacto | INTERNAL_APPROVER | **cubierto** | `e2e-flow.db.test.ts` › 5 · INTERNAL_APPROVER (otro usuario): login → ve la versión → adjunta evidencia → aprueba el hash exacto → logout |
+| 15 | edito Campaign | OPERATOR | **cubierto** | `e2e-flow.db.test.ts` › 7 · OPERATOR: edita la campaña; la versión aprobada NO cambia (ni la fila ni el hash) |
+| 16 | versión aprobada NO cambia | OPERATOR | **cubierto** | `builder-d3.db.test.ts` › open muestra APPROVED VERSION vN y WORKING DRAFT; guardar no toca la versión aprobada (§32)<br>`e2e-flow.db.test.ts` › 6 · OPERATOR: la campaña muestra APPROVED VERSION con el hash exacto y el WORKING DRAFT aparte<br>`e2e-flow.db.test.ts` › 7 · OPERATOR: edita la campaña; la versión aprobada NO cambia (ni la fila ni el hash) |
+| 17 | audit log registra todo | ADMIN, OPERATOR, INTERNAL_APPROVER | **cubierto** | `e2e-flow.db.test.ts` › 8 · audit: verifyChain OK y cada evento esperado con el actor del rol que corresponde |
+| 18 | ningún endpoint puede modificar ShowVersion | — | **cubierto** | `e2e-flow.db.test.ts` › ningún endpoint puede modificar una ShowVersion, y la base lo rechaza aunque alguien lo intente |
+| 19 | M2C.2 sigue pasando sin regresión | — | **cubierto (CI)** | Playwright `e2e/experience.spec.ts` + `e2e/builder.spec.ts` (14 tests, job `e2e-m2c`)<br>_Solo en CI (job `e2e-m2c`, 14/14); intermitencia histórica en #26._ |
 
-Cada fila incluye **el paso de E2 que lo cubre** (numerado como en el test) y
-los tests específicos de la fase que lo prueban en profundidad.
+## Pendientes de navegador (no cuentan como cubiertos)
 
-| # | §48 | Rol que lo ejecuta | E2 (paso) | Tests específicos | Estado |
-|---|---|---|---|---|---|
-| 1 | creo Campaign | OPERATOR (el Advertiser y el Contract los crea ADMIN) | 1, 2 | `campaigns.db.test.ts` | **cubierto** |
-| 2 | Builder guarda un Draft en PostgreSQL | OPERATOR | 2, 3, 7: con `connectBuilderBackend` + `CampaignSession`, el mismo código que usa el Builder desde D3 | `builder-d3.db.test.ts`, `builder-repository.db.test.ts`, `useBuilderStore.test.ts` | **cubierto** a nivel API, sesión y store. El E2E de navegador del Builder es E3, todavía sin autorización (ver abajo). |
-| 3 | revision protege concurrencia | OPERATOR | 2 (`expectedRevision` viejo → 409 `DRAFT_CONFLICT`, sin escribir) | `campaigns.db.test.ts`, `builder-d3.db.test.ts` (conflicto entre dos operadores) | **cubierto** |
-| 4 | subo assets | OPERATOR | 3 (multipart real, Idempotency-Key y CSRF) | `api.db.test.ts` | **cubierto** |
-| 5 | ffprobe los valida realmente | OPERATOR | 3: los metadatos (contenedor, resolución, fps, codec, duración) salen de ffprobe; un archivo que no es video → 422 `ASSET_CORRUPT`, `REJECTED` | `process.real.test.ts`, `api.db.test.ts` | **cubierto** |
-| 6 | assets quedan identificados por SHA-256 | OPERATOR | 3: `sha256` = SHA-256 de los bytes subidos; 4: el paquete referencia el contenido, no ids | `local-disk.test.ts`, `s3.contract.test.ts` | **cubierto** |
-| 7 | envío Draft | OPERATOR | 4 (`POST /campaigns/:id/submit` con `draftRevision`) | `submit.db.test.ts` | **cubierto** |
-| 8 | servidor recompila | OPERATOR → servidor | 4: el servidor compila; el test recompila con el mismo compilador y el hash coincide | `submit.db.test.ts` | **cubierto** |
-| 9 | servidor ejecuta preflight | OPERATOR → servidor | 4: `exportable` según el mismo `validateDraft` + preflight | `submit.db.test.ts` (escena inexistente o aspecto equivocado → 422 `PREFLIGHT_FAILED`, sin versión ni audit) | **cubierto** |
-| 10 | crea ShowVersion inmutable | OPERATOR → servidor | 4 (crea), 7 (fila idéntica tras editar), §48.18 (UPDATE/DELETE rechazados) | `submit.db.test.ts`, `schema.db.test.ts` | **cubierto** |
-| 11 | calcula hash determinista | servidor | 4 (hash = recomputado) | `submit.db.test.ts` (mismo draft y bytes en dos campañas → mismo hash), `platform-contracts` | **cubierto** |
-| 12 | otro usuario la aprueba | INTERNAL_APPROVER (≠ OPERATOR que hizo el submit) | 5; el OPERATOR que hizo el submit recibe 403 | `approval.db.test.ts` (cuatro ojos, `FOUR_EYES_VIOLATION`) | **cubierto** |
-| 13 | evidencia queda congelada | INTERNAL_APPROVER | 5: SHA-256 de la evidencia = bytes subidos; la descarga devuelve los mismos bytes; UPDATE/DELETE de `approval_evidence` rechazados | `approval.db.test.ts` | **cubierto** |
-| 14 | aprobación refiere al hash exacto | INTERNAL_APPROVER | 5: otro hash → 409; la aprobación guarda el `versionHash` | `approval.db.test.ts` | **cubierto** |
-| 15 | edito Campaign | OPERATOR | 7 (nuevo draft, revisión 4) | `campaigns.db.test.ts` | **cubierto** |
-| 16 | versión aprobada NO cambia | OPERATOR | 6 (APPROVED VERSION con hash exacto y WORKING DRAFT aparte), 7 (fila de `show_versions` y de `approvals` idénticas) | `builder-d3.db.test.ts` (§32) | **cubierto** |
-| 17 | audit log registra todo | los tres roles | 8: `verifyChain` OK; cada evento con el actor de su rol (login, advertiser, contract, campaign, draft ×3, assets, submit, evidencia, aprobación) | `audit.db.test.ts`, `restore-drill.db.test.ts` | **cubierto** |
-| 18 | ningún endpoint puede modificar ShowVersion | — | §48.18: del registro de Fastify, las únicas escrituras sobre `/show-versions` son POST que crean filas nuevas (evidence/approve/reject), y no hay PUT/PATCH/DELETE; la base rechaza UPDATE/DELETE | `contract.db.test.ts` (rutas = registro), triggers de 0001 | **cubierto** |
-| 19 | M2C.2 sigue pasando sin regresión | — | — | job `e2e-m2c` de CI (14/14 `experience.spec.ts` + `builder.spec.ts`) | **cubierto en CI**. Acá no corre: no hay Chrome con H.264. Ver #26 por la intermitencia histórica. |
+| Id | Qué | Estado |
+|---|---|---|
+| E3-41 | §41 E2E Playwright: login, campaña, envío, aprobación por otro usuario y versión aprobada vs. working draft, en navegador | ⏳ **pendiente**: E3 autorizada por Fer en #31 (`apps/platform-web`); brief corto pendiente de acuerdo; no implementada ni verificada. |
+| E3-47 | §47 screenshots y video del flujo | ⏳ **pendiente**: Dependen de la UI de E3. |
 
-## Lo que §41 pide y esta matriz NO cubre
-
-- **§41 es Playwright**: login, campaña y aprobación en un navegador. E2
-  recorre exactamente ese flujo, pero **por HTTP**, sin UI. La UI de login,
-  campaña y aprobación no existe en ningún app, y E3 (Playwright de §41) sigue
-  **sin autorización**, según la decisión vigente en HANDOFF y la auditoría de D3.
-- Los screenshots y el video de §47 dependen de esa UI: quedan con E3.
-
-Por eso M3A.1 **no se declara cerrado** con esta matriz: los 19 puntos de §48
-están cubiertos a nivel plataforma, pero el E2E de navegador de §41 está
-pendiente.
+**Resumen:** 19/19 puntos de §48 cubiertos a nivel plataforma; 2 pendientes de navegador.
+M3A.1 **no se declara cerrado** mientras haya pendientes de navegador.

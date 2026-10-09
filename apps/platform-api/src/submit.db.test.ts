@@ -131,7 +131,7 @@ describe('CRITERIO C3: POST /api/v1/campaigns/:id/submit — camino feliz', () =
     expect(audit).toEqual([{ action: 'VERSION_SUBMITTED', actor_user_id: U.op!.id, after_hash: v.versionHash }]);
   });
 
-  it('mismo draft y mismos bytes en dos campañas (assets distintos, mismo contenido) → mismo hash, dos versiones', async () => {
+  it('mismo draft y mismos bytes en dos campañas (assets distintos, mismo contenido) → mismo hash, dos versiones [§48.11]', async () => {
     const o1 = await seedStoredObject(t.app, `master-compartido-${Math.random()}`);
     const o2 = await seedStoredObject(t.app, `horizontal-compartido-${Math.random()}`);
     const hashes: string[] = [];

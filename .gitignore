@@ -11,3 +11,4 @@ dist/
 test-results/
 playwright-report/
 docs/reviews/*.patch
+platform-results.json

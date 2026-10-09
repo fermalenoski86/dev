@@ -44,7 +44,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 - `0002_asset_pipeline` (reversible)
 - `0003_approval` (reversible)
 
-## Archivos de test (66)
+## Archivos de test (67)
 
 | Archivo | Suite |
 |---|---|
@@ -114,6 +114,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | `packages/telemetry/src/telemetry.test.ts` | Unidad (`pnpm verify`) |
 | `packages/timeline/src/transport.test.ts` | Unidad (`pnpm verify`) |
 | `packages/trust-3d/src/MediaTextureManager.test.ts` | Unidad (`pnpm verify`) |
+| `scripts/acceptance/matrix.test.ts` | Unidad de app (vitest del paquete) |
 
 ## Variables de entorno (32, de `.env.example`)
 
