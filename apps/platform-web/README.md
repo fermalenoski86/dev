@@ -11,6 +11,12 @@ de sesión: ADR-063 en `docs/architecture/DECISIONS.md`.
 - En producción: hosts HTTPS del mismo site (`web.<site>`, `control.<site>`,
   `api.<site>`).
 
+Rutas: `/login`, `/campaigns` (lista y alta), `/campaigns/<id>` (versión
+aprobada y working draft, assets, envío) y `/versions/<id>` (revisión,
+evidencia y aprobación de cuatro ojos). `NEXT_PUBLIC_TRUST_BUILDER_URL`
+(opcional) es la base de `apps/control` para el enlace al Builder
+(`/?campaign=<id>`).
+
 ```bash
 # API (otra terminal): TRUST_CORS_ORIGINS=http://localhost:3002 pnpm --filter @trust/platform-api start
 NEXT_PUBLIC_TRUST_API_URL=http://localhost:4000 pnpm --filter @trust/platform-web dev

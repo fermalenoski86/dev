@@ -33,3 +33,9 @@ th, td { text-align: left; padding: 0.5rem; border-bottom: 1px solid var(--line)
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .skip { position: absolute; left: -999px; }
 .skip:focus { left: 1rem; top: 1rem; background: var(--bg); padding: 0.5rem; }
+textarea { font: inherit; padding: 0.5rem 0.75rem; border: 1px solid var(--line); border-radius: 4px; background: transparent; color: inherit; min-height: 4rem; }
+button.secondary { background: transparent; color: var(--fg); border-color: var(--line); }
+.muted { color: var(--muted); }
+.check { display: flex; gap: 0.5rem; align-items: flex-start; }
+form { display: flex; flex-direction: column; gap: 0.5rem; }
+a { color: var(--accent); }
