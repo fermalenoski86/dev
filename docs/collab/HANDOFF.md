@@ -1,9 +1,19 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor). Auditoría de **E2**: PR [#29](https://github.com/fermalenoski86/dev/pull/29), rama `fase/m3a1-e2`, HEAD `69975d4`. Issue [#30](https://github.com/fermalenoski86/dev/issues/30). CI del PR 37904012565: 6/6 verde a la primera (mutaciones 244, M2C 14/14). E3 AUTORIZADA por Fer (#31, opción a: `apps/platform-web`); arranca después de aprobar E2, con brief corto primero. Pendiente de Fer: #26 y tags.
-**Fase:** M3A.1 Fase E — E2 E2E de plataforma sin navegador.
+**Pelota en:** Claude (implementador). E2 [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/29#issuecomment-6078625925) sobre `69975d4b45db1f30566d62fba853ce0e94bc3cca`: completar BL-23 (matriz ejecutable) en PR #29; issue #30 abierto. E3 autorizada por Fer (#31, `apps/platform-web`): brief corto después de aprobar E2.
+**Fase:** M3A.1 Fase E — E2, corrección de auditoría [P2].
 **Estado:** D3 [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/27#issuecomment-6076998058) sobre `66b1f44c2689d5ba3547f59b2e91654dbca30279`; squash en `main@2e39d3fbdf991fcf6884713b403ab3c5100610c8`. CI exacta [37892977654](https://github.com/fermalenoski86/dev/actions/runs/37892977654): 6/6 verde al primer intento; verify 693+1, PostgreSQL 238+6, bootstrap 6, media 63, mutaciones 240/240, M2C 14/14 y compose-smoke local/S3. Issue #28 cerrado.
 
+
+## Auditoría E2 — 2026-10-09
+- Resultado: **AUDIT: CAMBIOS**, [PR #29](https://github.com/fermalenoski86/dev/pull/29#issuecomment-6078625925), [issue #30](https://github.com/fermalenoski86/dev/issues/30#issuecomment-6078629079). Sin merge.
+- HEAD auditado: `69975d4b45db1f30566d62fba853ce0e94bc3cca`. HANDOFF leído de main y actualizado con blob vigente `9cb41cf818d59dbdf5e1340761a545bbc311963a`.
+- [P2] La matriz §48 es manual: faltan tags/generación/validación CI de BL-23, ya acordada en #20 y en el brief. Claude corrige en la misma rama; negativo reproducible que falle ante cobertura sin test/estado y recuperación; estados pendientes nunca verdes. Actualizar también las frases “E3 no autorizada” por #31.
+- CI revisada independientemente: [37904012565](https://github.com/fermalenoski86/dev/actions/runs/37904012565), intento 1, seis jobs success; merge de HEAD contra `dca798d`. Verify 693 passed + 1 skipped, PostgreSQL 247 + 6 skipped (E2 nuevo 9/9), bootstrap 6/6, media 63/63, mutaciones 244/244, M2C 14/14, compose local/S3 y contrato S3 15/15. Esta CI aún no contiene el gate de BL-23.
+- Ejecución propia: autoprueba del runner y diff-check OK; revisión estática e integración sin conflicto en merge-tree. PostgreSQL local intentado, exit 2 por binarios ausentes. No repetidos localmente install/verify/build, PG/bootstrap/media, mutaciones completas, navegador ni compose; evidencia CI examinada. Entorno local Node24/pnpm11 distinto del requerido; no atribuir esos gates a ejecución propia.
+- Decisiones de test aceptadas: seed de usuarios, repositorio real Builder y suite PostgreSQL. M3A.1 sigue sin cierre; navegador/evidencia visual corresponden a E3.
+- Debate registrado en BACKLOG: BL-23 aceptada y pendiente de implementación; fuente oficial Vitest 2 https://v2.vitest.dev/guide/reporters#json-reporter (consulta 2026-10-09), útil para tags/resultados sin dependencia nueva, no sustituye asserts ni navegador. BL-27 (API ADMIN de alta) propuesta de Claude, diferida a decisión de producto; no necesaria para preparar tests ni autorizada por #31.
+- Próximo turno: Claude entrega corrección y gates del nuevo HEAD; luego ChatGPT reaudita. Tras aprobación de E2, brief E3 de `apps/platform-web` para acuerdo antes de implementar. M2C y experiencia ejecutiva permanecen congelados.
 
 ## Decisión de Fer sobre E3 (2026-10-09 06:48 ART, #31)
 Opción (a): la UI de login, campaña y aprobación vive en una app nueva `apps/platform-web`. `apps/control` sigue congelada. **E3 arranca después de `AUDIT: APROBADO` de E2**, con un brief corto de E3 para acordar con el auditor antes de implementar. No cambia la pelota actual.
@@ -12,7 +22,7 @@ Opción (a): la UI de login, campaña y aprobación vive en una app nueva `apps/
 Opción 1: D3 autorizada (store del Builder con `CampaignRepository` inyectado + indicador de versión; sin tocar la experiencia ejecutiva, el renderer, la geometría ni los screenshots; los 14 E2E de M2C son gate). **Orden: D3 después de cerrar E1 y antes de E2**, en su propia rama y PR. No cambia la pelota actual.
 
 ## Entrega activa
-- Implementador: Claude. Crear `fase/m3a1-e2` desde `main@2e39d3fbdf991fcf6884713b403ab3c5100610c8` o posterior y entregar PR + issue de auditoría.
+- Implementador: Claude. Corregir BL-23 en la rama existente `fase/m3a1-e2`, PR #29; responder el hallazgo con SHA y gates completos y devolver issue #30 a auditoría.
 - E2: ejecutar por HTTP real, PostgreSQL real, ffprobe real, sesiones/CSRF y roles reales el flujo definido en `docs/briefs/M3A1_FASE_E.md` §E2. Generar `docs/reviews/M3A1_ACEPTACION.md` con los 19 puntos y los estados autoritativos; un pendiente nunca cuenta como cubierto.
 - Gates obligatorios: todos los de AGENTS.md. Mantener los 14 E2E M2C congelados. E3 autorizada por Fer (#31): UI en `apps/platform-web`, después de aprobar E2.
 - D3 queda cerrada. No reabrir store/indicador salvo bug demostrado con reproducción y test.
@@ -124,6 +134,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-09 — ChatGPT: E2 `AUDIT: CAMBIOS` sobre `69975d4`; CI seis jobs verde, [P2] matriz ejecutable BL-23 ausente. Devuelve pelota a Claude para el mismo PR #29; #30 abierto. E3 autorizada por #31 sigue después de aprobar E2.
 - 2026-10-09 08:43 UTC — Claude: CI de #29 6/6 verde a la primera (37904012565). Auditoría de E2 pedida en #29/#30. Pelota a ChatGPT.
 - 2026-10-09 08:25 UTC — Claude: D3 mergeada (`main@2e39d3f`); #28 cerrado sin tag. E2 entregada en #29 (issue #30): `e2e-flow.db.test.ts`, §41 por HTTP real rol por rol, y la matriz `M3A1_ACEPTACION.md` de los 19 puntos de §48 (M3A.1 no se declara cerrado: falta E3). Gates locales: verify 693+1, PG 247+6, bootstrap 6, media 63, build, 4/4 mutaciones `e2:`. E2E M2C y las 244 mutaciones completas quedan para CI.
 - 2026-10-09 — ChatGPT: D3 `AUDIT: APROBADO` sobre `66b1f44c2689d5ba3547f59b2e91654dbca30279`; CI 37892977654 inspeccionada completa: verify693+1, PG238+6, bootstrap6, restore18 tablas/verifyChain, media63, mutaciones240, M2C14 y compose local/S3, seis jobs verdes a la primera. Auditor local: delta completo y 24/24 focalizadas; full gates no repetidos localmente y cubiertos por CI. Squash en `main@2e39d3fbdf991fcf6884713b403ab3c5100610c8`; #28 cerrado. BL-25 diferida a E3; BL-26 aceptada con ajustes para después de E2. Pelota a Claude para E2; E3 sin autorización.
