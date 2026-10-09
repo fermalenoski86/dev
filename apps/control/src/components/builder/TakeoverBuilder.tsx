@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DRAFT_PRESETS, MIN_MOMENT_MS, momentSpans, totalDurationMs } from '@trust/show-authoring';
 import type { BuilderIssue, ScreenDirective, TakeoverMoment } from '@trust/show-authoring';
+import { campaignIdFromSearch } from '@trust/builder-repository';
 import { BUILDING, SCENE_IDS, useBuilderStore } from '../../state/useBuilderStore';
+import { CampaignStatus } from './CampaignStatus';
 import { SchematicPreviewRenderer } from './PreviewRenderer';
 import { Panel, fmt } from '../primitives';
 
@@ -36,7 +38,7 @@ export function TakeoverBuilder() {
     loadPreset, selectMoment, patchMoment, patchSurfaces, patchMeta,
     addMomentAt, duplicate, remove, move, revalidate,
     play, pause, stop, restart, scrub, tick, save, loadFromStorage,
-    importDraft, setPresentMode, setShowCompiled,
+    importDraft, setPresentMode, setShowCompiled, connectCampaign, syncCampaign,
   } = useBuilderStore();
 
   const total = totalDurationMs(draft);
@@ -44,8 +46,23 @@ export function TakeoverBuilder() {
   const selected = draft.moments.find((m) => m.id === selectedMomentId) ?? null;
 
   useEffect(() => {
+    // D3 (#15): con `?campaign=<uuid>` el draft sale del backend (§31). Sin
+    // eso, o si la campaña no abre, el Builder sigue como en M2C.
+    const campaignId = campaignIdFromSearch(window.location.search);
+    if (campaignId) {
+      void connectCampaign(campaignId).then((ok) => {
+        if (!ok && !loadFromStorage()) revalidate();
+      });
+      return;
+    }
     if (!loadFromStorage()) revalidate();
-  }, [loadFromStorage, revalidate]);
+  }, [loadFromStorage, revalidate, connectCampaign]);
+
+  // D3: al volver la conexión se sube lo pendiente (§9 "online: sincroniza").
+  useEffect(() => {
+    window.addEventListener('online', syncCampaign);
+    return () => window.removeEventListener('online', syncCampaign);
+  }, [syncCampaign]);
 
   // El playhead se lee del motor, no se calcula acá.
   useEffect(() => {
@@ -222,6 +239,8 @@ function TopBar({
         >
           {dirty ? 'UNSAVED' : 'SAVED'}
         </span>
+
+        <CampaignStatus />
 
         <select
           data-testid="preset-select"

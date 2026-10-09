@@ -17,5 +17,7 @@ export default defineConfig({
       '@trust/experience-core': resolve(__dirname, 'packages/experience-core/src/index.ts'),
     },
   },
-  test: { include: ['packages/**/*.test.ts'], exclude: ['**/node_modules/**', '**/*.db.test.ts', '**/*.real.test.ts'], environment: 'node' },
+  // JSX de React 17+ (runtime automático), igual que Next en apps/control.
+  esbuild: { jsx: 'automatic' },
+  test: { include: ['packages/**/*.test.ts', 'apps/control/src/**/*.test.ts'], exclude: ['**/node_modules/**', '**/*.db.test.ts', '**/*.real.test.ts'], environment: 'node' },
 });

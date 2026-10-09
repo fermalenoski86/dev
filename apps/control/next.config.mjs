@@ -17,6 +17,7 @@ const nextConfig = {
     '@trust/control-core',
     '@trust/show-authoring',
     '@trust/experience-core',
+    '@trust/builder-repository',
   ],
 };
 export default nextConfig;

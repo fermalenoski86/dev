@@ -1,0 +1,89 @@
+M3A.1 Fase D3 — salida REAL de los gates (2026-10-09T06:19Z, este entorno)
+Node v22.22.0 · pnpm 12.5.1 · psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1)
+rama fase/m3a1-d3 desde main@ba928e5
+
+== pnpm install --frozen-lockfile
+Lockfile is up to date, resolution step is skipped
+Done in 32ms using pnpm v12.5.1
+
+== pnpm verify (exit 0)
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  39 passed | 1 skipped (40)
+      Tests  693 passed | 1 skipped (694)
+
+   nuevos en la suite default:
+    ✓ packages/builder-repository/src/session.test.ts > D3 · CampaignSession > open expone APPROVED VERSION y la revisión del WORKING DRAFT (§32)
+    ✓ packages/builder-repository/src/session.test.ts > D3 · CampaignSession > el expectedRevision sale del repositorio, no del llamador
+    ✓ packages/builder-repository/src/session.test.ts > D3 · CampaignSession > nunca dos guardados en paralelo; los del medio se descartan y se sube SOLO el último
+    ✓ packages/builder-repository/src/session.test.ts > D3 · CampaignSession > sin conexión queda pending y sync() lo sube
+    ✓ packages/builder-repository/src/session.test.ts > D3 · CampaignSession > un 409 queda como conflicto visible con las revisiones (§9) y nada se pisa
+    ✓ packages/builder-repository/src/session.test.ts > D3 · CampaignSession > las tres salidas de §9: recuperar server, mantener local, duplicar
+    ✓ packages/builder-repository/src/session.test.ts > D3 · CampaignSession > un error del backend se muestra; con conflicto abierto, sigue el conflicto
+    ✓ packages/builder-repository/src/session.test.ts > D3 · CampaignSession > save antes de abrir es un error explícito
+    ✓ packages/builder-repository/src/session.test.ts > D3 · composición del navegador > campaignIdFromSearch solo acepta un uuid en ?campaign=
+    ✓ packages/builder-repository/src/session.test.ts > D3 · composición del navegador > lee el CSRF de /auth/me y compone el repositorio de D2 (registro de sync + espejo M2C)
+    ✓ packages/builder-repository/src/session.test.ts > D3 · composición del navegador > sin sesión → UNAUTHENTICATED; sin backend → OfflineError
+    ✓ apps/control/src/state/useBuilderStore.test.ts > D3 · store del Builder > sin campaña: el guardado de M2C no cambia (localStorage) y no hay indicador
+    ✓ apps/control/src/state/useBuilderStore.test.ts > D3 · store del Builder > abre la campaña del backend: adopta su draft limpio y expone APPROVED VERSION / WORKING DRAFT
+    ✓ apps/control/src/state/useBuilderStore.test.ts > D3 · store del Builder > autosave con expectedRevision del repositorio; limpio recién al confirmar
+    ✓ apps/control/src/state/useBuilderStore.test.ts > D3 · store del Builder > si se edita mientras se guarda, el draft sigue sucio (no se marca limpio lo que no se subió)
+    ✓ apps/control/src/state/useBuilderStore.test.ts > D3 · store del Builder > conflicto: queda visible y sucio (reemplazarlo pide confirmación); recuperar servidor lo resuelve
+    ✓ apps/control/src/state/useBuilderStore.test.ts > D3 · store del Builder > conflicto: mantener la mía la sube y duplicar deja la copia para exportar
+    ✓ apps/control/src/state/useBuilderStore.test.ts > D3 · store del Builder > si la campaña no abre: error visible y el autosave queda local (M2C), nunca a una campaña no abierta
+    ✓ apps/control/src/components/builder/CampaignStatus.test.ts > D3 · indicador de campaña del Builder > sin campaña: no renderiza nada
+    ✓ apps/control/src/components/builder/CampaignStatus.test.ts > D3 · indicador de campaña del Builder > APPROVED VERSION vN y WORKING DRAFT rev R (§32)
+    ✓ apps/control/src/components/builder/CampaignStatus.test.ts > D3 · indicador de campaña del Builder > sin versión aprobada: solo WORKING DRAFT
+    ✓ apps/control/src/components/builder/CampaignStatus.test.ts > D3 · indicador de campaña del Builder > pendiente sin conexión y error se ven
+    ✓ apps/control/src/components/builder/CampaignStatus.test.ts > D3 · indicador de campaña del Builder > conflicto: revisiones del servidor y del cliente, y las tres salidas de §9
+    ✓ apps/control/src/components/builder/CampaignStatus.test.ts > D3 · indicador de campaña del Builder > copia local de "duplicar": se ofrece para descargar
+         Tests  24 passed (24)
+
+== pnpm build (exit 0)
+apps/previs build:  ✓ Compiled successfully
+apps/control build:  ✓ Compiled successfully
+apps/previs build: ┌ ○ /                                    239 kB          326 kB
+apps/previs build: └ ○ /_not-found                          872 B          88.2 kB
+apps/control build: ┌ ○ /                                    31.2 kB         152 kB
+apps/control build: ├ ○ /_not-found                          872 B          88.2 kB
+apps/control build: └ ○ /experience                          15.2 kB         136 kB
+
+== PostgreSQL 16 (vitest.platform.config.ts, exit 0)
+ Test Files  19 passed | 1 skipped (20)
+      Tests  238 passed | 6 skipped (244)
+
+   nuevo contra la API real (builder-d3.db.test.ts):
+    ✓ apps/platform-api/src/builder-d3.db.test.ts > CRITERIO D3: el Builder abre la campaña del backend y guarda con expectedRevision > open muestra APPROVED VERSION vN y WORKING DRAFT; guardar no toca la versión aprobada (§32)
+    ✓ apps/platform-api/src/builder-d3.db.test.ts > CRITERIO D3: el Builder abre la campaña del backend y guarda con expectedRevision > autosaves encimados: uno por vez y solo el último; cada subida es UNA revisión y UN audit
+    ✓ apps/platform-api/src/builder-d3.db.test.ts > CRITERIO D3: el Builder abre la campaña del backend y guarda con expectedRevision > offline → pending (local); al volver, sync sube con la revisión correcta
+    ✓ apps/platform-api/src/builder-d3.db.test.ts > CRITERIO D3: el Builder abre la campaña del backend y guarda con expectedRevision > otro operador escribe → CONFLICTO visible, el servidor no se pisa; "mantener la mía" es explícito
+    ✓ apps/platform-api/src/builder-d3.db.test.ts > CRITERIO D3: el Builder abre la campaña del backend y guarda con expectedRevision > recuperar la del servidor y duplicar: el Builder adopta el draft del servidor sin escribir
+    ✓ apps/platform-api/src/builder-d3.db.test.ts > CRITERIO D3: el Builder abre la campaña del backend y guarda con expectedRevision > INTERNAL_APPROVER abre pero no puede guardar: error visible, la base intacta; sin sesión no conecta
+         Tests  6 passed (6)
+
+== bootstrap-smoke.sh (exit 0)
+      Tests  6 passed (6)
+
+== media (exit 0)
+      Tests  63 passed (63)
+
+== mutaciones D3 (python3 scripts/mutation-check.py --tanda 228:240)
+tanda 228:240 — 12 de 240 reglas
+ATRAPADA   d3: expectedRevision inventado por el llamador (§31)
+ATRAPADA   d3: el autosave del medio también se sube
+ATRAPADA   d3: dos guardados en paralelo
+ATRAPADA   d3: CSRF de la sesión no se manda
+ATRAPADA   d3: ?campaign= acepta cualquier cosa
+ATRAPADA   d3: conflicto marcado como guardado en la vista (§9)
+ATRAPADA   d3: limpio aunque se editó durante el guardado
+ATRAPADA   d3: conflicto deja el draft limpio (reemplazo sin confirmación)
+ATRAPADA   d3: campaña que no abrió sigue recibiendo autosaves
+ATRAPADA   d3: sin campaña el Builder deja de guardar local (M2C)
+ATRAPADA   d3: indicador sin APPROVED VERSION (§32)
+ATRAPADA   d3: indicador visible sin campaña (M2C cambia)
+atrapadas 12 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+
+== python3 scripts/mutation-check.py --autoprueba
+autoprueba OK
+
+== E2E M2C (14): NO ejecutado localmente (no hay Google Chrome con H.264 en este entorno). Evidencia: job e2e-m2c de CI.

@@ -93,6 +93,9 @@ experiencia ejecutiva, el renderer, la geometría ni los screenshots. Los 14 E2E
 de M2C tienen que seguir pasando. **Requiere decisión de Fer** (issue
 `decisión-producto`): mientras tanto D1 y D2 avanzan y D3 no se inicia.
 
+**Estado D3:** Fer eligió la opción 1 en #15. Implementado en `fase/m3a1-d3`;
+detalle en `docs/platform/BUILDER_REPOSITORY.md` §D3 y `docs/reviews/M3A1_FASE_D3.md`.
+
 ## Decisiones a validar (❓)
 
 1. **§6 "una Campaign no puede utilizar una superficie fuera de su Contract.

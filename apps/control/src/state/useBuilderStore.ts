@@ -34,6 +34,7 @@ import {
   type TakeoverDraft,
   type TakeoverMoment,
 } from '@trust/show-authoring';
+import { type CampaignSession, type CampaignView, connectBuilderBackend } from '@trust/builder-repository';
 
 /**
  * Estado del TAKEOVER BUILDER.
@@ -62,6 +63,8 @@ const storage = (): DraftStorage => {
   }
 };
 const sceneIds = new Set(SCENES.keys());
+/** D3: la última sesión de campaña abierta (solo ella actualiza el indicador). */
+let sesionActual: CampaignSession | null = null;
 
 export interface BuilderState {
   draft: TakeoverDraft;
@@ -86,6 +89,14 @@ export interface BuilderState {
   lastSavedAt: number | null;
   presentMode: boolean;
   showCompiled: boolean;
+
+  /*
+   * D3 (#15, opción 1) — campaña del backend. `null` = Builder de M2C tal cual:
+   * solo localStorage, sin indicador. Con sesión, el autosave pasa por el
+   * `CampaignRepository` de D2 (expectedRevision, offline, conflicto §9).
+   */
+  campaign: CampaignView | null;
+  campaignSession: CampaignSession | null;
 
   setDraft: (draft: TakeoverDraft, options?: { markDirty?: boolean }) => void;
   loadPreset: (build: () => TakeoverDraft) => void;
@@ -117,6 +128,15 @@ export interface BuilderState {
   importDraft: (raw: unknown) => { ok: boolean; message?: string };
   setPresentMode: (on: boolean) => void;
   setShowCompiled: (on: boolean) => void;
+
+  /** Abre la campaña con una sesión ya armada (inyectable: tests y composición). */
+  openCampaign: (session: CampaignSession, campaignId: string) => Promise<boolean>;
+  /** Composición del navegador: sesión de C1 + API (fetch inyectado acá, no en un componente). */
+  connectCampaign: (campaignId: string) => Promise<boolean>;
+  /** Reintenta lo pendiente (al volver la conexión). */
+  syncCampaign: () => void;
+  /** Las tres salidas de §9. Ninguna se toma sola. */
+  resolveConflict: (salida: 'server' | 'local' | 'duplicate') => Promise<void>;
 }
 
 export const useBuilderStore = create<BuilderState>((set, get) => ({
@@ -141,6 +161,9 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   lastSavedAt: null,
   presentMode: false,
   showCompiled: false,
+
+  campaign: null,
+  campaignSession: null,
 
   setDraft: (draft, options) => {
     set({ draft: { ...draft, updatedAt: Date.now() }, dirty: options?.markDirty ?? true });
@@ -280,10 +303,27 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
   },
 
   save: () => {
-    const draft = { ...get().draft, updatedAt: Date.now() };
-    if (saveDraft(storage(), draft)) {
-      set({ draft, dirty: false, lastSavedAt: Date.now() });
+    const sesion = get().campaignSession;
+    if (!sesion) {
+      // M2C, sin cambios: solo localStorage.
+      const draft = { ...get().draft, updatedAt: Date.now() };
+      if (saveDraft(storage(), draft)) {
+        set({ draft, dirty: false, lastSavedAt: Date.now() });
+      }
+      return;
     }
+    // D3: el repositorio guarda local siempre y sube con expectedRevision.
+    // Limpio solo si quedó persistido Y nadie editó mientras tanto. Un conflicto
+    // o un error dejan el draft sucio: reemplazarlo pide confirmación.
+    const enviado = get().draft;
+    void sesion
+      .save({ ...enviado, updatedAt: Date.now() })
+      .then((r) => {
+        if (r && (r.kind === 'saved' || r.kind === 'pending') && get().draft === enviado) {
+          set({ dirty: false, lastSavedAt: Date.now() });
+        }
+      })
+      .catch(() => undefined); // el error queda en `campaign` y el indicador lo muestra
   },
 
   loadFromStorage: () => {
@@ -331,7 +371,90 @@ export const useBuilderStore = create<BuilderState>((set, get) => ({
     set({ presentMode: on });
   },
   setShowCompiled: (on) => set({ showCompiled: on }),
+
+  openCampaign: async (session, campaignId) => {
+    sesionActual = session; // una sesión vieja que siga emitiendo no pisa el indicador
+    set({ campaignSession: null, campaign: null });
+    session.subscribe((v) => {
+      if (sesionActual === session) set({ campaign: v });
+    });
+    try {
+      const abierta = await session.open(campaignId);
+      adoptarDelRepositorio(abierta.draft);
+      set({ campaignSession: session, campaign: session.view() });
+      return true;
+    } catch {
+      // Sin campaña abierta no hay autosave remoto: el indicador muestra el
+      // error y lo que se edite queda solo en este navegador (M2C).
+      set({ campaignSession: null, campaign: session.view() });
+      return false;
+    }
+  },
+
+  connectCampaign: async (campaignId) => {
+    try {
+      const session = await connectBuilderBackend({
+        baseUrl: process.env.NEXT_PUBLIC_TRUST_API_URL ?? '',
+        fetch: (input, init) => window.fetch(input, init),
+        storage: storage(),
+      });
+      return await get().openCampaign(session, campaignId);
+    } catch (e) {
+      const error = e instanceof Error && 'code' in e ? { code: String((e as { code: unknown }).code), message: e.message } : { code: 'OFFLINE', message: 'Sin conexión con el backend.' };
+      set({
+        campaignSession: null,
+        campaign: { campaignId, phase: 'error', connectivity: error.code === 'OFFLINE' ? 'offline' : 'online', revision: null, updatedAt: null, approvedVersion: null, conflict: null, error, localCopy: null },
+      });
+      return false;
+    }
+  },
+
+  syncCampaign: () => {
+    const sesion = get().campaignSession;
+    if (!sesion) return;
+    const enviado = get().draft;
+    void sesion
+      .sync()
+      .then((r) => {
+        if (r?.kind === 'saved' && get().draft === enviado && get().dirty === false) set({ lastSavedAt: Date.now() });
+      })
+      .catch(() => undefined);
+  },
+
+  resolveConflict: async (salida) => {
+    const sesion = get().campaignSession;
+    if (!sesion) return;
+    try {
+      if (salida === 'local') {
+        const enviado = get().draft;
+        const r = await sesion.keepLocal();
+        if (r?.kind === 'saved' && get().draft === enviado) set({ dirty: false, lastSavedAt: Date.now() });
+        return;
+      }
+      const draft = salida === 'server' ? await sesion.recoverServer() : await sesion.duplicateAsNew();
+      adoptarDelRepositorio(draft);
+    } catch {
+      // el error (o el conflicto que sigue abierto) queda en `campaign`
+    }
+  },
 }));
+
+/** Adopta un draft que ya está persistido por el repositorio: queda limpio. */
+function adoptarDelRepositorio(draft: TakeoverDraft) {
+  const { getState, setState } = useBuilderStore;
+  const adopted = adoptDraft(draft, 'storage');
+  getState().session.release();
+  setState({
+    draft: adopted.draft,
+    selectedMomentId: adopted.draft.moments[0]?.id ?? null,
+    dirty: adopted.dirty,
+    previewState: null,
+    transport: 'stopped',
+    timeMs: 0,
+    engineRevision: 'none',
+  });
+  getState().revalidate();
+}
 
 /* ── Selectores ──────────────────────────────────────────────── */
 
