@@ -149,3 +149,12 @@ GATE imagen platform-api: node@sha256:0e5f906573693feaa1e21057ebdcfdb5bd5021f050
 GATE imagen seaweedfs: chrislusf/seaweedfs@sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d
 GATE compose-smoke completo
       Tests  15 passed (15)
+
+== CI sobre aabd501 (HEAD de entrega, merge de main con #25) — 2026-10-09 UTC
+run 37863613267 (workflow_dispatch, attempt 1): success — verify-build, postgres, compose-smoke, media, e2e-m2c, mutations (227/227): todos success
+run 37863120895 (pull_request #23):
+  attempt 1: verify-build, postgres, compose-smoke, media, mutations = success; e2e-m2c = FAILURE
+             (job 113603360867, experience.spec.ts:17 quedó en LOADING; ver #26)
+  attempt 2 (re-run ÚNICO del job fallido, 00:35–00:37): e2e-m2c = success (job 113611296304)
+Nota: el rojo del attempt 1 es real y está documentado en #26 (decisión-producto); no se tocó apps/control
+ni se salteó ningún test. No se presenta como verde: el verde es del re-run y del dispatch independiente.
