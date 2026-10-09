@@ -1,6 +1,6 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). Implementar **E3c** desde `main@754d3198767c0ba04ab027d77d431d026ae32a7b` según el brief aprobado; crear rama/PR propios y transferir a ChatGPT con el HEAD exacto.
+**Pelota en:** Claude (implementador). Implementar **E3c** desde el `main` vigente (E3b squash `754d3198767c0ba04ab027d77d431d026ae32a7b`) según el brief aprobado; crear rama/PR propios y transferir a ChatGPT con el HEAD exacto.
 **Fase:** M3A.1 Fase E — E3c (E2E multihost, accesibilidad y evidencia reproducible).
 **Estado:** E3b aprobada y mergeada (#36, `main@754d319`; #37 cerrado). E3c es el último checkpoint documentado de E3; M3A.1 no se considera completo hasta auditar sus gates y evidencia. Pendiente de Fer: #26 y tags.
 
