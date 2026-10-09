@@ -1,9 +1,17 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor). Auditoría del **brief de E3**: PR [#32](https://github.com/fermalenoski86/dev/pull/32) (`docs/briefs/M3A1_FASE_E3.md`, solo documento), issue [#33](https://github.com/fermalenoski86/dev/issues/33). Decisión principal a validar: cómo entra el Builder (D3) al E2E de navegador (propuesta: CORS por allowlist en la API). E3 no se implementa antes de `AUDIT: APROBADO` del brief. Pendiente de Fer: #26 y tags.
-**Fase:** M3A.1 Fase E — E3, acuerdo de brief para UI + Playwright §41/§47.
-**Estado:** E2 [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/29#issuecomment-6080498773) sobre `ea635b1c845fe6e357bc668907ec1139a822234a`; squash en `main@0234055a572107ca3623363bcb8e45d7dfe6326c`. Issue #30 cerrado. CI 37915601096: 6/6 verde al primer intento; verify 702+1, PostgreSQL 247+6, bootstrap 6, media 63, mutaciones 247/247, M2C 14/14, compose local/S3 15/15 y acceptance 19 puntos/12 tags passed.
+**Pelota en:** Claude (implementador). Corregir el **brief de E3** en PR [#32](https://github.com/fermalenoski86/dev/pull/32), issue [#33](https://github.com/fermalenoski86/dev/issues/33), según [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/32#issuecomment-6084515242) sobre `cf3b5a00a3ca91a2f7fc4146c689e5c8625b4aeb`. No implementar E3a antes de aprobar el brief.
+**Fase:** M3A.1 Fase E — E3, corrección del brief de UI + Playwright §41/§47.
+**Estado:** [P1] pendiente: el login por proxy de `platform-web` emite una cookie `__Host-` host-only que el Builder no puede reutilizar al llamar directamente a otro host de API. Elegir una topología de sesión concreta y agregar E2E multihost. Decisiones aceptadas con ajuste: cuenta por rol/worker (BL-25), artifact con manifest/retención (BL-29) y accesibilidad automática + teclado/foco sin prometer conformidad total (BL-28). Pendiente de Fer: #26 y tags.
 
+## Auditoría inicial del brief E3 — 2026-10-09
+- Resultado: **AUDIT: CAMBIOS**, [comentario en PR #32](https://github.com/fermalenoski86/dev/pull/32#issuecomment-6084515242).
+- HEAD auditado: `cf3b5a00a3ca91a2f7fc4146c689e5c8625b4aeb`. El PR solo agrega el brief; E3 todavía no está implementada.
+- [P1] reproducible: login vía rewrite de `platform-web` + Builder directo a `platform-api` no comparte la cookie de producción `__Host-trust_session` si usan hosts distintos. `credentials: include` y CSRF ya existen en D3; CORS no cambia el alcance host-only de la cookie.
+- Corrección sugerida sin tocar el código congelado de `apps/control`: ambas UIs hablan directamente con la API, incluido el login, bajo hosts HTTPS del mismo site, con allowlist exacta, credenciales, preflight y CSRF; se admite otra arquitectura si demuestra el mismo flujo.
+- CI exacta [37927769812](https://github.com/fermalenoski86/dev/actions/runs/37927769812), 6/6 success al primer intento: verify 702+1, PostgreSQL 247+6, bootstrap 6, media 63, mutaciones 247/247, M2C 14/14, compose 15/15 y acceptance 19 puntos/12 tags. Auditor inspeccionó logs; no repitió localmente infraestructura/navegador.
+- Controles E3 no ejecutables aún: UI, CORS multihost, Playwright §41, screenshots/video, manifest y accesibilidad. No cuentan como aprobados hasta existir y pasar.
+- BACKLOG actualizado: BL-28 aceptada con ajuste; BL-29 propuesta. Claude debe responder al debate, actualizar el brief y devolver un nuevo SHA a ChatGPT.
 
 ## Cierre E2 — 2026-10-09
 - Resultado: **AUDIT: APROBADO**, [PR #29](https://github.com/fermalenoski86/dev/pull/29#issuecomment-6080498773), issue #30 cerrado y squash en `main@0234055a572107ca3623363bcb8e45d7dfe6326c`.
