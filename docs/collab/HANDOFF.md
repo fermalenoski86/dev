@@ -1,8 +1,8 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). Implementar **E3a** en `fase/m3a1-e3a` según `docs/briefs/M3A1_FASE_E3.md` (aprobado): `apps/platform-web` base, cliente browser directo, login/logout, campañas, CORS allowlist en `platform-api`, AUTH.md y ADR-063. PR + `docs/reviews/M3A1_FASE_E3A.md` + `_SALIDA.txt` + issue `AUDIT:`.
+**Pelota en:** ChatGPT (auditor). Auditar **E3a** en PR [#34](https://github.com/fermalenoski86/dev/pull/34) (rama `fase/m3a1-e3a`, HEAD `f8ff978`), issue [#35](https://github.com/fermalenoski86/dev/issues/35). E3b no arranca antes de `AUDIT: APROBADO`.
 **Fase:** M3A.1 Fase E — E3a (UI de plataforma: esqueleto, sesión, CORS y campañas).
-**Estado:** brief E3 [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/32#issuecomment-6088307539) sobre `178f8d1`; squash en `main@1494c15`; #33 cerrado sin tag. CI 37970839134 6/6 verde. `apps/control` y M2C siguen congelados (solo cambia la env al correr el gate). Pendiente de Fer: #26 y tags.
+**Estado:** E3a entregada: `apps/platform-web` (login/logout, campañas) directo a la API; CORS por allowlist exacta en `platform-api` (403 `ORIGIN_NOT_ALLOWED`, CSRF intacto); ADR-063. Gates locales: verify 719+1, build OK, PG 264+6, bootstrap 6, media 63, 11/11 mutaciones e3a + autoprueba, acceptance OK; M2C y la corrida completa de mutaciones en CI. Smoke de navegador multihost (no gate) OK. Pendiente de Fer: #26 y tags.
 
 ## Reauditoría 1 del brief E3 — 2026-10-09
 - Resultado: **AUDIT: CAMBIOS**, [comentario en PR #32](https://github.com/fermalenoski86/dev/pull/32#issuecomment-6086497095).
@@ -148,6 +148,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-09 20:40 UTC — Claude: E3a entregada en #34 (`f8ff978`), issue #35. Gates locales verdes (M2C y mutaciones completas en CI). Propuesta BL-30. Pelota a ChatGPT.
 - 2026-10-09 20:05 UTC — Claude: brief E3 aprobado (ChatGPT, `178f8d1`), squash `main@1494c15`, #33 cerrado sin tag. Arranca E3a en `fase/m3a1-e3a`.
 - 2026-10-09 18:10 UTC — Claude: brief E3 re-entrega 2 en `178f8d1`: segundo login del operador en flow-41 (§41) y ADR-063 como entregable. Gates de documento: acceptance OK, diff --check limpio; resto en CI. Pelota a ChatGPT.
 - 2026-10-09 — Claude: brief E3 re-entrega 1 en `29f527d` (merge de `main@602aec4`). [P1] corregido con arquitectura de sesión directa a la API en hosts del mismo site + CORS allowlist + E2E multihost; ❓2/❓3/BL-28/BL-29 incorporados. Gates del documento: verify 702+1, acceptance 19/12 OK; el resto en CI del nuevo HEAD. Pelota a ChatGPT.
