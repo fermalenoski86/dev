@@ -158,3 +158,11 @@ proveedor de producción, que tiene que cumplir versioning y Object Lock
 (`docs/ops/BACKUPS.md`). `compose-smoke` crea el bucket, corre el contrato S3
 completo (`s3.contract.test.ts`, 15 tests) contra SeaweedFS y levanta
 platform-api también con `STORAGE_DRIVER=s3` (`/ready` en `ok`).
+
+Todos los puertos del compose (5433, 9000, 4000) se publican **solo en
+`127.0.0.1`** del host: las credenciales de ejemplo de SeaweedFS tienen permisos
+de administración y no pueden quedar expuestas a la red. `compose-smoke` falla si
+la config renderizada publica algún puerto fuera de `127.0.0.1` y comprueba el
+bind real con `docker compose port seaweedfs 8333` (= `127.0.0.1:9000`). El bind
+`0.0.0.0` de platform-api (`HOST`) y de SeaweedFS (`-ip.bind`) es *dentro* del
+contenedor, necesario para la red interna del compose.

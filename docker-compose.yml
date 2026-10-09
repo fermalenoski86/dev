@@ -14,7 +14,7 @@ services:
     image: postgres:16@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d   # 16.15 (Debian), digest resuelto en CI run 37839307934
     environment:
       POSTGRES_PASSWORD: CHANGE_ME
-    ports: ["5433:5432"]
+    ports: ["127.0.0.1:5433:5432"]   # solo loopback del host (E1 #23 P2)
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -26,7 +26,7 @@ services:
     image: chrislusf/seaweedfs@sha256:4e61d15fd35994cb1e43e1e553dff106794841fd9a99ade2fc8c8bfce4d7872d
     command: ["server", "-dir=/data", "-ip.bind=0.0.0.0", "-s3", "-s3.port=8333", "-s3.config=/etc/seaweedfs/s3.json"]
     volumes: ["./docker/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro"]
-    ports: ["9000:8333"]   # S3 en 127.0.0.1:9000, el S3_ENDPOINT de .env.example
+    ports: ["127.0.0.1:9000:8333"]   # S3 solo en loopback del host, 127.0.0.1:9000 (credenciales de ejemplo con Admin: nunca en 0.0.0.0)
 
   platform-api:
     image: node:22-bookworm@sha256:0e5f906573693feaa1e21057ebdcfdb5bd5021f050b2dc7c9deceb629c7da2a8   # digest resuelto en CI run 37839307934
@@ -38,7 +38,7 @@ services:
     environment:
       HOST: 0.0.0.0
       PORT: "4000"
-    ports: ["4000:4000"]
+    ports: ["127.0.0.1:4000:4000"]   # solo loopback del host; HOST=0.0.0.0 es el bind DENTRO del contenedor
     depends_on:
       postgres:
         condition: service_healthy

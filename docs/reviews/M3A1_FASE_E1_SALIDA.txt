@@ -158,3 +158,16 @@ run 37863120895 (pull_request #23):
   attempt 2 (re-run ÚNICO del job fallido, 00:35–00:37): e2e-m2c = success (job 113611296304)
 Nota: el rojo del attempt 1 es real y está documentado en #26 (decisión-producto); no se tocó apps/control
 ni se salteó ningún test. No se presenta como verde: el verde es del re-run y del dispatch independiente.
+
+== Re-entrega 3 (AUDIT: CAMBIOS 2026-10-09, P2 bind de puertos) — salida local real
+merge de main (trae #12) sin conflictos de contenido
+pnpm install --frozen-lockfile: exit 0
+pnpm verify: exit 0 — Tests 669 passed | 1 skipped (670) · lint ✖ 12 problems (0 errors, 12 warnings)
+pnpm build: exit 0
+vitest platform (PostgreSQL 16 local): exit 0 — Tests 232 passed | 6 skipped (238)
+vitest media: exit 0 — Tests 63 passed (63)
+pnpm docs:contract: sin diff (DELIVERY/openapi no cambian)
+python3 scripts/mutation-check.py --autoprueba: autoprueba OK
+bash -n scripts/ci/compose-smoke.sh: OK
+chequeo de puertos (snippet de compose-smoke contra config de ejemplo): todo en 127.0.0.1 → exit 0; un puerto sin host_ip → exit 1 "✗ puertos publicados fuera de 127.0.0.1: seaweedfs:9000"
+NO ejecutado localmente: docker compose / compose-smoke real y mutaciones completas (sin Docker aquí; corren en CI).

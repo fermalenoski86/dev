@@ -66,6 +66,20 @@ for svc in postgres platform-api seaweedfs; do
 GATE imagen $svc: $digest"
   case "$img" in *@sha256:*) ;; *) echo "   ✗ $svc NO está fijada por digest"; SIN_DIGEST=1 ;; esac
 done
+echo "== puertos publicados: todos en 127.0.0.1 (config renderizada)"
+docker compose --profile s3 config --format json | node -e '
+let s = ""; process.stdin.on("data", (d) => (s += d)).on("end", () => {
+  const malos = [];
+  for (const [svc, def] of Object.entries(JSON.parse(s).services)) {
+    for (const p of def.ports ?? []) {
+      const ip = p.host_ip ?? "";
+      console.log(`${svc}: ${ip || "(todas las interfaces)"}:${p.published} -> ${p.target}`);
+      if (ip !== "127.0.0.1") malos.push(`${svc}:${p.published}`);
+    }
+  }
+  if (malos.length) { console.error("✗ puertos publicados fuera de 127.0.0.1: " + malos.join(", ")); process.exit(1); }
+  console.log("GATE compose-smoke: todos los puertos publicados solo en 127.0.0.1");
+});'
 echo "GATE seaweedfs version: $(docker compose --profile s3 run --rm --no-deps seaweedfs version 2>/dev/null | tr -s '\n' ' ')"
 
 echo "== S3 de dev/CI (SeaweedFS)"
@@ -80,6 +94,9 @@ done
 aws --endpoint-url http://127.0.0.1:9000 s3api create-bucket --bucket "$BUCKET"
 aws --endpoint-url http://127.0.0.1:9000 s3api head-bucket --bucket "$BUCKET"
 echo "GATE compose-smoke: bucket $BUCKET creado en SeaweedFS"
+BIND=$(docker compose --profile s3 port seaweedfs 8333)
+echo "GATE compose-smoke: seaweedfs 8333 publicado en $BIND (esperado 127.0.0.1:9000)"
+[ "$BIND" = "127.0.0.1:9000" ]
 
 echo "== contrato S3 (packages/platform-storage) contra SeaweedFS"
 S3_TEST_ENDPOINT=http://127.0.0.1:9000 S3_REGION=us-east-1 S3_BUCKET=$BUCKET S3_ACCESS_KEY=$S3_KEY S3_SECRET_KEY=$S3_SECRET S3_FORCE_PATH_STYLE=true \

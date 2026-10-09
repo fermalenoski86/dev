@@ -174,3 +174,10 @@ Generado, no escrito a mano.
 - RFC 9110 §10.2.3 `Retry-After` (https://www.rfc-editor.org/rfc/rfc9110#section-10.2.3): segundos enteros. Aplicado.
 - PostgreSQL 16, cap. 26 "Backup and Restore" (https://www.postgresql.org/docs/16/backup.html): `pg_dump -Fc`, `pg_restore` y probar los restores. Aplicado en el drill.
 - Retiro de las imágenes de MinIO: fuentes secundarias en #22. **Verificado empíricamente** con el sondeo de CI; las fechas exactas de las fuentes no las verifiqué.
+
+## Re-entrega 3 — P2 de la re-auditoría (bind de puertos)
+
+- `docker-compose.yml`: los tres puertos publicados pasan a `127.0.0.1:` (postgres 5433, seaweedfs 9000, platform-api 4000). No cambia el bind interno (`HOST=0.0.0.0`, `-ip.bind=0.0.0.0`), necesario para la red del compose.
+- `compose-smoke.sh`: falla si la config renderizada (`docker compose --profile s3 config --format json`) publica algún puerto con `host_ip` distinto de `127.0.0.1`, y comprueba el bind real con `docker compose port seaweedfs 8333` = `127.0.0.1:9000`. El contrato S3 15/15 sigue en el mismo job.
+- No agrego mutación nueva para esto: el job `mutations` no tiene Docker; el chequeo vive en `compose-smoke`, y su rama de falla se probó con una config sin `host_ip` (salida en `_SALIDA.txt`). Todas las mutaciones existentes se conservan.
+- Integrado `main` con #12. DELIVERY/openapi sin cambios.
