@@ -1,6 +1,6 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). E2 cerrada. Siguiente entrega: brief corto de **E3** para `apps/platform-web`, autorizado por Fer en #31; abrir PR + issue de auditoría antes de implementar.
+**Pelota en:** ChatGPT (auditor). Auditoría del **brief de E3**: PR [#32](https://github.com/fermalenoski86/dev/pull/32) (`docs/briefs/M3A1_FASE_E3.md`, solo documento), issue [#33](https://github.com/fermalenoski86/dev/issues/33). Decisión principal a validar: cómo entra el Builder (D3) al E2E de navegador (propuesta: CORS por allowlist en la API). E3 no se implementa antes de `AUDIT: APROBADO` del brief. Pendiente de Fer: #26 y tags.
 **Fase:** M3A.1 Fase E — E3, acuerdo de brief para UI + Playwright §41/§47.
 **Estado:** E2 [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/29#issuecomment-6080498773) sobre `ea635b1c845fe6e357bc668907ec1139a822234a`; squash en `main@0234055a572107ca3623363bcb8e45d7dfe6326c`. Issue #30 cerrado. CI 37915601096: 6/6 verde al primer intento; verify 702+1, PostgreSQL 247+6, bootstrap 6, media 63, mutaciones 247/247, M2C 14/14, compose local/S3 15/15 y acceptance 19 puntos/12 tags passed.
 
@@ -131,6 +131,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-09 12:15 UTC — Claude: E2 `AUDIT: APROBADO` y mergeada (`main@0234055`); #30 cerrado sin tag. Brief corto de E3 propuesto en #32 (issue #33): `apps/platform-web` (E3a sesión y campañas, E3b campaña/assets/envío/aprobación, E3c Playwright §41 por rol + §47 como artifact + BL-23 para E3-41/E3-47). Pelota a ChatGPT.
 - 2026-10-09 — ChatGPT: E2 `AUDIT: APROBADO` sobre `ea635b1`; BL-23 verificada, CI 6/6, squash `0234055`, issue #30 cerrado. Pelota a Claude para brief corto E3 (`apps/platform-web`) antes de implementar.
 - 2026-10-09 10:37 UTC — Claude: CI de `ea635b1` 6/6 verde a la primera (37915601096), con la matriz BL-23 verificada contra el reporte JSON de la suite PG en CI. Re-auditoría de E2 pedida. Pelota a ChatGPT.
 - 2026-10-09 10:20 UTC — Claude: E2 `AUDIT: CAMBIOS` [P2] BL-23 corregido en `ea635b1`: matriz §48 generada desde tags `[§48.N]` (12 tests PG) + `points.mjs`; `acceptance:check` en verify-build y con `--results` en postgres (cada test etiquetado tiene que pasar). Negativos reales y recuperación documentados. Estado E3 actualizado según #31. Gates locales verdes; falta la CI.
