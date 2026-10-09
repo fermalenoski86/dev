@@ -1,0 +1,52 @@
+M3A.1 Fase E2 — salida REAL de los gates (2026-10-09T08:16Z, este entorno)
+Node v22.22.0 · pnpm 12.5.1 · psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) · ffprobe version 6.1.1-3ubuntu5
+rama fase/m3a1-e2 desde main@dca798d
+
+== pnpm install --frozen-lockfile
+Done in 49ms using pnpm v12.5.1
+
+== pnpm verify (exit 0)
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  39 passed | 1 skipped (40)
+      Tests  693 passed | 1 skipped (694)
+
+== pnpm build (exit 0)
+apps/previs build:  ✓ Compiled successfully
+apps/control build:  ✓ Compiled successfully
+
+== PostgreSQL 16 + ffprobe (vitest.platform.config.ts, exit 0)
+ Test Files  20 passed | 1 skipped (21)
+      Tests  247 passed | 6 skipped (253)
+
+   E2 (e2e-flow.db.test.ts, HTTP real, verbose):
+    ✓ apps/platform-api/src/e2e-flow.db.test.ts > E2 · §41 por HTTP real, rol por rol (sin navegador) > 1 · ADMIN: login → Advertiser y Contract → logout
+    ✓ apps/platform-api/src/e2e-flow.db.test.ts > E2 · §41 por HTTP real, rol por rol (sin navegador) > 2 · OPERATOR: login → crea la Campaign → el Builder (builder-repository) guarda el draft; la revisión protege la concurrencia
+    ✓ apps/platform-api/src/e2e-flow.db.test.ts > E2 · §41 por HTTP real, rol por rol (sin navegador) > 3 · OPERATOR: sube assets válidos; ffprobe los valida de verdad; quedan identificados por SHA-256 681ms
+    ✓ apps/platform-api/src/e2e-flow.db.test.ts > E2 · §41 por HTTP real, rol por rol (sin navegador) > 4 · OPERATOR: submit → el servidor recompila, corre el preflight y crea la ShowVersion con hash determinista
+    ✓ apps/platform-api/src/e2e-flow.db.test.ts > E2 · §41 por HTTP real, rol por rol (sin navegador) > 5 · INTERNAL_APPROVER (otro usuario): login → ve la versión → adjunta evidencia → aprueba el hash exacto → logout
+    ✓ apps/platform-api/src/e2e-flow.db.test.ts > E2 · §41 por HTTP real, rol por rol (sin navegador) > 6 · OPERATOR: la campaña muestra APPROVED VERSION con el hash exacto y el WORKING DRAFT aparte
+    ✓ apps/platform-api/src/e2e-flow.db.test.ts > E2 · §41 por HTTP real, rol por rol (sin navegador) > 7 · OPERATOR: edita la campaña; la versión aprobada NO cambia (ni la fila ni el hash)
+    ✓ apps/platform-api/src/e2e-flow.db.test.ts > E2 · §41 por HTTP real, rol por rol (sin navegador) > 8 · audit: verifyChain OK y cada evento esperado con el actor del rol que corresponde
+    ✓ apps/platform-api/src/e2e-flow.db.test.ts > E2 · §41 por HTTP real, rol por rol (sin navegador) > §48.18 · ningún endpoint puede modificar una ShowVersion, y la base lo rechaza aunque alguien lo intente
+         Tests  9 passed (9)
+
+== bootstrap-smoke.sh (exit 0)
+      Tests  6 passed (6)
+
+== media (exit 0)
+      Tests  63 passed (63)
+
+== mutaciones E2 (python3 scripts/mutation-check.py --tanda 240:244)
+tanda 240:244 — 4 de 244 reglas
+ATRAPADA   e2: la aprobación no publica la versión en la campaña (§41)
+ATRAPADA   e2: logout no revoca la sesión (§41 logout)
+ATRAPADA   e2: submit audita con otro actor (§48.17)
+ATRAPADA   e2: validación de asset sin audit (§48.17)
+atrapadas 4 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+
+== python3 scripts/mutation-check.py --autoprueba
+autoprueba OK
+
+== corrida completa de las 244 mutaciones: NO ejecutada localmente (una corrida previa se cortó con el entorno). Evidencia: job mutations de CI.
+== E2E M2C (14): NO ejecutado localmente (sin Google Chrome con H.264). Evidencia: job e2e-m2c de CI.

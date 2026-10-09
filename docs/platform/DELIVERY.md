@@ -44,7 +44,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 - `0002_asset_pipeline` (reversible)
 - `0003_approval` (reversible)
 
-## Archivos de test (65)
+## Archivos de test (66)
 
 | Archivo | Suite |
 |---|---|
@@ -58,6 +58,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | `apps/platform-api/src/campaigns.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/cli/user-create.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/contract.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
+| `apps/platform-api/src/e2e-flow.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/logs-sin-secretos.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/restore-drill.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/submit.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
