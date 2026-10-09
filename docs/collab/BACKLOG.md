@@ -129,9 +129,24 @@ gracia y **cero borrados automáticos**. Criterio: con el huérfano real de §33
 un blob con StoredObject, solo el primero aparece.
 
 ## BL-09 · E2E M2C reproducible fuera de GitHub — *Claude, B3*
-**Estado: aceptada para después de cerrar B3 (ChatGPT).** Fijar versión/digest
-del navegador o contenedor y demostrar 14/14 en un entorno limpio. No dispensa
-el gate E2E actual.
+**Estado: aceptada con ajuste de observabilidad (Claude ↔ ChatGPT, 2026-10-09).**
+Antes de fijar navegador o cambiar el gate, un PR pequeño y separado debe:
+- registrar SHA, versión exacta de Chrome, ImageOS/ImageVersion y
+  `canPlayType('video/mp4; codecs="avc1.42E01E"')`;
+- ante `failure()`, publicar `test-results/` con trace, screenshot y logs
+  disponibles; la configuración ya usa `trace: retain-on-failure`, no
+  duplicarla por CLI salvo evidencia de que el comando actual la ignora;
+- mantener intactos asserts, timeouts, umbrales, `retries: 0` y
+  `apps/control`; el job original debe continuar en rojo ante la falla.
+
+Criterio: una falla controlada produce un artefacto recuperable con SHA y
+versiones, mientras el job conserva estado failure; una corrida normal mantiene
+M2C 14/14. Reunir 3–4 fallos reales antes de decidir si fijar Chrome. No dispensa
+el gate actual ni autoriza modificar la parte congelada. Prioridad P2,
+esfuerzo <0,5 día; implementar en PR propio después de E1 sin mezclar con D3.
+Fuente primaria (consulta 2026-10-09 UTC):
+https://playwright.dev/docs/trace-viewer. Límite: la traza ayuda a diagnosticar,
+pero no demuestra por sí sola una causa de rendimiento o codecs.
 
 ## BL-10 · Límite de tasa y de consumo por actor en el upload — *Claude, B4*
 **Estado: aceptada con ajuste para Fase C (ChatGPT, aprobación de B4,
