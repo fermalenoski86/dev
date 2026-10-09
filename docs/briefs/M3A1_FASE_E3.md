@@ -12,36 +12,87 @@ Este brief no agrega requisitos: ordena los del master en checkpoints y marca
 con ❓ lo que el master no decide.
 
 **Propuesto por Claude el 2026-10-09**, con E2 aprobada y mergeada en `main@0234055`.
+**Re-entrega 1 (2026-10-09):** corrige el [P1] de la auditoría (arquitectura de
+sesión entre hosts) e incorpora los ajustes a ❓2, ❓3, BL-28 y BL-29. El detalle
+está en la sección "Re-entrega 1" al final.
 
 ## Qué NO se toca
 
 `apps/control` (Builder y experiencia ejecutiva M2C.2), los renderers, la
 geometría, los screenshots congelados y `e2e/` (los 14 de M2C siguen siendo
-gate). Tampoco cambia la arquitectura de storage B1 ni el contrato de la API,
-salvo lo que pida la decisión ❓1.
+gate). De `apps/control` solo cambia **la variable de entorno**
+`NEXT_PUBLIC_TRUST_API_URL` con la que se levanta: ningún archivo. Tampoco
+cambia la arquitectura de storage B1. El contrato de la API solo suma CORS por
+allowlist (ver "Arquitectura de sesión").
 
-## E3a — `apps/platform-web`: esqueleto, sesión y campañas
+## Arquitectura de sesión (decisión ❓1, corregida)
 
-- **App y comunicación con la API**:
+**Las dos UIs hablan directamente con `platform-api`.** No hay proxy de mismo
+origen en ningún lado. La cookie de sesión es host-only (`__Host-trust_session`
+en producción, sin `Domain`), así que tiene que emitirla y recibirla **el host
+de la API**. Un proxy en `platform-web` dejaría la cookie en el host de la web,
+y el Builder, que llama a la API directo, recibiría `401` (hallazgo [P1]).
+
+- **Topología:** tres hosts HTTPS del **mismo site**:
+  - `web.<site>` → `platform-web`;
+  - `control.<site>` → `apps/control`;
+  - `api.<site>` → `platform-api`.
+  - Es **requisito de despliegue**. La cookie es `SameSite=Lax`: entre hosts
+    del mismo site viaja en `fetch` con `credentials: 'include'`; entre sites
+    distintos no viaja. El brief no pide cambiar `SameSite`.
+- **`platform-api`: CORS por allowlist exacta.**
+  - `TRUST_CORS_ORIGINS` es una lista de orígenes exactos (esquema + host +
+    puerto). Si está vacía, no hay CORS (comportamiento actual).
+  - Al arrancar se rechaza `*`, un valor que no sea un origen válido y, en
+    producción, un origen `http:`.
+  - Para un origen permitido: `Access-Control-Allow-Origin: <origen>` (nunca
+    `*`), `Access-Control-Allow-Credentials: true` y `Vary: Origin`.
+  - En el preflight: métodos y headers explícitos (`Content-Type`,
+    `X-CSRF-Token`, `Idempotency-Key`, `If-Match` si aplica) y `Max-Age` acotado.
+  - Para un origen no permitido: el preflight responde **sin** headers CORS,
+    así que el navegador bloquea. Además, defensa en profundidad: una mutación
+    con header `Origin` presente y fuera de la allowlist responde
+    `403 ORIGIN_NOT_ALLOWED` antes de tocar la sesión. Los clientes sin
+    `Origin` (CLI, tests) no cambian.
+  - Se implementa como hook de Fastify **sin dependencia nueva**. Lleva tests
+    de plataforma: preflight permitido y rechazado, credenciales,
+    `Vary: Origin`, el 403 y CSRF intacto (una mutación con origen permitido y
+    sin `X-CSRF-Token` sigue dando `403 CSRF_TOKEN_INVALID`).
+- **CSRF:** no cambia. Cada UI obtiene el token de `POST /auth/login` o de
+  `GET /auth/me` y lo manda en `X-CSRF-Token`.
+- **`platform-web`:** usa `NEXT_PUBLIC_TRUST_API_URL` (la misma convención que
+  D3). Las llamadas a la API salen **del navegador**: los Server Components no
+  ven la cookie, porque es de otro host. La guarda de sesión es del lado del
+  cliente: `GET /auth/me`; si da 401, va a `/login`.
+- **`apps/control`:** sin cambios de código. Se levanta con
+  `NEXT_PUBLIC_TRUST_API_URL=https://api.<site>`. Una vez logueado en
+  `platform-web`, la cookie del host de la API ya existe y D3 la usa.
+
+## E3a — `apps/platform-web`: esqueleto, sesión, CORS y campañas
+
+- **App y cliente HTTP:**
   - Next 14 + React 18, el mismo stack que `apps/control`, sin dependencias
     nuevas fuera de las que ya usa el monorepo.
-  - Consume **solo `platform-api`**, a través de un proxy de mismo origen:
-    rewrite de `/api/v1/*` en `next.config`. Cookie `HttpOnly` y CSRF de C1,
-    sin tokens en `localStorage`.
-  - El cliente HTTP es un módulo con `fetch` inyectado, no `fetch()` en
-    componentes, igual que §31 y D3.
-- **Login / logout** (`/login`): `POST /auth/login` y `/auth/me`. Si no hay
+  - Consume **solo `platform-api`**, con cookie `HttpOnly` y el CSRF de C1, sin
+    tokens en `localStorage`.
+  - El cliente HTTP es un módulo con `fetch` y `baseUrl` inyectados, no
+    `fetch()` en componentes, igual que §31 y D3. Siempre manda
+    `credentials: 'include'`.
+- **CORS por allowlist en `platform-api`**, como se describe arriba, con sus
+  tests y la documentación en `docs/platform/AUTH.md`.
+- **Login / logout** (`/login`): `POST /auth/login` y `GET /auth/me`. Si no hay
   sesión, redirige a login. Logout revoca la sesión en el servidor.
 - **Campañas** (`/campaigns`): lista con `GET /campaigns` y alta con
-  `POST /campaigns` (elige el contrato, que ya existe y crea ADMIN). Cada rol
-  ve solo lo que la API le devuelve; la UI no reimplementa permisos.
+  `POST /campaigns`. El alta elige un contrato existente; los contratos los
+  crea ADMIN. Cada rol ve solo lo que la API le devuelve: la UI no reimplementa
+  permisos.
 
 ## E3b — Campaña, assets, envío y aprobación de cuatro ojos
 
 - **Detalle de campaña** (`/campaigns/:id`):
   - APPROVED VERSION vN con su **hash exacto**, y el WORKING DRAFT con su
     revisión, por separado (§32);
-  - acceso al Builder con `?campaign=` (D3), ver ❓1.
+  - enlace al Builder: `https://control.<site>/?campaign=<id>` (D3).
 - **Assets**: upload multipart (`POST /assets`, Idempotency-Key). Muestra el
   estado READY o REJECTED con el motivo de ffprobe y el SHA-256.
 - **Enviar a aprobación**: `POST /campaigns/:id/submit` con `draftRevision`.
@@ -52,68 +103,123 @@ salvo lo que pida la decisión ❓1.
   - aprueba o rechaza citando el `versionHash`.
   - Si la API rechaza por cuatro ojos o por un hash distinto, la UI muestra el
     error: la regla vive en el servidor y la UI no la duplica.
+- **Accesibilidad (BL-28):**
+  - todos los controles tienen nombre accesible y foco visible;
+  - los errores de la API se anuncian con `role="alert"`.
 
 ## E3c — E2E Playwright de §41 por rol, evidencia §47 y matriz
 
+- **Hosts distintos, no solo puertos.**
+  - Chrome se lanza con `--host-resolver-rules` que mapea `web.trust.test`,
+    `control.trust.test` y `api.trust.test` a `127.0.0.1`.
+  - Delante de cada app hay un terminador TLS de test: un script Node con
+    `node:https`, sin dependencias. El certificado autofirmado se genera con
+    `openssl` en el `globalSetup` y **no se versiona**.
+  - Playwright usa `ignoreHTTPSErrors`.
+  - `platform-api` arranca en modo producción para la cookie:
+    `TRUST_COOKIE_SECURE=true`, así que la cookie es `__Host-trust_session`.
+  - `TRUST_CORS_ORIGINS=https://web.trust.test:<p>,https://control.trust.test:<p>`.
 - **Specs nuevos** en `e2e-platform/` con su propio
-  `playwright.platform.config.ts`, separados de los de M2C congelados. El
-  flujo es exactamente el de §41:
-  1. **OPERATOR**: login → crear campaña → el Builder guarda el draft en el
-     backend → subir assets válidos → enviar → hash visible → logout.
-  2. **INTERNAL_APPROVER** (otro usuario): login → ver la versión → adjuntar
-     evidencia → aprobar.
-  3. **OPERATOR**: la campaña muestra APPROVED VERSION, el hash exacto y el
-     working draft aparte → editar → la versión aprobada no cambia.
-- **Datos y sesiones** (BL-25, aceptada para E3 en la auditoría de D3):
-  - usuarios con el CLI de C1 y contratos por API como ADMIN, en el
-    `globalSetup`;
-  - sesión por rol: login por API y `storageState`, sin cookies en el repo;
-  - datos aislados por worker: contrato y campaña propios.
-- **CI**: job nuevo `e2e-platform` con PostgreSQL 16, ffmpeg, platform-api,
-  platform-web y Google Chrome del runner (igual que `e2e-m2c`). `retries: 0`
-  y trace `retain-on-failure`.
-- **§47**: video y screenshots de Builder → Guardar → Enviar → Hash → Aprobar
-  → versión inmutable. Se publican como **artifact de CI**, no como binarios
-  en el repo. El reporte enlaza el run.
-- **Matriz (BL-23)**:
-  - E3-41 y E3-47 pasan a *cubierto* solo con tags en los títulos Playwright
-    y el reporte JSON de Playwright del job `e2e-platform`, exigiendo
-    `passed`;
+  `playwright.platform.config.ts`, separados de los de M2C congelados.
+  - **`session-multihost.spec.ts`** (la reproducción del [P1], ahora como gate):
+    1. login en `web.trust.test`;
+    2. la cookie `__Host-trust_session` existe **solo** para `api.trust.test`
+       (se verifica con `context.cookies()`), no para la web;
+    3. `control.trust.test/?campaign=<id>`: el Builder hace `/auth/me` → 200;
+    4. guardar hace `PUT` con CSRF → 200, y el indicador muestra la revisión
+       nueva;
+    5. una `fetch` desde una página servida en un origen **no** listado
+       (`evil.trust.test`) falla en el navegador: el preflight sale sin
+       `Access-Control-Allow-Origin` y no hay escritura en la base;
+    6. logout → el Builder recibe 401 en la próxima llamada.
+  - **`flow-41.spec.ts`**, exactamente el flujo de §41:
+    1. **OPERATOR**: login → crear campaña → el Builder (`apps/control`) guarda
+       el draft en el backend → subir assets válidos → enviar → hash visible
+       → logout.
+    2. **INTERNAL_APPROVER** (otro usuario): login → ver la versión → adjuntar
+       evidencia → aprobar.
+    3. **OPERATOR**: la campaña muestra APPROVED VERSION, el hash exacto y el
+       working draft aparte → editar → la versión aprobada no cambia.
+  - **`a11y.spec.ts`** (BL-28):
+    - `@axe-core/playwright` en login, campañas y revisión, con **cero
+      violaciones**;
+    - el recorrido principal (login → campaña → enviar; login → revisión →
+      aprobar) se completa **solo con teclado**: foco visible y errores
+      anunciados.
+    - No se afirma conformidad WCAG completa: es un escaneo automático más
+      recorridos.
+- **Datos y sesiones** (BL-25, con la precisión de la auditoría):
+  - en el `globalSetup`, el CLI de C1 crea **una cuenta por rol y por worker**:
+    `operator-w<N>`, `approver-w<N>` y `admin-w<N>`;
+  - contratos por API como ADMIN, y contrato y campaña **propios de cada
+    worker**;
+  - sesión por rol con login por API y `storageState` en un directorio
+    temporal, sin cookies en el repo.
+- **CI:**
+  - job nuevo `e2e-platform` con PostgreSQL 16, ffmpeg, platform-api,
+    platform-web, apps/control y Google Chrome del runner (igual que
+    `e2e-m2c`);
+  - `retries: 0` y trace `retain-on-failure`.
+- **§47 y manifest (❓3 + BL-29):**
+  - video y screenshots de Builder → Guardar → Enviar → Hash → Aprobar →
+    versión inmutable, publicados como **artifact de CI** con
+    `retention-days: 90` explícito. No hay binarios en el repo.
+  - El artifact incluye `evidence-manifest.json`:
+    - commit SHA;
+    - navegador y versión;
+    - roles y usuarios por worker;
+    - `campaignId`, `versionId` y `versionHash`;
+    - specs, con el resultado de cada test;
+    - el archivo de cada screenshot y video con su SHA-256.
+  - CI **valida** el manifest antes de subirlo, con un validador Node sin
+    dependencias y sus tests. Falla si falta un campo, si un archivo listado no
+    existe, si un SHA-256 no coincide o si un test no está en `passed`.
+- **Matriz (BL-23):**
+  - E3-41 y E3-47 pasan a *cubierto* solo con tags en los títulos de
+    Playwright y el reporte JSON de Playwright del job `e2e-platform`, que
+    exige `passed`;
   - hasta entonces quedan *pendiente*.
 
 Gate de cada checkpoint: verify, build, PostgreSQL, bootstrap, media,
-mutaciones (nuevas, sobre el cliente HTTP y las guardas de UI), **M2C 14/14** y,
-desde E3c, `e2e-platform`.
+mutaciones, acceptance y **M2C 14/14**; desde E3c, también `e2e-platform`.
+Las mutaciones nuevas cubren la allowlist CORS, el 403 de origen, el cliente
+HTTP y las guardas de UI.
 
-## Decisiones a validar (❓)
+## Decisiones (estado tras la auditoría)
 
-1. **Cómo entra el Builder al flujo de navegador.** §41 dice "Builder guarda
-   draft en backend". El Builder vive en `apps/control` (D3, `?campaign=`).
-   Desde el origen de `apps/control` no llega a la API sin CORS ni proxy.
-   - **(a) Propuesta:** la API acepta CORS **solo para orígenes listados**
-     (`TRUST_CORS_ORIGINS`, `credentials: true`, preflight). `apps/control` se
-     levanta con `NEXT_PUBLIC_TRUST_API_URL` apuntando a la API. El cambio va
-     en `platform-api` y no toca código de `apps/control`, solo su variable de
-     entorno. Lleva tests de origen permitido/rechazado y CSRF intacto.
-   - **(b)** `apps/control` suma un rewrite `/api/v1` en su `next.config`.
-     Toca un archivo de la app congelada (D3 ya lo modificó una vez para
-     `transpilePackages`).
-   - **(c)** `platform-web` incluye un editor mínimo de draft y el Builder
-     queda fuera del E2E de navegador. No cumple §41 al pie de la letra.
-2. **Alta de usuarios para el E2E** con el CLI de C1 en el `globalSetup`, sin
-   API de administración (BL-27 sigue diferida).
-3. **Evidencia §47 como artifact de CI** y no versionada: el repo es público y
-   no lleva binarios.
-4. **Estética**: UI funcional y sobria, sin design system nuevo. No es la
-   experiencia ejecutiva.
+1. **Arquitectura de sesión:** las dos UIs van directo a la API, en hosts del
+   mismo site, con CORS por allowlist exacta. Reemplaza la propuesta anterior
+   (proxy en web + CORS para el Builder), que tenía el [P1]. Se descartan:
+   - (b) el rewrite en `apps/control`: toca la app congelada y deja la cookie
+     en el host de control;
+   - (c) el editor mínimo: no cumple §41.
+2. **Alta de usuarios para el E2E:** el CLI de C1 en el `globalSetup`, una
+   cuenta por rol y por worker. Aceptada con la precisión de BL-25. BL-27
+   sigue diferida.
+3. **Evidencia §47:** artifact de CI con manifest validado y `retention-days`
+   explícito. Aceptada con ajuste: BL-29 se incorpora a E3c.
+4. **Estética:** UI funcional y sobria, sin design system nuevo. Aceptada.
 
 ## Fuera de alcance
 
 UI de administración de usuarios y contratos (BL-27), portal externo
-(EXTERNAL_APPROVER por UI), Scheduler/EDGE/Deploy, i18n y BL-26.
+(EXTERNAL_APPROVER por UI), Scheduler/EDGE/Deploy, i18n, BL-26 y cualquier
+cambio de `SameSite` o del nombre de la cookie.
 
-## Propuestas de mejora (≤ 3)
+## Propuestas de mejora
 
-- **BL-28 · Prueba de accesibilidad automática** en `e2e-platform` con las
-  reglas de axe-core sobre login, campañas y revisión. Requiere una
-  dependencia de dev (`@axe-core/playwright`): decisión del auditor. ~0,5 día.
+- **BL-28 · Accesibilidad operativa:** aceptada con el ajuste del auditor e
+  incorporada a E3b (nombres, foco y alertas) y a E3c (`a11y.spec.ts`). Suma
+  una dependencia de dev: `@axe-core/playwright`.
+- **BL-29 · Manifest de evidencia:** aceptada e incorporada a E3c.
+
+## Re-entrega 1 — AUDIT: CAMBIOS (PR #32, comentario 6084515242)
+
+| Hallazgo | Respuesta |
+|---|---|
+| [P1] cookie `__Host-` host-only: el proxy en web y el CORS para el Builder no comparten sesión | Corregido. No hay proxy: las dos UIs van directo a la API en hosts del mismo site, con CORS por allowlist exacta (sin `*`, `credentials: true`, `Vary: Origin`, 403 a mutaciones con origen no listado) y CSRF intacto. El E2E multihost `session-multihost.spec.ts` es gate: hosts distintos con TLS y la cookie `__Host-` real, login → `/auth/me` desde el Builder → `PUT` con CSRF → logout, y origen no listado bloqueado. |
+| ❓2 una cuenta por rol y por worker | Incorporado en E3c "Datos y sesiones". |
+| ❓3 manifest y `retention-days` | Incorporado en E3c "§47 y manifest" (BL-29). |
+| ❓4 | Sin cambios (aceptada). |
+| BL-28 con teclado, foco, nombres y alertas | Incorporado en E3b y en `a11y.spec.ts` (E3c). |
+| BL-29 | Aceptada e incorporada a E3c. |
