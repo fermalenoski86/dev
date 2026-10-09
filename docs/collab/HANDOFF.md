@@ -1,8 +1,17 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor). Auditar **E3b** en PR [#36](https://github.com/fermalenoski86/dev/pull/36) (rama `fase/m3a1-e3b`, HEAD `24336db`), issue [#37](https://github.com/fermalenoski86/dev/issues/37). E3c no arranca antes de `AUDIT: APROBADO`.
-**Fase:** M3A.1 Fase E — E3b (campaña, assets, envío y aprobación de cuatro ojos en `apps/platform-web`).
-**Estado:** E3a aprobada y mergeada (#34, `main@88f8a9a`; #35 cerrado). E3b entregada: `/campaigns/[id]` (versión aprobada + hash y working draft separados, assets, asignación a ranura con expectedRevision, envío con hash visible) y `/versions/[id]` (evidencia, aprobar citando el hash, rechazar). Gates locales: verify 740+1, build OK, PG 267+6, bootstrap 6, media 63, 9/9 mutaciones e3b + autoprueba, acceptance OK; M2C y mutaciones completas en CI. Smoke de navegador del flujo §41 completo OK (encontró y corrigió randomUUID en http). Decisión a validar: asignación de assets desde platform-web; BL-31 propuesta. Pendiente de Fer: #26 y tags.
+**Pelota en:** Claude (implementador). Implementar **E3c** desde `main@754d3198767c0ba04ab027d77d431d026ae32a7b` según el brief aprobado; crear rama/PR propios y transferir a ChatGPT con el HEAD exacto.
+**Fase:** M3A.1 Fase E — E3c (E2E multihost, accesibilidad y evidencia reproducible).
+**Estado:** E3b aprobada y mergeada (#36, `main@754d319`; #37 cerrado). E3c es el último checkpoint documentado de E3; M3A.1 no se considera completo hasta auditar sus gates y evidencia. Pendiente de Fer: #26 y tags.
+
+## Cierre E3b — 2026-10-09
+- Resultado: **AUDIT: APROBADO**, [comentario en PR #36](https://github.com/fermalenoski86/dev/pull/36#issuecomment-6091297474).
+- HEAD auditado: `24336db7f1ac2459b303efa5ff011a80a6939ef5`; squash: `754d3198767c0ba04ab027d77d431d026ae32a7b`; issue #37 cerrado.
+- CI exacta [37998495129](https://github.com/fermalenoski86/dev/actions/runs/37998495129), 6/6 verde: verify 740+1, build, PostgreSQL 267+6, acceptance 19/12, bootstrap 6/6, media 63/63, mutaciones 267/267, M2C 14/14 y compose/S3 15/15.
+- Auditor: revisión de 23 archivos, integración limpia con el main vigente, diff-check limpio y 21/21 tests focales de cliente/asignación/vistas sobre el HEAD exacto.
+- No repetido localmente: full verify/build, PostgreSQL, bootstrap, media, mutaciones completas, M2C y compose; cubiertos por logs inspeccionados de la CI exacta. TLS multihost, §41 Playwright completo, axe/teclado, screenshots/video/manifest y negativos de BL-30 pertenecen a E3c y siguen pendientes.
+- Decisiones E3b aceptadas: asignación mínima desde platform-web de una sola ranura con `expectedRevision`; confirmación explícita del hash; rutas dinámicas. BL-31 aceptada con ajuste como P2 **después de E3**, separada de E3c.
+- Próximo paso: Claude implementa E3c; no ampliar su alcance con BL-31.
 
 ## Cierre E3a — 2026-10-09
 - Resultado: **AUDIT: APROBADO**, [comentario en PR #34](https://github.com/fermalenoski86/dev/pull/34#issuecomment-6089938993).
@@ -46,14 +55,15 @@ Opción (a): la UI de login, campaña y aprobación vive en una app nueva `apps/
 Opción 1: D3 autorizada (store del Builder con `CampaignRepository` inyectado + indicador de versión; sin tocar la experiencia ejecutiva, el renderer, la geometría ni los screenshots; los 14 E2E de M2C son gate). **Orden: D3 después de cerrar E1 y antes de E2**, en su propia rama y PR. No cambia la pelota actual.
 
 ## Entrega activa
-- Implementador: Claude. Crear rama y PR de **E3b** desde el main vigente; actualizar este HANDOFF en main al transferir el turno.
-- Detalle de campaña `/campaigns/:id`: APPROVED VERSION vN con hash exacto, WORKING DRAFT/revisión y enlace al Builder `control.<site>/?campaign=<id>`.
-- Assets: upload multipart con `Idempotency-Key`; mostrar READY/REJECTED, motivo de ffprobe y SHA-256.
-- Envío: `POST /campaigns/:id/submit` con `draftRevision` y hash de la versión visible.
-- Revisión `/versions/:id`: INTERNAL_APPROVER ve versión/hash/assets, adjunta evidencia y aprueba o rechaza citando `versionHash`; cuatro ojos y errores de hash siguen autoritativos en la API.
-- BL-28 dentro de E3b: controles con nombre accesible, foco visible y errores API anunciados. Axe y flujo completo de teclado quedan como gate E3c.
-- Ejecutar todos los gates de AGENTS.md, acceptance y M2C 14/14. No modificar `apps/control`, experiencia ejecutiva, renderers, geometría, screenshots existentes ni storage congelado.
-- BL-30 se implementa en E3c, no mezclarla con E3b. BL-27 no está autorizada. #26/BL-09 sigue separado.
+- Implementador: Claude. Crear rama y PR de **E3c** desde el main vigente; actualizar este HANDOFF en main al transferir el turno.
+- Agregar `e2e-platform` con hosts HTTPS distintos para platform-web, Builder y API, cookie `__Host-`, allowlist exacta/CORS/CSRF y URL pública de API fijada en build.
+- Automatizar §41 con **tres logins UI explícitos**: operador inicial, aprobador y operador nuevo después del logout; no reutilizar la sesión revocada. Mantener datos aislados por worker.
+- Reusar `storageState` por worker sólo en specs que no estén probando login/logout. Fuente primaria consultada 2026-10-09: https://playwright.dev/docs/auth; su límite es que acelera pruebas, no reemplaza los logins exigidos por §41.
+- Implementar BL-28: axe en las vistas acordadas, flujo principal sólo con teclado, foco visible, nombres accesibles y errores anunciados; no afirmar conformidad WCAG completa.
+- Implementar BL-29: screenshots y video de §47 en artifact con manifest JSON (SHA, navegador, roles, campaña, versión/hash, specs y resultado) y retención explícita.
+- Implementar BL-30: build de producción falla sin `NEXT_PUBLIC_TRUST_API_URL` o con `http:`; compila con HTTPS y documenta que `NEXT_PUBLIC_*` queda congelada en el artefacto.
+- La matriz E3-41/E3-47 sólo pasa a cubierta desde el reporte real de Playwright. Ejecutar todos los gates de AGENTS.md, acceptance y M2C 14/14.
+- No modificar `apps/control`, experiencia ejecutiva, renderers, geometría, screenshots existentes ni storage congelado. BL-31 queda después de E3; BL-27 no está autorizada; #26/BL-09 sigue separado.
 
 ## Objetivo autorizado por Fer — 2026-10-06
 Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
