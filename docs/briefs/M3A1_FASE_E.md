@@ -96,6 +96,8 @@ Además: `docs/reviews/M3A1_ACEPTACION.md`, una matriz de los 19 puntos de
 Cada punto queda en uno de tres estados: **cubierto**, **pendiente por #15**
 o **no aplicable**. Un pendiente nunca se cuenta como cubierto.
 
+**Estado E2:** implementado en `fase/m3a1-e2`; matriz generada y verificada (BL-23) en `docs/reviews/M3A1_ACEPTACION.md`, reporte en `docs/reviews/M3A1_FASE_E2.md`. **E3:** autorizada por Fer en #31 (`apps/platform-web`), después de aprobar E2 y con brief corto previo.
+
 ## E3 — E2E Playwright de §41 (bloqueado)
 
 Requiere:

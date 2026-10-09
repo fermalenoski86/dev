@@ -264,7 +264,7 @@ describe('CRITERIO C2: evidencia — bytes reales, allowlist, límite y descarga
 });
 
 describe('CRITERIO C2: aprobar', () => {
-  it('cuatro ojos: quien envió (con los dos roles) no aprueba → 403 FOUR_EYES_VIOLATION', async () => {
+  it('cuatro ojos: quien envió (con los dos roles) no aprueba → 403 FOUR_EYES_VIOLATION [§48.12]', async () => {
     const v = await version();
     const ev = await evidenciaOk(v.id, U.op!);
     const r = await decidir('approve', v.id, U.op!, { evidenceId: ev.id, versionHash: v.hash });

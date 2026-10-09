@@ -29,6 +29,9 @@ jobs:
       # E1 · BL-11/§47: el contrato y el inventario versionados = regenerados
       - name: OpenAPI y DELIVERY regenerados sin diff
         run: pnpm docs:contract && git diff --exit-code docs/platform/openapi.json docs/platform/DELIVERY.md
+      # E2 · BL-23: la matriz de §48 se genera de los tags [§48.N]; puntos sin test/estado o doc viejo → rojo
+      - name: Matriz de aceptación §48 al día
+        run: pnpm acceptance:check
 
   postgres:
     runs-on: ubuntu-24.04
@@ -44,7 +47,9 @@ jobs:
           sudo systemctl stop postgresql || true
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
       - run: bash scripts/dev/pg-up.sh
-      - run: scripts/ci/run.sh postgres npx vitest run -c vitest.platform.config.ts
+      - run: scripts/ci/run.sh postgres npx vitest run -c vitest.platform.config.ts --reporter=default --reporter=json --outputFile.json=platform-results.json
+      # E2 · BL-23: cada test etiquetado [§48.N] tiene que haber PASADO en esta corrida (un skip no cubre)
+      - run: scripts/ci/run.sh acceptance pnpm acceptance:check --results platform-results.json
       - run: scripts/ci/run.sh bootstrap bash packages/platform-db/scripts/bootstrap-smoke.sh
 
   # E1 · §35: `docker compose up` reproducible, imágenes por digest y contrato S3 contra SeaweedFS (#22)

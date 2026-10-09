@@ -101,7 +101,7 @@ const updates = async (draftId: string) =>
   (await t.app.selectFrom('audit_events').select('action').where('entity_id', '=', draftId).where('action', '=', 'DRAFT_UPDATED').execute()).length;
 
 describe('CRITERIO D3: el Builder abre la campaña del backend y guarda con expectedRevision', () => {
-  it('open muestra APPROVED VERSION vN y WORKING DRAFT; guardar no toca la versión aprobada (§32)', async () => {
+  it('open muestra APPROVED VERSION vN y WORKING DRAFT; guardar no toca la versión aprobada (§32) [§48.2] [§48.16]', async () => {
     const cp = await campania();
     const v = await seedVersion(t.app, { campaignId: cp.id, draftId: cp.draftId, submittedBy: U.op!.id, versionHash: sha(`d3-${Math.random()}`) });
     await seedApproval(t.app, v.id, U.apr!.id, 'APPROVED');
@@ -147,7 +147,7 @@ describe('CRITERIO D3: el Builder abre la campaña del backend y guarda con expe
     expect(await enBase(cp.draftId)).toEqual({ revision: 2, name: 'sin red' });
   });
 
-  it('otro operador escribe → CONFLICTO visible, el servidor no se pisa; "mantener la mía" es explícito', async () => {
+  it('otro operador escribe → CONFLICTO visible, el servidor no se pisa; "mantener la mía" es explícito [§48.3]', async () => {
     const cp = await campania();
     const yo = await navegador(U.op!).conectar();
     const otro = await navegador(U.op2!).conectar();

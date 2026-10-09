@@ -1,0 +1,116 @@
+M3A.1 Fase E2 — salida REAL de los gates (2026-10-09T08:16Z, este entorno)
+Node v22.22.0 · pnpm 12.5.1 · psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) · ffprobe version 6.1.1-3ubuntu5
+rama fase/m3a1-e2 desde main@dca798d
+
+== pnpm install --frozen-lockfile
+Done in 49ms using pnpm v12.5.1
+
+== pnpm verify (exit 0)
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  39 passed | 1 skipped (40)
+      Tests  693 passed | 1 skipped (694)
+
+== pnpm build (exit 0)
+apps/previs build:  ✓ Compiled successfully
+apps/control build:  ✓ Compiled successfully
+
+== PostgreSQL 16 + ffprobe (vitest.platform.config.ts, exit 0)
+ Test Files  20 passed | 1 skipped (21)
+      Tests  247 passed | 6 skipped (253)
+
+   E2 (e2e-flow.db.test.ts, HTTP real, verbose):
+    ✓ apps/platform-api/src/e2e-flow.db.test.ts > E2 · §41 por HTTP real, rol por rol (sin navegador) > 1 · ADMIN: login → Advertiser y Contract → logout
+    ✓ apps/platform-api/src/e2e-flow.db.test.ts > E2 · §41 por HTTP real, rol por rol (sin navegador) > 2 · OPERATOR: login → crea la Campaign → el Builder (builder-repository) guarda el draft; la revisión protege la concurrencia
+    ✓ apps/platform-api/src/e2e-flow.db.test.ts > E2 · §41 por HTTP real, rol por rol (sin navegador) > 3 · OPERATOR: sube assets válidos; ffprobe los valida de verdad; quedan identificados por SHA-256 681ms
+    ✓ apps/platform-api/src/e2e-flow.db.test.ts > E2 · §41 por HTTP real, rol por rol (sin navegador) > 4 · OPERATOR: submit → el servidor recompila, corre el preflight y crea la ShowVersion con hash determinista
+    ✓ apps/platform-api/src/e2e-flow.db.test.ts > E2 · §41 por HTTP real, rol por rol (sin navegador) > 5 · INTERNAL_APPROVER (otro usuario): login → ve la versión → adjunta evidencia → aprueba el hash exacto → logout
+    ✓ apps/platform-api/src/e2e-flow.db.test.ts > E2 · §41 por HTTP real, rol por rol (sin navegador) > 6 · OPERATOR: la campaña muestra APPROVED VERSION con el hash exacto y el WORKING DRAFT aparte
+    ✓ apps/platform-api/src/e2e-flow.db.test.ts > E2 · §41 por HTTP real, rol por rol (sin navegador) > 7 · OPERATOR: edita la campaña; la versión aprobada NO cambia (ni la fila ni el hash)
+    ✓ apps/platform-api/src/e2e-flow.db.test.ts > E2 · §41 por HTTP real, rol por rol (sin navegador) > 8 · audit: verifyChain OK y cada evento esperado con el actor del rol que corresponde
+    ✓ apps/platform-api/src/e2e-flow.db.test.ts > E2 · §41 por HTTP real, rol por rol (sin navegador) > §48.18 · ningún endpoint puede modificar una ShowVersion, y la base lo rechaza aunque alguien lo intente
+         Tests  9 passed (9)
+
+== bootstrap-smoke.sh (exit 0)
+      Tests  6 passed (6)
+
+== media (exit 0)
+      Tests  63 passed (63)
+
+== mutaciones E2 (python3 scripts/mutation-check.py --tanda 240:244)
+tanda 240:244 — 4 de 244 reglas
+ATRAPADA   e2: la aprobación no publica la versión en la campaña (§41)
+ATRAPADA   e2: logout no revoca la sesión (§41 logout)
+ATRAPADA   e2: submit audita con otro actor (§48.17)
+ATRAPADA   e2: validación de asset sin audit (§48.17)
+atrapadas 4 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+
+== python3 scripts/mutation-check.py --autoprueba
+autoprueba OK
+
+== corrida completa de las 244 mutaciones: NO ejecutada localmente (una corrida previa se cortó con el entorno). Evidencia: job mutations de CI.
+== E2E M2C (14): NO ejecutado localmente (sin Google Chrome con H.264). Evidencia: job e2e-m2c de CI.
+
+==================================================================
+== Re-entrega 1 (AUDIT: CAMBIOS [P2] BL-23) — salida REAL 2026-10-09T10:06Z
+pnpm install --frozen-lockfile: exit 0
+pnpm verify: exit 0 — Tests 702 passed | 1 skipped (703) · lint ✖ 12 problems (0 errors, 12 warnings)
+pnpm build: exit 0
+vitest platform (--reporter=json): exit 0 — Tests 247 passed | 6 skipped (253)
+bootstrap-smoke: exit 0 — Tests 6 passed (6)
+media: exit 0 — Tests 63 passed (63)
+pnpm docs:contract: DELIVERY regenerado (suma scripts/acceptance/matrix.test.ts)
+
+== node scripts/acceptance/cli.mjs check --results <reporte de la corrida platform de arriba>
+GATE acceptance: 19 puntos, 12 tests etiquetados, todos passed en el reporte; docs/reviews/M3A1_ACEPTACION.md al día
+
+== scripts/acceptance/matrix.test.ts (verbose)
+    ✓ scripts/acceptance/matrix.test.ts > BL-23 · matriz de aceptación ejecutable > scanTags lee los tags de it/test/describe, con varias por título
+    ✓ scripts/acceptance/matrix.test.ts > BL-23 · matriz de aceptación ejecutable > la lista real de puntos con un tag por punto valida sin errores
+    ✓ scripts/acceptance/matrix.test.ts > BL-23 · matriz de aceptación ejecutable > NEGATIVO: un punto cubierto sin test etiquetado falla
+    ✓ scripts/acceptance/matrix.test.ts > BL-23 · matriz de aceptación ejecutable > NEGATIVO: un tag a un punto que no existe falla
+    ✓ scripts/acceptance/matrix.test.ts > BL-23 · matriz de aceptación ejecutable > NEGATIVO: un tag fuera de la suite que CI verifica con resultados falla
+    ✓ scripts/acceptance/matrix.test.ts > BL-23 · matriz de aceptación ejecutable > NEGATIVO: pendiente o no-aplicable sin motivo falla; con motivo, se muestra pendiente y nunca verde
+    ✓ scripts/acceptance/matrix.test.ts > BL-23 · matriz de aceptación ejecutable > NEGATIVO: la evidencia de M2C sin sus 14 tests o sin archivo falla
+    ✓ scripts/acceptance/matrix.test.ts > BL-23 · matriz de aceptación ejecutable > NEGATIVO: un test etiquetado que no pasó (skip, fail) o que no está en el reporte falla
+    ✓ scripts/acceptance/matrix.test.ts > BL-23 · matriz de aceptación ejecutable > el repo real: 19 puntos con test o estado declarado y el documento generado al día
+         Tests  9 passed (9)
+
+== negativos controlados y recuperación (CLI real sobre el repo)
+== NEGATIVO 1: se le quita el tag [§48.13] al paso 5 de e2e-flow (evidencia congelada)
+✗ matriz de aceptación (BL-23): 2 problema(s)
+  - §48.13 («evidencia queda congelada»): marcado cubierto pero ningún test tiene [§48.13]
+  - docs/reviews/M3A1_ACEPTACION.md desactualizado: correr `pnpm acceptance:generate`
+exit=1
+== recuperación: se restaura el tag
+GATE acceptance: 19 puntos, 12 tests etiquetados; docs/reviews/M3A1_ACEPTACION.md al día
+exit=0
+
+== NEGATIVO 2: el reporte de vitest trae un test etiquetado como skipped
+✗ matriz de aceptación (BL-23): 1 problema(s)
+  - apps/platform-api/src/e2e-flow.db.test.ts «E2 · §41 por HTTP real, rol por rol (sin navegador) ningún endpoint puede modificar una ShowVersion, y la base lo rechaza aunque alguien lo intente [§48.18]»: skipped (se exige passed)
+exit=1
+== recuperación: reporte real de la corrida PostgreSQL
+GATE acceptance: 19 puntos, 12 tests etiquetados, todos passed en el reporte; docs/reviews/M3A1_ACEPTACION.md al día
+exit=0
+
+== NEGATIVO 3: documento editado a mano (desactualizado)
+✗ matriz de aceptación (BL-23): 1 problema(s)
+  - docs/reviews/M3A1_ACEPTACION.md desactualizado: correr `pnpm acceptance:generate`
+exit=1
+GATE acceptance: 19 puntos, 12 tests etiquetados; docs/reviews/M3A1_ACEPTACION.md al día
+exit=0
+
+== mutaciones E2 + BL-23 (python3 scripts/mutation-check.py --tanda 240:247)
+tanda 240:247 — 7 de 247 reglas
+ATRAPADA   e2: la aprobación no publica la versión en la campaña (§41)
+ATRAPADA   e2: logout no revoca la sesión (§41 logout)
+ATRAPADA   e2: submit audita con otro actor (§48.17)
+ATRAPADA   e2: validación de asset sin audit (§48.17)
+ATRAPADA   e2: un punto de §48 pierde su test y la matriz no se entera (BL-23)
+ATRAPADA   e2: un test etiquetado salteado cuenta como cubierto (BL-23)
+ATRAPADA   e2: punto cubierto sin test pasa la validación (BL-23)
+atrapadas 7 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+autoprueba: autoprueba OK
+NO ejecutado localmente: la corrida completa de las 247 mutaciones y el E2E M2C (sin Chrome H.264): evidencia en CI.
