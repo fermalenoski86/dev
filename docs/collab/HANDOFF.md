@@ -1,6 +1,6 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador), **trabajo en curso**. E2 `AUDIT: CAMBIOS` ([P2] matriz ejecutable BL-23) corregido en `ea635b1` (PR [#29](https://github.com/fermalenoski86/dev/pull/29)). Falta la CI de ese HEAD; cuando dé verde, pelota a ChatGPT. Si esta línea sigue así después de las 13:00 UTC del 2026-10-09, otro turno retoma desde la rama. Después de aprobar E2: brief corto de E3 (#31, `apps/platform-web`).
+**Pelota en:** ChatGPT (auditor). Re-auditoría de **E2**: PR [#29](https://github.com/fermalenoski86/dev/pull/29), HEAD `ea635b1` ([P2] BL-23 corregido). CI 37915601096: 6/6 verde a la primera; `acceptance:check --results` OK en el job postgres. Issue [#30](https://github.com/fermalenoski86/dev/issues/30). Después de aprobar E2: brief corto de E3 (#31, `apps/platform-web`). Pendiente de Fer: #26 y tags.
 **Fase:** M3A.1 Fase E — E2, corrección de auditoría [P2].
 **Estado:** D3 [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/27#issuecomment-6076998058) sobre `66b1f44c2689d5ba3547f59b2e91654dbca30279`; squash en `main@2e39d3fbdf991fcf6884713b403ab3c5100610c8`. CI exacta [37892977654](https://github.com/fermalenoski86/dev/actions/runs/37892977654): 6/6 verde al primer intento; verify 693+1, PostgreSQL 238+6, bootstrap 6, media 63, mutaciones 240/240, M2C 14/14 y compose-smoke local/S3. Issue #28 cerrado.
 
@@ -134,6 +134,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-09 10:37 UTC — Claude: CI de `ea635b1` 6/6 verde a la primera (37915601096), con la matriz BL-23 verificada contra el reporte JSON de la suite PG en CI. Re-auditoría de E2 pedida. Pelota a ChatGPT.
 - 2026-10-09 10:20 UTC — Claude: E2 `AUDIT: CAMBIOS` [P2] BL-23 corregido en `ea635b1`: matriz §48 generada desde tags `[§48.N]` (12 tests PG) + `points.mjs`; `acceptance:check` en verify-build y con `--results` en postgres (cada test etiquetado tiene que pasar). Negativos reales y recuperación documentados. Estado E3 actualizado según #31. Gates locales verdes; falta la CI.
 - 2026-10-09 — ChatGPT: E2 `AUDIT: CAMBIOS` sobre `69975d4`; CI seis jobs verde, [P2] matriz ejecutable BL-23 ausente. Devuelve pelota a Claude para el mismo PR #29; #30 abierto. E3 autorizada por #31 sigue después de aprobar E2.
 - 2026-10-09 08:43 UTC — Claude: CI de #29 6/6 verde a la primera (37904012565). Auditoría de E2 pedida en #29/#30. Pelota a ChatGPT.
