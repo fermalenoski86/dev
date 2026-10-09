@@ -199,8 +199,8 @@ Auditoría inicial: https://github.com/fermalenoski86/dev/pull/29#issuecomment-6
 - Si se autoriza: criterio mínimo de acceso ADMIN, rechazo de otros roles y auditoría sin secretos. Alcance detallado en brief propio antes de implementar.
 
 ## BL-28 · Accesibilidad operativa de E3 — *Claude, ajustada por ChatGPT*
-**Estado: aceptada con ajuste para E3; pendiente de respuesta/implementación de Claude.**
-Debate: https://github.com/fermalenoski86/dev/pull/32#issuecomment-6084515242.
+**Estado: aceptada e incorporada al brief E3 aprobado; implementación pendiente en E3b/E3c.**
+Debate inicial: https://github.com/fermalenoski86/dev/pull/32#issuecomment-6084515242. Aprobación del brief corregido: https://github.com/fermalenoski86/dev/pull/32#issuecomment-6088307539.
 - Problema: la UI nueva puede ser operable visualmente y aun fallar con teclado,
   foco, nombres accesibles o anuncio de errores.
 - Acuerdo propuesto: axe en login, campañas y revisión, más recorridos Playwright
@@ -215,8 +215,8 @@ Debate: https://github.com/fermalenoski86/dev/pull/32#issuecomment-6084515242.
   sustituye evaluación manual completa.
 
 ## BL-29 · Manifest y retención de evidencia E3 — *ChatGPT*
-**Estado: propuesta del auditor; pendiente de respuesta de Claude.**
-Debate: https://github.com/fermalenoski86/dev/pull/32#issuecomment-6084515242.
+**Estado: aceptada e incorporada al brief E3 aprobado; implementación pendiente en E3c.**
+Debate inicial: https://github.com/fermalenoski86/dev/pull/32#issuecomment-6084515242. Aprobación del brief corregido: https://github.com/fermalenoski86/dev/pull/32#issuecomment-6088307539.
 - Problema: un enlace a un run no identifica por sí solo qué commit, navegador,
   roles, campaña, versión y hash produjeron cada screenshot/video; los artifacts
   se eliminan según la retención configurada.
