@@ -1,20 +1,20 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor). Auditoría de **D3**: PR [#27](https://github.com/fermalenoski86/dev/pull/27), rama `fase/m3a1-d3`, HEAD `66b1f44`. Issue [#28](https://github.com/fermalenoski86/dev/issues/28). CI del PR 37892977654: 6/6 verde a la primera (mutaciones 240, M2C 14/14). Después de aprobar D3: E2. Pendiente de Fer: #26 y los tags.
-**Fase:** M3A.1 Fase D — D3 Builder persistente acotado.
-**Estado:** E1 cerrada. [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/23#issuecomment-6075263530) sobre `2f30671d38eb7c24bd387fa9ca3473c0baf236c8`; squash en `main@4c42e919b20099f50c714d69f75c03ef46367eb1`. CI exacta [37882528899](https://github.com/fermalenoski86/dev/actions/runs/37882528899): 6/6 verde a la primera, S3 15/15, mutaciones 228/228 y M2C 14/14. Issues #22 y #24 cerrados. #26/BL-09: observabilidad aceptada con ajustes, sin relajar el gate; no bloquea D3.
+**Pelota en:** Claude (implementador). Iniciar **E2** desde el `main` vigente, que contiene D3 aprobada y fusionada. No iniciar E3.
+**Fase:** M3A.1 Fase E — E2 E2E de plataforma sin navegador.
+**Estado:** D3 [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/27#issuecomment-6076998058) sobre `66b1f44c2689d5ba3547f59b2e91654dbca30279`; squash en `main@2e39d3fbdf991fcf6884713b403ab3c5100610c8`. CI exacta [37892977654](https://github.com/fermalenoski86/dev/actions/runs/37892977654): 6/6 verde al primer intento; verify 693+1, PostgreSQL 238+6, bootstrap 6, media 63, mutaciones 240/240, M2C 14/14 y compose-smoke local/S3. Issue #28 cerrado.
 
 ## Decisión de Fer sobre #15 (2026-10-08 20:32 ART)
 Opción 1: D3 autorizada (store del Builder con `CampaignRepository` inyectado + indicador de versión; sin tocar la experiencia ejecutiva, el renderer, la geometría ni los screenshots; los 14 E2E de M2C son gate). **Orden: D3 después de cerrar E1 y antes de E2**, en su propia rama y PR. No cambia la pelota actual.
 
 ## Entrega activa
-- Implementador: Claude. Crear `fase/m3a1-d3` desde el `main` vigente, abrir PR y issue de auditoría; actualizar HANDOFF en main al entregar.
-- D3: inyectar `CampaignRepository` en el Builder y mostrar el indicador de versión autorizado por #15. Definir regresiones que demuestren carga/guardado persistente, conflicto/revisión visible y compatibilidad con el protocolo de D2.
-- Congelado: experiencia ejecutiva, renderer, geometría y screenshots. No usar D3 como permiso para construir login, campaña o aprobación; E3 continúa sin autorización.
-- Gates obligatorios: todos los de AGENTS.md, incluidos los 14 E2E M2C. No iniciar E2 antes de la auditoría aprobatoria de D3.
-- #26/BL-09 aceptada con ajustes: PR pequeño separado de observabilidad (versiones de runner/Chrome/codecs + artefactos al fallar), sin cambiar asserts, timeouts ni retries. Prioridad detrás de D3; registrar evidencia antes de proponer fijar navegador.
-- #25, #12 y E1: aprobados e integrados. #22 y #24: cerrados.
-- Limpieza administrativa pendiente: `bisect/e1-rojo-1179018` y `bisect/e1-verde-55df505`. Su borrado remoto requiere autorización explícita; no bloquea el roadmap.
+- Implementador: Claude. Crear `fase/m3a1-e2` desde `main@2e39d3fbdf991fcf6884713b403ab3c5100610c8` o posterior y entregar PR + issue de auditoría.
+- E2: ejecutar por HTTP real, PostgreSQL real, ffprobe real, sesiones/CSRF y roles reales el flujo definido en `docs/briefs/M3A1_FASE_E.md` §E2. Generar `docs/reviews/M3A1_ACEPTACION.md` con los 19 puntos y los estados autoritativos; un pendiente nunca cuenta como cubierto.
+- Gates obligatorios: todos los de AGENTS.md. Mantener los 14 E2E M2C congelados. No iniciar E3 ni construir UI de login/campaña/aprobación: su ubicación sigue pendiente de decisión de producto.
+- D3 queda cerrada. No reabrir store/indicador salvo bug demostrado con reproducción y test.
+- Debate de mejoras D3: BL-25 se ajusta y difiere a E3 (no es trabajo independiente de E2); cuando se autorice, usar autenticación Playwright por API/storageState sin persistir cookies y aislar datos por worker. BL-26 queda aceptada para backlog después de E2, prioridad P2: retry solo de pending, backoff exponencial acotado con jitter, una sync en vuelo y cancelación en éxito/conflicto/cierre; criterio verificable: backend vuelve sin evento `online`, una sola revisión/audit y límite de intentos. Fuente primaria: https://html.spec.whatwg.org/multipage/system-state.html#browser-state.
+- #26/BL-09 continúa como PR pequeño separado de observabilidad, sin cambiar asserts, timeouts ni retries. No mezclar con E2.
+- Limpieza administrativa pendiente: tags y ramas `bisect/e1-rojo-1179018` / `bisect/e1-verde-55df505`; el borrado remoto requiere autorización explícita y no bloquea E2.
 
 ## Objetivo autorizado por Fer — 2026-10-06
 Continuar Claude + ChatGPT hasta completar todo el alcance pensado y documentado del proyecto TRUST, fase por fase. Claude implementa y ChatGPT audita. Después de aprobar una fase, continuar con la siguiente ya definida en los briefs/roadmap, sin pedir confirmación rutinaria. No inventar requisitos ausentes; las decisiones de producto pendientes siguen el proceso de AGENTS.md. Mantener los gates y las partes congeladas. Esta autorización no aprueba B2 ni cambia quién tiene la pelota.
@@ -120,6 +120,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-09 — ChatGPT: D3 `AUDIT: APROBADO` sobre `66b1f44c2689d5ba3547f59b2e91654dbca30279`; CI 37892977654 inspeccionada completa: verify693+1, PG238+6, bootstrap6, restore18 tablas/verifyChain, media63, mutaciones240, M2C14 y compose local/S3, seis jobs verdes a la primera. Auditor local: delta completo y 24/24 focalizadas; full gates no repetidos localmente y cubiertos por CI. Squash en `main@2e39d3fbdf991fcf6884713b403ab3c5100610c8`; #28 cerrado. BL-25 diferida a E3; BL-26 aceptada con ajustes para después de E2. Pelota a Claude para E2; E3 sin autorización.
 - 2026-10-09 06:47 UTC — Claude: CI de #27 6/6 verde a la primera (37892977654). La corrida local completa de mutaciones se cortó en 15/240 (0 sobrevivientes) y se restauró limpia; las 240 están en CI y las 12 `d3:` corrieron completas localmente. Auditoría pedida en #27/#28. Pelota a ChatGPT.
 - 2026-10-09 06:25 UTC — Claude: D3 entregada en #27 (issue #28): `CampaignSession` en `@trust/builder-repository`, store del Builder con sesión inyectada (sin `?campaign=` M2C no cambia) e indicador APPROVED VERSION / WORKING DRAFT. Gates locales: verify 693+1, PG 238+6, bootstrap 6, media 63, build, 12/12 mutaciones `d3:`; la corrida completa local sigue en curso. E2E solo en CI.
 - 2026-10-09 06:10 UTC — Claude: E1 mergeada; cerrados #24 y #22 (SeaweedFS implementado y auditado), sin tag (pendiente de Fer). Arranco D3 en `fase/m3a1-d3` desde `main@cde1d35`.
