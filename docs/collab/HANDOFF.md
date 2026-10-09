@@ -1,6 +1,6 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). D3 entregada en el PR [#27](https://github.com/fermalenoski86/dev/pull/27) (rama `fase/m3a1-d3`, HEAD `66b1f44`), issue [#28](https://github.com/fermalenoski86/dev/issues/28). Esperando la CI del PR; cuando dé verde, pelota a ChatGPT. Si esta línea sigue así después de las 10:00 UTC del 2026-10-09, otro turno retoma desde esa rama. Después de aprobar D3: E2.
+**Pelota en:** ChatGPT (auditor). Auditoría de **D3**: PR [#27](https://github.com/fermalenoski86/dev/pull/27), rama `fase/m3a1-d3`, HEAD `66b1f44`. Issue [#28](https://github.com/fermalenoski86/dev/issues/28). CI del PR 37892977654: 6/6 verde a la primera (mutaciones 240, M2C 14/14). Después de aprobar D3: E2. Pendiente de Fer: #26 y los tags.
 **Fase:** M3A.1 Fase D — D3 Builder persistente acotado.
 **Estado:** E1 cerrada. [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/23#issuecomment-6075263530) sobre `2f30671d38eb7c24bd387fa9ca3473c0baf236c8`; squash en `main@4c42e919b20099f50c714d69f75c03ef46367eb1`. CI exacta [37882528899](https://github.com/fermalenoski86/dev/actions/runs/37882528899): 6/6 verde a la primera, S3 15/15, mutaciones 228/228 y M2C 14/14. Issues #22 y #24 cerrados. #26/BL-09: observabilidad aceptada con ajustes, sin relajar el gate; no bloquea D3.
 
@@ -120,6 +120,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-09 06:47 UTC — Claude: CI de #27 6/6 verde a la primera (37892977654). La corrida local completa de mutaciones se cortó en 15/240 (0 sobrevivientes) y se restauró limpia; las 240 están en CI y las 12 `d3:` corrieron completas localmente. Auditoría pedida en #27/#28. Pelota a ChatGPT.
 - 2026-10-09 06:25 UTC — Claude: D3 entregada en #27 (issue #28): `CampaignSession` en `@trust/builder-repository`, store del Builder con sesión inyectada (sin `?campaign=` M2C no cambia) e indicador APPROVED VERSION / WORKING DRAFT. Gates locales: verify 693+1, PG 238+6, bootstrap 6, media 63, build, 12/12 mutaciones `d3:`; la corrida completa local sigue en curso. E2E solo en CI.
 - 2026-10-09 06:10 UTC — Claude: E1 mergeada; cerrados #24 y #22 (SeaweedFS implementado y auditado), sin tag (pendiente de Fer). Arranco D3 en `fase/m3a1-d3` desde `main@cde1d35`.
 - 2026-10-09 — ChatGPT: E1 `AUDIT: APROBADO` sobre `2f30671d38eb7c24bd387fa9ca3473c0baf236c8`; P1 S3 y P2 bind cerrados. CI 37882528899 inspeccionada: verify669+1, PG232+6, bootstrap6, restore18 tablas/verifyChain, S3 15, media63, mutaciones228 y M2C14; seis jobs verdes a la primera. Local: revisión del delta, bash syntax, autoprueba y puertos loopback; verify local no ejecutado por pnpm11 vs requisito12; Docker/PG/media/mutaciones/E2E no repetidos localmente y cubiertos por CI independiente. Squash en `main@4c42e919b20099f50c714d69f75c03ef46367eb1`; #22/#24 cerrados. Observabilidad #26 aceptada como ajuste BL-09 sin relajar gate. Pelota a Claude para D3 (#15 opción1), luego E2.
