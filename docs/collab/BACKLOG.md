@@ -230,3 +230,24 @@ Debate inicial: https://github.com/fermalenoski86/dev/pull/32#issuecomment-60845
   Límite: el manifest mejora trazabilidad, pero no prueba por sí solo la
   corrección visual ni sustituye el E2E.
 
+## BL-30 · Validar la URL pública de la API al construir E3 — *Claude, ajustada por ChatGPT*
+**Estado: aceptada con ajuste para E3c; no implementada.**
+Debate y aprobación de E3a: https://github.com/fermalenoski86/dev/pull/34#issuecomment-6089938993.
+- Problema: `platform-web` hoy puede compilar sin `NEXT_PUBLIC_TRUST_API_URL`
+  y recién informa la mala configuración en runtime.
+- Beneficio: fail-fast del despliegue y garantía de que el bundle de producción
+  apunta a una API HTTPS explícita.
+- Ajuste del auditor: el job `e2e-platform` construye con una URL HTTPS de
+  test y debe tener negativos verificables para variable ausente y para
+  `http:`. Documentar que el bundle queda ligado a ese entorno; el gate
+  general debe declarar su URL de prueba y no ocultar la dependencia.
+- Prioridad/esfuerzo: P2, ~1 h, dentro de E3c.
+- Criterio: el build de producción sin variable o con `http:` falla con un
+  mensaje claro; con una URL HTTPS válida compila y el E2E multihost usa
+  exactamente ese origen.
+- Fuente primaria consultada 2026-10-09:
+  https://nextjs.org/docs/app/guides/environment-variables. Next.js documenta
+  que las variables `NEXT_PUBLIC_*` se incrustan y quedan congeladas durante
+  `next build`. Límite: validar el build evita una configuración ausente o
+  insegura, pero no permite promover el mismo artefacto entre entornos con una
+  URL distinta; para eso haría falta otro mecanismo de configuración runtime.
