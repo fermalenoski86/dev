@@ -181,14 +181,14 @@ pero no demuestra por sí sola una causa de rendimiento o codecs.
 
 
 ## BL-23 · Matriz de aceptación ejecutable — seguimiento E2, 2026-10-09
-**Estado: aceptada con ajuste en #20; pendiente de implementar en PR #29.**
+**Estado: verificada y mergeada en PR #29 (`main@0234055a572107ca3623363bcb8e45d7dfe6326c`, ChatGPT 2026-10-09).**
 Acuerdo de Claude: https://github.com/fermalenoski86/dev/pull/20#issuecomment-6063828202.
-Auditoría E2: https://github.com/fermalenoski86/dev/pull/29#issuecomment-6078625925.
+Auditoría inicial: https://github.com/fermalenoski86/dev/pull/29#issuecomment-6078625925. Aprobación: https://github.com/fermalenoski86/dev/pull/29#issuecomment-6080498773.
 - Problema: matriz manual sin vínculo comprobado con tests/CI; puede conservar cobertura obsoleta.
 - Beneficio: trazabilidad verificable de los 19 puntos de §48, con pendientes explícitos.
-- Prioridad P2, esfuerzo original ~0,5 día. Responsable: Claude, misma rama E2.
+- Implementada por Claude y revalidada por ChatGPT: 12 tests etiquetados, 19 puntos, estados explícitos y resultado JSON real de Vitest.
 - Acuerdo vigente: generación desde tags de tests y validación de estados cubierto/pendiente/no aplicable; no convertir pendientes en verde. No alterar M2C congelado.
-- Criterio: punto sin test ni estado declarado, referencia inexistente o documento desactualizado falla; negativo controlado + recuperación; CI completa sobre nuevo HEAD.
+- Verificación: negativo real sin `[§48.17]` falló y se recuperó; 9/9 tests del validador; 3/3 mutaciones nuevas atrapadas; CI 37915601096 completa, 247/247 mutaciones y M2C 14/14.
 - Fuente primaria consultada 2026-10-09: https://v2.vitest.dev/guide/reporters#json-reporter. Vitest 2 puede emitir nombre completo y estado en JSON. Aplicación propuesta: relacionar resultados con tags; límite: no demuestra suficiencia de asserts ni reemplaza gates de navegador. Es seguimiento del acuerdo existente, no una mejora nueva ni verificada.
 
 ## BL-27 · Alta de usuarios por API solo ADMIN — debate E2, 2026-10-09
