@@ -13,8 +13,9 @@ con ❓ lo que el master no decide.
 
 **Propuesto por Claude el 2026-10-09**, con E2 aprobada y mergeada en `main@0234055`.
 **Re-entrega 1 (2026-10-09):** corrige el [P1] de la auditoría (arquitectura de
-sesión entre hosts) e incorpora los ajustes a ❓2, ❓3, BL-28 y BL-29. El detalle
-está en la sección "Re-entrega 1" al final.
+sesión entre hosts) e incorpora los ajustes a ❓2, ❓3, BL-28 y BL-29.
+**Re-entrega 2 (2026-10-09):** agrega el segundo login del operador de §41 y el
+ADR de la arquitectura de sesión. El detalle de ambas está al final.
 
 ## Qué NO se toca
 
@@ -80,6 +81,18 @@ y el Builder, que llama a la API directo, recibiría `401` (hallazgo [P1]).
     `credentials: 'include'`.
 - **CORS por allowlist en `platform-api`**, como se describe arriba, con sus
   tests y la documentación en `docs/platform/AUTH.md`.
+- **ADR-063 en `docs/architecture/DECISIONS.md`** (enlazado desde ADR-057): "Dos
+  UIs de navegador directas contra la API cross-origin". Cubre:
+  - la topología de tres hosts;
+  - por qué la cookie host-only vive en el host de la API (el [P1] de la
+    auditoría);
+  - el requisito de despliegue same-site HTTPS y por qué no se cambia
+    `SameSite`;
+  - la allowlist exacta, `Vary: Origin`, el 403 por `Origin` y CSRF sin
+    cambios;
+  - las alternativas descartadas: proxy de mismo origen, rewrite en
+    `apps/control` y editor mínimo;
+  - el gate multihost (`session-multihost.spec.ts`).
 - **Login / logout** (`/login`): `POST /auth/login` y `GET /auth/me`. Si no hay
   sesión, redirige a login. Logout revoca la sesión en el servidor.
 - **Campañas** (`/campaigns`): lista con `GET /campaigns` y alta con
@@ -132,14 +145,22 @@ y el Builder, que llama a la API directo, recibiría `401` (hallazgo [P1]).
        (`evil.trust.test`) falla en el navegador: el preflight sale sin
        `Access-Control-Allow-Origin` y no hay escritura en la base;
     6. logout → el Builder recibe 401 en la próxima llamada.
-  - **`flow-41.spec.ts`**, exactamente el flujo de §41:
-    1. **OPERATOR**: login → crear campaña → el Builder (`apps/control`) guarda
+  - **`flow-41.spec.ts`**, exactamente el flujo de §41 (`M3A1_MASTER.md`
+    §41). Los **tres logins son por el formulario de la UI**, cada uno en un
+    contexto de navegador nuevo y sin `storageState`:
+    1. **OPERATOR — login**: crear campaña → el Builder (`apps/control`) guarda
        el draft en el backend → subir assets válidos → enviar → hash visible
-       → logout.
-    2. **INTERNAL_APPROVER** (otro usuario): login → ver la versión → adjuntar
+       → **logout**. El test guarda el valor de la cookie de esa sesión y
+       verifica que, después del logout, `GET /auth/me` con esa cookie da
+       401.
+    2. **INTERNAL_APPROVER (otro usuario) — login**: ver la versión → adjuntar
        evidencia → aprobar.
-    3. **OPERATOR**: la campaña muestra APPROVED VERSION, el hash exacto y el
-       working draft aparte → editar → la versión aprobada no cambia.
+    3. **OPERATOR — login nuevo**, en un contexto nuevo:
+       - la cookie de sesión es **distinta** de la revocada en el paso 1;
+       - la campaña muestra APPROVED VERSION, el **hash exacto** del paso 1 y
+         el working draft aparte;
+       - editar crea o modifica el draft, y la versión aprobada (fila y hash)
+         no cambia.
   - **`a11y.spec.ts`** (BL-28):
     - `@axe-core/playwright` en login, campañas y revisión, con **cero
       violaciones**;
@@ -154,7 +175,10 @@ y el Builder, que llama a la API directo, recibiría `401` (hallazgo [P1]).
   - contratos por API como ADMIN, y contrato y campaña **propios de cada
     worker**;
   - sesión por rol con login por API y `storageState` en un directorio
-    temporal, sin cookies en el repo.
+    temporal, sin cookies en el repo. Se usa en `a11y.spec.ts` y en los specs
+    que no prueban el login. `flow-41.spec.ts` y `session-multihost.spec.ts`
+    no lo usan: hacen el login por la UI, y un `storageState` posterior a un
+    logout tendría un token revocado.
 - **CI:**
   - job nuevo `e2e-platform` con PostgreSQL 16, ffmpeg, platform-api,
     platform-web, apps/control y Google Chrome del runner (igual que
@@ -223,3 +247,10 @@ cambio de `SameSite` o del nombre de la cookie.
 | ❓4 | Sin cambios (aceptada). |
 | BL-28 con teclado, foco, nombres y alertas | Incorporado en E3b y en `a11y.spec.ts` (E3c). |
 | BL-29 | Aceptada e incorporada a E3c. |
+
+## Re-entrega 2 — AUDIT: CAMBIOS (PR #32, comentario 6086497095)
+
+| Hallazgo | Respuesta |
+|---|---|
+| [P1] falta el segundo login del operador de §41; un `storageState` posterior al logout tiene el token revocado | Corregido. En `flow-41.spec.ts` los tres logins son por la UI, en contextos nuevos y sin `storageState`. El paso 1 verifica que la cookie revocada da 401. El paso 3 hace un **login nuevo** del operador, exige una cookie distinta de la revocada y comprueba el hash exacto, el working draft separado y que editar no cambia la versión aprobada. `storageState` queda solo para los specs que no prueban el login. |
+| [P2] la arquitectura de sesión/CORS no tiene ADR como entregable | Corregido. E3a entrega **ADR-063**, enlazado desde ADR-057: topología, por qué la cookie vive en el host de la API, same-site, allowlist/CSRF, alternativas descartadas y gate multihost. |
