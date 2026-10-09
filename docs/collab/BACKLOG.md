@@ -251,3 +251,25 @@ Debate y aprobación de E3a: https://github.com/fermalenoski86/dev/pull/34#issue
   `next build`. Límite: validar el build evita una configuración ausente o
   insegura, pero no permite promover el mismo artefacto entre entornos con una
   URL distinta; para eso haría falta otro mecanismo de configuración runtime.
+
+## BL-31 · Historial de versiones por campaña — *Claude, ajustada por ChatGPT*
+**Estado: aceptada con ajuste; P2 después de cerrar E3, no mezclar con E3c.**
+Debate y aprobación de E3b:
+https://github.com/fermalenoski86/dev/pull/36#issuecomment-6091297474.
+- Problema: el aprobador sólo llega a una versión desde el enlace que entrega
+  el operador; no puede recuperar el historial de una campaña desde la UI.
+- Beneficio: navegación operativa y trazabilidad sin copiar enlaces fuera de
+  TRUST.
+- Ajuste del auditor: `GET /campaigns/:id/versions` devuelve resúmenes
+  paginados, aplica la misma autorización por objeto que campaña/versión y no
+  expone contenido innecesario. Debe ir en un cambio separado después de E3.
+- Prioridad/esfuerzo: P2, ~0,5–1 día.
+- Criterio: listado ordenado y paginado; pruebas negativas demuestran que un
+  actor no puede enumerar campañas ni versiones ajenas; OpenAPI y UI quedan
+  cubiertos por tests.
+- Fuente primaria consultada 2026-10-09:
+  https://api-security.owasp.org/editions/2023/en/0xa1-broken-object-level-authorization/.
+  OWASP API1:2023 muestra que un endpoint de listado puede revelar
+  identificadores que luego habilitan BOLA. Límite: la guía define el riesgo,
+  pero el modelo concreto de permisos sigue siendo el contrato interno de
+  TRUST.
