@@ -968,3 +968,24 @@ Alternativas descartadas:
 - guardar la revisión dentro de `trust.builder.draft.v1`, porque cambia el formato;
 - reintentar con la `serverRevision` automáticamente, porque es last-write-wins;
 - un merge por moments, porque §8 no lo permite.
+
+## ADR-062 — El Builder usa el repositorio a través de una sesión de campaña
+**Fecha:** 2026-10 · **Estado:** propuesto (auditoría D3) · **Origen:** M3A.1 Fase D3 + decisión de Fer en #15 (opción 1)
+La lógica de guardado remoto no vive en el store de React: vive en
+`CampaignSession` (`@trust/builder-repository`), que serializa los autosaves
+(uno por vez, solo el último de los encolados), toma el `expectedRevision` del
+repositorio y publica una vista para el indicador. El store del Builder solo
+la inyecta y adopta drafts; el componente no llama a `fetch()` (§31).
+
+Sin `?campaign=<uuid>` el Builder es el de M2C, byte por byte en su
+comportamiento: el camino de `save()` sin sesión no cambia y el indicador no
+renderiza nada. Un conflicto o un error dejan el draft sucio para que ningún
+reemplazo (preset, import) pise trabajo sin confirmar.
+
+Alternativas descartadas:
+- poner el repositorio directo en el store (lógica de concurrencia en React,
+  difícil de probar sin DOM);
+- una ruta nueva de Next para el Builder con backend (más superficie en
+  `apps/control` de la que autoriza #15);
+- crear la campaña nueva al "duplicar" (necesita UI de contrato: Fase E).
+

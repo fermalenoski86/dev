@@ -2,7 +2,7 @@
 
 Master §9 (offline/conflicto) y §31 (Builder integration). ADR-061.
 **No toca `apps/control`, `show-authoring` ni el formato de `DraftStorage`.**
-D3 (el Builder lo usa) sigue bloqueado por el issue #15.
+D3 (el Builder lo usa, #15 opción 1): ver la sección «D3» al final.
 
 ## Interfaz
 
@@ -67,7 +67,7 @@ devolvió 502, 503 o 504.
      cambiar, es otro conflicto: nunca es last-write-wins silencioso.
    - `duplicateAsNew()`: devuelve una copia de lo local y vuelve al draft del
      servidor. No escribe nada remoto (decisión 7 del brief D); crear la
-     campaña nueva queda para D3/E.
+     campaña nueva queda para E (D3 ofrece descargar la copia).
 5. Al reabrir con trabajo `pending`, se conserva lo local y se intenta
    sincronizar.
 
@@ -99,3 +99,44 @@ segunda revisión.
   - local sin chequeo de revisión;
   - metadata de otra campaña;
   - offline sin `pending`.
+
+## D3 — el Builder usa el repositorio (#15, opción 1; ADR-062)
+
+Alcance autorizado por Fer en #15: el store del Builder con `CampaignRepository`
+inyectado + indicador de versión. **No se tocan** la experiencia ejecutiva, el
+renderer, la geometría ni los screenshots; los 14 E2E de M2C siguen siendo gate.
+
+### Cómo se activa
+
+`?campaign=<uuid>` en la URL del Builder. Sin ese parámetro (o con algo que no
+sea un uuid) el Builder es **exactamente** el de M2C: `localStorage`, sin
+indicador, sin red. `NEXT_PUBLIC_TRUST_API_URL` es la base de la API (vacía =
+mismo origen, como asume `API.md`).
+
+### Piezas
+
+| Dónde | Qué |
+|---|---|
+| `@trust/builder-repository` · `session.ts` | `CampaignSession`: serializa los guardados (nunca dos PUT en paralelo; si se encolan varios, sube solo el último), toma el `expectedRevision` del repositorio, traduce cada resultado a `CampaignView` y expone las tres salidas de §9. `connectBuilderBackend()` lee el CSRF de `GET /api/v1/auth/me` y compone `SyncingCampaignRepository` + `ApiCampaignRepository` con el `fetch` inyectado. `campaignIdFromSearch()` valida el parámetro. |
+| `apps/control` · `useBuilderStore.ts` | `campaign` / `campaignSession`; `save()` sin sesión es el de M2C sin cambios; con sesión delega en `CampaignSession`. `openCampaign` (inyectable), `connectCampaign` (composición del navegador), `syncCampaign`, `resolveConflict`. |
+| `apps/control` · `CampaignStatus.tsx` | Indicador: APPROVED VERSION vN (solo lectura, §32), WORKING DRAFT rev R, estado (SINCRONIZADO / GUARDANDO / PENDIENTE · SIN CONEXIÓN / CONFLICTO / ERROR) y, ante un conflicto, los tres botones de §9 con confirmación. Sin campaña no renderiza nada. |
+| `apps/control` · `TakeoverBuilder.tsx` | Al montar: con `?campaign=` abre la campaña; si no abre, cae al `loadFromStorage()` de M2C. Escucha `online` para subir lo pendiente. |
+
+### Reglas del estado "guardado"
+
+- El badge `SAVED` de M2C pasa a limpio solo si lo confirmado (servidor o local
+  pendiente) es **el mismo draft que está en pantalla**: si se editó durante el
+  guardado, sigue `UNSAVED` y el autosave sube lo nuevo.
+- Un **conflicto** o un **error** dejan el draft sucio: cambiar de preset o
+  importar pide confirmación, así nada pisa el trabajo que está en conflicto.
+- Si la campaña no abre (sin sesión, sin permiso, sin backend), el indicador
+  muestra el error y lo que se edite queda **solo en este navegador** (M2C).
+  Nunca hay autosave hacia una campaña que no se abrió.
+- "Duplicar" adopta el draft del servidor y ofrece **Descargar copia local**:
+  crear la campaña nueva desde el Builder queda para E (no hay UI de contratos).
+
+### Límite conocido
+
+No hay pantalla de login en el Builder (Fase E): la sesión de C1 tiene que
+existir en el navegador (cookie del mismo origen). Sin sesión, el indicador
+dice `ERROR · UNAUTHENTICATED` y el Builder sigue local.

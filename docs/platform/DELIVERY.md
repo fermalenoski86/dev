@@ -44,13 +44,16 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 - `0002_asset_pipeline` (reversible)
 - `0003_approval` (reversible)
 
-## Archivos de test (61)
+## Archivos de test (65)
 
 | Archivo | Suite |
 |---|---|
+| `apps/control/src/components/builder/CampaignStatus.test.ts` | Unidad de app (vitest del paquete) |
+| `apps/control/src/state/useBuilderStore.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-api/src/api.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/approval.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/auth.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
+| `apps/platform-api/src/builder-d3.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/builder-repository.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/campaigns.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/cli/user-create.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
@@ -62,6 +65,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | `e2e/builder.spec.ts` | E2E (Playwright, CI) |
 | `e2e/experience.spec.ts` | E2E (Playwright, CI) |
 | `packages/builder-repository/src/repository.test.ts` | Unidad (`pnpm verify`) |
+| `packages/builder-repository/src/session.test.ts` | Unidad (`pnpm verify`) |
 | `packages/control-core/src/control-core.test.ts` | Unidad (`pnpm verify`) |
 | `packages/control-core/src/m2a2.test.ts` | Unidad (`pnpm verify`) |
 | `packages/control-core/src/m2a3.test.ts` | Unidad (`pnpm verify`) |

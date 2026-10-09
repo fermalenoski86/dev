@@ -3,7 +3,7 @@ import type { TakeoverDraft } from '@trust/show-authoring';
 /**
  * Contrato del repositorio de campañas del Builder — M3A.1 Fase D2 (master §31).
  *
- * El Builder (D3, pendiente de #15) habla SOLO con esta interfaz: ningún
+ * El Builder (D3, #15) habla SOLO con esta interfaz (vía `CampaignSession`): ningún
  * componente React llama a `fetch()` (§31). Hay tres implementaciones:
  *
  *   · LocalCampaignRepository   — el comportamiento actual, solo localStorage;

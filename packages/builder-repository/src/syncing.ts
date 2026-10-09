@@ -26,7 +26,7 @@ import {
  *                              servidor volvió a cambiar, es otro conflicto);
  *       - `duplicateAsNew()` — devuelve lo local como draft suelto y vuelve al
  *                              del servidor. Sin escritura remota (decisión 7
- *                              del brief D): crear la campaña nueva es de D3/E.
+ *                              del brief D): crear la campaña nueva es de E (D3 ofrece descargar la copia).
  *
  * Persistencia local: el registro de sync por campaña,
  * `trust.builder.sync.v1:<campaignId>` (draft + revisión base + pendiente,
