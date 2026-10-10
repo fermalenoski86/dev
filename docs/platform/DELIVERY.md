@@ -44,7 +44,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 - `0002_asset_pipeline` (reversible)
 - `0003_approval` (reversible)
 
-## Archivos de test (76)
+## Archivos de test (78)
 
 | Archivo | Suite |
 |---|---|
@@ -73,6 +73,8 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | `apps/platform-web/src/lib/draft-assets.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/session.test.ts` | Unidad de app (vitest del paquete) |
 | `e2e/builder.spec.ts` | E2E (Playwright, CI) |
+| `e2e/diag/signature-window.spec.ts` | Diagnóstico E2E (`diag-e2e.yml`, no es gate) |
+| `e2e/diag/warmup-trace.spec.ts` | Diagnóstico E2E (`diag-e2e.yml`, no es gate) |
 | `e2e/experience.spec.ts` | E2E (Playwright, CI) |
 | `packages/builder-repository/src/repository.test.ts` | Unidad (`pnpm verify`) |
 | `packages/builder-repository/src/session.test.ts` | Unidad (`pnpm verify`) |

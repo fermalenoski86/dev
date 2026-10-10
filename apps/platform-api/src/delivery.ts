@@ -32,6 +32,8 @@ function archivosDeTest(root: string): string[] {
 function suiteDe(f: string): string {
   if (f.endsWith('.db.test.ts')) return 'PostgreSQL (`vitest.platform.config.ts`)';
   if (f.endsWith('.media.test.ts')) return 'Medios (`vitest.media.config.ts`)';
+  // issue #26: e2e/diag/ se corre solo en diag-e2e.yml (workflow_dispatch o push a diag/**); no es gate
+  if (f.startsWith('e2e/diag/')) return 'Diagnóstico E2E (`diag-e2e.yml`, no es gate)';
   if (f.endsWith('.spec.ts')) return 'E2E (Playwright, CI)';
   if (f.startsWith('packages/')) return 'Unidad (`pnpm verify`)';
   return 'Unidad de app (vitest del paquete)';
