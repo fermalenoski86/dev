@@ -25,3 +25,19 @@ NEXT_PUBLIC_TRUST_API_URL=http://localhost:4000 pnpm --filter @trust/platform-we
 En desarrollo por `http://localhost` la cookie no es `Secure` y no lleva el
 prefijo `__Host-`; los puertos no separan cookies, así que esto **no** prueba la
 topología de producción. El gate multihost (hosts distintos con TLS) es de E3c.
+
+## Build para desplegar (BL-30)
+
+`NEXT_PUBLIC_*` se **incrusta en el build**: el artefacto queda atado a esa API
+y no se puede promover a otro entorno con otra API (se construye uno por
+entorno). Un build para desplegar se hace con `TRUST_BUILD_STRICT=1`: falla si
+`NEXT_PUBLIC_TRUST_API_URL` falta o no es https, y si
+`NEXT_PUBLIC_TRUST_BUILDER_URL`, cuando está, no es https. El `pnpm build` del
+gate `verify-build` no usa la bandera: compila, y la app muestra el error de
+configuración en runtime.
+
+```bash
+TRUST_BUILD_STRICT=1 NEXT_PUBLIC_TRUST_API_URL=https://api.<site> \
+  NEXT_PUBLIC_TRUST_BUILDER_URL=https://control.<site> pnpm --filter @trust/platform-web build
+```
+

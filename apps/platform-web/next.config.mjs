@@ -1,3 +1,8 @@
+import { assertBuildEnv } from './src/build-env.mjs';
+
+// BL-30: con TRUST_BUILD_STRICT=1 el build falla si la URL de la API falta o no es https.
+assertBuildEnv(process.env);
+
 /**
  * platform-web — M3A.1 E3a (docs/briefs/M3A1_FASE_E3.md, ADR-063).
  *

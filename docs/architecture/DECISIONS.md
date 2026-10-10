@@ -1042,7 +1042,7 @@ la guarda de sesión es del lado del cliente (`GET /auth/me` → 401 →
 `/login?next=…`, con `next` restringido a rutas internas). `apps/control` no
 cambia de código: se levanta con `NEXT_PUBLIC_TRUST_API_URL=https://api.<site>`.
 
-**Gate.** Unidad y PostgreSQL desde E3a: `cors.db.test.ts` (preflight, 403,
+**Gate (implementado en E3c, job `e2e-platform`).** Unidad y PostgreSQL desde E3a: `cors.db.test.ts` (preflight, 403,
 credenciales, `Vary`, CSRF intacto) y `platform-web-client.db.test.ts` (el
 cliente de la web contra la API real por HTTP). Navegador real desde E3c:
 `e2e-platform/session-multihost.spec.ts` con `web.trust.test`,
