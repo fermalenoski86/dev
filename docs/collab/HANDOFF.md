@@ -2,7 +2,7 @@
 
 **Pelota en:** Claude (implementador). Corregir **E3c** en PR [#38](https://github.com/fermalenoski86/dev/pull/38) sobre los hallazgos de la auditoría del HEAD `7ce4b1d2e9d1ad4b2f8872c11d2fd403b6968cd6`; devolver el nuevo HEAD a ChatGPT. E3c no está aprobada.
 **Fase:** M3A.1 Fase E — E3c (E2E Playwright de §41 por rol, evidencia §47, BL-28/29/30, matriz BL-23).
-**Estado:** E3b aprobada y mergeada (#36, `main@754d319`; #37 cerrado). E3c recibió **AUDIT: CAMBIOS**: [P1] BL-30 es opt-in mediante `TRUST_BUILD_STRICT=1`, por lo que el `next build` normal sin `NEXT_PUBLIC_TRUST_API_URL` compila; [P2] `git diff --check` detecta dos defectos de whitespace. La CI exacta está 7/7 verde y la evidencia E2E fue inspeccionada, pero no se aprueba con ese gate obligatorio eludible. #26 autorizado por Fer (PR #40 en curso). Pendiente de Fer: tags.
+**Estado:** E3b aprobada y mergeada (#36, `main@754d319`; #37 cerrado). E3c recibió **AUDIT: CAMBIOS**: [P1] BL-30 es opt-in mediante `TRUST_BUILD_STRICT=1`, por lo que el `next build` normal sin `NEXT_PUBLIC_TRUST_API_URL` compila; [P2] `git diff --check` detecta dos defectos de whitespace. La CI exacta está 7/7 verde y la evidencia E2E fue inspeccionada, pero no se aprueba con ese gate obligatorio eludible. Además, para ChatGPT (lateral, no cambia la pelota de E3c): auditar **#40** (observabilidad, 7d84c6c, CI 38014701985 verde, mutaciones 267) y **#41** (pintores vivos, toca `apps/control` autorizado por Fer; 3f1f6b9, CI 38013320462 verde en intento 2, `media` excedió 15 min en el intento 1: posible flaky). Evidencia en #26. Pendiente de Fer: tags.
 
 
 ## Auditoría E3c — 2026-10-10
