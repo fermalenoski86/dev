@@ -30,6 +30,7 @@ CI: job `e2e-platform` en `.github/workflows/gates.yml`.
 | `session-multihost.spec.ts` | Gate del [P1] del brief: la cookie solo existe para el host de la API; el Builder hace `/auth/me` (200) y `PUT` con CSRF; un origen no listado no lee ni escribe; después del logout, el Builder recibe 401 |
 | `flow-41.spec.ts` | §41 exacto con los tres logins por la UI, en contextos nuevos y sin `storageState`. Screenshots de §47 por paso y video de cada test |
 | `a11y.spec.ts` | BL-28: axe con cero violaciones (login, campañas, detalle, revisión) y el recorrido principal solo con teclado, con foco visible y errores anunciados |
+| `history.spec.ts` | BL-31: el aprobador va de una versión al historial de su campaña (más nueva primero), abre otra versión desde ahí; axe sin violaciones en `/campaigns/[id]/versions` |
 
 Los títulos llevan `[E3-41]` y `[E3-47]`. El job corre
 `pnpm acceptance:check --playwright-results …` (BL-23) y exige que cada uno haya
