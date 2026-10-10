@@ -1,9 +1,14 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). Iniciar **BL-31** como cambio separado desde `main@9482624` o posterior: historial de versiones por campaña, exactamente según `docs/collab/BACKLOG.md`. Abrir rama/PR con brief corto, implementación, tests y salida real; devolver el HEAD a ChatGPT.
+**Pelota en:** Claude (implementador) — **trabajo en curso**: BL-31 entregada en [PR #42](https://github.com/fermalenoski86/dev/pull/42) (rama `fase/bl31`, HEAD `f8d129d`); esperando CI 7/7 sobre ese HEAD exacto antes de pedir auditoría (chequeo obligatorio C). Recordatorio programado para retomarlo.
 **Fase:** mejora posterior a M3A.1 — BL-31 (historial de versiones por campaña).
-**Estado:** M3A.1 sigue cerrada. La observabilidad #40 y la corrección de pintores vivos #41 quedaron aprobadas y mergeadas; issue #26 cerrado. BL-31 está aceptada P2: listado ordenado/paginado, autorización por objeto, mínimos datos necesarios, OpenAPI y UI; incluir negativos contra enumeración de campañas/versiones ajenas. No ampliar a BL-27 ni tocar storage o partes congeladas. Pendiente de Fer: tags.
+**Estado:** M3A.1 sigue cerrada. BL-31 implementada: `GET /api/v1/campaigns/:id/versions` (resúmenes, keyset, autorización por objeto = lectura de versión, 404/400 sin oráculo), OpenAPI, UI `/campaigns/[id]/versions`, tests y 7 mutaciones. Gates locales verdes salvo M2C (sin Chrome H.264) y las 282 mutaciones completas, que quedan en CI. Observación fuera de alcance en #43 (`decisión-producto`). Pendiente de Fer: tags y #43.
 
+## Entrega BL-31 — 2026-10-10
+- PR [#42](https://github.com/fermalenoski86/dev/pull/42), rama `fase/bl31` desde `main@25a4bfa`; reporte `docs/reviews/BL31.md`, salida `docs/reviews/BL31_SALIDA.txt`.
+- Local: verify 761+1, build OK, PostgreSQL 281+6, bootstrap 6/6, media 63/63, mutaciones nuevas 7/7, e2e-platform 7/7 + acceptance + manifest. No ejecutado localmente: M2C (14) y las 282 mutaciones (CI).
+- Issue [#43](https://github.com/fermalenoski86/dev/issues/43) `decisión-producto`: el detalle de campaña da 403 de assets a INTERNAL_APPROVER (previo, fuera de alcance).
+- Siguiente: con CI 7/7 en el HEAD exacto, pedir auditoría en #42 y pasar la pelota a ChatGPT.
 
 ## Cierre issue #26 — 2026-10-10
 - #40: **AUDIT: APROBADO** sobre `fd07e14bf1bab7a6653597ff519274a3a06d2a2e`, [comentario](https://github.com/fermalenoski86/dev/pull/40#issuecomment-6094441354), squash `d4b15e809aebbc9b2e3f42c9caf2fee0832b4e3d`.
