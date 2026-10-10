@@ -1,8 +1,17 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor). Re-auditar [#40](https://github.com/fermalenoski86/dev/pull/40#issuecomment-6094293838) (HEAD `fd07e14`, CI [38026067868](https://github.com/fermalenoski86/dev/actions/runs/38026067868) 7/7) y [#41](https://github.com/fermalenoski86/dev/pull/41#issuecomment-6094294971) (HEAD `85ba52f`, CI [38026162185](https://github.com/fermalenoski86/dev/actions/runs/38026162185) 7/7), ambos sincronizados con `main@e2aae89`. Diagnóstico combinado [38026178331](https://github.com/fermalenoski86/dev/actions/runs/38026178331): M2C 20/20. No empezar BL-31 hasta cerrar estos PR.
-**Fase:** M3A.1 cerrada; mantenimiento posterior — issue #26 (observabilidad y carrera del E2E M2C).
-**Estado:** E3c aprobada y mergeada (#38, `main@cc6c4d8`; #39 cerrado). Los 19 criterios de §48 quedaron cubiertos. #40 requiere adaptar el workflow diagnóstico a BL-30, resolver el conflicto del inventario generado y limpiar whitespace; #41 no tiene hallazgo funcional nuevo, pero debe correr los siete gates actuales sobre el árbol integrado con E3c. Próximo alcance ya aceptado después de #26: BL-31, en cambio separado. Pendiente de Fer: tags.
+**Pelota en:** Claude (implementador). Iniciar **BL-31** como cambio separado desde `main@9482624` o posterior: historial de versiones por campaña, exactamente según `docs/collab/BACKLOG.md`. Abrir rama/PR con brief corto, implementación, tests y salida real; devolver el HEAD a ChatGPT.
+**Fase:** mejora posterior a M3A.1 — BL-31 (historial de versiones por campaña).
+**Estado:** M3A.1 sigue cerrada. La observabilidad #40 y la corrección de pintores vivos #41 quedaron aprobadas y mergeadas; issue #26 cerrado. BL-31 está aceptada P2: listado ordenado/paginado, autorización por objeto, mínimos datos necesarios, OpenAPI y UI; incluir negativos contra enumeración de campañas/versiones ajenas. No ampliar a BL-27 ni tocar storage o partes congeladas. Pendiente de Fer: tags.
+
+
+## Cierre issue #26 — 2026-10-10
+- #40: **AUDIT: APROBADO** sobre `fd07e14bf1bab7a6653597ff519274a3a06d2a2e`, [comentario](https://github.com/fermalenoski86/dev/pull/40#issuecomment-6094441354), squash `d4b15e809aebbc9b2e3f42c9caf2fee0832b4e3d`.
+- #41: **AUDIT: APROBADO** sobre `85ba52fbd92316cb5266b3f5974974ecbcb2df2f`, [comentario](https://github.com/fermalenoski86/dev/pull/41#issuecomment-6094441446), squash `94826248610a2c343248795faf3e35682b9bd46b`.
+- Cada HEAD tuvo CI 7/7 al primer intento: verify 753+1, PostgreSQL 267+6, bootstrap 6/6, media 63/63, mutaciones 275/275, M2C 14/14, e2e-platform 6/6 y compose 15/15.
+- Diagnóstico combinado `c150455` ([run 38026178331](https://github.com/fermalenoski86/dev/actions/runs/38026178331)): M2C endurecido 10/10 con workers=1 y 10/10 con workers=2. La carrera `:267` quedó reproducida como ventana stale de 20–58 ms; el fix no relaja umbrales, tiempos ni `retries: 0`. Para `:17` queda el motivo de warm-up y artifact ante futuras fallas.
+- Auditor: revisión completa de ambos deltas, integración y diff-check limpios. Gates no repetidos localmente por Node 24/pnpm 11; logs exactos de CI inspeccionados. Issue #26 cerrado como completado.
+- Próximo paso autorizado: Claude implementa BL-31 sin mezclar otros cambios. Criterio de `BACKLOG.md`: `GET /campaigns/:id/versions` con resúmenes paginados y autorización por objeto, UI/OpenAPI y pruebas negativas de enumeración.
 
 
 ## Cierre E3c y M3A.1 — 2026-10-10
@@ -203,6 +212,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-10 03:01 ART — ChatGPT: #40 y #41 `AUDIT: APROBADO`; squash `d4b15e8` y `9482624`; issue #26 cerrado. CI 7/7 en ambos HEAD y diagnóstico combinado M2C 20/20. Pelota a Claude para BL-31 separado.
 - 2026-10-10 02:45 ART — Claude: CI 7/7 al primer intento en #40 (`fd07e14`) y #41 (`85ba52f`); diag `c150455` M2C 10/10 w1 + 10/10 w2. Hallazgos respondidos con autorrevisión A/B/C; pelota a ChatGPT.
 - 2026-10-10 02:05 ART — Claude: #40 merge de main + DELIVERY regenerado (`a561c99`), diag-e2e con build del alcance M2C y EOF limpios (`fd07e14`); #41 merge de main (`85ba52f`, delta sigue en 3 archivos). verify local 753+1 en ambos. CI en curso; re-auditoría se pide con CI verde.
 - 2026-10-10 01:50 UTC — Claude: CI de `7ce4b1d` 7/7 verde al primer intento (38011732400): verify, PG, media, compose, M2C 14/14, mutaciones 275/275, e2e-platform 6/6 + acceptance navegador + manifest (head 7ce4b1d, árbol fdd266d). Auditoría de E3c pedida en #39. Pelota a ChatGPT.
