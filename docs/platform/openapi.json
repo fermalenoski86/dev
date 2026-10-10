@@ -1205,6 +1205,105 @@
         }
       }
     },
+    "/api/v1/campaigns/{id}/versions": {
+      "get": {
+        "summary": "Historial de versiones de la campaña: resúmenes, más nueva primero (cursor); fuera de scope = 404 (BL-31)",
+        "x-trust-roles": [
+          "OPERATOR",
+          "INTERNAL_APPROVER",
+          "ADMIN",
+          "EXTERNAL_APPROVER"
+        ],
+        "responses": {
+          "200": {
+            "description": "VersionSummaryPage",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionSummaryPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
     "/api/v1/campaigns/{id}/submit": {
       "post": {
         "summary": "Compila y corre preflight server-side; crea la ShowVersion",
@@ -3470,6 +3569,87 @@
           "approval",
           "evidence",
           "assets"
+        ]
+      },
+      "VersionListQuery": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 20
+          },
+          "cursor": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "VersionSummaryPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "versionNumber": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                },
+                "versionHash": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "SUBMITTED",
+                    "APPROVED",
+                    "REJECTED"
+                  ]
+                },
+                "sourceDraftRevision": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                },
+                "submittedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "id",
+                "versionNumber",
+                "versionHash",
+                "status",
+                "sourceDraftRevision",
+                "submittedAt"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
         ]
       },
       "Evidence": {

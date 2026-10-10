@@ -83,6 +83,14 @@ export const ShowVersionSchema = z.object({
 }).passthrough();
 export type ShowVersion = z.infer<typeof ShowVersionSchema>;
 
+/** BL-31: resumen de una versión en el historial de su campaña (sin paquete, evidencia ni actores). */
+export const VersionSummarySchema = z.object({
+  id: Uuid, versionNumber: z.number().int().positive(), versionHash: Sha, status: z.enum(['SUBMITTED', 'APPROVED', 'REJECTED']),
+  sourceDraftRevision: z.number().int().positive(), submittedAt: z.string(),
+});
+export type VersionSummary = z.infer<typeof VersionSummarySchema>;
+export interface VersionPage { items: VersionSummary[]; nextCursor: string | null }
+
 export const EVIDENCE_TYPES = ['PDF', 'EMAIL', 'MESSAGE'] as const;
 export type EvidenceType = (typeof EVIDENCE_TYPES)[number];
 
@@ -287,6 +295,17 @@ export class PlatformClient {
 
   async getVersion(id: string): Promise<ShowVersion> {
     return this.request('GET', `/api/v1/show-versions/${encodeURIComponent(id)}`, ShowVersionSchema);
+  }
+
+  /**
+   * BL-31: historial de versiones de la campaña, de la más nueva a la más vieja.
+   * `cursor` = el `nextCursor` de la página anterior; la autorización por objeto
+   * (y el 404 de una campaña ajena) la decide el servidor.
+   */
+  async listCampaignVersions(campaignId: string, o: { cursor?: string | null; limit?: number } = {}): Promise<VersionPage> {
+    const q = new URLSearchParams({ limit: String(o.limit ?? 20) });
+    if (o.cursor) q.set('cursor', o.cursor);
+    return this.request('GET', `/api/v1/campaigns/${encodeURIComponent(campaignId)}/versions?${q.toString()}`, pagina(VersionSummarySchema));
   }
 
   async uploadEvidence(versionId: string, input: { type: EvidenceType; file: Blob; filename: string }): Promise<Evidence> {

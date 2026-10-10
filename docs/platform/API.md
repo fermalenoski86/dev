@@ -20,6 +20,7 @@ regenerados con `pnpm docs:contract` (CI exige diff vacío).
 | GET | `/api/v1/show-versions/:id` | versión con estado derivado, evidencia y manifiesto (C2) | ver `APPROVAL.md` |
 | POST | `/api/v1/show-versions/:id/evidence` | evidencia multipart, detección por bytes (C2) | ver `APPROVAL.md` |
 | GET | `/api/v1/show-versions/:id/evidence/:evidenceId` | descarga (`attachment`, `nosniff`, CSP sandbox) (C2) | ver `APPROVAL.md` |
+| GET | `/api/v1/campaigns/:id/versions?limit=&cursor=` | historial de versiones de la campaña: resúmenes, más nueva primero (BL-31) | ver `APPROVAL.md` |
 | POST | `/api/v1/show-versions/:id/approve` | aprobar con evidencia y hash exacto (C2) | ver `APPROVAL.md` |
 | POST | `/api/v1/show-versions/:id/reject` | rechazar con motivo y hash exacto (C2) | ver `APPROVAL.md` |
 | PUT | `/api/v1/contracts/:id/four-eyes` | política de cuatro ojos, solo ADMIN (C2) | ver `APPROVAL.md` |

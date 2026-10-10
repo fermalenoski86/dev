@@ -1,3 +1,4 @@
+import { VERSION_PAGE_DEFAULT, VERSION_PAGE_MAX } from '@trust/platform-approval';
 import { AssetRejectionSchema } from '@trust/platform-contracts';
 import { z } from 'zod';
 
@@ -151,6 +152,22 @@ export const ShowVersionResponseSchema = z.object({
   evidence: z.array(EvidenceResponseSchema),
   assets: z.array(z.object({ logicalRef: z.string(), assetId: Uuid, sha256: Sha })),
 });
+
+/* ── BL-31: historial de versiones por campaña ─────────────────────── */
+export const VersionListQuerySchema = z
+  .object({ limit: z.coerce.number().int().min(1).max(VERSION_PAGE_MAX).default(VERSION_PAGE_DEFAULT), cursor: Uuid.optional() })
+  .strict();
+/** Resumen mínimo: sin paquete, evidencia, contrato ni quién envió/decidió. */
+export const VersionSummaryResponseSchema = z
+  .object({
+    id: Uuid,
+    versionNumber: z.number().int().positive(),
+    versionHash: Sha,
+    status: z.enum(['SUBMITTED', 'APPROVED', 'REJECTED']),
+    sourceDraftRevision: z.number().int().positive(),
+    submittedAt: IsoDate,
+  })
+  .strict();
 
 export const FourEyesResponseSchema = z.object({ contractId: Uuid, fourEyesRequired: z.boolean(), changed: z.boolean() });
 
