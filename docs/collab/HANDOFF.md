@@ -1,6 +1,6 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude — **trabajo en curso** (E3c, PR [#38](https://github.com/fermalenoski86/dev/pull/38)). La entrega `41177c1` se pasó sin la autorrevisión obligatoria (A/B/C) y con `e2e-m2c` rojo; se retira hasta tener la CI completa verde sobre el nuevo HEAD `7ce4b1d` (autorrevisión: manifest con `headSha`, ≥8 screenshots por flujo, negativos BL-30 estrictos). ChatGPT: **no auditar todavía**; Claude devuelve la pelota con run y SHA.
+**Pelota en:** ChatGPT (auditor). Auditar **E3c** en PR [#38](https://github.com/fermalenoski86/dev/pull/38) (rama `fase/m3a1-e3c`, HEAD `7ce4b1d2e9d1ad4b2f8872c11d2fd403b6968cd6`), pedido en [#39](https://github.com/fermalenoski86/dev/issues/39#issuecomment-6092342890). CI exacta [38011732400](https://github.com/fermalenoski86/dev/actions/runs/38011732400) 7/7 verde al primer intento (M2C 14/14, mutaciones 275/275, e2e-platform 6/6 con manifest). Autorrevisión A/B/C en `docs/reviews/M3A1_FASE_E3C.md`.
 **Fase:** M3A.1 Fase E — E3c (E2E Playwright de §41 por rol, evidencia §47, BL-28/29/30, matriz BL-23).
 **Estado:** E3b aprobada y mergeada (#36, `main@754d319`; #37 cerrado). E3c entregada: `e2e-platform/` con hosts HTTPS distintos (terminador TLS de test, `--host-resolver-rules`), API en producción con `__Host-trust_session`, usuarios por CLI de C1 por worker; specs session-multihost, flow-41 (tres logins por UI, Builder real) y a11y (axe 0 + teclado); manifest de evidencia (BL-29, 90 días); build estricto (BL-30); E3-41/E3-47 cubiertos por reporte de Playwright (BL-23). Gates locales: verify 752+1, build, PG 267+6, bootstrap 6, media 63, 6/6 mutaciones e3c + autoprueba, e2e-platform 6/6 local; M2C y mutaciones completas en CI. #26 autorizado por Fer (PR #40 en curso). Pendiente de Fer: tags.
 
@@ -173,6 +173,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-10 01:50 UTC — Claude: CI de `7ce4b1d` 7/7 verde al primer intento (38011732400): verify, PG, media, compose, M2C 14/14, mutaciones 275/275, e2e-platform 6/6 + acceptance navegador + manifest (head 7ce4b1d, árbol fdd266d). Auditoría de E3c pedida en #39. Pelota a ChatGPT.
 - 2026-10-10 01:05 UTC — Claude: pelota retirada de ChatGPT para E3c. Re-run único de `e2e-m2c` sobre `41177c1` verde (posible flaky #26, registrado en #38). Autorrevisión A/B/C: 3 defectos corregidos en `7ce4b1d` (manifest `headSha`, screenshots por flujo, negativos BL-30), 8/8 mutaciones e3c, verify 752+1, build y acceptance locales. Esperando CI completa del HEAD.
 - 2026-10-10 00:30 UTC — Claude: E3b aprobada (ChatGPT) y mergeada; #37 cerrado. E3c entregada en #38 (`69fab3a`), issue #39: e2e-platform 6/6 local con 2 workers, manifest validado, negativos BL-28/BL-30. Pelota a ChatGPT.
 - 2026-10-09 22:20 UTC — Claude: E3a aprobada (ChatGPT) y mergeada; #35 cerrado. E3b entregada en #36 (`24336db`), issue #37. Gates locales verdes (M2C y mutaciones completas en CI). Propuesta BL-31. Pelota a ChatGPT.
