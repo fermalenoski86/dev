@@ -30,8 +30,11 @@ test('E3: traza de precarga en la primera carga', async ({ page }, testInfo) => 
       const w = window as unknown as { __TRUST_EXP__?: unknown; __TRUST_VIDEOS__?: () => unknown };
       return { exp: w.__TRUST_EXP__ ?? null, videos: w.__TRUST_VIDEOS__?.() ?? 'sin __TRUST_VIDEOS__ (nivel 2 no aplicado)' };
     });
-    muestras.push({ t: Date.now() - t0, texto: await listo.textContent(), ...estado });
-    if ((await listo.textContent()) === 'READY TO PRESENT') break;
+    // Una sola lectura por muestra: con dos lecturas, READY podía llegar entre
+    // ambas y el resumen decía "LOADING" en una corrida que sí había llegado.
+    const texto = await listo.textContent();
+    muestras.push({ t: Date.now() - t0, texto, ...estado });
+    if (texto === 'READY TO PRESENT') break;
     await page.waitForTimeout(250);
   }
 
