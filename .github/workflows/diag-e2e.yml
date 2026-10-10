@@ -1,0 +1,79 @@
+# Diagnóstico del issue #26. NO es un gate: solo workflow_dispatch, matriz de
+# workers y repeticiones, y siempre sube test-results. Corre los specs de
+# e2e/diag/ (E1, E3) y, con `gate: true`, también el suite congelado tal cual,
+# para medir la tasa de falla por configuración sin tocar gates.yml.
+name: diag-e2e
+on:
+  # push a diag/** permite medir desde una rama sin mergear antes (workflow_dispatch
+  # solo se dispara si el archivo ya está en main). Con push: 10 repeticiones y gate=true.
+  push:
+    branches: ['diag/**']
+  workflow_dispatch:
+    inputs:
+      repeticiones:
+        description: 'corridas por configuración'
+        default: '5'
+      gate:
+        description: 'correr también e2e/experience.spec.ts + builder.spec.ts (sin cambios)'
+        type: boolean
+        default: true
+permissions:
+  contents: read
+env:
+  PNPM_VERSION: 12.5.1
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+jobs:
+  diag:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        workers: [1, 2]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Playwright 1.56.1 + Google Chrome del runner
+        run: |
+          npm i --no-save --prefix /tmp/pw @playwright/test@1.56.1
+          /tmp/pw/node_modules/.bin/playwright install-deps chromium
+      - name: 'Entorno (para correlacionar, E5)'
+        run: |
+          echo "sha=$(git rev-parse HEAD) tree=$(git write-tree)"
+          google-chrome --version
+          echo "ImageOS=$ImageOS ImageVersion=$ImageVersion"
+          nproc; free -m; cat /proc/loadavg
+          timeout 20 google-chrome --headless=new --disable-gpu --no-sandbox --dump-dom \
+            'data:text/html,<script>document.write(document.createElement("video").canPlayType("video/mp4; codecs=avc1.640028"))</script>' 2>/dev/null | tail -c 40 || echo 'canPlayType: sin respuesta en 20 s'
+      - name: Repeticiones
+        env: { NODE_PATH: /tmp/pw/node_modules, TRUST_CHROMIUM_PATH: /usr/bin/google-chrome }
+        run: |
+          set +e
+          N=${{ inputs.repeticiones || '10' }}
+          for i in $(seq 1 $N); do
+            echo "::group::corrida $i / workers ${{ matrix.workers }}"
+            ( while true; do cat /proc/loadavg; sleep 5; done ) & LA=$!
+            /tmp/pw/node_modules/.bin/playwright test -c playwright.config.ts e2e/diag \
+              --workers=${{ matrix.workers }} --reporter=line --output=test-results/diag-$i
+            echo "diag exit=$?"
+            if [ "${{ github.event_name == 'push' || inputs.gate }}" = "true" ]; then
+              /tmp/pw/node_modules/.bin/playwright test -c playwright.config.ts e2e/experience.spec.ts e2e/builder.spec.ts \
+                --workers=${{ matrix.workers }} --reporter=line --output=test-results/gate-$i
+              echo "gate exit=$? (corrida $i, workers ${{ matrix.workers }})" | tee -a resumen.txt
+            fi
+            kill $LA
+            echo "::endgroup::"
+          done
+          echo "== resumen workers=${{ matrix.workers }} =="; cat resumen.txt || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: diag-e2e-${{ github.sha }}-w${{ matrix.workers }}-${{ github.run_attempt }}
+          path: |
+            test-results/
+            resumen.txt
+          retention-days: 30
+
