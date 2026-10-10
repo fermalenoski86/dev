@@ -1,8 +1,19 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor). Auditar **E3c** en PR [#38](https://github.com/fermalenoski86/dev/pull/38) (rama `fase/m3a1-e3c`, HEAD `7ce4b1d2e9d1ad4b2f8872c11d2fd403b6968cd6`), pedido en [#39](https://github.com/fermalenoski86/dev/issues/39#issuecomment-6092342890). CI exacta [38011732400](https://github.com/fermalenoski86/dev/actions/runs/38011732400) 7/7 verde al primer intento (M2C 14/14, mutaciones 275/275, e2e-platform 6/6 con manifest). Autorrevisión A/B/C en `docs/reviews/M3A1_FASE_E3C.md`.
+**Pelota en:** Claude (implementador). Corregir **E3c** en PR [#38](https://github.com/fermalenoski86/dev/pull/38) sobre los hallazgos de la auditoría del HEAD `7ce4b1d2e9d1ad4b2f8872c11d2fd403b6968cd6`; devolver el nuevo HEAD a ChatGPT. E3c no está aprobada.
 **Fase:** M3A.1 Fase E — E3c (E2E Playwright de §41 por rol, evidencia §47, BL-28/29/30, matriz BL-23).
-**Estado:** E3b aprobada y mergeada (#36, `main@754d319`; #37 cerrado). E3c entregada: `e2e-platform/` con hosts HTTPS distintos (terminador TLS de test, `--host-resolver-rules`), API en producción con `__Host-trust_session`, usuarios por CLI de C1 por worker; specs session-multihost, flow-41 (tres logins por UI, Builder real) y a11y (axe 0 + teclado); manifest de evidencia (BL-29, 90 días); build estricto (BL-30); E3-41/E3-47 cubiertos por reporte de Playwright (BL-23). Gates locales: verify 752+1, build, PG 267+6, bootstrap 6, media 63, 6/6 mutaciones e3c + autoprueba, e2e-platform 6/6 local; M2C y mutaciones completas en CI. #26 autorizado por Fer (PR #40 en curso). Pendiente de Fer: tags.
+**Estado:** E3b aprobada y mergeada (#36, `main@754d319`; #37 cerrado). E3c recibió **AUDIT: CAMBIOS**: [P1] BL-30 es opt-in mediante `TRUST_BUILD_STRICT=1`, por lo que el `next build` normal sin `NEXT_PUBLIC_TRUST_API_URL` compila; [P2] `git diff --check` detecta dos defectos de whitespace. La CI exacta está 7/7 verde y la evidencia E2E fue inspeccionada, pero no se aprueba con ese gate obligatorio eludible. #26 autorizado por Fer (PR #40 en curso). Pendiente de Fer: tags.
+
+
+## Auditoría E3c — 2026-10-10
+- Resultado: **AUDIT: CAMBIOS**, [comentario en PR #38](https://github.com/fermalenoski86/dev/pull/38#issuecomment-6092526259).
+- HEAD auditado: `7ce4b1d2e9d1ad4b2f8872c11d2fd403b6968cd6`. Integración limpia con el `main` vigente.
+- [P1] BL-30 falla abierto: `assertBuildEnv` retorna si falta `TRUST_BUILD_STRICT=1`; el comando normal `next build` sin las URLs públicas termina en código 0. La validación debe ser obligatoria en el build de producción, los consumidores deben pasar URLs HTTPS explícitas y los negativos deben recorrer ese mismo camino sin una bandera especial.
+- [P2] `git diff --check origin/main...7ce4b1d` reporta una línea en blanco nueva al EOF de `apps/platform-web/README.md` y whitespace final en `docs/reviews/M3A1_FASE_E3C_SALIDA.txt`.
+- CI exacta [38011732400](https://github.com/fermalenoski86/dev/actions/runs/38011732400): 7/7 jobs success; verify 752+1, PostgreSQL 267+6, bootstrap 6/6, media 63/63, mutaciones 275/275, M2C 14/14, compose 15/15 y `e2e-platform` 6/6.
+- Verificación propia: 21/21 tests focales; artifact descargado e inspeccionado (`headSha=7ce4b1d…`, Chrome 154, seis tests sin reintentos, 8 screenshots y 16 videos); manifest revalidado y SHA-256 de screenshots correctos. Revisión visual de Builder, hash enviado, aprobación y versión inmutable.
+- No ejecutado localmente: PostgreSQL, bootstrap, media, mutaciones completas, M2C y `e2e-platform` multihost; se inspeccionaron sus logs y el artifact de la CI exacta.
+- Próximo paso: Claude corrige ambos hallazgos en el mismo PR y devuelve nuevo SHA. No iniciar BL-31 ni ampliar alcance hasta aprobar E3c.
 
 
 ## Issue #26: autorización de Fer (2026-10-09 21:57 ART)
