@@ -83,15 +83,70 @@ export function checkResults({ tags, report, root }) {
   return errores;
 }
 
+const PW_TITULO = /\btest(?:\.(?:only|skip|fixme))?\(\s*(['"`])((?:\\.|(?!\1).)*)\1/g;
+const PW_TAG = /\[(E3-\d+)\]/g;
+
+/** Tests de Playwright con tags `[E3-N]` en el título. `files`: [{ path, source }]. */
+export function scanPlaywrightTags(files) {
+  const out = [];
+  for (const f of files) {
+    for (const m of f.source.matchAll(PW_TITULO)) {
+      const title = m[2];
+      const ids = [...title.matchAll(PW_TAG)].map((t) => t[1]);
+      if (ids.length) out.push({ file: f.path, title, ids });
+    }
+  }
+  return out;
+}
+
+/** Valida los ítems de navegador contra los tags de Playwright. */
+export function validateNavegador({ navegador, pwTags }) {
+  const errores = [];
+  const ids = new Set(navegador.map((x) => x.id));
+  for (const t of pwTags) for (const id of t.ids) if (!ids.has(id)) errores.push(`${t.file} «${t.title}»: [${id}] no es un ítem de navegador`);
+  for (const x of navegador) {
+    if (!['cubierto', 'pendiente'].includes(x.estado)) errores.push(`${x.id}: estado inválido «${x.estado}»`);
+    else if (x.estado === 'cubierto' && !pwTags.some((t) => t.ids.includes(x.id))) errores.push(`${x.id} («${x.texto}»): marcado cubierto pero ningún test de Playwright tiene [${x.id}]`);
+    else if (x.estado === 'pendiente' && !x.motivo) errores.push(`${x.id}: estado pendiente sin motivo`);
+  }
+  return errores;
+}
+
+/**
+ * Cruza los tags de Playwright con el reporte JSON de Playwright (`--reporter=json`):
+ * cada test etiquetado tiene que estar y TODOS sus intentos en `passed`.
+ */
+export function checkPlaywrightResults({ pwTags, report }) {
+  const specs = [];
+  const recorrer = (suite) => {
+    for (const sp of suite.specs ?? []) specs.push(sp);
+    for (const s of suite.suites ?? []) recorrer(s);
+  };
+  for (const s of report.suites ?? []) recorrer(s);
+  const errores = [];
+  for (const t of pwTags) {
+    const base = t.file.split('/').pop();
+    const sp = specs.find((x) => x.title === t.title && (x.file ?? '').split('/').pop() === base);
+    if (!sp) {
+      errores.push(`${t.file} «${t.title}»: no aparece en el reporte de Playwright`);
+      continue;
+    }
+    const estados = (sp.tests ?? []).flatMap((x) => (x.results ?? []).map((r) => r.status));
+    if (estados.length === 0 || estados.some((e) => e !== 'passed')) errores.push(`${t.file} «${t.title}»: ${estados.join(', ') || 'sin resultados'} (se exige passed)`);
+  }
+  return errores;
+}
+
 /** Markdown determinista (sin fechas): CI exige diff vacío contra lo generado. */
-export function render({ points, tags, pendientes }) {
+export function render({ points, tags, navegador, pwTags = [] }) {
   const L = [];
   L.push('# M3A.1 — Matriz de aceptación (master §48)');
   L.push('');
   L.push('> **Generado** por `pnpm acceptance:generate` (`scripts/acceptance/`) desde la lista de');
   L.push('> puntos (`points.mjs`) y los tags `[§48.N]` en los nombres de los tests. No editar a mano:');
-  L.push('> CI exige diff vacío y que cada test etiquetado haya **pasado** en el job `postgres`');
-  L.push('> (reporte JSON de vitest). Un pendiente nunca cuenta como cubierto (BL-23).');
+  L.push('> CI exige diff vacío y que cada test etiquetado haya **pasado**: los `[§48.N]` en el job `postgres`');
+  L.push('> (reporte JSON de vitest) y los `[E3-N]` en el job `e2e-platform` (reporte JSON de Playwright).');
+  L.push('> Un pendiente nunca cuenta como cubierto (BL-23).');
   L.push('');
   L.push('Recorrido principal: `apps/platform-api/src/e2e-flow.db.test.ts` (E2), por HTTP real con');
   L.push('PostgreSQL, ffprobe, login, cookie, CSRF y logout por rol. Lo único sembrado por la base son');
@@ -110,15 +165,25 @@ export function render({ points, tags, pendientes }) {
     L.push(`| ${p.n} | ${p.texto} | ${p.rol} | ${estado} | ${evid}${nota} |`);
   }
   L.push('');
-  L.push('## Pendientes de navegador (no cuentan como cubiertos)');
+  L.push('## Navegador (§41, §47)');
   L.push('');
-  L.push('| Id | Qué | Estado |');
-  L.push('|---|---|---|');
-  for (const x of pendientes) L.push(`| ${x.id} | ${x.texto} | ⏳ **pendiente**: ${x.motivo} |`);
+  L.push('Playwright en `e2e-platform/`, job `e2e-platform`: hosts HTTPS distintos (web/control/api.trust.test), API en');
+  L.push('modo producción con la cookie `__Host-trust_session`, Builder real (`apps/control`) y tres logins por la UI.');
+  L.push('');
+  L.push('| Id | Qué | Estado | Evidencia |');
+  L.push('|---|---|---|---|');
+  for (const x of navegador) {
+    const con = pwTags.filter((t) => t.ids.includes(x.id));
+    const evid = con.length ? con.map((t) => `\`${t.file.split('/').pop()}\` › ${t.title.replace(/\s*\[E3-\d+\]/g, '').replace(/\|/g, '\\|').trim()}`).join('<br>') : '—';
+    const estado = x.estado === 'cubierto' ? `**cubierto (CI, job \`${x.job}\`)**` : `⏳ **pendiente**: ${x.motivo}`;
+    const nota = x.nota ? `<br>_${x.nota}_` : '';
+    L.push(`| ${x.id} | ${x.texto} | ${estado} | ${evid}${nota} |`);
+  }
   L.push('');
   const cubiertos = points.filter((p) => p.estado === 'cubierto').length;
-  L.push(`**Resumen:** ${cubiertos}/19 puntos de §48 cubiertos a nivel plataforma; ${pendientes.length} pendientes de navegador.`);
-  L.push('M3A.1 **no se declara cerrado** mientras haya pendientes de navegador.');
+  const pendientes = navegador.filter((x) => x.estado !== 'cubierto').length;
+  L.push(`**Resumen:** ${cubiertos}/19 puntos de §48 cubiertos a nivel plataforma; navegador: ${navegador.length - pendientes}/${navegador.length} cubiertos, ${pendientes} pendientes.`);
+  L.push(pendientes > 0 ? 'M3A.1 **no se declara cerrado** mientras haya pendientes de navegador.' : 'Sin pendientes de navegador: la cobertura vale mientras los jobs `postgres`, `e2e-m2c` y `e2e-platform` pasen. El cierre de M3A.1 lo declara la auditoría.');
   L.push('');
   return L.join('\n');
 }

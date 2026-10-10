@@ -36,7 +36,7 @@ qué falta). Quien termina un turno lo actualiza.
 ```bash
 pnpm install
 pnpm verify                                   # suite default + lint + typecheck
-pnpm build
+NEXT_PUBLIC_TRUST_API_URL=https://api.trust.test:8443 pnpm build   # BL-30: platform-web exige la API por https
 bash scripts/dev/pg-up.sh                     # PostgreSQL 16 local en :5433
 npx vitest run -c vitest.platform.config.ts   # PostgreSQL real
 bash packages/platform-db/scripts/bootstrap-smoke.sh

@@ -13,7 +13,7 @@
  */
 export const POINTS = [
   { n: 1, texto: 'creo Campaign', estado: 'cubierto', rol: 'OPERATOR (Advertiser y Contract: ADMIN)' },
-  { n: 2, texto: 'Builder guarda un Draft en PostgreSQL', estado: 'cubierto', rol: 'OPERATOR', nota: 'A nivel API, sesión y store (`@trust/builder-repository`, el código del Builder desde D3). El E2E de navegador es E3: ver «Pendientes de navegador».' },
+  { n: 2, texto: 'Builder guarda un Draft en PostgreSQL', estado: 'cubierto', rol: 'OPERATOR', nota: 'A nivel API, sesión y store (`@trust/builder-repository`, el código del Builder desde D3). En navegador: E3-41 (el Builder real guarda por la API en otro host).' },
   { n: 3, texto: 'revision protege concurrencia', estado: 'cubierto', rol: 'OPERATOR' },
   { n: 4, texto: 'subo assets', estado: 'cubierto', rol: 'OPERATOR' },
   { n: 5, texto: 'ffprobe los valida realmente', estado: 'cubierto', rol: 'OPERATOR' },
@@ -38,11 +38,19 @@ export const POINTS = [
   },
 ];
 
-/** Lo que §41/§47 piden en navegador y todavía no existe (E3, #31). Siempre pendiente. */
-export const PENDIENTES_NAVEGADOR = [
-  { id: 'E3-41', texto: '§41 E2E Playwright: login, campaña, envío, aprobación por otro usuario y versión aprobada vs. working draft, en navegador', motivo: 'E3a (login, campañas, CORS) aprobada; E3b entrega la UI de campaña, assets, envío y aprobación de cuatro ojos. El E2E Playwright de §41 por rol es E3c: no implementado ni verificado.' },
-  { id: 'E3-47', texto: '§47 screenshots y video del flujo', motivo: 'Dependen del job `e2e-platform` de E3c (artifact de CI con manifest, BL-29).' },
+/**
+ * Lo que §41/§47 piden en NAVEGADOR (E3). `cubierto` exige al menos un test de
+ * Playwright en `e2e-platform/` con `[<id>]` en el título; el job
+ * `e2e-platform` corre `acceptance:check --playwright-results` y exige que
+ * cada uno haya PASADO. `pendiente` exige motivo y nunca se muestra verde.
+ */
+export const NAVEGADOR = [
+  { id: 'E3-41', texto: '§41 E2E Playwright: login, campaña, envío, aprobación por otro usuario y versión aprobada vs. working draft, en navegador', estado: 'cubierto', job: 'e2e-platform' },
+  { id: 'E3-47', texto: '§47 screenshots y video del flujo', estado: 'cubierto', job: 'e2e-platform', nota: 'Artifact de CI `e2e-platform-evidence` con `evidence-manifest.json` validado (BL-29), retención 90 días; no se versionan binarios.' },
 ];
+
+/** Directorio de los specs de navegador de plataforma (E3c). */
+export const SUITE_NAVEGADOR = 'e2e-platform';
 
 /** Suite cuyos resultados verifica CI (job postgres): solo ahí puede haber tags. */
 export const SUITE_VERIFICADA = /\.db\.test\.ts$/;

@@ -12,3 +12,4 @@ test-results/
 playwright-report/
 docs/reviews/*.patch
 platform-results.json
+e2e-platform-evidence/

@@ -1,0 +1,228 @@
+# M3A.1 Fase E3c — salida REAL de los gates (2026-10-10, este entorno)
+
+Rama fase/m3a1-e3c desde main@754d319. Salida filtrada a las líneas de resultado; nada editado a mano.
+
+## 2026-10-10T00:17:59Z · node v22.22.0 · pnpm 12.5.1 · psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) · ffprobe version 6.1.1-3ubuntu5
+$ pnpm install --frozen-lockfile
+Done in 40ms using pnpm v12.5.1
+
+$ pnpm verify
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  48 passed | 1 skipped (49)
+      Tests  752 passed | 1 skipped (753)
+
+$ pnpm build
+exit=0
+
+$ npx vitest run -c vitest.platform.config.ts
+ Test Files  23 passed | 1 skipped (24)
+      Tests  267 passed | 6 skipped (273)
+
+$ bash packages/platform-db/scripts/bootstrap-smoke.sh
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+
+$ npx vitest run -c vitest.media.config.ts
+ Test Files  3 passed (3)
+      Tests  63 passed (63)
+
+$ pnpm acceptance:check
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 4 tests [E3-N]; docs/reviews/M3A1_ACEPTACION.md al día
+
+$ pnpm docs:contract && git diff --stat docs/platform/openapi.json
+docs/platform/openapi.json y docs/platform/DELIVERY.md regenerados (27 rutas registradas)
+(sin diff en openapi.json)
+
+$ python3 scripts/mutation-check.py --tanda 267:273   (las 6 reglas nuevas e3c:)
+tanda 267:273 — 6 de 273 reglas
+ATRAPADA   e3c: un test [E3-N] salteado en Playwright cuenta como cubierto (BL-23) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3c: ítem de navegador cubierto sin test de Playwright pasa (BL-23) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3c: el manifest no verifica el SHA-256 de la evidencia (BL-29) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3c: el manifest acepta tests con reintentos (BL-29) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3c: build estricto acepta la API por http (BL-30) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ATRAPADA   e3c: TRUST_BUILD_STRICT=1 no valida nada (BL-30) ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+atrapadas 6 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+
+$ python3 scripts/mutation-check.py --autoprueba
+autoprueba OK
+
+La corrida completa de las 273 reglas queda en CI (job mutations).
+
+$ npx playwright test e2e/experience.spec.ts e2e/builder.spec.ts   (M2C 14)
+NO EJECUTADO localmente: no hay Google Chrome con H.264 en este entorno. La evidencia es el job e2e-m2c de CI.
+
+## E2E de plataforma (job e2e-platform), ejecutado LOCALMENTE
+
+Chromium 1194 de Playwright (141.0.7390.37, sin codecs propietarios: el flujo de plataforma no reproduce video), Playwright 1.56.1 y @axe-core/playwright 4.10.2 instalados con --no-save fuera del repo. Mismo comando que CI, salvo que CI usa el Google Chrome del runner. E2E_WORKERS=2. Builds: platform-web estricto (TRUST_BUILD_STRICT=1, API y Builder por https://*.trust.test:8443) y apps/control con NEXT_PUBLIC_TRUST_API_URL.
+
+$ playwright test -c playwright.platform.config.ts
+Running 6 tests using 2 workers
+  ✓  1 [chromium] › e2e-platform/flow-41.spec.ts:47:5 › 1 · OPERATOR: login → crea la campaña → el Builder guarda el draft en el backend → sube assets → envía → hash visible → logout [E3-41] [E3-47] (8.2s)
+  ✓  3 [chromium] › e2e-platform/flow-41.spec.ts:107:5 › 2 · INTERNAL_APPROVER (otro usuario): login → ve la versión → adjunta evidencia → aprueba el hash exacto [E3-41] [E3-47] (3.2s)
+  ✓  2 [chromium] › e2e-platform/a11y.spec.ts:48:5 › axe: login, campañas, detalle de campaña y revisión sin violaciones [BL-28] (12.2s)
+  ✓  4 [chromium] › e2e-platform/flow-41.spec.ts:132:5 › 3 · OPERATOR (login nuevo): APPROVED VERSION + hash exacto + working draft aparte → edita → la versión aprobada no cambia [E3-41] [E3-47] (6.2s)
+  ✓  5 [chromium] › e2e-platform/a11y.spec.ts:78:5 › teclado: login (error anunciado) → campaña → enviar; login → revisión → aprobar, con foco visible [BL-28] (8.3s)
+  ✓  6 [chromium] › e2e-platform/session-multihost.spec.ts:13:5 › sesión multihost: login en web, el Builder en control usa la cookie del host de la API, CSRF, origen bloqueado y logout [E3-41] (4.8s)
+  6 passed (32.4s)
+
+$ pnpm acceptance:check --playwright-results test-results/e2e-platform-results.json
+$ node scripts/e2e-platform/manifest.mjs build … && node scripts/e2e-platform/manifest.mjs validate e2e-platform-evidence
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 4 tests [E3-N], todos passed en Playwright; docs/reviews/M3A1_ACEPTACION.md al día
+manifest: 6 tests, 1 flujos, 24 archivos → e2e-platform-evidence/evidence-manifest.json
+GATE evidencia: 6 tests passed, 1 flujo(s) §41, 8 screenshots, 16 videos, SHA-256 verificados (commit 754d319, chromium 141.0.7390.37)
+
+## BL-30 · builds estrictos de platform-web (los mismos negativos corren en CI)
+
+$ TRUST_BUILD_STRICT=1 NEXT_PUBLIC_TRUST_API_URL='' npx next build
+exit=1
+Error: platform-web: build estricto inválido (BL-30):
+- NEXT_PUBLIC_TRUST_API_URL es obligatoria en un build estricto (TRUST_BUILD_STRICT=1)
+    at assertBuildEnv (file:///home/claude/dev/apps/platform-web/src/build-env.mjs:42:33)
+$ TRUST_BUILD_STRICT=1 NEXT_PUBLIC_TRUST_API_URL='http://api.trust.test:8443' npx next build
+exit=1
+Error: platform-web: build estricto inválido (BL-30):
+- NEXT_PUBLIC_TRUST_API_URL tiene que ser https (recibido «http:»)
+    at assertBuildEnv (file:///home/claude/dev/apps/platform-web/src/build-env.mjs:42:33)
+$ TRUST_BUILD_STRICT=1 NEXT_PUBLIC_TRUST_API_URL=https://api.trust.test:8443 NEXT_PUBLIC_TRUST_BUILDER_URL=https://control.trust.test:8443 npx next build
+exit=0
+
+## BL-28 · negativos reales: el gate de accesibilidad muerde
+
+1. Se reemplazó <label for="login-email"> por un <span> y :focus-visible por outline: none. El test de axe falló primero en getByLabel(Email) y el de teclado falló con «foco visible»:
+
+  ✘  1 [chromium] › e2e-platform/a11y.spec.ts:48:5 › axe: login, campañas, detalle de campaña y revisión sin violaciones [BL-28] (15.9s)
+  ✘  2 [chromium] › e2e-platform/a11y.spec.ts:78:5 › teclado: login (error anunciado) → campaña → enviar; login → revisión → aprobar, con foco visible [BL-28] (914ms)
+    Error: expect(locator).toBeVisible() failed
+    test-results/e2e-platform/a11y-axe-login-campañas-de-f4fb2-sión-sin-violaciones-BL-28--chromium/test-failed-1.png
+  2) [chromium] › e2e-platform/a11y.spec.ts:78:5 › teclado: login (error anunciado) → campaña → enviar; login → revisión → aprobar, con foco visible [BL-28]
+    Error: foco visible
+    > 33 |     expect(visible, 'foco visible').toBe(true);
+    test-results/e2e-platform/a11y-teclado-login-error-a-2d86a-bar-con-foco-visible-BL-28--chromium/test-failed-1.png
+  2 failed
+
+2. Se quitó lang="es" de <html>. El test de axe falló en /login con html-has-lang:
+
+    Error: axe en /login
+    +   "html-has-lang (serious): html",
+    > 20 |   expect(resumen, `axe en ${vista}`).toEqual([]);
+    test-results/e2e-platform/a11y-axe-login-campañas-de-f4fb2-sión-sin-violaciones-BL-28--chromium/test-failed-1.png
+  1 failed
+
+Después de cada negativo se restauró el archivo (git checkout) y se reconstruyó; la corrida completa de arriba es posterior y pasa 6/6.
+
+## Autorrevisión previa — 2026-10-10 (salida real, este entorno)
+
+$ npx vitest run scripts/e2e-platform/manifest.test.ts
+ ✓ scripts/e2e-platform/manifest.test.ts (6 tests)
+      Tests  6 passed (6)
+
+$ python3 scripts/mutation-check.py --tanda 267:275
+ATRAPADA   e3c: un test [E3-N] salteado en Playwright cuenta como cubierto (BL-23)
+ATRAPADA   e3c: ítem de navegador cubierto sin test de Playwright pasa (BL-23)
+ATRAPADA   e3c: el manifest no verifica el SHA-256 de la evidencia (BL-29)
+ATRAPADA   e3c: el manifest acepta tests con reintentos (BL-29)
+ATRAPADA   e3c: build estricto acepta la API por http (BL-30)
+ATRAPADA   e3c: el manifest acepta un headSha ausente (BL-29, autorrevisión)
+ATRAPADA   e3c: el flujo §41 registra menos screenshots de §47 y pasa (BL-29, autorrevisión)
+ATRAPADA   e3c: TRUST_BUILD_STRICT=1 no valida nada (BL-30)
+atrapadas 8 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+
+$ (cd apps/platform-web && TRUST_BUILD_STRICT=1 npx next build); grep -c "NEXT_PUBLIC_TRUST_API_URL es obligatoria"
+exit=1
+1
+$ (cd apps/platform-web && TRUST_BUILD_STRICT=1 NEXT_PUBLIC_TRUST_API_URL=http://api.trust.test:8443 npx next build); grep -c "tiene que ser https"
+exit=1
+1
+
+$ pnpm verify
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  48 passed | 1 skipped (49)
+      Tests  752 passed | 1 skipped (753)
+exit=0
+
+$ pnpm acceptance:check
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 4 tests [E3-N]; docs/reviews/M3A1_ACEPTACION.md al día
+
+$ pnpm build
+exit=0
+
+No repetido localmente en esta vuelta (el cambio solo toca el manifest, gates.yml,
+mutation-check y docs): PostgreSQL, bootstrap, media, e2e-platform y M2C. Quedan
+cubiertos por la CI del HEAD entregado.
+
+## Re-entrega 1 (AUDIT: CAMBIOS, BL-30 obligatorio) — salida REAL, 2026-10-10
+
+## 2026-10-10T02:10:30Z · node v22.22.0 · pnpm 12.5.1
+$ pnpm install --frozen-lockfile
+Done in 46ms using pnpm v12.5.1
+
+$ pnpm verify
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  48 passed | 1 skipped (49)
+      Tests  753 passed | 1 skipped (754)
+
+$ env -u NEXT_PUBLIC_TRUST_API_URL pnpm build   (BL-30: el gate sin la variable tiene que fallar)
+exit=1
+apps/platform-web build: - NEXT_PUBLIC_TRUST_API_URL es obligatoria en `next build` (se incrusta en el bundle)
+
+$ NEXT_PUBLIC_TRUST_API_URL=https://api.trust.test:8443 pnpm build
+exit=0
+
+$ pnpm -r --filter '!@trust/platform-web' build   (lo que corre e2e-m2c)
+exit=0
+
+$ pnpm acceptance:check
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 4 tests [E3-N]; docs/reviews/M3A1_ACEPTACION.md al día
+
+$ pnpm docs:contract && git diff --stat docs/platform/
+docs/platform/openapi.json y docs/platform/DELIVERY.md regenerados (27 rutas registradas)
+(sin diff)
+
+## BL-30 · `next build` real en apps/platform-web, sin banderas
+
+$ env -u NEXT_PUBLIC_TRUST_API_URL -u NEXT_PUBLIC_TRUST_BUILDER_URL npx next build
+exit=1
+Error: platform-web: `next build` inválido (BL-30):
+- NEXT_PUBLIC_TRUST_API_URL es obligatoria en `next build` (se incrusta en el bundle)
+
+$ NEXT_PUBLIC_TRUST_API_URL=http://api.trust.test:8443 npx next build
+exit=1
+Error: platform-web: `next build` inválido (BL-30):
+- NEXT_PUBLIC_TRUST_API_URL tiene que ser https (recibido «http:»)
+
+$ NEXT_PUBLIC_TRUST_API_URL=https://api.trust.test:8443 NEXT_PUBLIC_TRUST_BUILDER_URL=https://control.trust.test:8443 npx next build
+exit=0
+
+$ next dev y next start sin la variable (no validan)
+next start → HTTP 200
+
+$ python3 scripts/mutation-check.py --tanda 267:275   (las 8 reglas e3c:)
+tanda 267:275 — 8 de 275 reglas
+ATRAPADA   e3c: un test [E3-N] salteado en Playwright cuenta como cubierto (BL-23)
+ATRAPADA   e3c: ítem de navegador cubierto sin test de Playwright pasa (BL-23)
+ATRAPADA   e3c: el manifest no verifica el SHA-256 de la evidencia (BL-29)
+ATRAPADA   e3c: el manifest acepta tests con reintentos (BL-29)
+ATRAPADA   e3c: `next build` acepta la API por http (BL-30)
+ATRAPADA   e3c: el manifest acepta un headSha ausente (BL-29, autorrevisión)
+ATRAPADA   e3c: el flujo §41 registra menos screenshots de §47 y pasa (BL-29, autorrevisión)
+ATRAPADA   e3c: `next build` no valida las variables públicas (BL-30)
+atrapadas 8 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+
+$ python3 scripts/mutation-check.py --autoprueba
+autoprueba OK
+
+## e2e-platform local después del cambio (builds sin bandera)
+
+  ✓  1 [chromium] › e2e-platform/flow-41.spec.ts:47:5 › 1 · OPERATOR: login → crea la campaña → el Builder guarda el draft en el backend → sube assets → envía → hash visible → logout [E3-41] [E3-47] (8.8s)
+  ✓  2 [chromium] › e2e-platform/a11y.spec.ts:48:5 › axe: login, campañas, detalle de campaña y revisión sin violaciones [BL-28] (10.8s)
+  ✓  3 [chromium] › e2e-platform/flow-41.spec.ts:107:5 › 2 · INTERNAL_APPROVER (otro usuario): login → ve la versión → adjunta evidencia → aprueba el hash exacto [E3-41] [E3-47] (2.4s)
+  ✓  4 [chromium] › e2e-platform/a11y.spec.ts:78:5 › teclado: login (error anunciado) → campaña → enviar; login → revisión → aprobar, con foco visible [BL-28] (7.1s)
+  ✓  5 [chromium] › e2e-platform/flow-41.spec.ts:132:5 › 3 · OPERATOR (login nuevo): APPROVED VERSION + hash exacto + working draft aparte → edita → la versión aprobada no cambia [E3-41] [E3-47] (7.1s)
+  ✓  6 [chromium] › e2e-platform/session-multihost.spec.ts:13:5 › sesión multihost: login en web, el Builder en control usa la cookie del host de la API, CSRF, origen bloqueado y logout [E3-41] (3.1s)
+  6 passed (31.2s)
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 4 tests [E3-N], todos passed en Playwright; docs/reviews/M3A1_ACEPTACION.md al día
+manifest: 6 tests, 1 flujos, 24 archivos → e2e-platform-evidence/evidence-manifest.json
+GATE evidencia: 6 tests passed, 1 flujo(s) §41, 8 screenshots, 16 videos, SHA-256 verificados (head 7ce4b1d, árbol 7ce4b1d, chromium 141.0.7390.37)

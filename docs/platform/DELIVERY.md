@@ -44,7 +44,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 - `0002_asset_pipeline` (reversible)
 - `0003_approval` (reversible)
 
-## Archivos de test (78)
+## Archivos de test (83)
 
 | Archivo | Suite |
 |---|---|
@@ -66,12 +66,16 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | `apps/platform-api/src/restore-drill.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/submit.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/upload-limits.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
+| `apps/platform-web/src/build-env.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/components/views-e3b.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/components/views.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/api-e3b.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/api.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/draft-assets.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/session.test.ts` | Unidad de app (vitest del paquete) |
+| `e2e-platform/a11y.spec.ts` | E2E (Playwright, CI) |
+| `e2e-platform/flow-41.spec.ts` | E2E (Playwright, CI) |
+| `e2e-platform/session-multihost.spec.ts` | E2E (Playwright, CI) |
 | `e2e/builder.spec.ts` | E2E (Playwright, CI) |
 | `e2e/diag/signature-window.spec.ts` | Diagnóstico E2E (`diag-e2e.yml`, no es gate) |
 | `e2e/diag/warmup-trace.spec.ts` | Diagnóstico E2E (`diag-e2e.yml`, no es gate) |
@@ -126,6 +130,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | `packages/timeline/src/transport.test.ts` | Unidad (`pnpm verify`) |
 | `packages/trust-3d/src/MediaTextureManager.test.ts` | Unidad (`pnpm verify`) |
 | `scripts/acceptance/matrix.test.ts` | Unidad de app (vitest del paquete) |
+| `scripts/e2e-platform/manifest.test.ts` | Unidad de app (vitest del paquete) |
 
 ## Variables de entorno (33, de `.env.example`)
 
