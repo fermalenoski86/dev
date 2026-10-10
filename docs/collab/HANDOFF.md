@@ -1,8 +1,24 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor). Re-auditar **E3c** en PR [#38](https://github.com/fermalenoski86/dev/pull/38), rama `fase/m3a1-e3c`, HEAD `a233ee29223e1592357286f4803533b592f63809` (re-entrega 1).
-**Fase:** M3A.1 Fase E — E3c (E2E Playwright de §41 por rol, evidencia §47, BL-28/29/30, matriz BL-23).
-**Estado:** E3b aprobada y mergeada (#36, `main@754d319`; #37 cerrado). E3c re-entrega 1 responde a AUDIT: CAMBIOS ([comentario 6092617967](https://github.com/fermalenoski86/dev/pull/38#issuecomment-6092617967)): [P1] BL-30 ahora es obligatorio en todo `next build` (`next.config.mjs` valida en `phase-production-build`, sin bandera; negativos reales sin variable/`http:` exit 1, con https exit 0; test con el config real; mutación renombrada); [P2] `git diff --check origin/main...HEAD` vacío. El gate de AGENTS.md pasa a `NEXT_PUBLIC_TRUST_API_URL=https://api.trust.test:8443 pnpm build`. Gates locales verdes; CI sobre a233ee2 7/7 verde al primer intento (run 38016270285, evidencia artifact 11656007432). Lateral para ChatGPT (no cambia la pelota de E3c): auditar **#40** y **#41**. Evidencia en #26. Pendiente de Fer: tags.
+**Pelota en:** Claude (implementador). Corregir los PR laterales [#40](https://github.com/fermalenoski86/dev/pull/40) y [#41](https://github.com/fermalenoski86/dev/pull/41) según sus `AUDIT: CAMBIOS`, sincronizarlos con `main@cc6c4d8` o posterior y devolver nuevos HEAD a ChatGPT. No empezar BL-31 hasta cerrar estos PR.
+**Fase:** M3A.1 cerrada; mantenimiento posterior — issue #26 (observabilidad y carrera del E2E M2C).
+**Estado:** E3c aprobada y mergeada (#38, `main@cc6c4d8`; #39 cerrado). Los 19 criterios de §48 quedaron cubiertos. #40 requiere adaptar el workflow diagnóstico a BL-30, resolver el conflicto del inventario generado y limpiar whitespace; #41 no tiene hallazgo funcional nuevo, pero debe correr los siete gates actuales sobre el árbol integrado con E3c. Próximo alcance ya aceptado después de #26: BL-31, en cambio separado. Pendiente de Fer: tags.
+
+
+## Cierre E3c y M3A.1 — 2026-10-10
+- Resultado: **AUDIT: APROBADO**, [comentario en PR #38](https://github.com/fermalenoski86/dev/pull/38#issuecomment-6093558367).
+- HEAD auditado: `a233ee29223e1592357286f4803533b592f63809`; squash en `main`: `cc6c4d85b957ed5a4237af73e353811acf16d941`; issue #39 cerrado.
+- Los hallazgos de BL-30 y whitespace quedaron cerrados: `next build` real falla sin URL y con `http:`, compila con HTTPS y `git diff --check` queda limpio.
+- Verificación propia: 22/22 tests focales y build real de `platform-web`; integración limpia con el main vigente.
+- CI exacta [38016270285](https://github.com/fermalenoski86/dev/actions/runs/38016270285), 7/7 verde al primer intento: verify 753+1, PostgreSQL 267+6, bootstrap 6/6, media 63/63, mutaciones 275/275, M2C 14/14, compose 15/15 y `e2e-platform` 6/6.
+- Artifact 11656007432 descargado y revalidado: `headSha=a233ee2…`, seis tests sin reintentos, 8 screenshots, 16 videos y SHA-256 correctos.
+- No ejecutado localmente: PostgreSQL, bootstrap, media, mutaciones completas, M2C, compose y `e2e-platform` multihost; cubiertos por logs y artifact inspeccionados de la CI exacta.
+- Con PostgreSQL, hash, validación real de assets, aprobación de cuatro ojos, navegador y M2C verdes, los 19 criterios de §48 quedan cubiertos y M3A.1 se declara cerrada.
+
+## Auditoría lateral #40/#41 — 2026-10-10
+- #40: **AUDIT: CAMBIOS**, [comentario](https://github.com/fermalenoski86/dev/pull/40#issuecomment-6093580332), HEAD `7d84c6c`. [P1] `diag-e2e.yml` ejecuta `pnpm build` sin la URL obligatoria de E3c; [P1] conflicto en `docs/platform/DELIVERY.md` y CI de seis jobs sobre base anterior; [P2] tres finales de archivo con línea en blanco. Debe sincronizar, regenerar DELIVERY y entregar CI 7/7.
+- #41: **AUDIT: CAMBIOS**, [comentario](https://github.com/fermalenoski86/dev/pull/41#issuecomment-6093580446), HEAD `3f1f6b9`. El delta funcional (`generation/detached`, warm-up observable y test que exige `hold`) conserva umbrales y no presenta hallazgo nuevo; la medición demuestra 20–28 ms de ventana stale en 10/20 y 20/20 verde con el fix. Falta sincronizar con E3c y ejecutar los siete gates actuales; la CI vieja tuvo seis jobs y `media` pasó recién en el intento 2.
+- #26 sigue abierto. No cambiar la causa `:17` sin evidencia; si reaparece, usar los artifacts y el motivo de warm-up. Después de aprobar e integrar ambos PR, Claude continúa con BL-31 como cambio separado.
 
 
 ## Re-entrega 1 de E3c — 2026-10-10
