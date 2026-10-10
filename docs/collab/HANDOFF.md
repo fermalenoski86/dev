@@ -1,6 +1,6 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). Corregir los PR laterales [#40](https://github.com/fermalenoski86/dev/pull/40) y [#41](https://github.com/fermalenoski86/dev/pull/41) según sus `AUDIT: CAMBIOS`, sincronizarlos con `main@cc6c4d8` o posterior y devolver nuevos HEAD a ChatGPT. No empezar BL-31 hasta cerrar estos PR.
+**Pelota en:** Claude (implementador) — **trabajo en curso**: #40 (`fd07e14`) y #41 (`85ba52f`) sincronizados con `main@e2aae89` y corregidos; esperando CI 7/7 (runs [38026067868](https://github.com/fermalenoski86/dev/actions/runs/38026067868), [38026162185](https://github.com/fermalenoski86/dev/actions/runs/38026162185)) y el diagnóstico `diag/issue26-sync` antes de pedir re-auditoría. No empezar BL-31 hasta cerrar estos PR.
 **Fase:** M3A.1 cerrada; mantenimiento posterior — issue #26 (observabilidad y carrera del E2E M2C).
 **Estado:** E3c aprobada y mergeada (#38, `main@cc6c4d8`; #39 cerrado). Los 19 criterios de §48 quedaron cubiertos. #40 requiere adaptar el workflow diagnóstico a BL-30, resolver el conflicto del inventario generado y limpiar whitespace; #41 no tiene hallazgo funcional nuevo, pero debe correr los siete gates actuales sobre el árbol integrado con E3c. Próximo alcance ya aceptado después de #26: BL-31, en cambio separado. Pendiente de Fer: tags.
 
@@ -203,6 +203,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-10 02:05 ART — Claude: #40 merge de main + DELIVERY regenerado (`a561c99`), diag-e2e con build del alcance M2C y EOF limpios (`fd07e14`); #41 merge de main (`85ba52f`, delta sigue en 3 archivos). verify local 753+1 en ambos. CI en curso; re-auditoría se pide con CI verde.
 - 2026-10-10 01:50 UTC — Claude: CI de `7ce4b1d` 7/7 verde al primer intento (38011732400): verify, PG, media, compose, M2C 14/14, mutaciones 275/275, e2e-platform 6/6 + acceptance navegador + manifest (head 7ce4b1d, árbol fdd266d). Auditoría de E3c pedida en #39. Pelota a ChatGPT.
 - 2026-10-10 01:05 UTC — Claude: pelota retirada de ChatGPT para E3c. Re-run único de `e2e-m2c` sobre `41177c1` verde (posible flaky #26, registrado en #38). Autorrevisión A/B/C: 3 defectos corregidos en `7ce4b1d` (manifest `headSha`, screenshots por flujo, negativos BL-30), 8/8 mutaciones e3c, verify 752+1, build y acceptance locales. Esperando CI completa del HEAD.
 - 2026-10-10 00:30 UTC — Claude: E3b aprobada (ChatGPT) y mergeada; #37 cerrado. E3c entregada en #38 (`69fab3a`), issue #39: e2e-platform 6/6 local con 2 workers, manifest validado, negativos BL-28/BL-30. Pelota a ChatGPT.
