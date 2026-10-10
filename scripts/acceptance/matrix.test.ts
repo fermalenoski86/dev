@@ -1,9 +1,9 @@
 import { spawnSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error módulo .mjs sin tipos (script de CI, sin build)
-import { checkResults, countPlaywrightTests, render, scanTags, validate } from './matrix.mjs';
+import { checkPlaywrightResults, checkResults, countPlaywrightTests, render, scanPlaywrightTags, scanTags, validate, validateNavegador } from './matrix.mjs';
 // @ts-expect-error módulo .mjs sin tipos
-import { PENDIENTES_NAVEGADOR, POINTS, SUITE_VERIFICADA } from './points.mjs';
+import { NAVEGADOR, POINTS, SUITE_VERIFICADA } from './points.mjs';
 
 /**
  * BL-23 · negativos controlados de la matriz ejecutable: cada forma de que la
@@ -47,7 +47,7 @@ describe('BL-23 · matriz de aceptación ejecutable', () => {
     expect(validate({ points: sinMotivo, tags, suite: SUITE_VERIFICADA, playwrightSources: PW })).toEqual(['§48.5: estado pendiente sin motivo']);
     const conMotivo = POINTS.map((p: { n: number }) => (p.n === 5 ? { ...p, estado: 'pendiente', motivo: 'falta X' } : p));
     expect(validate({ points: conMotivo, tags, suite: SUITE_VERIFICADA, playwrightSources: PW })).toEqual([]);
-    const md = render({ points: conMotivo, tags, pendientes: PENDIENTES_NAVEGADOR });
+    const md = render({ points: conMotivo, tags, navegador: NAVEGADOR });
     expect(md).toContain('| 5 | ffprobe los valida realmente | OPERATOR | ⏳ **pendiente** |');
     expect(md).toContain('18/19 puntos de §48 cubiertos');
   });
@@ -73,6 +73,45 @@ describe('BL-23 · matriz de aceptación ejecutable', () => {
     expect(checkResults({ tags, report, root: '/repo' })).toEqual([
       'apps/a.db.test.ts «suite salteado [§48.2]»: skipped (se exige passed)',
       'apps/b.db.test.ts: no está en el reporte de resultados',
+    ]);
+  });
+
+  it('E3c · scanPlaywrightTags lee `[E3-N]` de test(...) en los specs de e2e-platform', () => {
+    const pw = scanPlaywrightTags([{ path: 'e2e-platform/a.spec.ts', source: "test('uno [E3-41] [E3-47]', async () => {});\ntest.describe.configure({ mode: 'serial' });\ntest(`sin tag`, () => {});\ntest('dos [E3-41]', () => {});" }]);
+    expect(pw).toEqual([
+      { file: 'e2e-platform/a.spec.ts', title: 'uno [E3-41] [E3-47]', ids: ['E3-41', 'E3-47'] },
+      { file: 'e2e-platform/a.spec.ts', title: 'dos [E3-41]', ids: ['E3-41'] },
+    ]);
+  });
+
+  it('E3c · NEGATIVO: navegador cubierto sin test de Playwright, tag a un ítem inexistente o pendiente sin motivo fallan', () => {
+    const pwTags = [{ file: 'e2e-platform/a.spec.ts', title: 'x [E3-41]', ids: ['E3-41'] }];
+    expect(validateNavegador({ navegador: NAVEGADOR, pwTags })).toEqual([expect.stringContaining('E3-47 («§47 screenshots y video del flujo»): marcado cubierto pero ningún test de Playwright tiene [E3-47]')]);
+    expect(validateNavegador({ navegador: NAVEGADOR, pwTags: [...pwTags, { file: 'e2e-platform/a.spec.ts', title: 'y [E3-47] [E3-99]', ids: ['E3-47', 'E3-99'] }] })).toEqual([expect.stringContaining('[E3-99] no es un ítem de navegador')]);
+    const pendiente = NAVEGADOR.map((x: { id: string }) => (x.id === 'E3-47' ? { ...x, estado: 'pendiente', motivo: undefined } : x));
+    expect(validateNavegador({ navegador: pendiente, pwTags })).toEqual(['E3-47: estado pendiente sin motivo']);
+    const md = render({ points: POINTS, tags: todos(), navegador: pendiente.map((x: { id: string }) => (x.id === 'E3-47' ? { ...x, motivo: 'falta el artifact' } : x)), pwTags });
+    expect(md).toContain('| E3-47 | §47 screenshots y video del flujo | ⏳ **pendiente**: falta el artifact |');
+    expect(md).toContain('navegador: 1/2 cubiertos, 1 pendientes');
+    expect(md).toContain('M3A.1 **no se declara cerrado**');
+  });
+
+  it('E3c · NEGATIVO: un test [E3-N] que no pasó en Playwright (skip, fail, reintento) o que falta en el reporte falla', () => {
+    const pwTags = [
+      { file: 'e2e-platform/a.spec.ts', title: 'ok [E3-41]', ids: ['E3-41'] },
+      { file: 'e2e-platform/a.spec.ts', title: 'salteado [E3-41]', ids: ['E3-41'] },
+      { file: 'e2e-platform/a.spec.ts', title: 'flaky [E3-47]', ids: ['E3-47'] },
+      { file: 'e2e-platform/b.spec.ts', title: 'ausente [E3-47]', ids: ['E3-47'] },
+    ];
+    const report = { suites: [{ title: 'a.spec.ts', specs: [], suites: [{ title: 'd', specs: [
+      { title: 'ok [E3-41]', file: 'a.spec.ts', tests: [{ results: [{ status: 'passed' }] }] },
+      { title: 'salteado [E3-41]', file: 'a.spec.ts', tests: [{ results: [{ status: 'skipped' }] }] },
+      { title: 'flaky [E3-47]', file: 'a.spec.ts', tests: [{ results: [{ status: 'failed' }, { status: 'passed' }] }] },
+    ] }] }] };
+    expect(checkPlaywrightResults({ pwTags, report })).toEqual([
+      'e2e-platform/a.spec.ts «salteado [E3-41]»: skipped (se exige passed)',
+      'e2e-platform/a.spec.ts «flaky [E3-47]»: failed, passed (se exige passed)',
+      'e2e-platform/b.spec.ts «ausente [E3-47]»: no aparece en el reporte de Playwright',
     ]);
   });
 

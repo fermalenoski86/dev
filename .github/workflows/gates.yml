@@ -25,7 +25,10 @@ jobs:
         with: { node-version: 22 }
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
       - run: scripts/ci/run.sh verify pnpm verify
+      # BL-30: todo `next build` de platform-web exige la API por https (no hay bandera opt-in).
+      # Este build se descarta: la URL es la de los hosts de test, no un despliegue.
       - run: pnpm build
+        env: { NEXT_PUBLIC_TRUST_API_URL: 'https://api.trust.test:8443' }
       # E1 · BL-11/§47: el contrato y el inventario versionados = regenerados
       - name: OpenAPI y DELIVERY regenerados sin diff
         run: pnpm docs:contract && git diff --exit-code docs/platform/openapi.json docs/platform/DELIVERY.md
@@ -86,7 +89,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
-      - run: pnpm build
+      # M2C no usa platform-web (y su `next build` exige NEXT_PUBLIC_TRUST_API_URL, BL-30): se excluye
+      # para no cambiar ni una variable del build de apps/control congelado.
+      - run: pnpm -r --filter '!@trust/platform-web' build
       # El Chromium que baja Playwright no trae H.264: los MP4 de la experiencia
       # no cargan y la pantalla queda en LOADING. Se usa el Google Chrome que ya
       # viene en el runner (con codecs propietarios) vía TRUST_CHROMIUM_PATH.
@@ -97,6 +102,77 @@ jobs:
           google-chrome --version
       - run: scripts/ci/run.sh e2e-m2c /tmp/pw/node_modules/.bin/playwright test -c playwright.config.ts e2e/experience.spec.ts e2e/builder.spec.ts --reporter=line
         env: { NODE_PATH: /tmp/pw/node_modules, TRUST_CHROMIUM_PATH: /usr/bin/google-chrome }
+
+  # E3c · E2E de plataforma (§41, §47; ADR-063): hosts HTTPS distintos
+  # (web/control/api.trust.test → 127.0.0.1) con un terminador TLS de test,
+  # API en modo producción (cookie __Host-trust_session), Builder real y tres
+  # logins por la UI. Evidencia como artifact con manifest validado (BL-29).
+  e2e-platform:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      E2E_API_URL: https://api.trust.test:8443
+      E2E_CONTROL_URL: https://control.trust.test:8443
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: ffmpeg + PostgreSQL 16
+        run: |
+          sudo apt-get update -q && sudo apt-get install -yq ffmpeg postgresql-16
+          sudo systemctl stop postgresql || true
+      - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
+      - run: bash scripts/dev/pg-up.sh
+      # BL-30: NEXT_PUBLIC_* queda congelada en el build; el build estricto exige la API por https.
+      - name: BL-30 · `next build` sin URL o con http falla (el mismo comando de siempre, sin banderas)
+        working-directory: apps/platform-web
+        run: |
+          # cada negativo tiene que fallar POR BL-30 (no por otro error de build): si falta el mensaje, el paso falla
+          if env -u NEXT_PUBLIC_TRUST_API_URL -u NEXT_PUBLIC_TRUST_BUILDER_URL npx next build > /tmp/sin-url.log 2>&1; then echo "::error::next build sin URL compiló"; exit 1; fi
+          grep -q "NEXT_PUBLIC_TRUST_API_URL es obligatoria" /tmp/sin-url.log || { cat /tmp/sin-url.log; echo "::error::el build sin URL falló por otro motivo"; exit 1; }
+          echo "OK: next build sin NEXT_PUBLIC_TRUST_API_URL falla por BL-30"
+          if NEXT_PUBLIC_TRUST_API_URL=http://api.trust.test:8443 npx next build > /tmp/http.log 2>&1; then echo "::error::next build con http compiló"; exit 1; fi
+          grep -q "tiene que ser https" /tmp/http.log || { cat /tmp/http.log; echo "::error::el build con http falló por otro motivo"; exit 1; }
+          echo "OK: next build con http falla por BL-30"
+      - name: Build de platform-web y del Builder para los hosts de test
+        run: |
+          (cd apps/platform-web && NEXT_PUBLIC_TRUST_API_URL=$E2E_API_URL NEXT_PUBLIC_TRUST_BUILDER_URL=$E2E_CONTROL_URL npx next build)
+          # apps/control sin cambios de código: solo la variable de entorno (ADR-063)
+          (cd apps/control && NEXT_PUBLIC_TRUST_API_URL=$E2E_API_URL npx next build)
+      - name: Playwright 1.56.1 + axe-core + Google Chrome del runner
+        run: |
+          npm i --no-save --prefix /tmp/pw @playwright/test@1.56.1 @axe-core/playwright@4.10.2
+          /tmp/pw/node_modules/.bin/playwright install-deps chromium
+          # el video de §47 lo graba el ffmpeg propio de Playwright (no el del sistema)
+          /tmp/pw/node_modules/.bin/playwright install ffmpeg
+          google-chrome --version
+      - run: scripts/ci/run.sh e2e-platform /tmp/pw/node_modules/.bin/playwright test -c playwright.platform.config.ts
+        env: { NODE_PATH: /tmp/pw/node_modules, TRUST_CHROMIUM_PATH: /usr/bin/google-chrome, E2E_WORKERS: '2' }
+      # BL-23: cada test [E3-N] tiene que haber PASADO en el reporte de Playwright.
+      - run: scripts/ci/run.sh acceptance-navegador pnpm acceptance:check --playwright-results test-results/e2e-platform-results.json
+      - name: BL-29 · manifest de evidencia (build + validate)
+        # en pull_request, GITHUB_SHA es el merge commit sintético: el HEAD auditado va aparte
+        env: { E2E_HEAD_SHA: '${{ github.event.pull_request.head.sha || github.sha }}' }
+        run: |
+          node scripts/e2e-platform/manifest.mjs build --report test-results/e2e-platform-results.json --evidence test-results/e2e-platform-evidence --out e2e-platform-evidence
+          scripts/ci/run.sh evidencia node scripts/e2e-platform/manifest.mjs validate e2e-platform-evidence
+      - name: e2e-platform-evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-platform-evidence
+          path: e2e-platform-evidence/
+          retention-days: 90
+          if-no-files-found: error
+      - name: trazas de fallos
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-platform-traces
+          path: |
+            test-results/e2e-platform/
+            test-results/e2e-platform-logs/
+          retention-days: 14
+          if-no-files-found: ignore
 
   mutations:
     runs-on: ubuntu-24.04

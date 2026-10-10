@@ -25,3 +25,18 @@ NEXT_PUBLIC_TRUST_API_URL=http://localhost:4000 pnpm --filter @trust/platform-we
 En desarrollo por `http://localhost` la cookie no es `Secure` y no lleva el
 prefijo `__Host-`; los puertos no separan cookies, así que esto **no** prueba la
 topología de producción. El gate multihost (hosts distintos con TLS) es de E3c.
+
+## Build (BL-30)
+
+`NEXT_PUBLIC_*` se **incrusta en el build**: el artefacto queda atado a esa API
+y no se puede promover a otro entorno con otra API, así que se construye uno por
+entorno. Por eso **todo `next build` falla** si `NEXT_PUBLIC_TRUST_API_URL` falta
+o no es https, y también si `NEXT_PUBLIC_TRUST_BUILDER_URL`, cuando está, no es
+https. No hay bandera para saltearlo. `next dev` y `next start` no validan.
+
+```bash
+NEXT_PUBLIC_TRUST_API_URL=https://api.<site> NEXT_PUBLIC_TRUST_BUILDER_URL=https://control.<site> \
+  pnpm --filter @trust/platform-web build
+# el gate `pnpm build` del monorepo también necesita la variable (cualquier https; el build se descarta):
+NEXT_PUBLIC_TRUST_API_URL=https://api.trust.test:8443 pnpm build
+```
