@@ -276,10 +276,10 @@ M = [
  ('e3c: ítem de navegador cubierto sin test de Playwright pasa (BL-23)', 'scripts/acceptance/matrix.mjs', "else if (x.estado === 'cubierto' && !pwTags.some((t) => t.ids.includes(x.id)))", "else if (x.estado === 'cubierto' && false)", 'npx vitest run scripts/acceptance/matrix.test.ts'),
  ('e3c: el manifest no verifica el SHA-256 de la evidencia (BL-29)', 'scripts/e2e-platform/manifest.mjs', '    else if (sha256(buf) !== x.sha256) e.push', '    else if (false) e.push', 'npx vitest run scripts/e2e-platform/manifest.test.ts'),
  ('e3c: el manifest acepta tests con reintentos (BL-29)', 'scripts/e2e-platform/manifest.mjs', "if (t.status !== 'passed' || (t.attempts ?? []).some((a) => a !== 'passed'))", "if (t.status !== 'passed')", 'npx vitest run scripts/e2e-platform/manifest.test.ts'),
- ('e3c: build estricto acepta la API por http (BL-30)', 'apps/platform-web/src/build-env.mjs', "    if (u.protocol !== 'https:') errores.push", '    if (false) errores.push', 'npx vitest run apps/platform-web/src/build-env.test.ts'),
+ ('e3c: `next build` acepta la API por http (BL-30)', 'apps/platform-web/src/build-env.mjs', "    if (u.protocol !== 'https:') errores.push", '    if (false) errores.push', 'npx vitest run apps/platform-web/src/build-env.test.ts'),
  ('e3c: el manifest acepta un headSha ausente (BL-29, autorrevisión)', 'scripts/e2e-platform/manifest.mjs', "  if (!/^[0-9a-f]{40}$/.test(m?.headSha ?? ''))", '  if (false)', 'npx vitest run scripts/e2e-platform/manifest.test.ts'),
  ('e3c: el flujo §41 registra menos screenshots de §47 y pasa (BL-29, autorrevisión)', 'scripts/e2e-platform/manifest.mjs', '    if ((f.screenshots ?? []).length < MIN_SCREENSHOTS)', '    if (false)', 'npx vitest run scripts/e2e-platform/manifest.test.ts'),
- ('e3c: TRUST_BUILD_STRICT=1 no valida nada (BL-30)', 'apps/platform-web/src/build-env.mjs', "  if (env.TRUST_BUILD_STRICT !== '1') return;", '  return;', 'npx vitest run apps/platform-web/src/build-env.test.ts'),
+ ('e3c: `next build` no valida las variables públicas (BL-30)', 'apps/platform-web/src/build-env.mjs', '  if (phase !== PHASE_PRODUCTION_BUILD) return;', '  return;', 'npx vitest run apps/platform-web/src/build-env.test.ts'),
 ]
 # Restauracion garantizada: si esto se interrumpe a mitad (Ctrl-C, timeout,
 # SIGTERM), el repo NO puede quedar con una mutacion aplicada. Pasa, y el

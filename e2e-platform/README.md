@@ -51,7 +51,7 @@ con los screenshots, los videos y `evidence-manifest.json`:
 
 ```bash
 bash scripts/dev/pg-up.sh
-(cd apps/platform-web && TRUST_BUILD_STRICT=1 NEXT_PUBLIC_TRUST_API_URL=https://api.trust.test:8443 \
+(cd apps/platform-web && NEXT_PUBLIC_TRUST_API_URL=https://api.trust.test:8443 \
   NEXT_PUBLIC_TRUST_BUILDER_URL=https://control.trust.test:8443 npx next build)
 (cd apps/control && NEXT_PUBLIC_TRUST_API_URL=https://api.trust.test:8443 npx next build)
 npm i --no-save --prefix /tmp/pw @playwright/test@1.56.1 @axe-core/playwright@4.10.2

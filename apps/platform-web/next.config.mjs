@@ -1,7 +1,5 @@
+import { PHASE_PRODUCTION_BUILD } from 'next/constants.js';
 import { assertBuildEnv } from './src/build-env.mjs';
-
-// BL-30: con TRUST_BUILD_STRICT=1 el build falla si la URL de la API falta o no es https.
-assertBuildEnv(process.env);
 
 /**
  * platform-web — M3A.1 E3a (docs/briefs/M3A1_FASE_E3.md, ADR-063).
@@ -31,4 +29,11 @@ const nextConfig = {
     ];
   },
 };
-export default nextConfig;
+/**
+ * BL-30: todo `next build` falla si NEXT_PUBLIC_TRUST_API_URL falta o no es https
+ * (y NEXT_PUBLIC_TRUST_BUILDER_URL, si está, no es https). Sin banderas opt-in.
+ */
+export default function config(phase) {
+  assertBuildEnv(phase, process.env);
+  return nextConfig;
+}

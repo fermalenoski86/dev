@@ -29,7 +29,7 @@ Node 22.22.0 · pnpm 12.5.1 · PostgreSQL 16.15 · ffprobe 6.1. Salida en `M3A1_
 | E2E M2C (14) | **No ejecutado localmente** (no hay Chrome con H.264). Evidencia: job `e2e-m2c` de CI |
 
 **Negativos reales** (detalle en la SALIDA):
-- **BL-30:** un build estricto sin URL o con `http:` falla con un mensaje
+- **BL-30** (desde la re-entrega 1, sin bandera): `next build` sin URL o con `http:` falla con un mensaje
   claro; con https compila.
 - **BL-28:** sin `<label>` y sin foco visible, fallan los tests de axe y de
   teclado; sin `lang`, axe falla con `html-has-lang`.
@@ -84,11 +84,15 @@ Node 22.22.0 · pnpm 12.5.1 · PostgreSQL 16.15 · ffprobe 6.1. Salida en `M3A1_
    - `validate` lo exige todo, sin reintentos, con ≥ 8 screenshots y videos;
    - CI lo sube como artifact `e2e-platform-evidence` con
      `retention-days: 90`, y un test verifica que coincida con el manifest.
-6. **BL-30** (`apps/platform-web/src/build-env.mjs`, cargado por `next.config`):
-   - con `TRUST_BUILD_STRICT=1`, el build falla si
-     `NEXT_PUBLIC_TRUST_API_URL` falta o no es https (también si
-     `NEXT_PUBLIC_TRUST_BUILDER_URL`, cuando está, no lo es);
-   - el job construye así y además corre los dos builds negativos;
+6. **BL-30** (`apps/platform-web/src/build-env.mjs`, cargado por `next.config`
+   en la fase `phase-production-build`). Corregido en la re-entrega 1:
+   - **todo `next build`** falla si `NEXT_PUBLIC_TRUST_API_URL` falta o no es
+     https, y si `NEXT_PUBLIC_TRUST_BUILDER_URL`, cuando está, no lo es. No hay
+     bandera opt-in;
+   - `next dev` y `next start` no validan;
+   - el job `e2e-platform` corre los dos negativos con el mismo comando de
+     siempre; `verify-build` construye con una URL https explícita, y
+     `e2e-m2c` excluye platform-web de su build;
    - README: `NEXT_PUBLIC_*` queda congelada en el build y el artefacto es
      por entorno.
 7. **BL-23**: E3-41 y E3-47 pasan a **cubierto (CI)**.
@@ -116,11 +120,7 @@ Node 22.22.0 · pnpm 12.5.1 · PostgreSQL 16.15 · ffprobe 6.1. Salida en `M3A1_
 
 ## Decisiones de Claude a validar
 
-1. **BL-30 opt-in con `TRUST_BUILD_STRICT=1`.** `next build` siempre corre con
-   `NODE_ENV=production`, así que un fail-fast incondicional rompería el
-   `pnpm build` del gate `verify-build` y el de cualquier contribuidor. El
-   build para desplegar y el del E2E usan la bandera, y CI prueba los dos
-   negativos.
+1. ~~BL-30 opt-in con `TRUST_BUILD_STRICT=1`~~: el auditor lo rechazó ([P1]) y quedó corregido en la re-entrega 1 (validación obligatoria en `next build`).
 2. **`@axe-core/playwright` se instala en CI con `--no-save`, como
    Playwright**, en lugar de como devDependency. Sigue la política vigente
    (`playwright.config.ts`: Playwright no está en las dependencias del
@@ -207,3 +207,10 @@ y con `e2e-m2c` en rojo; esta vuelta lo corrige.
 
 Se exige `gates.yml` en verde sobre el HEAD exacto entregado, con `e2e-m2c` y
 `mutations`. El run y el SHA van en el pedido de auditoría (issue #39 y PR #38).
+
+## Re-entrega 1 — AUDIT: CAMBIOS (PR #38, comentario 6092526259)
+
+| Hallazgo | Respuesta |
+|---|---|
+| [P1] BL-30 fail-open: `next build` sin URL compilaba salvo con `TRUST_BUILD_STRICT=1` | Corregido. `next.config.mjs` exporta una función de fase y `assertBuildEnv(phase, env)` valida **siempre** en `phase-production-build`, sin bandera. `next build` sin URL sale 1 y con `http:` sale 1; con https, 0; `next start` sin la variable sigue sirviendo. La regresión importa el `next.config.mjs` real y lo evalúa en las tres fases. En CI, los negativos usan el comando de siempre (`env -u … npx next build`), `verify-build` pasa una URL https explícita y `e2e-m2c` usa `pnpm -r --filter '!@trust/platform-web' build`, para no cambiar el build de `apps/control`. `AGENTS.md`: el gate `pnpm build` lleva la variable. La mutación `e3c: next build no valida las variables públicas` queda atrapada. |
+| [P2] `git diff --check`: blank line al final de `apps/platform-web/README.md` y trailing whitespace en la SALIDA | Corregido: `git diff --check origin/main...HEAD` sin salida. |

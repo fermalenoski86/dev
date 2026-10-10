@@ -4,10 +4,10 @@
  * `NEXT_PUBLIC_*` se incrusta en el JavaScript al hacer `next build`
  * (https://nextjs.org/docs/app/guides/environment-variables): el artefacto
  * queda atado a esa API y NO se puede promover a otro entorno con otra API.
- * Por eso un build para desplegar (o para el E2E) se hace con
- * `TRUST_BUILD_STRICT=1`, y entonces falla si la URL de la API falta o no es
- * HTTPS. Sin la bandera (el `pnpm build` del gate verify-build), el build
- * compila y la app muestra el error de configuración en runtime.
+ * Por eso TODO `next build` (fase de build de producción) falla si la URL de
+ * la API falta o no es HTTPS, sin banderas opt-in (auditoría E3c, [P1]).
+ * `next dev` y `next start` no validan: el primero es desarrollo y el segundo
+ * sirve un bundle ya construido.
  *
  * Devuelve la lista de errores (vacía = OK). Sin dependencias: lo carga next.config.
  */
@@ -16,7 +16,7 @@ export function checkBuildEnv(env) {
   const https = (nombre, requerida) => {
     const v = (env[nombre] ?? '').trim();
     if (v === '') {
-      if (requerida) errores.push(`${nombre} es obligatoria en un build estricto (TRUST_BUILD_STRICT=1)`);
+      if (requerida) errores.push(`${nombre} es obligatoria en \`next build\` (se incrusta en el bundle)`);
       return;
     }
     let u;
@@ -35,9 +35,12 @@ export function checkBuildEnv(env) {
   return errores;
 }
 
-/** Para next.config: lanza si el build es estricto y hay errores. */
-export function assertBuildEnv(env) {
-  if (env.TRUST_BUILD_STRICT !== '1') return;
+/** Fase de `next build` (valor de `PHASE_PRODUCTION_BUILD` en `next/constants`). */
+export const PHASE_PRODUCTION_BUILD = 'phase-production-build';
+
+/** Para next.config: en la fase de build de producción, lanza si hay errores. Otras fases no validan. */
+export function assertBuildEnv(phase, env) {
+  if (phase !== PHASE_PRODUCTION_BUILD) return;
   const errores = checkBuildEnv(env);
-  if (errores.length > 0) throw new Error(`platform-web: build estricto inválido (BL-30):\n- ${errores.join('\n- ')}`);
+  if (errores.length > 0) throw new Error(`platform-web: \`next build\` inválido (BL-30):\n- ${errores.join('\n- ')}`);
 }
