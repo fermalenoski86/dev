@@ -1,8 +1,8 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). Implementar **E3c** desde el `main` vigente (E3b squash `754d3198767c0ba04ab027d77d431d026ae32a7b`) según el brief aprobado; crear rama/PR propios y transferir a ChatGPT con el HEAD exacto.
-**Fase:** M3A.1 Fase E — E3c (E2E multihost, accesibilidad y evidencia reproducible).
-**Estado:** E3b aprobada y mergeada (#36, `main@754d319`; #37 cerrado). E3c es el último checkpoint documentado de E3; M3A.1 no se considera completo hasta auditar sus gates y evidencia. Pendiente de Fer: #26 y tags.
+**Pelota en:** ChatGPT (auditor). Auditar **E3c** en PR [#38](https://github.com/fermalenoski86/dev/pull/38) (rama `fase/m3a1-e3c`, HEAD `69fab3a`), issue [#39](https://github.com/fermalenoski86/dev/issues/39). Primera corrida del job nuevo `e2e-platform` en CI pendiente.
+**Fase:** M3A.1 Fase E — E3c (E2E Playwright de §41 por rol, evidencia §47, BL-28/29/30, matriz BL-23).
+**Estado:** E3b aprobada y mergeada (#36, `main@754d319`; #37 cerrado). E3c entregada: `e2e-platform/` con hosts HTTPS distintos (terminador TLS de test, `--host-resolver-rules`), API en producción con `__Host-trust_session`, usuarios por CLI de C1 por worker; specs session-multihost, flow-41 (tres logins por UI, Builder real) y a11y (axe 0 + teclado); manifest de evidencia (BL-29, 90 días); build estricto (BL-30); E3-41/E3-47 cubiertos por reporte de Playwright (BL-23). Gates locales: verify 752+1, build, PG 267+6, bootstrap 6, media 63, 6/6 mutaciones e3c + autoprueba, e2e-platform 6/6 local; M2C y mutaciones completas en CI. Pendiente de Fer: #26 y tags.
 
 ## Cierre E3b — 2026-10-09
 - Resultado: **AUDIT: APROBADO**, [comentario en PR #36](https://github.com/fermalenoski86/dev/pull/36#issuecomment-6091297474).
@@ -169,6 +169,7 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - PR #7 debe sincronizarse con main antes de implementar; la combinación de contenido fue limpia localmente.
 
 ## Historial
+- 2026-10-10 00:30 UTC — Claude: E3b aprobada (ChatGPT) y mergeada; #37 cerrado. E3c entregada en #38 (`69fab3a`), issue #39: e2e-platform 6/6 local con 2 workers, manifest validado, negativos BL-28/BL-30. Pelota a ChatGPT.
 - 2026-10-09 22:20 UTC — Claude: E3a aprobada (ChatGPT) y mergeada; #35 cerrado. E3b entregada en #36 (`24336db`), issue #37. Gates locales verdes (M2C y mutaciones completas en CI). Propuesta BL-31. Pelota a ChatGPT.
 - 2026-10-09 — ChatGPT: E3a `AUDIT: APROBADO` sobre `f8ff978`; CI 37986634244 6/6, mutaciones 258/258 y M2C 14/14; squash `88f8a9a`, #35 cerrado. BL-30 aceptada con ajuste para E3c. Pelota a Claude para E3b.
 - 2026-10-09 20:40 UTC — Claude: E3a entregada en #34 (`f8ff978`), issue #35. Gates locales verdes (M2C y mutaciones completas en CI). Propuesta BL-30. Pelota a ChatGPT.
