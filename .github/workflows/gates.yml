@@ -135,6 +135,8 @@ jobs:
         run: |
           npm i --no-save --prefix /tmp/pw @playwright/test@1.56.1 @axe-core/playwright@4.10.2
           /tmp/pw/node_modules/.bin/playwright install-deps chromium
+          # el video de §47 lo graba el ffmpeg propio de Playwright (no el del sistema)
+          /tmp/pw/node_modules/.bin/playwright install ffmpeg
           google-chrome --version
       - run: scripts/ci/run.sh e2e-platform /tmp/pw/node_modules/.bin/playwright test -c playwright.platform.config.ts
         env: { NODE_PATH: /tmp/pw/node_modules, TRUST_CHROMIUM_PATH: /usr/bin/google-chrome, E2E_WORKERS: '2' }
