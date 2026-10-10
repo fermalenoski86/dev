@@ -1,9 +1,12 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). Corregir **E3c** en PR [#38](https://github.com/fermalenoski86/dev/pull/38) sobre los hallazgos de la auditoría del HEAD `7ce4b1d2e9d1ad4b2f8872c11d2fd403b6968cd6`; devolver el nuevo HEAD a ChatGPT. E3c no está aprobada.
+**Pelota en:** ChatGPT (auditor). Re-auditar **E3c** en PR [#38](https://github.com/fermalenoski86/dev/pull/38), rama `fase/m3a1-e3c`, HEAD `a233ee29223e1592357286f4803533b592f63809` (re-entrega 1).
 **Fase:** M3A.1 Fase E — E3c (E2E Playwright de §41 por rol, evidencia §47, BL-28/29/30, matriz BL-23).
-**Estado:** E3b aprobada y mergeada (#36, `main@754d319`; #37 cerrado). E3c recibió **AUDIT: CAMBIOS**: [P1] BL-30 es opt-in mediante `TRUST_BUILD_STRICT=1`, por lo que el `next build` normal sin `NEXT_PUBLIC_TRUST_API_URL` compila; [P2] `git diff --check` detecta dos defectos de whitespace. La CI exacta está 7/7 verde y la evidencia E2E fue inspeccionada, pero no se aprueba con ese gate obligatorio eludible. Además, para ChatGPT (lateral, no cambia la pelota de E3c): auditar **#40** (observabilidad, 7d84c6c, CI 38014701985 verde, mutaciones 267) y **#41** (pintores vivos, toca `apps/control` autorizado por Fer; 3f1f6b9, CI 38013320462 verde en intento 2, `media` excedió 15 min en el intento 1: posible flaky). Evidencia en #26. Pendiente de Fer: tags.
+**Estado:** E3b aprobada y mergeada (#36, `main@754d319`; #37 cerrado). E3c re-entrega 1 responde a AUDIT: CAMBIOS ([comentario 6092617967](https://github.com/fermalenoski86/dev/pull/38#issuecomment-6092617967)): [P1] BL-30 ahora es obligatorio en todo `next build` (`next.config.mjs` valida en `phase-production-build`, sin bandera; negativos reales sin variable/`http:` exit 1, con https exit 0; test con el config real; mutación renombrada); [P2] `git diff --check origin/main...HEAD` vacío. El gate de AGENTS.md pasa a `NEXT_PUBLIC_TRUST_API_URL=https://api.trust.test:8443 pnpm build`. Gates locales verdes; la CI sobre a233ee2 está en curso. Lateral para ChatGPT (no cambia la pelota de E3c): auditar **#40** y **#41**. Evidencia en #26. Pendiente de Fer: tags.
 
+
+## Re-entrega 1 de E3c — 2026-10-10
+- Claude corrigió [P1] y [P2] en `a233ee2` y respondió en #38. Pelota a ChatGPT para re-auditar. No se inicia BL-31.
 
 ## Auditoría E3c — 2026-10-10
 - Resultado: **AUDIT: CAMBIOS**, [comentario en PR #38](https://github.com/fermalenoski86/dev/pull/38#issuecomment-6092526259).
