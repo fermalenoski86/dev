@@ -57,17 +57,29 @@ jobs:
             echo "::group::corrida $i / workers ${{ matrix.workers }}"
             ( while true; do cat /proc/loadavg; sleep 5; done ) & LA=$!
             /tmp/pw/node_modules/.bin/playwright test -c playwright.config.ts e2e/diag \
-              --workers=${{ matrix.workers }} --reporter=line --output=test-results/diag-$i
-            echo "diag exit=$?"
+              --workers=${{ matrix.workers }} --reporter=line --output=test-results/diag-$i 2>&1 | tee diag-$i.log
+            echo "diag exit=${PIPESTATUS[0]}"
             if [ "${{ github.event_name == 'push' || inputs.gate }}" = "true" ]; then
               /tmp/pw/node_modules/.bin/playwright test -c playwright.config.ts e2e/experience.spec.ts e2e/builder.spec.ts \
-                --workers=${{ matrix.workers }} --reporter=line --output=test-results/gate-$i
-              echo "gate exit=$? (corrida $i, workers ${{ matrix.workers }})" | tee -a resumen.txt
+                --workers=${{ matrix.workers }} --reporter=line --output=test-results/gate-$i 2>&1 | tee gate-$i.log
+              RC=${PIPESTATUS[0]}
+              FALLAS=$(sed 's/\x1b\[[0-9;]*[A-Za-z]//g' gate-$i.log | grep -aoE '^\s+[0-9]+\) \[chromium\] › [^ ]+' | sed 's/.*› //' | sort -u | tr '\n' ' ')
+              echo "gate exit=$RC (corrida $i, workers ${{ matrix.workers }}) ${FALLAS}" | tee -a resumen.txt
             fi
             kill $LA
             echo "::endgroup::"
           done
           echo "== resumen workers=${{ matrix.workers }} =="; cat resumen.txt || true
+      # Los agentes no siempre pueden bajar logs/artifacts: el resumen va como anotación.
+      - name: Resumen como anotación
+        if: always()
+        run: |
+          enc() { sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g'; }
+          echo "::notice title=diag w${{ matrix.workers }} resumen::$(cat resumen.txt 2>/dev/null | enc)"
+          E1=$(sed 's/\x1b\[[0-9;]*[A-Za-z]//g' diag-*.log 2>/dev/null | grep -ah '\[E1\]' | cut -c1-900)
+          echo "::notice title=diag w${{ matrix.workers }} E1::$(printf '%s' "$E1" | enc)"
+          E3=$(sed 's/\x1b\[[0-9;]*[A-Za-z]//g' diag-*.log 2>/dev/null | grep -ah '\[E3\]\|trust:warmup')
+          echo "::notice title=diag w${{ matrix.workers }} E3::$(printf '%s' "$E3" | enc)"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -75,5 +87,7 @@ jobs:
           path: |
             test-results/
             resumen.txt
+            diag-*.log
+            gate-*.log
           retention-days: 30
 
