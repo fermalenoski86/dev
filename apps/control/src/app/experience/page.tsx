@@ -111,6 +111,7 @@ export default function ExperiencePage() {
   }, []);
   const [showBackup, setShowBackup] = useState(false);
   const cargado = useRef(false);
+  const warmups = useRef<Record<string, unknown>>({});
 
   /* ── Preset de demo ─────────────────────────────────────────── */
   useEffect(() => {
@@ -143,7 +144,12 @@ export default function ExperiencePage() {
          * convertía READY TO PRESENT en una mentira delante del cliente. Si
          * falla, falla, y el operador lo ve en rojo antes de la reunión.
          */
-        void warmUpSource(src).then((r) => (r.ok ? ok(src) : fallo(src)));
+        void warmUpSource(src).then((r) => {
+          // Issue #26: el motivo de un warm-up fallido tiene que quedar en algún lado.
+          warmups.current[src] = { ...r, at: Date.now() };
+          if (!r.ok) console.warn('[trust:warmup] falló', src, r.detail);
+          return r.ok ? ok(src) : fallo(src);
+        });
       } else {
         const img = new Image();
         img.onload = () => ok(src);
@@ -164,6 +170,7 @@ export default function ExperiencePage() {
       loaded: exp.loaded,
       failed: exp.failed,
       required: requiredAssets(),
+      warmup: warmups.current,
     };
   }, [exp.phase, exp.loaded, exp.failed]);
 

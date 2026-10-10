@@ -39,6 +39,16 @@ export interface SurfaceDiagnostic {
   paused: boolean;
   currentTime: number;
   lastError: string | null;
+  /**
+   * Issue #26 / H1. Cada pintor registrado recibe un número creciente; una
+   * entrada con `generation` vieja o `detached: true` pertenece a un pintor que
+   * ya no existe. Antes esas entradas quedaban en el mapa indistinguibles de
+   * las vivas, y un test podía leer `framesDrawn` de un pintor muerto.
+   */
+  generation: number;
+  detached: boolean;
+  /** `performance.now()` del último tick que escribió esta entrada. */
+  lastTickAt: number;
 }
 
 const diagnostics = new Map<string, SurfaceDiagnostic>();
@@ -55,6 +65,27 @@ if (typeof window !== 'undefined') {
 
 /** Un `<video>` por FUENTE, compartido por las superficies que la usan. */
 const videos = new Map<string, HTMLVideoElement>();
+
+declare global {
+  interface Window {
+    /** Diagnóstico: estado de cada <video> compartido (issue #26, E3). */
+    __TRUST_VIDEOS__?: () => Array<Record<string, unknown>>;
+  }
+}
+if (typeof window !== 'undefined') {
+  window.__TRUST_VIDEOS__ = () =>
+    [...videos.entries()].map(([source, v]) => ({
+      source,
+      readyState: v.readyState,
+      networkState: v.networkState,
+      bufferedEnd: v.buffered.length ? v.buffered.end(v.buffered.length - 1) : 0,
+      duration: v.duration,
+      currentTime: v.currentTime,
+      paused: v.paused,
+      seeking: v.seeking,
+      error: v.error ? `code ${v.error.code}` : null,
+    }));
+}
 
 function getVideo(source: string): HTMLVideoElement {
   let v = videos.get(source);
@@ -112,6 +143,7 @@ const DRIFT_MS = 300;
 type Pintor = () => void;
 const pintores = new Set<Pintor>();
 let loop = 0;
+let generacion = 0;
 
 function registrarPintor(fn: Pintor): () => void {
   pintores.add(fn);
@@ -225,6 +257,7 @@ export function SurfaceMedia({
     if (!ctx) return;
 
     const clave = `${plan.id}_${plan.segment}`;
+    const generation = ++generacion;
     let frames = 0;
     let patron: CanvasPattern | null = null;
     const muestra = document.createElement('canvas');
@@ -246,6 +279,9 @@ export function SurfaceMedia({
         paused: video.paused,
         currentTime: video.currentTime,
         lastError: video.error ? `code ${video.error.code}` : null,
+        generation,
+        detached: false,
+        lastTickAt: performance.now(),
       });
 
       if (video.readyState < 2) return;
@@ -317,7 +353,13 @@ export function SurfaceMedia({
         }
       }
     };
-    return registrarPintor(pintar);
+    const soltar = registrarPintor(pintar);
+    return () => {
+      soltar();
+      // La entrada queda para la historia, pero marcada: nadie la confunde con un pintor vivo.
+      const d = diagnostics.get(clave);
+      if (d && d.generation === generation) diagnostics.set(clave, { ...d, detached: true });
+    };
     /*
      * M2C.2.2 / P0. Las dependencias son los VALORES del recorte, no el objeto.
      *
