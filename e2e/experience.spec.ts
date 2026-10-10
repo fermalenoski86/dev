@@ -307,11 +307,23 @@ test.describe('MASTER OF TRUST — Operator Mode', () => {
       } else {
         while ((await hora()) < t) await page.waitForTimeout(80);
       }
+      /*
+       * Issue #26 / H1. Solo cuentan los pintores VIVOS (`detached === false`).
+       * Al elegir SIGNATURE las 26 superficies pasan por black y se remontan;
+       * las entradas del pintor anterior quedaban en el diagnóstico con
+       * `framesDrawn` alto y `output: 'live'`, y el test las tomaba como base.
+       * Además, en el paso SIGNATURE la salida esperada es `hold`, no `live`.
+       */
+      const esperado = t < 0 ? ['hold'] : ['live', 'hold'];
+      const activas = (xs: Array<Record<string, number | string | boolean | null>>) =>
+        xs.filter((x) => x.detached === false && esperado.includes(String(x.output)));
       await expect
-        .poll(async () => (await leer()).filter((x) => x.output === 'live' || x.output === 'hold')
-          .every((x) => Number(x.readyState) >= 2 && Number(x.framesDrawn) > 0), { timeout: 8000 })
+        .poll(async () => {
+          const a = activas(await leer());
+          return a.length > 0 && a.every((x) => Number(x.readyState) >= 2 && Number(x.framesDrawn) > 0);
+        }, { timeout: 8000 })
         .toBe(true);
-      const vivas = (await leer()).filter((x) => x.output === 'live' || x.output === 'hold');
+      const vivas = activas(await leer());
       expect(vivas.length, `${momento}: ninguna superficie activa`).toBeGreaterThan(0);
       for (const x of vivas) {
         expect(Number(x.videoWidth), `${momento} ${x.id}`).toBeGreaterThan(0);
@@ -323,7 +335,7 @@ test.describe('MASTER OF TRUST — Operator Mode', () => {
       await page.waitForTimeout(900);
       for (const x of await leer()) {
         const prev = antes[`${x.id}_${x.segment}`];
-        if (prev === undefined) continue;
+        if (prev === undefined || x.detached) continue;
         expect(Number(x.framesDrawn), `${momento} ${x.id}: dejó de pintar`).toBeGreaterThan(prev + 1);
       }
       expect(Math.max(...(await pixeles())), `${momento}: canvas en negro`).toBeGreaterThan(60);
