@@ -35,7 +35,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
-      - run: pnpm build
+      # Mismo alcance que el gate M2C de gates.yml: platform-web queda fuera porque su
+      # `next build` exige NEXT_PUBLIC_TRUST_API_URL (BL-30) y M2C no lo usa.
+      - run: pnpm -r --filter '!@trust/platform-web' build
       - name: Playwright 1.56.1 + Google Chrome del runner
         run: |
           npm i --no-save --prefix /tmp/pw @playwright/test@1.56.1
@@ -90,4 +92,3 @@ jobs:
             diag-*.log
             gate-*.log
           retention-days: 30
-

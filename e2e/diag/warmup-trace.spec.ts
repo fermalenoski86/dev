@@ -46,4 +46,3 @@ test('E3: traza de precarga en la primera carga', async ({ page }, testInfo) => 
   // Documenta, no juzga: el gate real es experience.spec.ts.
   expect(muestras.length).toBeGreaterThan(0);
 });
-

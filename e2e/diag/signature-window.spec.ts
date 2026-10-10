@@ -110,4 +110,3 @@ test('E1: ventana stale de __TRUST_SURFACES__ al elegir SIGNATURE', async ({ pag
   // Este test no falla por la hipótesis: documenta. Solo falla si no midió nada.
   expect(muestras.length).toBeGreaterThan(50);
 });
-
