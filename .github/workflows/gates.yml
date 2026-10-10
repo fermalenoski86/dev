@@ -122,10 +122,13 @@ jobs:
       - name: BL-30 · un build estricto sin URL o con http falla
         working-directory: apps/platform-web
         run: |
+          # cada negativo tiene que fallar POR BL-30 (no por otro error de build): si falta el mensaje, el paso falla
           if TRUST_BUILD_STRICT=1 npx next build > /tmp/sin-url.log 2>&1; then echo "::error::build estricto sin URL compiló"; exit 1; fi
-          grep -q "BL-30" /tmp/sin-url.log && echo "OK: sin NEXT_PUBLIC_TRUST_API_URL falla"
+          grep -q "NEXT_PUBLIC_TRUST_API_URL es obligatoria" /tmp/sin-url.log || { cat /tmp/sin-url.log; echo "::error::el build sin URL falló por otro motivo"; exit 1; }
+          echo "OK: sin NEXT_PUBLIC_TRUST_API_URL falla por BL-30"
           if TRUST_BUILD_STRICT=1 NEXT_PUBLIC_TRUST_API_URL=http://api.trust.test:8443 npx next build > /tmp/http.log 2>&1; then echo "::error::build estricto con http compiló"; exit 1; fi
-          grep -q "tiene que ser https" /tmp/http.log && echo "OK: con http falla"
+          grep -q "tiene que ser https" /tmp/http.log || { cat /tmp/http.log; echo "::error::el build con http falló por otro motivo"; exit 1; }
+          echo "OK: con http falla por BL-30"
       - name: Build de platform-web (estricto) y del Builder para los hosts de test
         run: |
           (cd apps/platform-web && TRUST_BUILD_STRICT=1 NEXT_PUBLIC_TRUST_API_URL=$E2E_API_URL NEXT_PUBLIC_TRUST_BUILDER_URL=$E2E_CONTROL_URL npx next build)
@@ -143,6 +146,8 @@ jobs:
       # BL-23: cada test [E3-N] tiene que haber PASADO en el reporte de Playwright.
       - run: scripts/ci/run.sh acceptance-navegador pnpm acceptance:check --playwright-results test-results/e2e-platform-results.json
       - name: BL-29 · manifest de evidencia (build + validate)
+        # en pull_request, GITHUB_SHA es el merge commit sintético: el HEAD auditado va aparte
+        env: { E2E_HEAD_SHA: '${{ github.event.pull_request.head.sha || github.sha }}' }
         run: |
           node scripts/e2e-platform/manifest.mjs build --report test-results/e2e-platform-results.json --evidence test-results/e2e-platform-evidence --out e2e-platform-evidence
           scripts/ci/run.sh evidencia node scripts/e2e-platform/manifest.mjs validate e2e-platform-evidence

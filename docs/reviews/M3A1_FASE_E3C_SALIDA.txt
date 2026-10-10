@@ -110,3 +110,44 @@ exit=0
   1 failed
 
 Después de cada negativo se restauró el archivo (git checkout) y se reconstruyó; la corrida completa de arriba es posterior y pasa 6/6.
+
+## Autorrevisión previa — 2026-10-10 (salida real, este entorno)
+
+$ npx vitest run scripts/e2e-platform/manifest.test.ts
+ ✓ scripts/e2e-platform/manifest.test.ts (6 tests)
+      Tests  6 passed (6)
+
+$ python3 scripts/mutation-check.py --tanda 267:275
+ATRAPADA   e3c: un test [E3-N] salteado en Playwright cuenta como cubierto (BL-23)
+ATRAPADA   e3c: ítem de navegador cubierto sin test de Playwright pasa (BL-23)
+ATRAPADA   e3c: el manifest no verifica el SHA-256 de la evidencia (BL-29)
+ATRAPADA   e3c: el manifest acepta tests con reintentos (BL-29)
+ATRAPADA   e3c: build estricto acepta la API por http (BL-30)
+ATRAPADA   e3c: el manifest acepta un headSha ausente (BL-29, autorrevisión)
+ATRAPADA   e3c: el flujo §41 registra menos screenshots de §47 y pasa (BL-29, autorrevisión)
+ATRAPADA   e3c: TRUST_BUILD_STRICT=1 no valida nada (BL-30)
+atrapadas 8 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+
+$ (cd apps/platform-web && TRUST_BUILD_STRICT=1 npx next build); grep -c "NEXT_PUBLIC_TRUST_API_URL es obligatoria"
+exit=1
+1
+$ (cd apps/platform-web && TRUST_BUILD_STRICT=1 NEXT_PUBLIC_TRUST_API_URL=http://api.trust.test:8443 npx next build); grep -c "tiene que ser https"
+exit=1
+1
+
+$ pnpm verify
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  48 passed | 1 skipped (49)
+      Tests  752 passed | 1 skipped (753)
+exit=0
+
+$ pnpm acceptance:check
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 4 tests [E3-N]; docs/reviews/M3A1_ACEPTACION.md al día
+
+$ pnpm build
+exit=0
+
+No repetido localmente en esta vuelta (el cambio solo toca el manifest, gates.yml,
+mutation-check y docs): PostgreSQL, bootstrap, media, e2e-platform y M2C. Quedan
+cubiertos por la CI del HEAD entregado.

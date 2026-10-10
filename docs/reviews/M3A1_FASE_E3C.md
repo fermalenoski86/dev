@@ -141,3 +141,69 @@ Node 22.22.0 · pnpm 12.5.1 · PostgreSQL 16.15 · ffprobe 6.1. Salida en `M3A1_
 
 Ninguna nueva. BL-31 queda como lo aceptó el auditor: después de cerrar E3 y
 en un cambio aparte.
+
+## Autorrevisión previa (chequeo obligatorio de Fer, 2026-10-08)
+
+Hecha el 2026-10-10 sobre `git diff origin/main...HEAD`, antes de pedir la
+auditoría. La primera entrega (`41177c1`) pasó la pelota **sin** esta sección
+y con `e2e-m2c` en rojo; esta vuelta lo corrige.
+
+### A. Requisito del brief (§E3c) → dónde se cumple
+
+| Requisito | Dónde | Estado |
+|---|---|---|
+| Hosts distintos con `--host-resolver-rules` | `playwright.platform.config.ts` (`MAP *.trust.test 127.0.0.1`) | cubierto |
+| Terminador TLS Node sin dependencias; cert openssl en globalSetup, no versionado | `e2e-platform/tls-proxy.mjs`; `global-setup.ts` (cert en el dir temporal del estado) | cubierto |
+| `ignoreHTTPSErrors` | `support.ts` `contexto()` | cubierto |
+| API en producción: `TRUST_COOKIE_SECURE=true` → `__Host-trust_session` | `apps/platform-api/scripts/e2e-stack.ts` | cubierto |
+| `TRUST_CORS_ORIGINS` = web + control exactos | `global-setup.ts` → `E2E_CORS_ORIGINS` | cubierto |
+| multihost 1-6 (cookie solo en api, `/auth/me` 200, PUT+CSRF, origen no listado sin leer/escribir, logout → 401) | `session-multihost.spec.ts` | cubierto |
+| §41 con tres logins UI en contextos nuevos, cookie revocada → 401, cookie nueva distinta | `flow-41.spec.ts` tests 1-3 | cubierto |
+| Editar no cambia la versión aprobada (fila y hash) | `flow-41.spec.ts` test 3 | cubierto vía UI: hash, estado APPROVED y «desde el draft rev 4». No se compara la fila completa de la base (p. ej. `approvedAt`); el estado inmutable lo garantiza el repositorio (E1/E2, ya auditado) |
+| axe 0 violaciones en login, campañas y revisión; recorrido solo con teclado, foco visible, errores anunciados | `a11y.spec.ts` | cubierto (4 vistas) |
+| Una cuenta por rol y worker con el CLI de C1; contrato por worker | `e2e-stack.ts`, `support.ts` `cuenta()`/`contrato()` | cubierto |
+| `storageState` por rol en dir temporal para specs que no prueban login | — | **desvío declarado**: no se usa `storageState`; a11y hace login por la UI y prepara datos con sesiones por API (`apiSesion`). Es más estricto (más logins reales) a costa de ~1 s por test. No hay cookies en el repo |
+| Job CI con PG16, ffmpeg, Chrome del runner; `retries: 0`; trace `retain-on-failure` | `gates.yml` job `e2e-platform`; `playwright.platform.config.ts` | cubierto |
+| Artifact §47 con `retention-days: 90` y manifest validado antes de subir | `scripts/e2e-platform/manifest.mjs` + tests; `gates.yml` | cubierto; reforzado en esta vuelta (ver B) |
+| Matriz E3-41/E3-47 cubierta solo con reporte de Playwright `passed` | `scripts/acceptance/*`, `M3A1_ACEPTACION.md` | cubierto |
+| BL-30: build estricto falla sin URL o con `http:` | `apps/platform-web/src/build-env.mjs` + test; negativos en `gates.yml` | cubierto; negativos endurecidos en esta vuelta (ver B) |
+| Mutaciones nuevas | `scripts/mutation-check.py` | 8 de e3c (6 + 2 de esta vuelta), todas ATRAPADAS |
+| No tocar `apps/control`, `e2e/`, renderers, storage B1 | diff: solo se construye `apps/control` con su variable | cubierto |
+
+### B. Revisión adversaria: qué encontré y qué hice
+
+1. **[corregido] El manifest registraba el commit equivocado.** En `pull_request`,
+   `GITHUB_SHA` es el merge commit sintético, no el HEAD del PR. La evidencia
+   no se podía atar al SHA auditado. Ahora el manifest tiene `commit` (el árbol
+   que corrió) y `headSha` (el HEAD del PR, `E2E_HEAD_SHA` en `gates.yml`), y el
+   validador exige ambos. Tests: `manifest.test.ts` (negativos de `headSha` y
+   CLI con los dos SHA). Mutación nueva atrapada.
+2. **[corregido] Los negativos de BL-30 en CI podían pasar por el motivo
+   equivocado.** Con `grep -q … && echo`, si el primer `grep` no encontraba el
+   mensaje, `bash -e` no corta (el fallo está dentro de una lista `&&` que no es
+   la última): un build roto por otra causa daba el negativo por bueno. Ahora
+   cada `grep` usa `|| { …; exit 1; }` y busca el mensaje exacto de BL-30.
+   Comprobado localmente: los dos builds estrictos fallan con exit 1 y con el
+   mensaje esperado.
+3. **[corregido] Los 8 screenshots de §47 se contaban en global, no por flujo.**
+   Un flujo §41 podía registrar menos pasos si otro spec aportaba capturas.
+   Ahora el validador exige ≥ 8 screenshots en cada flujo registrado. Test y
+   mutación nuevos.
+4. **[no se cambia] `flow-41` es serial con estado de módulo.** Si falla el test
+   1, el 2 y el 3 se saltean y el manifest falla (exige `passed`). Es el
+   comportamiento buscado: §41 es un flujo, no tres casos independientes.
+5. **[no se cambia] Intermitencia `e2e-m2c`** (`experience.spec.ts:17`,
+   `ready-state` en `LOADING`). No es de este PR: no toca `apps/control`, `e2e/`
+   ni `playwright.config.ts`, y pasó 14/14 sobre `69fab3a` con el mismo código
+   de app. Sigue #26 (pendiente de Fer) y BL-09. Se registra como posible flaky
+   en el PR.
+6. **Otro tenant/campaña:** cada worker tiene cuentas, contrato y campañas
+   propias; el origen no listado no puede escribir (conteo antes/después).
+   **Infraestructura:** si el terminador TLS pierde el upstream responde 502 y
+   el test falla (no hay reintentos). **Secretos:** contraseñas y cert viven en
+   el dir temporal del estado, fuera del repo.
+
+### C. CI completo
+
+Se exige `gates.yml` en verde sobre el HEAD exacto entregado, con `e2e-m2c` y
+`mutations`. El run y el SHA van en el pedido de auditoría (issue #39 y PR #38).

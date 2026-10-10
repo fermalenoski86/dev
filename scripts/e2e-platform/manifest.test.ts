@@ -15,6 +15,7 @@ const tmp = mkdtempSync(path.join(os.tmpdir(), 'trust-bl29-'));
 afterAll(() => rmSync(tmp, { recursive: true, force: true }));
 
 const COMMIT = 'a'.repeat(40);
+const HEAD = 'c'.repeat(40);
 const U = '11111111-2222-4333-8444-555555555555';
 const report = {
   suites: [
@@ -28,8 +29,8 @@ const report = {
 function base() {
   const shots = Array.from({ length: MIN_SCREENSHOTS }, (_, i) => ({ path: `screenshots/0-0${i}.png`, kind: 'screenshot', buf: Buffer.from(`png ${i}`) }));
   const files = [...shots, { path: 'videos/00-0-flow-41.webm', kind: 'video', buf: Buffer.from('webm') }];
-  const flows = [{ test: 'x', roles: { operator: 'op-w0@e2e', approver: 'ap-w0@e2e' }, campaignId: U, versionId: U, versionHash: 'b'.repeat(64), screenshots: ['0-00.png'] }];
-  return { files, m: buildManifest({ commit: COMMIT, browser: 'chromium 141.0', tests: testsDelReporte(report), flows, files }) };
+  const flows = [{ test: 'x', roles: { operator: 'op-w0@e2e', approver: 'ap-w0@e2e' }, campaignId: U, versionId: U, versionHash: 'b'.repeat(64), screenshots: shots.map((x) => x.path.replace('screenshots/', '')) }];
+  return { files, m: buildManifest({ commit: COMMIT, headSha: HEAD, browser: 'chromium 141.0', tests: testsDelReporte(report), flows, files }) };
 }
 const lector = (files: Array<{ path: string; buf: Buffer }>) => (p: string) => files.find((f) => f.path === p)?.buf ?? null;
 
@@ -39,7 +40,7 @@ describe('BL-29 · manifest de evidencia de e2e-platform', () => {
     expect(t.map((x: { file: string; status: string }) => `${x.file}:${x.status}`)).toEqual(['a11y.spec.ts:passed', 'flow-41.spec.ts:passed', 'session-multihost.spec.ts:passed']);
     expect(t[0].videos).toEqual(['/no/existe/0.webm']);
     const { files, m } = base();
-    expect(m).toMatchObject({ schema: 'trust.e2e-platform.evidence.v1', commit: COMMIT, retentionDays: RETENTION_DAYS, specs: ['a11y.spec.ts', 'flow-41.spec.ts', 'session-multihost.spec.ts'] });
+    expect(m).toMatchObject({ schema: 'trust.e2e-platform.evidence.v1', commit: COMMIT, headSha: HEAD, retentionDays: RETENTION_DAYS, specs: ['a11y.spec.ts', 'flow-41.spec.ts', 'session-multihost.spec.ts'] });
     expect(m.files.find((f: { path: string }) => f.path === 'videos/00-0-flow-41.webm').sha256).toBe(sha256(Buffer.from('webm')));
     expect(validateManifest(m, lector(files))).toEqual([]);
   });
@@ -63,17 +64,23 @@ describe('BL-29 · manifest de evidencia de e2e-platform', () => {
     const { files, m } = base();
     const v = (x: object) => validateManifest({ ...m, ...x }, lector(files));
     expect(v({ commit: 'abc' })).toEqual([expect.stringContaining('commit inválido')]);
+    // el HEAD del PR auditado es obligatorio y distinto del árbol de merge que corrió en pull_request
+    expect(v({ headSha: undefined })).toEqual([expect.stringContaining('headSha inválido')]);
+    expect(v({ headSha: 'HEAD' })).toEqual([expect.stringContaining('headSha inválido')]);
     expect(v({ browser: '' })).toEqual(['falta el navegador']);
     expect(v({ retentionDays: 30 })).toEqual([`retentionDays tiene que ser ${RETENTION_DAYS}`]);
     const flujo = (o: object) => v({ flows: [{ ...m.flows[0], ...o }] });
     expect(flujo({ campaignId: 'x' })).toEqual([expect.stringContaining('campaignId inválido')]);
     expect(flujo({ versionHash: 'z'.repeat(64) })).toEqual([expect.stringContaining('versionHash inválido')]);
     expect(flujo({ roles: { operator: 'a', approver: 'a' } })).toEqual(['flujo: roles operator/approver ausentes o iguales']);
-    expect(flujo({ screenshots: ['no-esta.png'] })).toEqual(['flujo: screenshot no-esta.png no está en files']);
+    const shots = m.flows[0].screenshots as string[];
+    expect(flujo({ screenshots: [...shots.slice(1), 'no-esta.png'] })).toEqual(['flujo: screenshot no-esta.png no está en files']);
+    // los 8 pasos de §47 tienen que ser del flujo registrado, no de cualquier spec
+    expect(flujo({ screenshots: shots.slice(0, 1) })).toEqual([`flujo: 1 screenshots de §47 (se exigen ${MIN_SCREENSHOTS})`]);
     expect(v({ flows: [] })).toEqual(['sin flujos §41 registrados']);
     const sinVideo = m.files.filter((f: { kind: string }) => f.kind !== 'video');
     expect(v({ files: sinVideo })).toEqual(['sin videos']);
-    expect(v({ files: m.files.filter((f: { path: string }) => f.path !== 'screenshots/0-07.png') })).toEqual([`menos de ${MIN_SCREENSHOTS} screenshots`]);
+    expect(v({ files: m.files.filter((f: { path: string }) => f.path !== 'screenshots/0-07.png') })).toEqual(['flujo: screenshot 0-07.png no está en files', `menos de ${MIN_SCREENSHOTS} screenshots`]);
   });
 
   it('la retención del manifest es la misma que la del artifact en gates.yml', () => {
@@ -89,16 +96,17 @@ describe('BL-29 · manifest de evidencia de e2e-platform', () => {
     for (let i = 0; i < MIN_SCREENSHOTS; i++) writeFileSync(path.join(ev, 'screenshots', `0-0${i}.png`), `png ${i}`);
     const video = path.join(tmp, 'v.webm');
     writeFileSync(video, 'webm');
-    writeFileSync(path.join(ev, 'parts', 'f.json'), JSON.stringify({ browser: 'chromium 141', roles: { operator: 'op', approver: 'ap' }, campaignId: U, versionId: U, versionHash: 'c'.repeat(64), screenshots: ['0-00.png'] }));
+    writeFileSync(path.join(ev, 'parts', 'f.json'), JSON.stringify({ browser: 'chromium 141', roles: { operator: 'op', approver: 'ap' }, campaignId: U, versionId: U, versionHash: 'c'.repeat(64), screenshots: Array.from({ length: MIN_SCREENSHOTS }, (_, i) => `0-0${i}.png`) }));
     const rep = JSON.parse(JSON.stringify(report).replaceAll('/no/existe/0.webm', video));
     writeFileSync(path.join(tmp, 'r.json'), JSON.stringify(rep));
     const out = path.join(tmp, 'out');
-    const env = { ...process.env, GITHUB_SHA: COMMIT };
+    const env = { ...process.env, GITHUB_SHA: COMMIT, E2E_HEAD_SHA: HEAD };
     const b = spawnSync(process.execPath, ['scripts/e2e-platform/manifest.mjs', 'build', '--report', path.join(tmp, 'r.json'), '--evidence', ev, '--out', out], { encoding: 'utf8', env });
     expect(b.status, b.stderr).toBe(0);
     const ok = spawnSync(process.execPath, ['scripts/e2e-platform/manifest.mjs', 'validate', out], { encoding: 'utf8' });
     expect(ok.status, ok.stderr).toBe(0);
     expect(ok.stdout).toContain('GATE evidencia: 3 tests passed, 1 flujo(s) §41, 8 screenshots, 1 videos');
+    expect(JSON.parse(readFileSync(path.join(out, 'evidence-manifest.json'), 'utf8'))).toMatchObject({ commit: COMMIT, headSha: HEAD });
     writeFileSync(path.join(out, 'screenshots', '0-01.png'), 'alterado');
     const mal = spawnSync(process.execPath, ['scripts/e2e-platform/manifest.mjs', 'validate', out], { encoding: 'utf8' });
     expect(mal.status).toBe(1);

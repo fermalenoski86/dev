@@ -44,10 +44,11 @@ export function testsDelReporte(report) {
 }
 
 /** Arma el manifest (puro: recibe los archivos ya copiados con su contenido). */
-export function buildManifest({ commit, browser, tests, flows, files }) {
+export function buildManifest({ commit, headSha = commit, browser, tests, flows, files }) {
   return {
     schema: 'trust.e2e-platform.evidence.v1',
     commit,
+    headSha,
     browser,
     retentionDays: RETENTION_DAYS,
     specs: [...new Set(tests.map((t) => t.file))].sort(),
@@ -62,6 +63,7 @@ export function validateManifest(m, leer) {
   const e = [];
   if (m?.schema !== 'trust.e2e-platform.evidence.v1') e.push('schema inválido');
   if (!/^[0-9a-f]{40}$/.test(m?.commit ?? '')) e.push(`commit inválido: «${m?.commit}»`);
+  if (!/^[0-9a-f]{40}$/.test(m?.headSha ?? '')) e.push(`headSha inválido: «${m?.headSha}»`);
   if (!m?.browser || typeof m.browser !== 'string') e.push('falta el navegador');
   if (m?.retentionDays !== RETENTION_DAYS) e.push(`retentionDays tiene que ser ${RETENTION_DAYS}`);
   for (const s of SPECS_REQUERIDOS) if (!(m?.specs ?? []).includes(s)) e.push(`falta el spec ${s}`);
@@ -75,6 +77,7 @@ export function validateManifest(m, leer) {
     if (!UUID.test(f.versionId ?? '')) e.push(`flujo: versionId inválido «${f.versionId}»`);
     if (!SHA.test(f.versionHash ?? '')) e.push(`flujo: versionHash inválido «${f.versionHash}»`);
     if (!f.roles?.operator || !f.roles?.approver || f.roles.operator === f.roles.approver) e.push('flujo: roles operator/approver ausentes o iguales');
+    if ((f.screenshots ?? []).length < MIN_SCREENSHOTS) e.push(`flujo: ${(f.screenshots ?? []).length} screenshots de §47 (se exigen ${MIN_SCREENSHOTS})`);
     for (const s of f.screenshots ?? []) if (!(m.files ?? []).some((x) => x.path === `screenshots/${s}`)) e.push(`flujo: screenshot ${s} no está en files`);
   }
   const files = m?.files ?? [];
@@ -118,9 +121,12 @@ function main(argv) {
     }));
     const dirParts = path.join(evidencia, 'parts');
     const flows = (existsSync(dirParts) ? readdirSync(dirParts).sort() : []).map((p) => JSON.parse(readFileSync(path.join(dirParts, p), 'utf8')));
+    // `commit`: el árbol que corrió (en pull_request, GITHUB_SHA es el merge commit sintético);
+    // `headSha`: el HEAD del PR que se audita (E2E_HEAD_SHA en gates.yml). Fuera de CI, ambos son HEAD.
     const commit = process.env.GITHUB_SHA || execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+    const headSha = process.env.E2E_HEAD_SHA || commit;
     const browser = flows.find((f) => f.browser)?.browser ?? '';
-    const m = buildManifest({ commit, browser, tests, flows, files });
+    const m = buildManifest({ commit, headSha, browser, tests, flows, files });
     writeFileSync(path.join(out, 'evidence-manifest.json'), `${JSON.stringify(m, null, 2)}\n`);
     console.log(`manifest: ${m.tests.length} tests, ${m.flows.length} flujos, ${m.files.length} archivos → ${path.join(out, 'evidence-manifest.json')}`);
   } else if (cmd === 'validate') {
@@ -133,7 +139,7 @@ function main(argv) {
       for (const x of errores) console.error(`  - ${x}`);
       process.exit(1);
     }
-    console.log(`GATE evidencia: ${m.tests.length} tests passed, ${m.flows.length} flujo(s) §41, ${m.files.filter((f) => f.kind === 'screenshot').length} screenshots, ${m.files.filter((f) => f.kind === 'video').length} videos, SHA-256 verificados (commit ${m.commit.slice(0, 7)}, ${m.browser})`);
+    console.log(`GATE evidencia: ${m.tests.length} tests passed, ${m.flows.length} flujo(s) §41, ${m.files.filter((f) => f.kind === 'screenshot').length} screenshots, ${m.files.filter((f) => f.kind === 'video').length} videos, SHA-256 verificados (head ${m.headSha.slice(0, 7)}, árbol ${m.commit.slice(0, 7)}, ${m.browser})`);
   } else {
     console.error('uso: manifest.mjs build --report r.json --evidence dir --out dir | validate dir');
     process.exit(2);
