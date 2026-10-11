@@ -161,6 +161,24 @@ describe('LocalDiskStorage — defensas propias del disco', () => {
     expect(await s.statTemporary(reciente)).not.toBeNull();
   });
 
+  it('BL-08: listContentObjects no sigue symlinks: un symlink o un shard que no es directorio salen como no regulares', async () => {
+    const { storage: s } = await harness();
+    const info = await s.putTemporary(nuevoId(), desde(`real ${nuevoId()}`));
+    const { key } = await s.commitContentAddressed(info.tempId, { sha256: info.sha256 });
+    const afuera = await dirTemp('trust-afuera-');
+    await fs.writeFile(path.join(afuera, 'secreto'), 'no se lista');
+    const falso = sha('falso');
+    await fs.mkdir(path.join(s.root, 'sha256', falso.slice(0, 2)), { recursive: true, mode: 0o700 });
+    await fs.symlink(path.join(afuera, 'secreto'), path.join(s.root, 'sha256', falso.slice(0, 2), falso));
+    await fs.writeFile(path.join(s.root, 'sha256', 'zz'), 'shard que no es directorio');
+    const vistos = new Map<string, boolean>();
+    for await (const o of s.listContentObjects()) vistos.set(o.key, o.regularFile);
+    expect(vistos.get(key)).toBe(true);
+    expect(vistos.get(`sha256/${falso.slice(0, 2)}/${falso}`)).toBe(false);
+    expect(vistos.get('sha256/zz')).toBe(false);
+    expect(await fs.readFile(path.join(afuera, 'secreto'), 'utf8')).toBe('no se lista');
+  });
+
   it('streaming: 96 MB pasan sin cargarse en memoria', async () => {
     const { storage: s } = await harness();
     const MB = 1024 * 1024;

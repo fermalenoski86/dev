@@ -78,3 +78,17 @@ Sin transacción distribuida. Estrategia compensatoria:
 4. si la base falla después del commit de storage, el blob final queda como
    huérfano **seguro** (puede estar en uso por otro Asset: nunca se borra por
    el fallo de una operación); el reintento idempotente lo reutiliza.
+
+## Listado de la zona final (BL-08)
+
+`listContentObjects()` enumera `sha256/` **solo para leer**: devuelve clave
+cruda, tamaño, fecha de escritura del storage y si es archivo regular. No abre,
+no hashea, no mueve ni borra. Es un método **agregado** a la interfaz: no cambia
+claves, temporales, commit ni deduplicación (arquitectura B1/B1.1 intacta).
+
+- **Disco:** recorre `sha256/<shard>/<entrada>` con `lstat` (no sigue symlinks);
+  un symlink, un directorio fuera de lugar o un shard que no es directorio salen
+  con `regularFile: false`, para que el consumidor los informe.
+- **S3:** `ListObjectsV2` paginado con prefijo `sha256/`; `LastModified` lo da
+  el servidor. Un objeto sin `LastModified` sale con fecha 0 (cuenta como viejo).
+- Lo usa el reporte de blobs huérfanos (`docs/platform/ASSETS.md`, BL-08).

@@ -13,6 +13,19 @@ export interface BlobInfo {
   sizeBytes: number;
 }
 
+/**
+ * Un objeto de la zona final tal como lo ve el almacenamiento (BL-08). `key` es
+ * la clave relativa cruda: puede NO ser canónica (algo escrito por fuera del
+ * adaptador); quien la consume la valida. `regularFile` = false para lo que en
+ * disco no es un archivo regular (symlink, directorio fuera de lugar).
+ */
+export interface ContentObjectListing {
+  key: string;
+  sizeBytes: number;
+  lastModified: Date;
+  regularFile: boolean;
+}
+
 export interface CommitResult {
   key: string;
   /** false = el blob ya existía (deduplicación): no se reescribió. */
@@ -56,6 +69,12 @@ export interface ObjectStorage {
    * temporal válido NO se borra.
    */
   commitContentAddressed(tempId: string, expected: { sha256: string }): Promise<CommitResult>;
+
+  /**
+   * BL-08 · enumera la zona final `sha256/` SOLO para leer: no abre, no hashea,
+   * no mueve ni borra. Sin orden garantizado.
+   */
+  listContentObjects(): AsyncIterable<ContentObjectListing>;
 
   /** Borra temporales más viejos que el TTL. Nunca toca blobs finales. */
   cleanupTemporaryObjects(olderThanMs: number): Promise<number>;

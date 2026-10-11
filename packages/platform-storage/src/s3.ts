@@ -10,7 +10,7 @@ import { HashingCounter, descartar } from './hashing';
 import {
   StorageConflictError, StorageIntegrityError, assertContentKey, assertTempId, contentKeyFor, parseTempMeta, shaDeClave,
 } from './keys';
-import type { BlobInfo, CommitResult, ObjectStorage, TempObjectInfo } from './types';
+import type { BlobInfo, CommitResult, ContentObjectListing, ObjectStorage, TempObjectInfo } from './types';
 
 /**
  * S3CompatibleStorage — Fase B1 + Integrity Gate B1.1.
@@ -200,6 +200,19 @@ export class S3CompatibleStorage implements ObjectStorage {
   }
   async stream(key: string): Promise<Readable> {
     return this.getBody(assertContentKey(key));
+  }
+
+  /** BL-08 · lista `sha256/` con ListObjectsV2 paginado: solo lectura. */
+  async *listContentObjects(): AsyncIterable<ContentObjectListing> {
+    let token: string | undefined;
+    do {
+      const r = await this.client.send(new ListObjectsV2Command({ Bucket: this.cfg.bucket, Prefix: 'sha256/', ContinuationToken: token }));
+      for (const o of r.Contents ?? []) {
+        if (!o.Key) continue;
+        yield { key: o.Key, sizeBytes: o.Size ?? 0, lastModified: o.LastModified ?? new Date(0), regularFile: true };
+      }
+      token = r.IsTruncated ? r.NextContinuationToken : undefined;
+    } while (token);
   }
 
   /** Borra reservas (completas o a medias) cuyo objeto más reciente supera el TTL. */
