@@ -1,0 +1,8 @@
+F3(a) UI · brief — salida REAL
+Base: main@8fae6fe
+
+== git diff --check
+limpio
+
+== archivos fuera de docs/ en el delta
+ninguno
