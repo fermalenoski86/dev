@@ -24,7 +24,7 @@ historial): si una decisión cambia, se reemplaza la línea y el cambio va a
 | 2026-10-08 | [#22](https://github.com/fermalenoski86/dev/issues/22) | SeaweedFS fijado por digest, **solo** para desarrollo y CI (reemplaza a MinIO). |
 | 2026-10-09 | [#31](https://github.com/fermalenoski86/dev/issues/31) | UI de login, campaña y aprobación en una app nueva `apps/platform-web`. `apps/control` sigue congelada. (Hecho.) |
 | 2026-10-09 | [#26](https://github.com/fermalenoski86/dev/issues/26) | Plan de la auditoría externa de Fable autorizado completo, incluido tocar `apps/control` con evidencia + AUDIT. Sin relajar umbrales; `retries: 0`. |
-| 2026-10-11 | [#61](https://github.com/fermalenoski86/dev/issues/61) | Las medidas de las pantallas son las que cargó Fer en `EL_TRUST` (Corrientes más chica, Pellegrini más grande). La proforma P5 es solo orientativa. `EL_TRUST` no cambia; el Studio usa formatos configurables igual. TB60 y marquesina: abiertos con el proveedor, no bloquean. |
+| 2026-10-11 | [#61](https://github.com/fermalenoski86/dev/issues/61) | Las medidas de las pantallas son las que cargó Fer en `EL_TRUST` (Corrientes más chica, Pellegrini más grande). La proforma P5 es solo orientativa. `EL_TRUST` no cambia; el Studio usa formatos configurables igual. **Dos TB60**, uno por pantalla (una controladora independiente por cara). Marquesina: abierta con el proveedor, no bloquea. |
 | 2026-10-11 | [#59](https://github.com/fermalenoski86/dev/issues/59) | TRUST Creative Studio encargado: Claude diseña e implementa, ChatGPT audita; ahora solo brief CS-0; implementación después de F3(a). |
 | 2026-10-11 | [#52](https://github.com/fermalenoski86/dev/issues/52) | F3(a) rollback: Q0 = A, Q2 = A2.2 (ADR-064). |
 
