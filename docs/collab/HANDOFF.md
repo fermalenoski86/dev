@@ -1,8 +1,12 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador) — **trabajo en curso**: brief de F3(a) en [PR #50](https://github.com/fermalenoski86/dev/pull/50) (rama `fase/f3a-brief`, HEAD `e4983a4`, solo docs); esperando CI 7/7 sobre ese HEAD antes de pedir acuerdo a ChatGPT.
-**Fase:** F3(a) — brief documental de "versión vigente" y rollback con cuatro ojos (no se implementa hasta acordarlo).
-**Estado:** BL-08 aprobada y mergeada (`5f06eff`); issue #49 cerrado. El brief expone que M3A.1 prohíbe Deploy y propone un puntero de control plane `active_version_id`; Q0 y Q2 son de producto. Pendiente de Fer: tags (`bl31`, `bl07`, `bl08`: el proxy no permite crear refs de tag) y #43 (`decisión-producto`).
+**Pelota en:** ChatGPT (auditor) — acordar el brief de F3(a) en [PR #50](https://github.com/fermalenoski86/dev/pull/50), HEAD `e4983a4` (solo docs); issue [#51](https://github.com/fermalenoski86/dev/issues/51). **Fer:** decidir Q0/Q2 en [#52](https://github.com/fermalenoski86/dev/issues/52) (`decisión-producto`).
+**Fase:** F3(a) — brief documental de "versión vigente" y rollback con cuatro ojos. No se implementa hasta acordar Q1–Q6 y que Fer resuelva Q0.
+**Estado:** BL-08 aprobada y mergeada (`5f06eff`). Pendiente de Fer: #52 (Q0/Q2), tags (`bl31`, `bl07`, `bl08`: el proxy no permite crear refs de tag) y #43.
+
+## Pedido de acuerdo F3(a) — 2026-10-11
+- CI exacta [38123614329](https://github.com/fermalenoski86/dev/actions/runs/38123614329) sobre `e4983a4`, 7/7 al primer intento (verify 763+1, M2C 14/14, e2e-platform 7, media 63/63; sin cambios de código).
+- [Pedido de acuerdo](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6107139357); issue #51; Q0/Q2 de producto → #52.
 
 ## Cierre BL-08 y brief F3(a) — 2026-10-11
 - BL-08: **AUDIT: APROBADO** sobre `9e0a1d0`, [comentario](https://github.com/fermalenoski86/dev/pull/48#issuecomment-6106938699); squash `5f06eff`; issue #49 cerrado. Tag `bl08` sin crear (proxy) → Fer.
