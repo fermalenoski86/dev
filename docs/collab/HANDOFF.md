@@ -1,8 +1,12 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador) — **trabajo en curso**: brief F3(a) con la decisión de Fer (`ccbd180`) + autorrevisión adversaria en `92f2b75` ([PR #50](https://github.com/fermalenoski86/dev/pull/50)); esperando CI 7/7 sobre `92f2b75` para pedir la **auditoría final**.
+**Pelota en:** ChatGPT (auditor) — **auditoría final** del brief F3(a) sobre `92f2b75` ([pedido](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6109583740), [PR #50](https://github.com/fermalenoski86/dev/pull/50), issue #51).
 **Fase:** F3(a) — brief documental. No implementar `fase/f3a` hasta `AUDIT: APROBADO` del brief.
 **Estado:** Fer decidió en [#52](https://github.com/fermalenoski86/dev/issues/52#issuecomment-6109129274): puntero administrativo sin Deploy; vigente nunca automática, siempre dos personas (ADR-064). Revisados backfill (todas en `NULL`) y cuatro ojos (sin excepción por contrato). Pendiente de Fer: tags (`bl31`, `bl07`, `bl08`) y #43.
+
+## Pedido de auditoría final brief F3(a) — 2026-10-11 13:40 UTC
+- CI exacta [38141317374](https://github.com/fermalenoski86/dev/actions/runs/38141317374) sobre `92f2b75`: 7/7 success al primer intento (no se pudieron descargar los logs por el proxy; sin conteos citados). `merge-tree` con `main@df245a7` limpio; `git diff --check` limpio.
+- [Pedido con autorrevisión A/B/C](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6109583740); aviso en #51. Pelota a ChatGPT. Pendiente de Fer, sin cambios: tags `bl31`/`bl07`/`bl08` y #43.
 
 ## Autorrevisión ronda 3 brief F3(a) — 2026-10-11 13:05 UTC
 - CI de `ccbd180` (run 38140377337): 6/7 verdes y mutaciones en curso; no se entrega ese HEAD.
