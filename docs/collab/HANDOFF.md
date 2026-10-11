@@ -1,17 +1,12 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador de briefs) — redactar en PR documental separado el brief de F3(a): `redeploy(versionId)` de una versión aprobada anterior, y devolverlo a ChatGPT para acuerdo antes de implementar.
-**Fase:** mejora posterior a M3A.1 — F3(a), recuperación segura y trazable.
-**Estado:** BL-08 aprobada y mergeada. F3(a) ya estaba aceptada en BACKLOG; esta vuelta autoriza únicamente acordar el brief. No iniciar código hasta `AUDIT: APROBADO` del brief. F3(b), EDGE/último estado bueno, sigue `Fer decide`. Pendiente de Fer: tags (`bl31`, `bl07`, `bl08`: el proxy no permite crear refs de tag) y #43 (`decisión-producto`).
+**Pelota en:** Claude (implementador) — **trabajo en curso**: brief de F3(a) en [PR #50](https://github.com/fermalenoski86/dev/pull/50) (rama `fase/f3a-brief`, HEAD `e4983a4`, solo docs); esperando CI 7/7 sobre ese HEAD antes de pedir acuerdo a ChatGPT.
+**Fase:** F3(a) — brief documental de "versión vigente" y rollback con cuatro ojos (no se implementa hasta acordarlo).
+**Estado:** BL-08 aprobada y mergeada (`5f06eff`); issue #49 cerrado. El brief expone que M3A.1 prohíbe Deploy y propone un puntero de control plane `active_version_id`; Q0 y Q2 son de producto. Pendiente de Fer: tags (`bl31`, `bl07`, `bl08`: el proxy no permite crear refs de tag) y #43 (`decisión-producto`).
 
-## Cierre BL-08 y encargo de brief F3(a) — 2026-10-11
-- Resultado: **AUDIT: APROBADO**, [comentario en PR #48](https://github.com/fermalenoski86/dev/pull/48#issuecomment-6106938699); issue #49 cerrado; squash `5f06effa826f2d1a1986d6b38b748142a0daf0ab`.
-- HEAD auditado: `9e0a1d0c9760eabb6c22b481dedd8948ccb42261`. `git diff --check` y simulación de merge contra `main@f585020` limpios; sin cambios en áreas congeladas.
-- CI exacta [38117608607](https://github.com/fermalenoski86/dev/actions/runs/38117608607), 7/7 al primer intento: verify 763+1 y build; PostgreSQL 299+6; bootstrap 6/6; media 63/63; mutaciones 298/298 (9/9 BL-08); M2C 14/14; `e2e-platform` 7/7 con hashes; compose/SeaweedFS y contrato S3 16/16.
-- Auditor: caso real §33, StoredObject referenciado, retry idempotente, gracia, límite, datos mínimos, cero borrado/escritura y anomalías verificados en código/tests. `ObjectStorage.listContentObjects()` aceptado como extensión aditiva read-only que no altera claves, commit ni deduplicación B1/B1.1.
-- No repetidos localmente: suites completas, PostgreSQL, build, mutaciones, S3 y E2E por Node 24/pnpm 11 y falta de PostgreSQL frente al contrato Node 22/pnpm 12.5.1/PostgreSQL 16/Chrome; cubiertos por los logs exactos de CI, no declarados como ejecución local.
-- Fuente primaria contrastada: AWS S3 `ListObjectsV2` (consultada 2026-10-11), https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html. Aplicación: paginación por `NextContinuationToken` y metadatos `LastModified`/`Size`; límite: el listado es una foto y puede cambiar con concurrencia, por eso BL-08 solo reporta.
-- Próximo paso: Claude crea el brief F3(a) desde `main@911f7b5a4713`. Debe definir sin inventar producto: elegibilidad de versión previa aprobada, autorización por objeto/rol, separación de quien solicita y aprueba, audit trail, idempotencia/concurrencia, efectos exactos y negativos; registrar dudas no resueltas para Fer. PR documental primero; ChatGPT audita antes de cualquier implementación.
+## Cierre BL-08 y brief F3(a) — 2026-10-11
+- BL-08: **AUDIT: APROBADO** sobre `9e0a1d0`, [comentario](https://github.com/fermalenoski86/dev/pull/48#issuecomment-6106938699); squash `5f06eff`; issue #49 cerrado. Tag `bl08` sin crear (proxy) → Fer.
+- F3(a): brief en [PR #50](https://github.com/fermalenoski86/dev/pull/50) (`docs/briefs/F3A_REDEPLOY.md`, autorrevisión `docs/reviews/F3A_BRIEF.md`). Siguiente: con CI 7/7, pedir acuerdo a ChatGPT sobre Q0–Q6; Q0/Q2 → `decisión-producto` si no hay base registrada.
 
 ## Pedido de auditoría BL-08 — 2026-10-11
 - CI exacta [38117608607](https://github.com/fermalenoski86/dev/actions/runs/38117608607) sobre `9e0a1d0`, 7/7 al primer intento: verify 763+1 y build, PostgreSQL 299+6, bootstrap 6/6, media 63/63, mutaciones 298/298, M2C 14/14, `e2e-platform` 7 con manifest, compose con contrato S3 16/16 (incluye el listado nuevo).
