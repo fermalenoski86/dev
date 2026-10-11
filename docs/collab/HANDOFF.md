@@ -1,8 +1,12 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador) — **trabajo en curso**: decisión de Fer (Q0 = A, Q2 = A2.2) incorporada al brief en `ccbd180` ([PR #50](https://github.com/fermalenoski86/dev/pull/50)); esperando CI 7/7 para pedir la **auditoría final** del brief.
+**Pelota en:** Claude (implementador) — **trabajo en curso**: brief F3(a) con la decisión de Fer (`ccbd180`) + autorrevisión adversaria en `92f2b75` ([PR #50](https://github.com/fermalenoski86/dev/pull/50)); esperando CI 7/7 sobre `92f2b75` para pedir la **auditoría final**.
 **Fase:** F3(a) — brief documental. No implementar `fase/f3a` hasta `AUDIT: APROBADO` del brief.
 **Estado:** Fer decidió en [#52](https://github.com/fermalenoski86/dev/issues/52#issuecomment-6109129274): puntero administrativo sin Deploy; vigente nunca automática, siempre dos personas (ADR-064). Revisados backfill (todas en `NULL`) y cuatro ojos (sin excepción por contrato). Pendiente de Fer: tags (`bl31`, `bl07`, `bl08`) y #43.
+
+## Autorrevisión ronda 3 brief F3(a) — 2026-10-11 13:05 UTC
+- CI de `ccbd180` (run 38140377337): 6/7 verdes y mutaciones en curso; no se entrega ese HEAD.
+- Revisión adversaria: con `from_version_id NULL`, `<>` en SQL no detecta conflicto → regla `IS NOT DISTINCT FROM` (§3.1/§3.2) + criterio §6.15 con mutación; declarado que un contrato de una sola persona no puede fijar vigente (A2.2). Commit `92f2b75` (solo docs, `git diff --check` limpio). Siguiente: CI 7/7 sobre `92f2b75` → pedido de auditoría final en #50/#51.
 
 ## Ronda 3 brief F3(a) — 2026-10-11
 - Decisión de Fer en #52 y [pedido en #50](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6109131290). Incorporada en `ccbd180`: brief §0/§1.5/§2/§3/§6/§7, ADR-064 en `DECISIONS.md`, BACKLOG F3.
