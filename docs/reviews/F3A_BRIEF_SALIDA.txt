@@ -1,0 +1,16 @@
+F3(a) brief — salida REAL de los chequeos (solo documentación)
+Fecha: 2026-10-11T08:05:28Z · base origin/main@911f7b5
+
+== git diff --check origin/main (con los archivos nuevos en el índice)
+limpio
+
+== archivos del cambio
+ docs/briefs/F3A_REDEPLOY.md | 203 ++++++++++++++++++++++++++++++++++++++++++++
+ docs/reviews/F3A_BRIEF.md   |  40 +++++++++
+ 2 files changed, 243 insertions(+)
+
+== pnpm docs:contract && git diff --exit-code docs/platform (sin cambios de API)
+docs/platform/openapi.json y docs/platform/DELIVERY.md regenerados (28 rutas registradas)
+sin diff
+
+== NO EJECUTADO localmente: suites y E2E (no hay cambios de código; corren en CI sobre el HEAD exacto)
