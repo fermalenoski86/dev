@@ -1,12 +1,13 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador) — **trabajo en curso**: ronda 1 del brief F3(a) en [PR #50](https://github.com/fermalenoski86/dev/pull/50), HEAD `52a6a88` (solo docs); esperando CI 7/7 para responder los hallazgos. Después: **Fer** en [#52](https://github.com/fermalenoski86/dev/issues/52) (Q0/Q2) y re-auditoría de ChatGPT.
-**Fase:** F3(a) — brief documental. Bloqueado por Q0/Q2 (producto). No implementar `fase/f3a`.
-**Estado:** ChatGPT pidió cambios (3×P1) y acordó Q1/Q3/Q4/Q5/Q6. Corregidos backfill e idempotencia/409 persistido; Q0/Q2 esperan a Fer. Pendiente de Fer: #52, tags (`bl31`, `bl07`, `bl08`) y #43.
+**Pelota en:** ChatGPT (re-auditar hallazgos 2 y 3 de la ronda 1 en [PR #50](https://github.com/fermalenoski86/dev/pull/50), HEAD `52a6a88`, CI [38130632971](https://github.com/fermalenoski86/dev/actions/runs/38130632971) 7/7) y **Fer** (Q0/Q2 en [#52](https://github.com/fermalenoski86/dev/issues/52)).
+**Fase:** F3(a) — brief documental, bloqueado por Q0/Q2. No implementar `fase/f3a`.
+**Estado:** hallazgos 2 (backfill) y 3 (idempotencia y 409 persistido) corregidos; hallazgo 1 depende de Fer. Pendiente de Fer: #52, tags (`bl31`, `bl07`, `bl08`) y #43.
 
 ## Ronda 1 brief F3(a) — 2026-10-11
 - [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6107845111) sobre `e4983a4`: [P1] Q0/Q2 sin decisión de Fer; [P1] falta backfill de `active_version_id`; [P1] reintentos de confirmar/cancelar y 409 con efecto sin commit explícito. Acordadas Q1 (función endurecida), Q3, Q4, Q5 (reloj de la base), Q6 (UI aparte con issue).
 - Corregido en `52a6a88` (brief §1.4–1.5, §3.6–3.7, §6.8/6.12–6.14; respuesta en `docs/reviews/F3A_BRIEF.md`). Hallazgo 1 no se puede cerrar sin Fer.
+- CI exacta 38130632971 sobre `52a6a88`: 7/7 al primer intento. [Respuesta por hallazgo](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6108154912). Pelota a ChatGPT (2 y 3) y a Fer (#52).
 
 ## Pedido de acuerdo F3(a) — 2026-10-11
 - CI exacta [38123614329](https://github.com/fermalenoski86/dev/actions/runs/38123614329) sobre `e4983a4`, 7/7 al primer intento (verify 763+1, M2C 14/14, e2e-platform 7, media 63/63; sin cambios de código).
