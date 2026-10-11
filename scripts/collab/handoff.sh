@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# P-01 · Único camino para escribir docs/collab/HANDOFF.md en main.
+#
+#   leer   : scripts/collab/handoff.sh leer
+#            Hace fetch, muestra HANDOFF.md de origin/main e imprime el SHA leído.
+#            Guardalo: export HANDOFF_BASE_SHA=<sha>
+#   escribir: scripts/collab/handoff.sh escribir <archivo-nuevo> "<mensaje de commit>" [--historial "<línea>"]
+#            Compare-and-swap: si origin/main ya no es HANDOFF_BASE_SHA, ABORTA y
+#            muestra el diff para releer. Si coincide: valida el archivo, commitea
+#            sobre origin/main y hace push SOLO fast-forward. Nunca --force.
+#
+# Variables: HANDOFF_BASE_SHA (obligatoria para escribir), HANDOFF_REMOTE (origin),
+#            HANDOFF_BRANCH (main), GIT_AUTHOR_NAME/EMAIL como siempre.
+set -euo pipefail
+REMOTE=${HANDOFF_REMOTE:-origin}
+BRANCH=${HANDOFF_BRANCH:-main}
+FILE=docs/collab/HANDOFF.md
+HIST=docs/collab/HISTORIAL.md
+MAX_LINEAS=60
+
+fallo() { echo "handoff: $*" >&2; exit 1; }
+
+validar() { # $1 = archivo
+  local f=$1 n pelotas
+  [ -s "$f" ] || fallo "archivo vacío: $f"
+  n=$(wc -l < "$f")
+  [ "$n" -le $MAX_LINEAS ] || fallo "$n líneas (máx. $MAX_LINEAS). Mové decisiones a DECISIONES.md e historial a HISTORIAL.md."
+  pelotas=$(grep -cE '^\*\*Pelota en:\*\* (Claude|ChatGPT)\b' "$f" || true)
+  [ "$pelotas" -eq 1 ] || fallo "debe haber exactamente UNA línea '**Pelota en:** Claude|ChatGPT' (hay $pelotas)"
+  ! grep -qE '^(<<<<<<<|=======|>>>>>>>)' "$f" || fallo "marcadores de conflicto en $f"
+}
+
+case "${1:-}" in
+  leer)
+    git fetch -q "$REMOTE" "$BRANCH"
+    SHA=$(git rev-parse "$REMOTE/$BRANCH")
+    git show "$SHA:$FILE"
+    echo
+    echo "HANDOFF_BASE_SHA=$SHA"
+    ;;
+  validar)
+    validar "${2:-$FILE}"; echo "handoff: OK (${2:-$FILE})"
+    ;;
+  escribir)
+    NUEVO=${2:?archivo nuevo}; MSG=${3:?mensaje de commit}; shift 3 || true
+    LINEA_HIST=""
+    while [ $# -gt 0 ]; do case "$1" in --historial) LINEA_HIST=$2; shift 2;; *) fallo "opción desconocida $1";; esac; done
+    [ -n "${HANDOFF_BASE_SHA:-}" ] || fallo "falta HANDOFF_BASE_SHA: primero 'handoff.sh leer'"
+    validar "$NUEVO"
+    git fetch -q "$REMOTE" "$BRANCH"
+    ACTUAL=$(git rev-parse "$REMOTE/$BRANCH")
+    if [ "$ACTUAL" != "$HANDOFF_BASE_SHA" ]; then
+      echo "handoff: ABORTADO — $REMOTE/$BRANCH avanzó de ${HANDOFF_BASE_SHA:0:7} a ${ACTUAL:0:7} desde tu lectura." >&2
+      echo "handoff: cambios en $FILE que no viste:" >&2
+      git diff "$HANDOFF_BASE_SHA" "$ACTUAL" -- "$FILE" "$HIST" docs/collab/DECISIONES.md >&2 || true
+      echo "handoff: releé con 'handoff.sh leer', rehacé tu versión sobre eso y reintentá. Nada se escribió." >&2
+      exit 3
+    fi
+    # Commit construido SOBRE origin/main exacto, en un worktree aparte: no depende
+    # del estado de la rama local y el push solo puede ser fast-forward.
+    WT=$(mktemp -d)
+    trap 'git worktree remove --force "$WT" 2>/dev/null || true' EXIT
+    git worktree add -q --detach "$WT" "$ACTUAL"
+    cp "$NUEVO" "$WT/$FILE"
+    if [ -n "$LINEA_HIST" ]; then printf '%s\n' "$LINEA_HIST" >> "$WT/$HIST"; fi
+    git -C "$WT" add "$FILE" "$HIST"
+    git -C "$WT" commit -q -m "$MSG"
+    NUEVO_SHA=$(git -C "$WT" rev-parse HEAD)
+    # Push estrictamente fast-forward. Si alguien ganó la carrera en estos ms, git
+    # rechaza (non-fast-forward) y no se reescribe nada.
+    if git push -q "$REMOTE" "$NUEVO_SHA:refs/heads/$BRANCH"; then
+      echo "handoff: escrito en $REMOTE/$BRANCH → ${NUEVO_SHA:0:7} (base ${ACTUAL:0:7})"
+      echo "HANDOFF_BASE_SHA=$NUEVO_SHA"
+    else
+      echo "handoff: ABORTADO — push rechazado (no fast-forward: otro escribió entre tu fetch y tu push). Releé y reintentá." >&2
+      exit 3
+    fi
+    ;;
+  *)
+    sed -n '2,13p' "$0"; exit 2;;
+esac
