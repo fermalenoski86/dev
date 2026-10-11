@@ -278,7 +278,16 @@ https://github.com/fermalenoski86/dev/pull/36#issuecomment-6091297474.
 
 # Propuesta de proceso P-01…P-05 — *Claude, 2026-10-11, pedido de Fer*
 
-**Estado: propuesta.** Nada de esto se implementa hasta el acuerdo de ChatGPT
+**Estado: aceptada con ajustes** (ChatGPT, [#53](https://github.com/fermalenoski86/dev/issues/53#issuecomment-6110866000), 2026-10-11). Claude acepta todos los ajustes sin discrepancia. Resumen de lo que cambia respecto del texto original:
+- **P-01:** push a `main` **solo fast-forward** (`git push origin HEAD:main`), prohibido `--force` y `--force-with-lease`; ante avance concurrente: abortar, releer, reconstruir sobre el main nuevo, reintentar. CI valida ≤ 60 líneas, exactamente una pelota válida y ningún marcador de conflicto (`<<<<<<<`, `=======`, `>>>>>>>`). Pedir a Fer protección de rama `main` (CI requerido) cuando el plan lo permita.
+- **P-02:** `PROGRESO.md` es reporte generado, no memoria. Distinguir `0/0 (sin entregables definidos)` de `0/N (definidos, pendientes)`; un test acredita solo lo que prueba; brief aprobado ≠ funcionalidad; PR sin AUDIT no cuenta; evidencia física con referencia, condiciones, fecha y responsable. Fuente **determinista** (manifiesto en el repo, sin consultas variables a la API en `progress:check`).
+- **P-03:** scripts de CI/collab y cambios a gates/auth/transferencia de pelota son riesgo **alto**, no bajo; el riesgo se puede elevar a mano, nunca rebajar sin justificación revisada; el auditor decide siempre, también en bajo.
+- **P-04:** sanitizar logs/trazas/artifacts (cookies, tokens, env, datos comerciales); cuarto estado `causa no determinada (en investigación)`; `2/2` prueba reproducibilidad, no causa raíz; ajustar timeouts/umbrales solo por decisión y auditoría explícitas con prueba de que sigue detectando el fallo.
+- **P-05:** Claude **no toca `HANDOFF.md`** mientras la pelota es del auditor, ni la tabla "Abierto": el lateral se registra en su PR/issue y el titular de la pelota lo refleja después. Restricciones de push requieren branch protection, no solo el script.
+
+Orden confirmado: P-01 → P-02 → P-05 → P-04 → P-03, un PR por ítem, F3(a) con precedencia.
+
+Texto original de la propuesta: Nada de esto se implementa hasta el acuerdo de ChatGPT
 (ajustar o descartar con motivo, ítem por ítem). No frena F3(a). Restricciones
 de Fer: cambios chicos, separados y auditables; sin archivos de memoria nuevos;
 estructura HANDOFF / DECISIONES / HISTORIAL intacta.
@@ -414,7 +423,17 @@ auditado como cualquier otro.
 
 # P-06 · TRUST Agent Bridge — Zero Cost — *Claude, 2026-10-11, pedido de Fer*
 
-**Estado: propuesta.** Investigación con fuentes primarias (fecha de consulta
+**Estado: aceptada con ajustes, solo diseño + PoC** (ChatGPT, [#54](https://github.com/fermalenoski86/dev/issues/54), 2026-10-11). Claude acepta todos los ajustes. Lo que queda acordado:
+- **Alternativa 2 es la base operativa.** La 3 es experimental, detrás de PoC-0 y PoC-1, y **no** se habilita con permisos de escritura hasta volver a #54 con evidencia.
+- **Regla crucial:** ninguna salida automática (review de Codex, comentario de bot, ausencia de P0/P1) se convierte en `AUDIT: APROBADO`. El veredicto formal y el merge siguen siendo del auditor en el flujo actual. El puente **notifica y propone**, no aprueba.
+- Guardas: concurrency por repo+PR; validar en runtime repo, PR, rama, SHA, estado, emisor autenticado y transición esperada (no `body.includes('AUDIT:')`); nunca `pull_request_target` con checkout del PR y secretos; a la 5.ª ronda `bridge-paused`, no `decisión-producto`; el lock cron/Action debe ser atómico y con vencimiento (una línea en HANDOFF no es un mutex); la Action nunca mergea ni escribe `main`.
+- PoC-0: 3 PRs aislados (inocuo / P1 sembrado reversible / P2 inocuo), medir review tras abrir y tras push, latencia, cuota; probar `@codex review` desde una GitHub App. **Sin presumir** que el review empiece con `AUDIT:`.
+- PoC-1: `issue_comment` y `pull_request_review` por separado; permisos mínimos; probar PR ajeno, comentario externo, fork, replay, fallo de cuota.
+- Criterios: registrar SHA, ID de evento, actor, run, timestamp, cuota; 0 secretos en logs/artifacts/commits; 0 pushes a main; 0 aprobaciones por silencio; invalidación con HEAD viejo; rollback verificado; F3(a) intacta.
+- **Dato nuevo (2026-10-11 16:18 UTC):** `chatgpt-codex-connector[bot]` respondió solo en #54 ("To use Codex here, create an environment for this repo" → https://chatgpt.com/codex/cloud/settings/environments). Confirma que el conector está instalado y escucha menciones `@codex` también en **issues**; falta que Fer cree el environment (gratis). Es el prerrequisito de PoC-0.
+- **Humano, una sola vez (Fer):** crear el environment de Codex para `fermalenoski86/dev`; encender *Automatic review* si aparece; más adelante, para PoC-1, `claude setup-token` → GitHub Secret `CLAUDE_CODE_OAUTH_TOKEN`.
+
+Texto original de la propuesta: Investigación con fuentes primarias (fecha de consulta
 2026-10-11). Nada se implementa hasta acuerdo con ChatGPT. Condición de Fer:
 **USD 0 adicionales** (sin API paga, sin servidor, sin suscripción nueva).
 
