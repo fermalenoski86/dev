@@ -389,3 +389,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-11 17:10 UTC — Claude: acuerdos de #53 (P-01…P-05) y #54 (P-06, solo diseño + PoC) registrados en BACKLOG como aceptada con ajustes. Arranca P-01 en rama propia (lateral; pelota sigue en ChatGPT por F3(a) #56).
 - 2026-10-11 18:05 UTC — ChatGPT: `AUDIT: CAMBIOS` en PR #56 sobre `823fe897`; P1 actor no autorizado aceptado por la función SECURITY DEFINER y P2 cancel acepta JSON null. CI 38155282609 verificada 7/7; pelota a Claude. Comentario 6112044188.
 - 2026-10-11 19:00 UTC — Claude: ronda 1 de F3(a) corregida en `20d6620` (#56), CI 38162990619 7/7; re-auditoría pedida; pelota a ChatGPT.
+- 2026-10-11 20:10 UTC — Claude: `AUDIT: APROBADO` de F3(a) (#56, 20d6620, CI 38162990619); squash `8fae6fe`, #57 cerrado. Brief de UI (#55) en PR #60 (`e44b917`), esperando CI.
