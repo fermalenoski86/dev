@@ -7,7 +7,12 @@ four-eyes". Encargo del `AUDIT: APROBADO` de BL-08
 "Claude debe preparar primero un brief documental separado y devolverlo a
 ChatGPT para acuerdo antes de implementar".
 
-**Propuesto por Claude el 2026-10-11.** No hay código en este PR. Mismo
+**Propuesto por Claude el 2026-10-11; ronda 1 de auditoría incorporada el
+mismo día** ([AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6107845111):
+Q1/Q3/Q4/Q5/Q6 acordadas, backfill e idempotencia completa agregados; Q0/Q2
+siguen esperando a Fer en [#52](https://github.com/fermalenoski86/dev/issues/52)).
+**Estado: bloqueado por Q0/Q2. No se implementa ni se aprueba la versión final
+hasta que Fer responda #52.** No hay código en este PR. Mismo
 procedimiento que los briefs C y D: cada regla cita su base en el repo; lo que
 el repo no decide va marcado con ❓ y se acuerda antes de codificar. Si una ❓
 cambia producto, va a `decisión-producto` para Fer.
@@ -66,9 +71,32 @@ El resto del brief asume A.
    como las Approvals).
 4. Migración `0004_active_version`, **reversible**, con el mismo patrón de
    grants: `trust_app` no actualiza `active_version_id` por fuera de la
-   función/servicio que confirma (❓**Q1:** función `SECURITY DEFINER` como
-   `trust_create_show_version`, o UPDATE de columna con trigger; propongo la
-   función).
+   función que confirma. **Q1 acordada:** función `SECURITY DEFINER`
+   (como `trust_create_show_version`) con **todas** las invariantes adentro
+   (campaña bloqueada `FOR UPDATE`, pedido PENDING y no vencido según `now()`
+   de la base, vigente = `from_version_id`, destino APPROVED de esta campaña,
+   hash, cuatro ojos), `SET search_path = public, pg_temp` (`pg_temp` al
+   final), `REVOKE EXECUTE … FROM PUBLIC` y `GRANT EXECUTE` solo a `trust_app`
+   (documentación de PostgreSQL, `CREATE FUNCTION`, "Writing SECURITY DEFINER
+   Functions Safely"). `trust_app` no tiene UPDATE sobre `active_version_id`.
+5. **Backfill de datos existentes** (hallazgo 2 de la ronda 1), dentro de la
+   misma migración y transacción que agrega la columna:
+   `UPDATE campaigns SET active_version_id = latest_approved_version_id`.
+   - Campaña con versión aprobada → su vigente es la última aprobada (lo mismo
+     que hoy significaría "lo que se usa").
+   - Campaña sin aprobaciones → `active_version_id` queda `NULL` = "sin versión
+     vigente"; `GET /campaigns/:id` devuelve `activeVersion: null` y pedir un
+     cambio es imposible (no hay destino APPROVED). La primera aprobación la
+     fija según Q2.
+   - El backfill no escribe audit (no es una decisión de nadie: es el estado
+     equivalente al de antes de la columna); el reporte de la migración lo
+     declara. ❓ si el auditor prefiere un evento `ACTIVE_VERSION_BACKFILLED`
+     por campaña, se agrega.
+   - **Down:** borra tabla, función, triggers y columna; **up de nuevo** vuelve
+     a calcular el backfill. Probado con datos poblados (ver §6.12).
+   - Esta regla vale para Q2 = A2.1 y también para A2.2 (en A2.2 el backfill
+     igual conserva lo que hoy es la última aprobada). Si Q0 = C, no hay
+     migración.
 
 ## 2. ¿Qué pasa al aprobar una versión nueva?
 
@@ -95,8 +123,8 @@ rollback no hay "envío": la regla equivalente es **quien pide no confirma**.
 
 1. **Pedir** — `POST /api/v1/campaigns/:id/active-version-changes`
    `{ versionId, versionHash, reason, expectedActiveVersionId }`.
-   - Roles: OPERATOR · ADMIN (❓**Q3:** ¿también INTERNAL_APPROVER pide?).
-   - CSRF + `Idempotency-Key` obligatoria (§28). Cuerpo `.strict()`.
+   - Roles: OPERATOR · ADMIN (**Q3 acordada:** INTERNAL_APPROVER no pide).
+   - CSRF + `Idempotency-Key` obligatoria (§28, ver §3.6). Cuerpo `.strict()`.
    - Campaña bloqueada (`FOR UPDATE`) y `ACTIVE` (archivada → 409
      `INVALID_STATE_TRANSITION`).
    - `versionId` de esta campaña y APPROVED (otra campaña o inexistente →
@@ -111,30 +139,58 @@ rollback no hay "envío": la regla equivalente es **quien pide no confirma**.
      409 `ACTIVE_VERSION_CHANGE_PENDING` con su id.
    - 201 con el pedido. Audit `ACTIVE_VERSION_CHANGE_REQUESTED`.
 2. **Confirmar** — `POST /api/v1/active-version-changes/:id/confirm
-   { versionHash }`.
-   - Roles: INTERNAL_APPROVER · ADMIN (❓**Q4:** ¿EXTERNAL_APPROVER de su
-     contrato? Propongo **no** en esta etapa: rollback es operación interna).
+   { versionHash }`. CSRF + `Idempotency-Key` obligatoria (§3.6).
+   - Roles: INTERNAL_APPROVER · ADMIN (**Q4 acordada:** EXTERNAL_APPROVER no
+     confirma cambios operativos internos en esta etapa).
    - Con `four_eyes_required`: `decided_by ≠ requested_by` → si no, 403
      `FOUR_EYES_VIOLATION`; segunda barrera en trigger. Sin cuatro ojos en el
      contrato: el mismo usuario puede confirmar, y el audit lo dice.
    - Relee todo con la campaña bloqueada: pedido `PENDING` y no vencido, la
      vigente sigue siendo `from_version_id` (si no, 409
-     `ACTIVE_VERSION_CONFLICT` y el pedido queda `CANCELLED` en la misma
-     transacción), destino sigue APPROVED, hash coincide.
+     `ACTIVE_VERSION_CONFLICT` y el pedido queda `CANCELLED`, **persistido**:
+     ver §3.7), destino sigue APPROVED, hash coincide.
    - Mueve `active_version_id`, marca `CONFIRMED`, audit
      `ACTIVE_VERSION_CHANGED` con `beforeHash`/`afterHash` = hash de la
      versión anterior/nueva y metadata `{ campaignId, fromVersionId,
      toVersionId, requestId, requestedBy, reason }`.
 3. **Cancelar** — `POST /api/v1/active-version-changes/:id/cancel`: quien pidió
-   o ADMIN. Audit `ACTIVE_VERSION_CHANGE_CANCELLED`.
-4. **Vencimiento** — ❓**Q5:** un PENDING vence a las 24 h
-   (`ACTIVE_VERSION_CHANGE_TTL_MINUTES`). Propongo vencimiento **perezoso**:
-   se evalúa al confirmar o al pedir otro (sin job), el que vence pasa a
-   `EXPIRED` con audit. Sin job en segundo plano = nada nuevo que operar.
+   o ADMIN. CSRF + `Idempotency-Key` obligatoria (§3.6). Audit
+   `ACTIVE_VERSION_CHANGE_CANCELLED`.
+4. **Vencimiento** — **Q5 acordada:** un PENDING vence a las 24 h
+   (`ACTIVE_VERSION_CHANGE_TTL_MINUTES`), medido con `now()` de PostgreSQL
+   (`requested_at` también lo escribe la base), nunca con el reloj del host.
+   Vencimiento **perezoso**: se evalúa al confirmar, cancelar o pedir otro (sin
+   job); el que vence pasa a `EXPIRED` con audit, persistido aunque la
+   respuesta sea 409 (§3.7).
 5. **Lectura** — `GET /campaigns/:id` agrega `activeVersion {id,
    versionNumber, versionHash}` y `pendingActiveVersionChange` (o `null`).
    `GET /campaigns/:id/active-version-changes` (historial paginado, keyset
    como BL-31).
+
+6. **Idempotencia de las tres mutaciones** (hallazgo 3a de la ronda 1). Pedir,
+   confirmar y cancelar usan `withIdempotency` (`platform-db`, el mismo de
+   approve/reject):
+   - operación distinta por ruta (`active-version-change.request`,
+     `.confirm`, `.cancel`) y fingerprint = `SHA256(JCS({ operation,
+     payload }))` con el id de la ruta y el cuerpo `.strict()` (para confirmar:
+     `{ changeId, versionHash }`; para cancelar: `{ changeId }`);
+   - misma key + mismo pedido → **replay** de la respuesta guardada (200 con
+     `idempotent-replayed: true`), aunque el estado ya haya cambiado: una
+     confirmación aplicada cuya respuesta se perdió devuelve el mismo
+     resultado, no un 409 de transición inválida;
+   - misma key + otro pedido → 409 `IDEMPOTENCY_KEY_REUSED`;
+   - reserva y operación en la misma transacción (dos retries simultáneos
+     ejecutan una vez).
+7. **Terminalización que acompaña un 409** (hallazgo 3b de la ronda 1). Los
+   casos en que la operación **cambia algo y responde 409** (vigente cambiada
+   → pedido `CANCELLED`; pedido vencido → `EXPIRED`) no se implementan con
+   `throw` dentro de la transacción, porque el rollback se llevaría el cambio
+   y su audit. El servicio **devuelve** `{ status: 409, body }` desde la
+   función de `withIdempotency`: la transacción hace COMMIT (estado terminal +
+   evento de audit + respuesta guardada con su key) y recién después la ruta
+   responde 409. Un retry con la misma key repite ese 409 sin volver a
+   escribir. Los 409 que **no** cambian nada (hash, estado, PENDING
+   existente) siguen con `throw` y rollback, como hoy.
 
 Scope por contrato igual que C1/C2/BL-31: fuera de scope = 404 (no revela que
 existe); visible sin rol = 403. Todo en `OpenAPI` y `DELIVERY.md` regenerados.
@@ -152,9 +208,9 @@ metadata (ids, hashes, motivo).
 
 - Empujar a EDGE, Deploy, Scheduler, Proof of Play (master §1; M3B/M3C).
 - F3(b) "último estado bueno conocido" en EDGE (Fer decide el milestone).
-- UI: ❓**Q6:** propongo API + OpenAPI en este cambio y la vista en
-  `platform-web` como unidad separada (como BL-31 tuvo su UI en el mismo PR,
-  esto puede ir junto si se prefiere; el auditor elige).
+- UI: **Q6 acordada:** API + OpenAPI primero; la vista en `platform-web` va en
+  una unidad separada, con issue trazable abierto **antes** de declarar la
+  operación usable por personas.
 - `apps/control`, M2C.2, ShowEngine, compilador, storage B1 y formato del
   ShowPackage: **no se tocan**.
 - #43 (403 de assets a INTERNAL_APPROVER) sigue en `decisión-producto`.
@@ -178,26 +234,47 @@ PostgreSQL real, sin mocks en el camino feliz:
    otra campaña → error de PostgreSQL.
 7. Q2 según lo acordado (A2.1: aprobar v3 con vigente = última → sigue a v3;
    con vigente fijada en v1 → no se mueve).
-8. Idempotencia: misma key + mismo pedido → 200 replay sin segundo pedido;
-   otro pedido → 409 `IDEMPOTENCY_KEY_REUSED`.
+8. Idempotencia de pedir, confirmar y cancelar: misma key + mismo pedido →
+   200 replay sin segundo efecto; otro pedido → 409 `IDEMPOTENCY_KEY_REUSED`.
+   **Confirmación aplicada con respuesta perdida:** el retry con la misma key
+   devuelve el mismo cuerpo de éxito (no 409), la vigente no cambia de nuevo y
+   hay un solo `ACTIVE_VERSION_CHANGED`.
 9. Inmutabilidad: ShowVersions, manifiestos, Approvals y blobs idénticos antes
    y después de un rollback (foto completa, como BL-08).
 10. Mutaciones nuevas `f3a:` para cada regla (cuatro ojos app y base,
     hash, campaña, estado APPROVED, concurrencia, vencimiento, audit).
 11. Migración 0004 up/down/up limpia; bootstrap, M2C 14/14 y el resto de los
     gates sin regresión.
+12. **Backfill con datos poblados:** campañas con v2 aprobada (vigente = v2),
+    con v1 y v2 aprobadas y v3 SUBMITTED (vigente = v2), y sin aprobaciones
+    (vigente `null`); down con datos (sin error, sin perder versiones ni
+    aprobaciones) y up de nuevo con el mismo resultado.
+13. **409 con efecto persistido:** vigente cambiada entre pedir y confirmar →
+    409 `ACTIVE_VERSION_CONFLICT`; después, en otra conexión: pedido
+    `CANCELLED`, un evento `ACTIVE_VERSION_CHANGE_CANCELLED`, `verifyChain` ok;
+    retry con la misma key → el mismo 409 sin segundo evento. Igual para un
+    pedido vencido (`EXPIRED`). Mutación: cambiar el `return` por `throw` hace
+    fallar el test.
+14. **Función `SECURITY DEFINER`:** `PUBLIC` no tiene EXECUTE; `trust_app` sí;
+    `search_path` de la función termina en `pg_temp` (consulta a
+    `pg_proc.proconfig`); `trust_app` no puede hacer UPDATE directo de
+    `active_version_id`.
 
 ## 7. Preguntas a acordar (resumen)
 
 | # | Pregunta | Propuesta de Claude | Quién decide |
 |---|---|---|---|
-| Q0 | ¿Puntero "vigente" ahora (A) o esperar a Deploy (C)? | A | Fer (producto) vía ChatGPT |
-| Q1 | ¿Función `SECURITY DEFINER` o UPDATE + trigger? | función | ChatGPT |
-| Q2 | ¿La vigente sigue a la última aprobada (A2.1) o nunca sola (A2.2)? | A2.1 | Fer (producto) |
-| Q3 | ¿INTERNAL_APPROVER también pide? | no; pide OPERATOR/ADMIN | ChatGPT |
-| Q4 | ¿EXTERNAL_APPROVER confirma? | no en esta etapa | ChatGPT |
-| Q5 | Vencimiento del pedido | 24 h, perezoso | ChatGPT |
-| Q6 | ¿UI en el mismo cambio? | separada | ChatGPT |
+| # | Pregunta | Estado |
+|---|---|---|
+| Q0 | ¿Puntero "vigente" ahora (A) o esperar a Deploy (C)? | **pendiente de Fer** ([#52](https://github.com/fermalenoski86/dev/issues/52)); propuesta A |
+| Q1 | ¿Función `SECURITY DEFINER` o UPDATE + trigger? | **acordada:** función endurecida (§1.4) |
+| Q2 | ¿La vigente sigue a la última aprobada (A2.1) o nunca sola (A2.2)? | **pendiente de Fer** (#52); propuesta A2.1 |
+| Q3 | ¿INTERNAL_APPROVER también pide? | **acordada:** no; pide OPERATOR/ADMIN |
+| Q4 | ¿EXTERNAL_APPROVER confirma? | **acordada:** no en esta etapa |
+| Q5 | Vencimiento del pedido | **acordada:** 24 h, perezoso, reloj de la base (§3.4, §3.7) |
+| Q6 | ¿UI en el mismo cambio? | **acordada:** separada, con issue trazable |
 
-Con acuerdo sobre Q0–Q6 se implementa en `fase/f3a` desde `main`, con los
-gates de `AGENTS.md`, reporte `docs/reviews/F3A.md` y salida real.
+Cuando Fer responda #52 se registra la decisión acá (con link) y se vuelve a
+pedir auditoría. Recién con el brief aprobado se implementa en `fase/f3a` desde
+`main`, con los gates de `AGENTS.md`, reporte `docs/reviews/F3A.md` y salida
+real.

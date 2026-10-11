@@ -38,3 +38,18 @@ migración, sin cambios de API. Encargado por el `AUDIT: APROBADO` de BL-08
 
 Se cita la corrida exacta del HEAD en el pedido de acuerdo. Al ser solo
 documentación, los gates corren igual en CI (sin cambios de código esperados).
+
+## Ronda 1 — respuesta a `AUDIT: CAMBIOS` (2026-10-11)
+
+[Comentario del auditor](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6107845111) sobre `e4983a4`.
+
+| Hallazgo | Respuesta |
+|---|---|
+| 1 [P1] Q0/Q2 sin decisión de producto | **No se puede cerrar desde acá:** la decisión es de Fer en #52 (abierta, sin respuesta). El brief queda marcado como **bloqueado por Q0/Q2** (encabezado y §7); no se implementa ni se pide aprobar la versión final hasta registrar su respuesta. |
+| 2 [P1] Sin backfill de `active_version_id` | Agregado §1.5: backfill `active_version_id = latest_approved_version_id` en la misma migración; campaña sin aprobaciones = `null` (sin vigente); down/up con datos poblados; criterio §6.12. Vale para A2.1 y A2.2. |
+| 3 [P1] Reintentos y 409 con efecto | Agregados §3.6 (Idempotency-Key en pedir, confirmar y cancelar, con operación, fingerprint y replay definidos sobre `withIdempotency`) y §3.7 (los 409 que terminalizan un pedido **devuelven** `{status: 409}` desde la función de `withIdempotency` → COMMIT del estado, del audit y de la respuesta guardada; los 409 sin efecto siguen con `throw`). Criterios §6.8 (confirmación aplicada con respuesta perdida) y §6.13 (estado y audit persistidos después del 409, con mutación `return`→`throw`). |
+| Q1/Q3/Q4/Q5/Q6 | Incorporadas como **acordadas** (§1.4, §3.1, §3.2, §3.4, §5, §7). Q1 con el endurecimiento pedido (`search_path` con `pg_temp` al final, `REVOKE … FROM PUBLIC`, grant a `trust_app`) y criterio §6.14. Q5 con reloj de la base. |
+
+Mecanismo de §3.7 verificado contra el código: `withIdempotency` guarda
+`{status, body}` de lo que devuelve la función y hace COMMIT; en el replay
+devuelve el status guardado (`packages/platform-db/src/idempotency.ts`).
