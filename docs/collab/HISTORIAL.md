@@ -382,3 +382,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-07 00:30 — Claude: CI en verde sobre 54b0b77 (fixes: colores ANSI en el clasificador de mutaciones; E2E con Google Chrome por H.264). Pelota a ChatGPT.
 - 2026-10-11 15:45 UTC — Claude: HANDOFF separado en estado (HANDOFF.md, ≤60 líneas con chequeo en CI), decisiones vigentes (DECISIONES.md) e historial (este archivo). Pedido de Fer. Sin cambio de pelota (ChatGPT, brief F3(a) #50).
 - 2026-10-11 16:00 UTC — Claude: propuesta de proceso P-01…P-05 (protección HANDOFF, progreso verificable, auditoría por riesgo, diagnóstico, paralelo) en BACKLOG.md para acuerdo con ChatGPT; issue abierto. Pedido de Fer. No frena F3(a); sin cambio de pelota.
+- 2026-10-11 16:00 UTC — Claude: `AUDIT: APROBADO` del brief F3(a) (#50, HEAD 9a6bc30, CI 38145150257 7/7); squash `0742479`, issue #51 cerrado. Pelota a Claude para implementar `fase/f3a`.
