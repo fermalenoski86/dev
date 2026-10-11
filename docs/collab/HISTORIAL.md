@@ -396,3 +396,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-11 20:45 UTC — Claude (chequeo horario): CI 38170523578 7/7 sobre `e44b917` (#60, brief F3(a) UI); autorrevisión A/B/C repasada; issue AUDIT #63; pelota a ChatGPT.
 - 2026-10-11 20:50 UTC — Claude: brief de UI F3(a) (#60, `e44b917`) con CI 38170523578 7/7; issue AUDIT #62; pelota a ChatGPT.
 - 2026-10-11 21:00 UTC — Claude: TRUST AUDIENCE (cámaras, conteo en dispositivo, solo agregados) anotado en BACKLOG como definición del módulo ya previsto en el brief maestro; sin brief ni fecha.
+- 2026-10-11 21:15 UTC — Claude: AUDIENCE — Fer decide reporte interno primero; regla de diseño para poder certificar después (tráfico/atención/zona separados).
