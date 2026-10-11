@@ -1,8 +1,16 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor) — acordar el brief de F3(a) en [PR #50](https://github.com/fermalenoski86/dev/pull/50), HEAD `e4983a4` (solo docs); issue [#51](https://github.com/fermalenoski86/dev/issues/51). **Fer:** decidir Q0/Q2 en [#52](https://github.com/fermalenoski86/dev/issues/52) (`decisión-producto`).
-**Fase:** F3(a) — brief documental de "versión vigente" y rollback con cuatro ojos. No se implementa hasta acordar Q1–Q6 y que Fer resuelva Q0.
-**Estado:** BL-08 aprobada y mergeada (`5f06eff`). Pendiente de Fer: #52 (Q0/Q2), tags (`bl31`, `bl07`, `bl08`: el proxy no permite crear refs de tag) y #43.
+**Pelota en:** Claude (implementador de briefs) — corregir únicamente el brief/reporte de F3(a) en [PR #50](https://github.com/fermalenoski86/dev/pull/50) según [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6107845111) y devolverlo a ChatGPT con nuevo SHA; **no implementar código**. **Fer:** decidir Q0/Q2 en [#52](https://github.com/fermalenoski86/dev/issues/52) (`decisión-producto`).
+**Fase:** F3(a) — acuerdo documental de "versión vigente" y rollback con cuatro ojos. La implementación sigue bloqueada hasta resolver los hallazgos y Q0/Q2.
+**Estado:** brief auditado en `e4983a47bb96bf1f31c5f8aa107701313d3d8f4c` contra `main@c050629a106abe840692c0bc5927e7d6088e65ee`: **AUDIT: CAMBIOS**. BL-08 permanece aprobada/mergeada (`5f06eff`). Pendiente de Fer: #52, tags (`bl31`, `bl07`, `bl08`) y #43.
+
+## Auditoría del brief F3(a) — 2026-10-11
+- Veredicto: **AUDIT: CAMBIOS** sobre `e4983a4`; [comentario completo y reproducciones](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6107845111). Issue de auditoría [#51](https://github.com/fermalenoski86/dev/issues/51) queda abierto.
+- [CI exacta 38123614329](https://github.com/fermalenoski86/dev/actions/runs/38123614329): 7/7 `success`, intento 1. El auditor verificó por API el HEAD y las conclusiones; no repitió localmente pnpm/PostgreSQL/ffmpeg/mutaciones/Playwright.
+- Hallazgos [P1]: (1) Q0/Q2 siguen sin respuesta en #52; (2) falta backfill/semántica inicial de `active_version_id` para campañas con aprobación previa; (3) confirm/cancel necesitan idempotencia y las transiciones `CANCELLED`/`EXPIRED` que responden 409 deben persistir junto con su audit.
+- Acuerdo técnico parcial: Q1 función `SECURITY DEFINER` endurecida (`search_path` seguro + revocación pública + grant selectivo); Q3 no INTERNAL_APPROVER al pedir; Q4 no EXTERNAL_APPROVER al confirmar; Q5 24 h perezoso condicionado a persistencia correcta; Q6 API/OpenAPI primero y UI separada con issue.
+- Fuentes primarias contrastadas (2026-10-11): PostgreSQL `CREATE FUNCTION` para seguridad de `SECURITY DEFINER` y NIST Separation of Duty para separación dinámica/two-person rule. No resuelven las decisiones de producto Q0/Q2.
+- Siguiente: Claude actualiza solo docs en la misma rama; Fer responde #52; Claude pide nueva auditoría con HEAD exacto. Prohibido abrir implementación `fase/f3a` antes del acuerdo.
 
 ## Pedido de acuerdo F3(a) — 2026-10-11
 - CI exacta [38123614329](https://github.com/fermalenoski86/dev/actions/runs/38123614329) sobre `e4983a4`, 7/7 al primer intento (verify 763+1, M2C 14/14, e2e-platform 7, media 63/63; sin cambios de código).
