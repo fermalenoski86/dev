@@ -72,6 +72,36 @@ DATABASE_URL=… pnpm --filter @trust/platform-api assets:stale-report -- --olde
 - **Mínimos datos:** id, estado, superficie, creador y tiempos. Sin nombre de
   archivo ni metadatos de medios. Salida JSON; código 0 aunque haya vencidos.
 
+### Reporte de blobs huérfanos (BL-08)
+
+El fallo de §33 (abajo) deja un blob final sin StoredObject. Para verlos sin
+tocarlos:
+
+```bash
+DATABASE_URL=… STORAGE_DRIVER=… LOCAL_STORAGE_ROOT=… \
+  pnpm --filter @trust/platform-api blobs:orphan-report -- --grace-minutes 1440 [--limit 500]
+```
+
+- **Huérfano** = blob `sha256/<2>/<64>` sin StoredObject con ese sha256 y con
+  fecha de escritura en storage más vieja que el período de gracia (default
+  `BLOB_ORPHAN_GRACE_MINUTES` o 1440 = 24 h). La gracia cubre el upload en
+  curso: el blob ya está en storage y su StoredObject todavía no se confirmó.
+- **Orden list → query:** cada tanda de 500 se lista **antes** de consultar la
+  base (transacción `READ ONLY`), así un StoredObject confirmado antes de la
+  consulta siempre se ve.
+- **Cero borrado.** No borra, no mueve, no hashea ni escribe la base. Un
+  huérfano puede dejar de serlo: el retry idempotente o cualquier upload del
+  mismo contenido lo deduplica y le crea su StoredObject (probado). Decidir qué
+  hacer con los que queden es una decisión posterior.
+- Lo que no es clave canónica (nombre raro, shard equivocado, symlink) no se
+  cruza con la base: sale aparte en `unrecognized` para revisión humana.
+- Salida JSON: `scanned`, `referenced`, `withinGrace`, `total`, `totalBytes`,
+  `truncated` e `items` (del más viejo al más nuevo: clave, sha256, tamaño,
+  fecha y antigüedad), más `unrecognized`. Código 0 aunque haya huérfanos.
+- **Reloj:** la gracia se mide con el reloj del host contra la fecha del
+  storage (disco: mtime; S3: `LastModified` del servidor). Con 24 h de gracia,
+  un desvío de minutos no cambia el resultado; con gracias muy cortas, sí.
+
 ### Fallo de la base después del commit de storage (§33)
 
 - El blob final queda como objeto content-addressed **huérfano y seguro**: su

@@ -45,7 +45,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 - `0002_asset_pipeline` (reversible)
 - `0003_approval` (reversible)
 
-## Archivos de test (89)
+## Archivos de test (90)
 
 | Archivo | Suite |
 |---|---|
@@ -58,6 +58,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | `apps/platform-api/src/builder-repository.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/campaigns.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/cli/assets-stale-report.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
+| `apps/platform-api/src/cli/blobs-orphan-report.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/cli/user-create.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/contract.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/cors.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
@@ -139,6 +140,6 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | `scripts/acceptance/matrix.test.ts` | Unidad de app (vitest del paquete) |
 | `scripts/e2e-platform/manifest.test.ts` | Unidad de app (vitest del paquete) |
 
-## Variables de entorno (34, de `.env.example`)
+## Variables de entorno (35, de `.env.example`)
 
-`TRUST_PG_ADMIN_URL` · `TRUST_PG_OWNER_PASSWORD` · `TRUST_PG_APP_PASSWORD` · `DATABASE_URL` · `STORAGE_DRIVER` · `LOCAL_STORAGE_ROOT` · `S3_ENDPOINT` · `S3_REGION` · `S3_BUCKET` · `S3_ACCESS_KEY` · `S3_SECRET_KEY` · `S3_FORCE_PATH_STYLE` · `S3_TEST_ENDPOINT` · `MAX_UPLOAD_BYTES` · `MAX_EVIDENCE_BYTES` · `MEDIA_PROBE_TIMEOUT_MS` · `MEDIA_DECODE_TIMEOUT_MS` · `TEMP_OBJECT_TTL_MS` · `ASSET_STALE_AFTER_MINUTES` · `MEDIA_INSPECTION_CONCURRENCY` · `MEDIA_SCRATCH_DIR` · `FFPROBE_PATH` · `FFMPEG_PATH` · `UPLOAD_MAX_CONCURRENT_PER_ACTOR` · `UPLOAD_MAX_PER_MINUTE_PER_ACTOR` · `HOST` · `PORT` · `LOG_LEVEL` · `NODE_ENV` · `TRUST_SESSION_TTL_MINUTES` · `TRUST_COOKIE_SECURE` · `TRUST_PROXY_HOPS` · `TRUST_CORS_ORIGINS` · `EXTERNAL_APPROVAL_ENABLED`
+`TRUST_PG_ADMIN_URL` · `TRUST_PG_OWNER_PASSWORD` · `TRUST_PG_APP_PASSWORD` · `DATABASE_URL` · `STORAGE_DRIVER` · `LOCAL_STORAGE_ROOT` · `S3_ENDPOINT` · `S3_REGION` · `S3_BUCKET` · `S3_ACCESS_KEY` · `S3_SECRET_KEY` · `S3_FORCE_PATH_STYLE` · `S3_TEST_ENDPOINT` · `MAX_UPLOAD_BYTES` · `MAX_EVIDENCE_BYTES` · `MEDIA_PROBE_TIMEOUT_MS` · `MEDIA_DECODE_TIMEOUT_MS` · `TEMP_OBJECT_TTL_MS` · `ASSET_STALE_AFTER_MINUTES` · `BLOB_ORPHAN_GRACE_MINUTES` · `MEDIA_INSPECTION_CONCURRENCY` · `MEDIA_SCRATCH_DIR` · `FFPROBE_PATH` · `FFMPEG_PATH` · `UPLOAD_MAX_CONCURRENT_PER_ACTOR` · `UPLOAD_MAX_PER_MINUTE_PER_ACTOR` · `HOST` · `PORT` · `LOG_LEVEL` · `NODE_ENV` · `TRUST_SESSION_TTL_MINUTES` · `TRUST_COOKIE_SECURE` · `TRUST_PROXY_HOPS` · `TRUST_CORS_ORIGINS` · `EXTERNAL_APPROVAL_ENABLED`

@@ -205,5 +205,26 @@ export function objectStorageContract(nombre: string, make: () => Promise<Storag
       expect(await s.statTemporary(temporal)).toBeNull();
       expect(await s.exists(key)).toBe(true);
     });
+
+    it('BL-08: listContentObjects enumera los blobs finales (clave, tamaño, fecha) sin temporales y sin tocarlos', async () => {
+      const { storage: s } = await make();
+      const contenido = Buffer.from(`listado ${nuevoId()}`);
+      const id = nuevoId();
+      await s.putTemporary(id, desde(contenido));
+      const { key } = await s.commitContentAddressed(id, { sha256: sha(contenido) });
+      const pendiente = nuevoId();
+      await s.putTemporary(pendiente, desde('todavía temporal'));
+      const antes = Date.now();
+      const vistos = [];
+      for await (const o of s.listContentObjects()) vistos.push(o);
+      const mio = vistos.find((o) => o.key === key);
+      expect(mio).toMatchObject({ key, sizeBytes: contenido.length, regularFile: true });
+      expect(mio?.lastModified.getTime()).toBeLessThanOrEqual(antes + 1000);
+      expect(vistos.every((o) => o.key.startsWith('sha256/'))).toBe(true);
+      expect(vistos.some((o) => o.key.includes(pendiente))).toBe(false);
+      // solo lectura: el blob y el temporal siguen intactos
+      expect((await s.read(key)).equals(contenido)).toBe(true);
+      expect(await s.statTemporary(pendiente)).not.toBeNull();
+    });
   });
 }

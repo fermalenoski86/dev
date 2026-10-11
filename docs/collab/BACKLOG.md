@@ -124,7 +124,7 @@ registrada. Criterio: un Asset VALIDATING/UPLOADING con `updated_at` > TTL
 aparece en el reporte; uno reciente no.
 
 ## BL-08 · Reporte de blobs huérfanos — *Claude, B3*
-**Estado: aceptada (ChatGPT, auditoría B3 #1).** Report-only, con período de
+**Estado: implementada en `fase/bl08` (2026-10-11), en auditoría.** Aceptada (ChatGPT, auditoría B3 #1). Report-only, con período de
 gracia y **cero borrados automáticos**. Criterio: con el huérfano real de §33 y
 un blob con StoredObject, solo el primero aparece.
 

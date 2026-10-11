@@ -1,0 +1,69 @@
+BL-08 · reporte read-only de blobs huérfanos — salida REAL de los gates
+Entorno: v22.22.0 · pnpm 12.5.1 · psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) · ffprobe version 6.1.1-3ubuntu5 · 2026-10-11T06:15Z
+Base: origin/main@8f7a332 · rama fase/bl08 (el SHA exacto auditado y su CI van en el PR)
+
+== pnpm verify
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  50 passed | 1 skipped (51)
+      Tests  763 passed | 1 skipped (764)
+
+== NEXT_PUBLIC_TRUST_API_URL=https://api.trust.test:8443 pnpm build
+build=0
+
+== bash scripts/dev/pg-up.sh
+pg_ctl: server is running
+
+== npx vitest run -c vitest.platform.config.ts (PostgreSQL 16 real)
+ ✓ apps/platform-api/src/cli/blobs-orphan-report.db.test.ts (10 tests) 833ms
+ Test Files  27 passed | 1 skipped (28)
+      Tests  299 passed | 6 skipped (305)
+
+== bash packages/platform-db/scripts/bootstrap-smoke.sh
+      Tests  6 passed (6)
+
+== npx vitest run -c vitest.media.config.ts
+      Tests  63 passed (63)
+
+== python3 scripts/mutation-check.py --tanda 289: (las 9 nuevas de BL-08)
+atrapadas 9 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+
+== npx vitest run packages/platform-storage (contrato de ObjectStorage en disco + listado nuevo)
+      Tests  27 passed | 1 skipped (28)   (el contrato S3 corre en el job compose-smoke de CI)
+
+== smoke del CLI real (pnpm --filter @trust/platform-api blobs:orphan-report -- --grace-minutes 1440) sobre base descartable + LocalDiskStorage real
+base descartable trust_t_9f59faa63c; blobs: referenciado 7f052025d8f0…, huérfano 2 d cc8eb1cf3d6a…, reciente bdc35cd8e07f…
+$ tsx scripts/blobs-orphan-report.ts -- --grace-minutes 1440
+después del reporte: 6 entradas en sha256/ (3 shards + 3 blobs, sin cambios)
+{
+  "generatedAt": "2026-10-11T06:15:51.167Z",
+  "graceMs": 86400000,
+  "storageDriver": "local",
+  "scanned": 3,
+  "referenced": 1,
+  "withinGrace": 1,
+  "total": 1,
+  "totalBytes": 22,
+  "truncated": false,
+  "items": [
+    {
+      "key": "sha256/cc/cc8eb1cf3d6a9ce9cb77e60318cbf508a0c6492184504c41e445109fcac03afe",
+      "sha256": "cc8eb1cf3d6a9ce9cb77e60318cbf508a0c6492184504c41e445109fcac03afe",
+      "sizeBytes": 22,
+      "lastModified": "2026-10-09T06:15:50.367Z",
+      "ageMs": 172800800
+    }
+  ],
+  "unrecognized": {
+    "total": 0,
+    "truncated": false,
+    "items": []
+  }
+}
+
+
+== NO EJECUTADO localmente
+- E2E M2C congelado (14): sin Chrome con H.264 en este entorno → job e2e-m2c de CI.
+- e2e-platform multihost (sin cambios de UI) → job e2e-platform de CI.
+- Contrato S3 (listado incluido): sin SeaweedFS/MinIO local → job compose-smoke de CI.
+- Las 298 mutaciones completas: job de CI. Local: tanda nueva 289:298.

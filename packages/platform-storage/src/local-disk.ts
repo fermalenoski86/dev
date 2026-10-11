@@ -8,7 +8,7 @@ import {
   StorageConflictError, StorageIntegrityError, StorageKeyError, assertContentKey, assertTempId, contentKeyFor,
   parseTempMeta, shaDeClave,
 } from './keys';
-import type { BlobInfo, CommitResult, ObjectStorage, TempObjectInfo } from './types';
+import type { BlobInfo, CommitResult, ContentObjectListing, ObjectStorage, TempObjectInfo } from './types';
 
 /**
  * LocalDiskStorage — Fase B1 + Integrity Gate B1.1.
@@ -292,6 +292,32 @@ export class LocalDiskStorage implements ObjectStorage {
   async stream(key: string): Promise<Readable> {
     const fh = await this.openRead(this.finalPath(key));
     return fh.createReadStream();
+  }
+
+  /**
+   * BL-08 · recorre `sha256/<2>/<entrada>` con lstat (no sigue symlinks) y
+   * reporta cada entrada tal cual. Lo que no es archivo regular sale con
+   * `regularFile: false`; un shard que no es directorio, como entrada propia.
+   */
+  async *listContentObjects(): AsyncIterable<ContentObjectListing> {
+    const base = path.join(this.root, 'sha256');
+    await this.assertDirs(path.join(base, 'x'));
+    const fuera = (rel: string, st: { size: number; mtimeMs: number }, regular: boolean): ContentObjectListing =>
+      ({ key: rel, sizeBytes: st.size, lastModified: new Date(Math.floor(st.mtimeMs)), regularFile: regular });
+    for (const shard of (await fs.readdir(base)).sort()) {
+      const absShard = path.join(base, shard);
+      const st = await fs.lstat(absShard).catch(() => null);
+      if (!st) continue;
+      if (st.isSymbolicLink() || !st.isDirectory()) {
+        yield fuera(`sha256/${shard}`, st, false);
+        continue;
+      }
+      for (const nombre of (await fs.readdir(absShard)).sort()) {
+        const h = await fs.lstat(path.join(absShard, nombre)).catch(() => null);
+        if (!h) continue; // desapareció entre readdir y lstat
+        yield fuera(`sha256/${shard}/${nombre}`, h, h.isFile() && !h.isSymbolicLink());
+      }
+    }
   }
 
   /** Borra reservas cuyo contenido más reciente supera el TTL (completas o a medias). */
