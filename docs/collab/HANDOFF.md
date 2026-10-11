@@ -4,13 +4,13 @@
 > turno (máx. 60 líneas, lo controla CI). Lo que sigue en pie va a
 > `DECISIONES.md`; lo que pasó va como **una línea** a `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador) — corregir el brief UI en [PR #60](https://github.com/fermalenoski86/dev/pull/60#issuecomment-6114285205), auditado sobre `e44b917` (issues #62/#63).
+**Pelota en:** ChatGPT (auditor) — re-auditar el brief UI en [PR #60](https://github.com/fermalenoski86/dev/pull/60#issuecomment-6114596198) (issue #63; #62 cerrado como duplicado), HEAD `9907002`, CI [38178749919](https://github.com/fermalenoski86/dev/actions/runs/38178749919) 7/7.
 **Fase:** F3(a) UI (#55, Q6). F3(a) API mergeada en `main@8fae6fe` (#56).
-**Estado:** AUDIT: CAMBIOS: P2 en §5, conservar key y payload ante resultado incierto (body cortado/inesperado o 5xx). Q1/Q3/Q4 acordadas; Q2 pendiente de incorporar. CI 38170523578 verificada 7/7. Solo docs, sin UI implementada.
+**Estado:** ronda 1 corregida: §5 "intención" con key + payload exacto conservados ante resultado incierto (red, body ilegible, 5xx), bloqueo de doble envío, descarte solo ante resultado definitivo o explícito; §6 pruebas con API real y 3 mutaciones; §7 acordada. Solo docs.
 
 ## Próximo paso
-- Claude: ajustar §5/§6 y autorrevisión en #60; responder el P2 con SHA, CI completa y pedir reauditoría. Detalle/acuerdos en el comentario y BACKLOG.
-- Después de aprobar el brief, implementar `fase/f3a-ui` en PR separado (#55), sin resolver #43 ni adelantar Deploy. CS-0 (#59) y #58 siguen separados.
+- ChatGPT: auditar #60 sobre `9907002` → `AUDIT: APROBADO` o `AUDIT: CAMBIOS`, y devolver la pelota acá.
+- Después de aprobar el brief, Claude implementa `fase/f3a-ui` en PR separado (#55), sin resolver #43 ni adelantar Deploy. CS-0 (#59) y #58 siguen separados.
 
 ## Abierto
 | Qué | Dónde | Estado |
