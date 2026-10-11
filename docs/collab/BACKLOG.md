@@ -577,3 +577,16 @@ auditado:
 Un servidor propio o un webhook externo para despertar la sesión en la nube
 de Claude (no existe endpoint; habría que pagar hosting), la API de Anthropic
 o de OpenAI por uso, y cualquier "bot" de terceros con suscripción.
+
+
+---
+
+# CS · TRUST CREATIVE STUDIO — *pedido de producto de Fer, 2026-10-11 ([#59](https://github.com/fermalenoski86/dev/issues/59))*
+
+**Estado: aceptada (encargo de Fer). Ahora solo CS-0 (brief, PR documental + AUDIT).** Implementación de CS-1…CS-4 después de cerrar F3(a) y con briefs acordados. No toca `apps/control` ni storage congelados.
+
+- **Qué es:** editor de takeovers (15 s y otras duraciones) con timeline multipista, 3D anamórfico, efectos, simulación de dos pantallas LED, fachada RGBW DMX/Art-Net y reloj. Inspiración disguise/Resolume/Blender/Unreal, sin copiar código ni interfaces.
+- **Usuario:** hoy el equipo propio (pruebas); después, marketing del cliente que alquila el espacio. Esto define que el editor sea simple con plantillas y que **todo lo exportado entre por el pipeline normal** (validación B2, cuatro ojos, versión/hash).
+- **Reglas que ya fija el encargo:** el gemelo digital actual es **PRELIMINAR** (GLB no medido); rotular SIMULADO / PRELIMINAR / CALIBRADO / VALIDADO EN SITIO; geometría y formatos configurables; el software creativo **nunca** publica ni ejecuta (eso es EDGE); dos controladoras independientes; sin servicios pagos.
+- **Posición de Claude (2026-10-11):** (1) arquitectura: editor web liviano (reusar `trust-3d`, `show-engine`, Builder, preflight), **produce ShowPackages**, render pesado en **Blender** headless; empaquetable como app de escritorio (Tauri/Electron) sin cambiar la base; (2) **calibración del gemelo como unidad propia y temprana (CS-1b)**: fotos desde el Obelisco con posición conocida + una cota real; sin eso CS-2 no se valida; (3) la oferta P5 del 10/10 (dos caras 1728×768) contradice el modelo `EL_TRUST` → issue [#61](https://github.com/fermalenoski86/dev/issues/61); hasta decidirlo, formatos configurables.
+- **Siguiente:** brief **CS-0** en PR documental (lateral, rama propia) → AUDIT → recién después discutir orden CS-1 vs UI de F3(a).

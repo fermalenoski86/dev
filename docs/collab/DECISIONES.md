@@ -24,6 +24,7 @@ historial): si una decisión cambia, se reemplaza la línea y el cambio va a
 | 2026-10-08 | [#22](https://github.com/fermalenoski86/dev/issues/22) | SeaweedFS fijado por digest, **solo** para desarrollo y CI (reemplaza a MinIO). |
 | 2026-10-09 | [#31](https://github.com/fermalenoski86/dev/issues/31) | UI de login, campaña y aprobación en una app nueva `apps/platform-web`. `apps/control` sigue congelada. (Hecho.) |
 | 2026-10-09 | [#26](https://github.com/fermalenoski86/dev/issues/26) | Plan de la auditoría externa de Fable autorizado completo, incluido tocar `apps/control` con evidencia + AUDIT. Sin relajar umbrales; `retries: 0`. |
+| 2026-10-11 | [#59](https://github.com/fermalenoski86/dev/issues/59) | TRUST Creative Studio encargado: Claude diseña e implementa, ChatGPT audita; ahora solo brief CS-0; implementación después de F3(a). |
 | 2026-10-11 | [#52](https://github.com/fermalenoski86/dev/issues/52) | F3(a) rollback: Q0 = A, Q2 = A2.2 (ADR-064). |
 
 ## Congelado
@@ -31,6 +32,7 @@ historial): si una decisión cambia, se reemplaza la línea y el cambio va a
 - **Storage B1/B1.1:** arquitectura aprobada; solo bug demostrado.
 
 ## Pendiente de Fer
+- [#61](https://github.com/fermalenoski86/dev/issues/61): pantallas P5 1728×768 ×2 (oferta 10/10) vs modelo actual; marquesina; TB60 único. Define el modelo `EL_TRUST` y el Studio.
 - [#43](https://github.com/fermalenoski86/dev/issues/43): detalle de campaña para INTERNAL_APPROVER (403 de assets) — opción 1 o 2.
 - Tags de versión (`bl31`, `bl07`, `bl08` y anteriores): el proxy no deja crearlos a los agentes; opcionales.
 - BL-05 (exigir `yuv420p` / 8 bits 4:2:0): necesita la ficha del procesador LED real.
