@@ -1059,3 +1059,31 @@ Alternativas descartadas:
 - cookie con `Domain=<site>`: pierde el prefijo `__Host-` y la expone a todos
   los subdominios;
 - editor mínimo de draft en `platform-web` sin el Builder: no cumple §41.
+
+## ADR-064 — Versión vigente por campaña: puntero administrativo, siempre con cuatro ojos
+
+**Estado:** decisión de producto de Fer ([#52](https://github.com/fermalenoski86/dev/issues/52#issuecomment-6109129274), 2026-10-11); diseño en `docs/briefs/F3A_REDEPLOY.md` (PR #50), pendiente de auditoría final antes de implementar.
+
+**Contexto.** F3(a) del BACKLOG pide "volver a desplegar una versión aprobada
+anterior" con audit y cuatro ojos, pero M3A.1 no tiene Deploy (master: "No
+deploy endpoints"); Deploy y EDGE quedan para M3B/M3C.
+
+**Decisión.**
+- **Q0 = A:** cada campaña tiene `active_version_id` («versión vigente»), un
+  puntero administrativo separado de `latest_approved_version_id`. No despliega
+  ni envía contenido al edificio; Deploy lo leerá cuando exista.
+- **Q2 = A2.2:** una versión aprobada **nunca** pasa sola a vigente. Toda
+  selección o cambio (la primera, avanzar a una nueva o volver a una anterior)
+  es un pedido + confirmación de **otra persona**, con auditoría e
+  idempotencia. La regla vale aunque el contrato tenga
+  `four_eyes_required = false`.
+- Al migrar, todas las campañas arrancan sin vigente (`NULL`): copiar la última
+  aprobada sería una selección sin dos personas.
+
+**Consecuencias.** `platform-approval` no cambia; la única escritura del
+puntero es la función de confirmación (`SECURITY DEFINER`, segunda barrera en
+la base). Hasta que alguien elija una vigente, `activeVersion` es `null`.
+
+Alternativas descartadas: mover `latest_approved_version_id` hacia atrás
+(rompe su invariante); postergar hasta Deploy (Fer eligió A); que la vigente
+siga sola a la última aprobada (A2.1, descartada por Fer).

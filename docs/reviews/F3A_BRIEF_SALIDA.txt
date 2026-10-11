@@ -1,0 +1,22 @@
+F3(a) brief, ronda 4 — salida REAL de los chequeos (solo documentación)
+Fecha: 2026-10-11T13:55:58Z · base origin/main@43cdcec
+
+== git diff --check origin/main...HEAD
+limpio
+
+== code spans balanceados por línea en el brief
+ok, ninguna línea con backtick impar
+
+== archivos del cambio respecto de main
+ docs/architecture/DECISIONS.md    |  28 ++++
+ docs/briefs/F3A_REDEPLOY.md       | 321 ++++++++++++++++++++++++++++++++++++++
+ docs/collab/BACKLOG.md            |   2 +-
+ docs/reviews/F3A_BRIEF.md         |  98 ++++++++++++
+ docs/reviews/F3A_BRIEF_SALIDA.txt |  23 +++
+ 5 files changed, 471 insertions(+), 1 deletion(-)
+
+== pnpm docs:contract && git diff --exit-code docs/platform (sin cambios de API)
+docs/platform/openapi.json y docs/platform/DELIVERY.md regenerados (28 rutas registradas)
+sin diff
+
+== NO EJECUTADO localmente: suites y E2E (no hay cambios de código; corren en CI sobre el HEAD exacto)

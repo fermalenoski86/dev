@@ -1,0 +1,98 @@
+# F3(a) — brief documental para acuerdo
+
+**Qué es:** solo documento (`docs/briefs/F3A_REDEPLOY.md`). Sin código, sin
+migración, sin cambios de API. Encargado por el `AUDIT: APROBADO` de BL-08
+(#48): preparar el brief y acordarlo con ChatGPT antes de implementar.
+
+**Rama:** `fase/f3a-brief` desde `main@911f7b5`. Salida real: `F3A_BRIEF_SALIDA.txt`.
+
+## Autorrevisión previa
+
+### A. Contra el encargo
+
+| Pedido | Dónde |
+|---|---|
+| Semántica de autorización | brief §3 (roles por paso, scope por contrato, 404/403) y Q3/Q4 |
+| Four-eyes | §3 ("quien pide no confirma", **siempre**, también con `four_eyes_required = false`; app + función + trigger) |
+| Auditoría | §4 (acciones nuevas, misma transacción, `verifyChain`) |
+| Pruebas | §6 (15 criterios verificables + mutaciones `f3a:`) |
+| No inventar producto | §0 (choque con "no deploy" del master); Q0/Q2 decididas por Fer en #52 (Q0 = A, Q2 = A2.2; ADR-064) |
+
+### B. Revisión adversaria del brief
+
+- **"Redeploy" sin deploy:** el master prohíbe Deploy en M3A.1; el brief no lo
+  esconde. Fer eligió (Q0 = A) un puntero de control plane, no un push.
+- **Romper invariantes vigentes:** se descarta mover `latest_approved_version_id`
+  hacia atrás (opción B) porque el servicio de aprobación asume que solo avanza.
+- **Partes estables tocadas:** ninguna. Con A2.2 (decisión de Fer)
+  `platform-approval` no cambia; A2.1, que lo tocaba, quedó descartada. Nada
+  en `apps/control`, M2C, storage B1 ni ShowPackage.
+- **Carreras:** pedido/confirmación con campaña bloqueada, `expectedActiveVersionId`
+  y un solo PENDING por campaña (índice único parcial).
+- **Cuatro ojos eludible:** segunda barrera en la base, como `trust_four_eyes`.
+- **Enumeración:** versión de otra campaña = 404, igual que BL-31.
+- Códigos de error verificados contra el código actual
+  (`SHOW_VERSION_NOT_FOUND`, `INVALID_STATE_TRANSITION`, `VERSION_HASH_MISMATCH`);
+  los nuevos (`ACTIVE_VERSION_*`) quedan propuestos.
+
+### C. CI
+
+Se cita la corrida exacta del HEAD en el pedido de acuerdo. Al ser solo
+documentación, los gates corren igual en CI (sin cambios de código esperados).
+
+## Ronda 1 — respuesta a `AUDIT: CAMBIOS` (2026-10-11)
+
+[Comentario del auditor](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6107845111) sobre `e4983a4`.
+
+| Hallazgo | Respuesta |
+|---|---|
+| 1 [P1] Q0/Q2 sin decisión de producto | **No se puede cerrar desde acá:** la decisión es de Fer en #52 (abierta, sin respuesta). El brief queda marcado como **bloqueado por Q0/Q2** (encabezado y §7); no se implementa ni se pide aprobar la versión final hasta registrar su respuesta. |
+| 2 [P1] Sin backfill de `active_version_id` | Agregado §1.5: backfill `active_version_id = latest_approved_version_id` en la misma migración; campaña sin aprobaciones = `null` (sin vigente); down/up con datos poblados; criterio §6.12. Vale para A2.1 y A2.2. |
+| 3 [P1] Reintentos y 409 con efecto | Agregados §3.6 (Idempotency-Key en pedir, confirmar y cancelar, con operación, fingerprint y replay definidos sobre `withIdempotency`) y §3.7 (los 409 que terminalizan un pedido **devuelven** `{status: 409}` desde la función de `withIdempotency` → COMMIT del estado, del audit y de la respuesta guardada; los 409 sin efecto siguen con `throw`). Criterios §6.8 (confirmación aplicada con respuesta perdida) y §6.13 (estado y audit persistidos después del 409, con mutación `return`→`throw`). |
+| Q1/Q3/Q4/Q5/Q6 | Incorporadas como **acordadas** (§1.4, §3.1, §3.2, §3.4, §5, §7). Q1 con el endurecimiento pedido (`search_path` con `pg_temp` al final, `REVOKE … FROM PUBLIC`, grant a `trust_app`) y criterio §6.14. Q5 con reloj de la base. |
+
+Mecanismo de §3.7 verificado contra el código: `withIdempotency` guarda
+`{status, body}` de lo que devuelve la función y hace COMMIT; en el replay
+devuelve el status guardado (`packages/platform-db/src/idempotency.ts`).
+
+## Ronda 2 — `AUDIT: CAMBIOS` (2026-10-11)
+
+[Comentario](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6108767635): hallazgos 2 y 3 **cerrados** (sin evento de backfill); hallazgo 1 sigue abierto por #52.
+
+| Hallazgo | Respuesta |
+|---|---|
+| [P2] tabla §7 con cabecera duplicada | Corregido: queda una sola cabecera `# \| Pregunta \| Estado` y su separador. |
+
+## Ronda 3 — decisión de Fer incorporada (2026-10-11)
+
+[Decisión en #52](https://github.com/fermalenoski86/dev/issues/52#issuecomment-6109129274): **Q0 = A**, **Q2 = A2.2**. [Pedido en #50](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6109131290): incorporar ambas, revisar backfill y máquina de estados para A2.2, documentar el producto y pedir auditoría final.
+
+| Cambio | Dónde |
+|---|---|
+| Q0 = A registrada (puntero administrativo, sin Deploy) | brief §0, §7; ADR-064 |
+| Q2 = A2.2: nunca automática; `platform-approval` no se toca; sin `ACTIVE_VERSION_FOLLOWED_APPROVAL` | brief §2 (tabla de la máquina de estados), §4, §6.7 |
+| **Backfill revisado:** todas las campañas arrancan en `NULL` (copiar la última aprobada sería una selección sin dos personas). Reemplaza lo cerrado en la ronda 2 | brief §1.5, §6.12 (con mutación) |
+| Cuatro ojos **siempre**, también con `four_eyes_required = false` ("segunda persona autorizada" para toda selección) | brief §3, §3.2, §6.2 |
+| Primera selección con `expectedActiveVersionId: null` | brief §3.1, §6.7 |
+| Documentación de producto | `docs/architecture/DECISIONS.md` ADR-064; `docs/collab/BACKLOG.md` F3 |
+
+Declarado para la auditoría final: (1) backfill en `NULL` en vez de la última
+aprobada; (2) cuatro ojos sin excepción por contrato.
+
+### Autorrevisión adversaria de la ronda 3 (antes de pedir la auditoría final)
+
+| Cómo se rompe | Qué se hizo |
+|---|---|
+| Con `from_version_id = NULL` (primera selección), un chequeo `vigente <> from` en SQL da `NULL` y no dispara el conflicto: un pedido viejo podría pisar una vigente fijada por otro camino | Regla explícita `IS NOT DISTINCT FROM` en pedir y confirmar (§3.1, §3.2) y criterio §6.15 con mutación |
+| Cuatro ojos siempre: un contrato con una sola persona con roles nunca puede fijar vigente | Declarado como consecuencia en §3 (sin excepción en código; si molesta, decide Fer) |
+| Cambio de backfill respecto de la ronda 2 | Declarado arriba para que el auditor lo juzgue |
+
+## Ronda 4 — `AUDIT: CAMBIOS` de la auditoría final (2026-10-11)
+
+[Comentario](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6109756547) sobre `92f2b75`: Q0/Q2, `NULL`, ADR-064 y rondas 1–2 correctos.
+
+| Hallazgo | Respuesta |
+|---|---|
+| [P1] replay "200" contradice el 201 de pedir | §3.6: replay = **mismo status y body** que la respuesta original (pedir 201→201; confirmar/cancelar 200→200; terminalización 409→409), como hace `withIdempotency`. §6.8: una prueba por operación y mutación. |
+| [P2] backtick sin cerrar en confirmar y frase rota en §4 | Endpoint de confirmar en una sola línea de código; §4 reescrito: A2.2 no genera ningún evento al aprobar. |
+| [P2] autorrevisión inicial desactualizada | §A/§B actualizados: cuatro ojos siempre, 15 criterios, A2.1 descartada, `platform-approval` sin cambios. |
