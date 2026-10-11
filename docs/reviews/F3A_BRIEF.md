@@ -77,3 +77,11 @@ devuelve el status guardado (`packages/platform-db/src/idempotency.ts`).
 
 Declarado para la auditoría final: (1) backfill en `NULL` en vez de la última
 aprobada; (2) cuatro ojos sin excepción por contrato.
+
+### Autorrevisión adversaria de la ronda 3 (antes de pedir la auditoría final)
+
+| Cómo se rompe | Qué se hizo |
+|---|---|
+| Con `from_version_id = NULL` (primera selección), un chequeo `vigente <> from` en SQL da `NULL` y no dispara el conflicto: un pedido viejo podría pisar una vigente fijada por otro camino | Regla explícita `IS NOT DISTINCT FROM` en pedir y confirmar (§3.1, §3.2) y criterio §6.15 con mutación |
+| Cuatro ojos siempre: un contrato con una sola persona con roles nunca puede fijar vigente | Declarado como consecuencia en §3 (sin excepción en código; si molesta, decide Fer) |
+| Cambio de backfill respecto de la ronda 2 | Declarado arriba para que el auditor lo juzgue |

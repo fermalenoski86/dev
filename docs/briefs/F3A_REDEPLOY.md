@@ -137,6 +137,11 @@ de Fer (A2.2) exige "una segunda persona autorizada" para **toda** selección o
 cambio, así que acá `four_eyes_required = false` del contrato **no** la
 relaja (declarado para la auditoría final).
 
+Consecuencia declarada: un contrato con **una sola persona** con roles de
+plataforma no puede fijar nunca una vigente (nadie más confirma). Hoy no rompe
+nada (no hay Deploy que lea el puntero) y es lo que pide A2.2; si se vuelve un
+problema operativo, es decisión de Fer, no una excepción en el código.
+
 1. **Pedir** — `POST /api/v1/campaigns/:id/active-version-changes`
    `{ versionId, versionHash, reason, expectedActiveVersionId }`.
    - Roles: OPERATOR · ADMIN (**Q3 acordada:** INTERNAL_APPROVER no pide).
@@ -151,7 +156,10 @@ relaja (declarado para la auditoría final).
    - `expectedActiveVersionId` (uuid o `null`, obligatorio) = vigente actual
      (`null` para la primera selección), si no 409
      `ACTIVE_VERSION_CONFLICT` con `details.activeVersionId` (concurrencia
-     optimista, §48.3).
+     optimista, §48.3). Con `NULL` posible de los dos lados, la comparación es
+     `IS NOT DISTINCT FROM` (en SQL) / igualdad estricta con `null` (en TS),
+     nunca `=`/`<>`: `v1 <> NULL` da `NULL` y un chequeo `IF … <> …` dejaría
+     pasar un pedido viejo de "primera selección" sobre una vigente ya fijada.
    - Ya es la vigente → 409 `ACTIVE_VERSION_UNCHANGED`. Ya hay un PENDING →
      409 `ACTIVE_VERSION_CHANGE_PENDING` con su id.
    - 201 con el pedido. Audit `ACTIVE_VERSION_CHANGE_REQUESTED`.
@@ -164,7 +172,8 @@ relaja (declarado para la auditoría final).
      la función y en un trigger de la tabla (no hay forma de confirmar el
      propio pedido).
    - Relee todo con la campaña bloqueada: pedido `PENDING` y no vencido, la
-     vigente sigue siendo `from_version_id` (si no, 409
+     vigente sigue siendo `from_version_id` (`IS NOT DISTINCT FROM`, ver §3.1;
+     si no, 409
      `ACTIVE_VERSION_CONFLICT` y el pedido queda `CANCELLED`, **persistido**:
      ver §3.7), destino sigue APPROVED, hash coincide.
    - Mueve `active_version_id`, marca `CONFIRMED`, audit
@@ -282,6 +291,12 @@ PostgreSQL real, sin mocks en el camino feliz:
     `search_path` de la función termina en `pg_temp` (consulta a
     `pg_proc.proconfig`); `trust_app` no puede hacer UPDATE directo de
     `active_version_id`.
+15. **`NULL` en la concurrencia optimista:** pedido de primera selección
+    (`from_version_id NULL`) y vigente puesta en v1 por fuera (superusuario, solo
+    en el test) antes de confirmar → 409 `ACTIVE_VERSION_CONFLICT` y pedido
+    `CANCELLED`; al revés (pedido con `from = v1`, vigente llevada a `NULL`) →
+    también 409. Mutación: reemplazar `IS NOT DISTINCT FROM` por `=`/`<>` en la
+    función hace fallar el test.
 
 ## 7. Preguntas a acordar (resumen)
 
