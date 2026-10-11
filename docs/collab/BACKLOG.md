@@ -590,3 +590,17 @@ o de OpenAI por uso, y cualquier "bot" de terceros con suscripción.
 - **Reglas que ya fija el encargo:** el gemelo digital actual es **PRELIMINAR** (GLB no medido); rotular SIMULADO / PRELIMINAR / CALIBRADO / VALIDADO EN SITIO; geometría y formatos configurables; el software creativo **nunca** publica ni ejecuta (eso es EDGE); dos controladoras independientes; sin servicios pagos.
 - **Posición de Claude (2026-10-11):** (1) arquitectura: editor web liviano (reusar `trust-3d`, `show-engine`, Builder, preflight), **produce ShowPackages**, render pesado en **Blender** headless; empaquetable como app de escritorio (Tauri/Electron) sin cambiar la base; (2) **calibración del gemelo como unidad propia y temprana (CS-1b)**: fotos desde el Obelisco con posición conocida + una cota real; sin eso CS-2 no se valida; (3) la oferta P5 del 10/10 (dos caras 1728×768) es solo orientativa: **Fer decidió (#61) mantener las medidas de `EL_TRUST`** (Corrientes más chica, Pellegrini más grande); formatos configurables igual.
 - **Siguiente:** brief **CS-0** en PR documental (lateral, rama propia) → AUDIT → recién después discutir orden CS-1 vs UI de F3(a).
+
+---
+
+# AUD · TRUST AUDIENCE — conteo de personas y atención con cámaras — *Fer, 2026-10-11*
+
+**Estado: anotada (módulo ya previsto en el brief maestro como "Audience Analytics / cámaras", lista "después de M3A.1"). Sin brief ni fecha; se define después del Studio o antes si tiene prioridad comercial.** Esto fija qué es, para que el Studio y EDGE no lo contradigan.
+
+- **Qué es:** un equipo propio en el edificio (**Jetson Orin NX 16 GB industrial**, separado de EDGE) con 2 cámaras IP PoE exteriores (una por vereda) que cuenta **en el dispositivo** y manda a TRUST CONTROL **solo números agregados** por franja horaria y por campaña: personas que pasan, cuántas miran la fachada y por cuánto tiempo (atención por orientación de la cabeza), peatones vs vehículos, opcionalmente rango etario/género como estadística agregada.
+- **Qué no hace, por diseño:** no reconoce caras ni identifica a nadie; no guarda ni transmite video ni imágenes (se procesan y descartan en memoria); no sigue personas entre cámaras. Así no hay dato personal (Ley 25.326) y no hace falta consentimiento. Es una regla de arquitectura, no una opción.
+- **Por qué separado de EDGE:** el show nunca depende de la visión. Si AUDIENCE se cae o se actualiza, las pantallas siguen; un takeover pesado no le roba GPU al conteo.
+- **Valor:** impresiones y atención **por takeover** ("4.200 expuestas, 31% miró, 2,8 s"), la métrica que compra el mercado DOOH. Conecta con la medición de tráfico de Affinitas.
+- **Interfaz que ya entra en CS-0:** el ShowPackage lleva un `campaignId`/`versionId` y AUDIENCE reporta contra ese identificador; Proof of Play y AUDIENCE comparten la línea de tiempo de EDGE.
+- **Hardware orientativo:** Jetson Orin NX 16 GB en caja industrial sin ventilador USD 1.000–1.500; 2 cámaras IP PoE exteriores USD 200–400 c/u; switch PoE. Total ~USD 1.800–2.500. No se compra hasta tener brief.
+- **Decisión de Fer pendiente cuando llegue el momento:** prioridad frente al Studio, y si el conteo se vende al cliente como dato certificado (requiere metodología y auditoría externa tipo Geopath/ESOMAR) o solo como reporte interno.
