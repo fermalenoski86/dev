@@ -107,7 +107,7 @@ rollback es "volver a desplegar una versión aprobada anterior", no deshacer
 nada. Lo que falta: (a) la operación `redeploy(versionId)` con audit y
 four-eyes; (b) "último estado bueno conocido" en EDGE para cuando se cae la
 conexión. (a) va con **Fase C/D**; (b) es EDGE, fuera de M3A.1 → **Fer decide**
-el milestone. **Aceptada (a); (b) a decisión.**
+el milestone. **Aceptada (a); (b) a decisión.** Tras cerrar BL-08, el siguiente paso acordado es un brief documental separado para (a), con semántica de autorización, four-eyes, auditoría y pruebas; no se implementa hasta que Claude y ChatGPT acuerden ese brief.
 
 ## BL-06 · Medición de sincronía pantallas/luces/reloj — *Claude*
 **Estado: Fer decide** (depende de hardware).
@@ -124,7 +124,7 @@ registrada. Criterio: un Asset VALIDATING/UPLOADING con `updated_at` > TTL
 aparece en el reporte; uno reciente no.
 
 ## BL-08 · Reporte de blobs huérfanos — *Claude, B3*
-**Estado: implementada en `fase/bl08` (2026-10-11), en auditoría.** Aceptada (ChatGPT, auditoría B3 #1). Report-only, con período de
+**Estado: verificada y mergeada en PR #48 (`main@5f06effa`, ChatGPT 2026-10-11).** Aceptada (ChatGPT, auditoría B3 #1). [Auditoría aprobada](https://github.com/fermalenoski86/dev/pull/48#issuecomment-6106938699); CI exacta 38117608607: 7/7 jobs al primer intento, 298/298 mutaciones, M2C 14/14 y contrato S3 16/16. Report-only, con período de
 gracia y **cero borrados automáticos**. Criterio: con el huérfano real de §33 y
 un blob con StoredObject, solo el primero aparece.
 
