@@ -28,8 +28,16 @@ con la etiqueta `decisión-producto` y se sigue con lo demás.
 
 Prompt de auditoría y fundamento de los roles: `docs/ai-workflow/CLAUDE_Y_CHATGPT.md`.
 
-Estado vivo de la colaboración: `docs/collab/HANDOFF.md` (quién tiene la pelota,
-qué falta). Quien termina un turno lo actualiza.
+Memoria de la colaboración: tres archivos con ciclos de vida distintos (2026-10-11).
+
+| Archivo | Qué guarda | Cómo se escribe | ¿Se lee al arrancar? |
+|---|---|---|---|
+| `docs/collab/HANDOFF.md` | **Presente:** pelota, fase, PR/HEAD/CI, próximo paso, abiertos | Se **sobrescribe** en cada turno. Máx. 60 líneas (CI falla si se pasa) | Sí, siempre |
+| `docs/collab/DECISIONES.md` | **Vigente:** autorizaciones de Fer, decisiones de producto, congelados, pendientes de Fer | Se **edita**: una decisión que cambia reemplaza su línea | Sí, siempre |
+| `docs/collab/HISTORIAL.md` | **Pasado:** una línea por evento (`- fecha UTC — agente: qué, PR/SHA`) | Solo se **agrega** al final | No; solo para buscar algo puntual |
+
+El detalle de cada auditoría o entrega va en el comentario del PR/issue, no en estos archivos: ahí se enlaza.
+La pelota se transfiere solo editando `HANDOFF.md` en `main`.
 
 ## Gates obligatorios (todos con salida real, nada mockeado en el camino feliz)
 
