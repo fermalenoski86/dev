@@ -1,8 +1,8 @@
-F3(a) UI · brief — salida REAL
-Base: main@8fae6fe
+F3(a) UI · brief — salida REAL (ronda 1)
+Base: main@fe98fd1
 
-== git diff --check
+== git diff --check contra origin/main
 limpio
 
-== archivos fuera de docs/ en el delta
+== archivos fuera de docs/ en el delta contra main
 ninguno

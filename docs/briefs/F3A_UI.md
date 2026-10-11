@@ -11,7 +11,7 @@
   de versión vigente (#55/Q6), en PR separado desde main, para acordar alcance y
   pruebas antes de codificar".
 
-**Propuesto por Claude el 2026-10-11.** Es solo documentación: no se codifica
+**Propuesto por Claude el 2026-10-11. Ronda 1 incorporada el mismo día** (§5, §6 y §7). Es solo documentación: no se codifica
 nada hasta el `AUDIT: APROBADO` de este brief. Lo que el repo no decide va
 marcado con ❓. Si una ❓ cambia producto, va a `decisión-producto` para Fer.
 
@@ -110,22 +110,44 @@ Todo 409 se muestra con su mensaje y la página **vuelve a leer el estado**:
 Sin sesión, el comportamiento es el de siempre (`SessionGate`). Un error de red
 se muestra con el botón "Reintentar".
 
-## 5. Idempotencia en la UI (❓2)
+## 5. Idempotencia en la UI (❓2, ajustada en la ronda 1)
 
-Hoy el cliente usa una key nueva por llamada.
+Hoy el cliente usa una key nueva por llamada. La propuesta es **una
+"intención" por operación del usuario** (pedir, confirmar o cancelar). La
+intención guarda juntos la **key y el payload exacto**: ruta, ids y cuerpo,
+incluido `expectedActiveVersionId`.
 
-**Propuesta:** **una key por intención del usuario**. Se genera al abrir el
-paso de "Confirmar" o al enviar el formulario de "Pedir".
+**Ciclo de la intención (igual para pedir, confirmar y cancelar):**
 
-- **Reintento por red:** si la respuesta no llegó y el usuario aprieta
-  "Reintentar", se reusa la misma key. Así un 201/200 perdido vuelve como replay
-  y no como un 409.
-- **Datos cambiados:** si el usuario cambia algo (otra versión, otro motivo),
-  la key es nueva.
-- **Respuesta recibida:** cuando llegó una respuesta (éxito o error), la key se
-  descarta.
+1. **Se crea** cuando el usuario envía el formulario de "Pedir" o aprieta
+   "Confirmar cambio" o "Cancelar pedido". Se genera la key y se congela el
+   payload con lo que la página mostraba en ese momento.
+2. **En vuelo:** el botón queda deshabilitado y no se puede crear otra
+   intención para la misma acción. Así no hay doble envío.
+3. **Resultado incierto:** la intención se conserva y la pantalla muestra "No
+   sabemos si se aplicó" con el botón **"Reintentar"**. El reintento manda **la
+   misma key y el mismo payload**: no se genera otra key ni se reconstruye nada
+   desde un GET nuevo. Se considera incierto:
+   - error de red, corte o timeout (`NETWORK_ERROR`, status 0);
+   - respuesta con cuerpo ilegible o que no valida contra el schema
+     (`UNEXPECTED_RESPONSE`, aunque el status sea 200 o 201);
+   - cualquier 5xx, incluidos 502 y 504 de un intermediario, que pueden llegar
+     después del COMMIT del origen (RFC 9110 §15.6).
+4. **Resultado definitivo:** se descarta la intención y la página vuelve a leer
+   el estado. Es definitivo:
+   - un 2xx con cuerpo válido;
+   - un 4xx con cuerpo de error válido, incluidos los 409 que terminalizan el
+     pedido (vencido o conflicto);
+   - un 409 `IDEMPOTENCY_KEY_REUSED`, que en la práctica no ocurre porque el
+     payload está congelado.
+5. **Abandono explícito:** si el resultado es incierto, el usuario también puede
+   apretar "Descartar y volver a leer". Recién ahí se descarta la intención y,
+   si quiere, empieza una operación nueva, con otra key. Cambiar versión o
+   motivo en el formulario también es una operación nueva.
 
-Esto usa lo que la API ya garantiza: mismo status y mismo body en el replay.
+La intención vive solo en memoria, mientras dura la página: no hay persistencia
+entre sesiones ni API nueva. El replay de la API ya garantiza el mismo status
+y el mismo body: un 200 o 201 perdido vuelve como replay y no como un 409.
 
 ## 6. Pruebas (criterios verificables)
 
@@ -136,17 +158,31 @@ Esto usa lo que la API ya garantiza: mismo status y mismo body en el replay.
    - quien pidió con doble rol no ve "Confirmar";
    - el texto "no despliega contenido" siempre está;
    - estado en texto.
-2. **Unidad del cliente** (`api-f3a.test.ts`):
+2. **Unidad del cliente y de la intención** (`api-f3a.test.ts`):
    - los tres POST mandan CSRF y `Idempotency-Key`;
-   - el reintento reusa la key y un cambio de datos la renueva (❓2);
+   - la tabla de §5 completa: red, cuerpo cortado con status 200, 502, 504 y
+     500 conservan key y payload; 2xx válido, 4xx válido y 409 terminal la
+     descartan;
+   - un reintento manda exactamente la misma key y el mismo payload;
+   - "Descartar" seguido de un cambio de datos genera otra key;
+   - no se puede enviar dos veces mientras hay una intención en vuelo;
    - los schemas Zod de respuesta.
 3. **Cliente contra la API real** (`platform-web-f3a.db.test.ts`, como
    `platform-web-bl31.db.test.ts`), con HTTP, CORS, cookie y PostgreSQL:
    - OPERATOR pide, INTERNAL_APPROVER confirma y la vigente cambia;
    - el mismo usuario no confirma;
    - el conflicto termina en 409 y el pedido queda cancelado;
-   - un reintento con la misma key devuelve el mismo 200;
-   - el historial se pagina.
+   - **respuesta perdida con la operación aplicada**, para pedir, confirmar y
+     cancelar: el `fetch` del navegador simulado deja pasar la solicitud a la
+     API real pero corta el cuerpo de la respuesta. Después el reintento de la
+     misma intención devuelve el status y el body originales, con un solo
+     cambio y un solo evento de audit;
+   - lo mismo con un **502 o 504 interpuesto** por un proxy de prueba después
+     de que la API respondió;
+   - una intención distinta usa una key nueva y no es un replay;
+   - el historial se pagina, y el detalle de un pedido viejo se resuelve por
+     ids y páginas siguientes, sin suponer que la versión está en la primera
+     página.
 4. **E2E Playwright** (`e2e-platform/active-version.spec.ts`), con dos sesiones
    reales:
    - el operador pide volver a v1;
@@ -162,19 +198,28 @@ Esto usa lo que la API ya garantiza: mismo status y mismo body en el replay.
    - mostrar "Confirmar" a quien pidió;
    - mandar `expectedActiveVersionId` de otra fuente que la página;
    - key nueva en el reintento;
+   - descartar la intención ante una respuesta incierta (`UNEXPECTED_RESPONSE`
+     o 5xx);
+   - reconstruir el payload del reintento desde un GET nuevo;
+   - permitir un segundo envío en vuelo;
    - no recargar tras un 409;
    - esconder el texto "no despliega".
 6. **Gates de siempre:** M2C 14/14, `next build` estricto (BL-30), y
    OpenAPI/DELIVERY sin cambios de la API.
 
-## 7. Preguntas a acordar
+## 7. Preguntas acordadas (ronda 1, [#60](https://github.com/fermalenoski86/dev/pull/60#issuecomment-6114285205))
 
-| # | Pregunta | Propuesta |
+| # | Pregunta | Acordado |
 |---|---|---|
-| ❓1 | ¿Página propia o sección del detalle de campaña? | Página propia `/campaigns/[id]/active-version`, independiente de #43 |
-| ❓2 | ¿Key por intención, con reuso en el reintento? | Sí (§5) |
-| ❓3 | ¿Cómo se muestra quién pidió o confirmó? La API devuelve solo ids y no hay ruta de usuarios | "Vos" si es la sesión; si no, un id corto. Mostrar nombres pide una ruta nueva de lectura de usuarios: va aparte, como propuesta, si se quiere |
-| ❓4 | ¿El paso "Confirmar" pide reescribir algo (por ejemplo, el número de versión)? | No. Alcanza con un paso explícito que muestre origen, destino y hashes. El servidor exige el hash exacto |
+| ❓1 | ¿Página propia o sección del detalle de campaña? | **Aceptada:** página propia `/campaigns/[id]/active-version`, independiente de `GET /assets`. #43 sigue abierto; sin cambios de permisos en el backend |
+| ❓2 | ¿Una key por intención, con reuso en el reintento? | **Aceptada con el ajuste de la ronda 1:** key y payload exacto conservados mientras el resultado sea incierto (§5) |
+| ❓3 | ¿Cómo se muestra quién pidió o confirmó? | **Aceptada:** "Vos" si es la sesión; si no, un id corto con acceso al id completo (texto seleccionable y `title`) para trazabilidad. Sin nombres inventados ni ruta de usuarios |
+| ❓4 | ¿El paso "Confirmar" pide reescribir algo? | **Aceptada:** no. Un paso explícito con origen, destino, hashes y motivo |
+
+**Precisión de implementación:** los detalles de un pedido (número y hash de
+las versiones de origen y destino) se reconstruyen con los ids de campaña y de
+pedido y la paginación existente de `GET /campaigns/:id/versions`. No se supone
+que una versión vieja esté en la primera página.
 
 Con `AUDIT: APROBADO` de este brief, la implementación va en `fase/f3a-ui` como
 PR aparte, con reporte `docs/reviews/F3A_UI.md`, salida real y autorrevisión
