@@ -273,3 +273,139 @@ https://github.com/fermalenoski86/dev/pull/36#issuecomment-6091297474.
   identificadores que luego habilitan BOLA. Límite: la guía define el riesgo,
   pero el modelo concreto de permisos sigue siendo el contrato interno de
   TRUST.
+
+---
+
+# Propuesta de proceso P-01…P-05 — *Claude, 2026-10-11, pedido de Fer*
+
+**Estado: propuesta.** Nada de esto se implementa hasta el acuerdo de ChatGPT
+(ajustar o descartar con motivo, ítem por ítem). No frena F3(a). Restricciones
+de Fer: cambios chicos, separados y auditables; sin archivos de memoria nuevos;
+estructura HANDOFF / DECISIONES / HISTORIAL intacta.
+
+Orden propuesto: P-01 → P-02 → P-05 → P-04 → P-03. Cada uno es un PR propio,
+auditado como cualquier otro.
+
+## P-01 · Protección del HANDOFF (prioridad 1)
+- **Problema observado:** el 2026-10-07 el PR #2 quedó en conflicto porque la
+  rama y `main` editaron `HANDOFF.md` en paralelo. Hoy la regla "releer antes de
+  escribir" es de buena voluntad; nada la hace cumplir.
+- **Propuesta (dos piezas, sin archivos nuevos):**
+  1. `scripts/collab/handoff.sh`: único camino para escribir `HANDOFF.md`.
+     Hace `git fetch`, compara el SHA de `main` con el que el agente leyó al
+     arrancar (`HANDOFF_BASE_SHA`, que el propio script imprime al leer),
+     y si `main` se movió **aborta** y muestra el diff: el agente relee y
+     reintenta. Después commitea y hace `git push` con
+     `--force-with-lease=main:<sha leído>`, así un push concurrente del otro
+     agente no se pisa nunca (el lease lo rechaza).
+  2. CI (`gates.yml`, job `verify-build`): ≤ 60 líneas (ya está) + el
+     archivo tiene exactamente una línea `**Pelota en:**` con valor `Claude`
+     o `ChatGPT`, y sin marcadores de conflicto (`<<<<<<<`).
+- **Esfuerzo:** 0,5 día. **Riesgo:** bajo (scripts + CI).
+- **Criterio de aceptación:** test del script con dos escritores simulados
+  sobre un repo bare local: el segundo aborta con mensaje claro y sin perder
+  su cambio; con `main` quieto, escribe y pushea. CI falla con dos "Pelota en"
+  o con un marcador de conflicto. AGENTS.md documenta el script como el único
+  camino; los prompts de ambos agentes lo usan.
+
+## P-02 · Progreso verificable (prioridad 1)
+- **Problema observado:** "M3A.1 cerrada" es cierto para el software de
+  gestión, pero Fer no tiene una vista que separe eso de lo que todavía no
+  existe (NovaStar, DMX, reloj, hardware). Un porcentaje a ojo engañaría.
+- **Propuesta:** `scripts/collab/progress.mjs` genera
+  `docs/collab/PROGRESO.md` **a partir de datos existentes**, sin opinión:
+  - **Fuente de entregables:** los briefs (`docs/briefs/*.md`, secciones
+    "Checkpoints"/"Entregables") y `M3A1_ACEPTACION.md` (los 19 puntos §48
+    ya tienen estado por test).
+  - **Fuente de estado:** tags `[§N]` en tests (como hace `acceptance:check`),
+    issues `AUDIT:` cerrados con `AUDIT: APROBADO`, PRs mergeados.
+  - **Cinco pistas separadas**, una tabla cada una: Software de gestión
+    (plataforma + platform-web) · Integración NovaStar/procesador LED ·
+    DMX/Art-Net/iluminación · Reloj/cúpula · Hardware físico e instalación.
+    Hoy las últimas cuatro muestran **0 entregables definidos**: eso es el
+    dato, no se rellena.
+  - **Tres columnas de verdad por entregable:** `código` (PR mergeado +
+    AUDIT) · `probado simulado` (tests/CI) · `probado con equipo real`
+    (requiere evidencia enlazada: nunca se marca desde el repo solo).
+  - Solo **conteos** (n/N) por pista y columna. Nada de porcentaje global.
+- **Esfuerzo:** 1 día. **Riesgo:** bajo (solo docs generados).
+- **Criterio de aceptación:** `pnpm progress:check` falla en CI si
+  `PROGRESO.md` no coincide con lo generado (misma regla que DELIVERY.md).
+  Un entregable sin test ni AUDIT aparece como `pendiente`, nunca como hecho.
+  La columna "equipo real" está vacía en todo el repo hoy y el documento lo
+  dice en una línea. Nota a acordar: `PROGRESO.md` es un **archivo generado**
+  (como DELIVERY.md), no un archivo de memoria; si ChatGPT lo considera
+  violación de "sin archivos nuevos", alternativa: sección generada dentro de
+  `DELIVERY.md`.
+
+## P-03 · Auditoría basada en riesgo (prioridad 3)
+- **Problema observado:** una corrección de typo en docs y una migración de
+  DB reciben la misma auditoría. El tiempo del auditor es el cuello de botella
+  (ronda cada 2 h).
+- **Propuesta:** el PR declara `Riesgo: bajo | medio | alto` con una regla
+  mecánica, no a criterio:
+  - **alto:** toca `packages/platform-db/migrations`, `platform-auth`,
+    `platform-approval`, storage, procesos externos (ffmpeg/ffprobe), CORS/CSRF,
+    `apps/control` congelado, o cualquier cosa que mande señal a hardware
+    (cuando exista).
+  - **medio:** API, platform-web, show-engine, tests que son gate.
+  - **bajo:** docs, scripts de collab, CI sin cambiar gates.
+  - CI calcula el nivel desde los paths tocados y lo compara con el declarado
+    (`scripts/collab/risk.mjs`); si el PR declara menos, falla.
+  - **Todos los gates corren siempre.** Lo que cambia es el **mínimo de
+    auditoría**: bajo = delta + CI; medio = lo de hoy; alto = lo de hoy +
+    sección obligatoria "Pruebas adversarias" en el PR con al menos un caso de
+    cada eje aplicable (permisos cruzados, concurrencia, fallo de
+    infraestructura a mitad de operación, rollback, y, para control físico,
+    "qué pasa si el comando llega dos veces / tarde / nunca").
+- **Esfuerzo:** 1 día. **Riesgo:** bajo.
+- **Criterio de aceptación:** el script clasifica correctamente los últimos
+  10 PRs mergeados (tabla en el PR); un PR alto sin la sección adversaria
+  falla en CI; AGENTS.md define los tres mínimos.
+
+## P-04 · Diagnóstico de fallas (prioridad 2)
+- **Problema observado:** en #26 tardamos dos días en separar "test con carrera"
+  de "runner lento", y ni Claude ni ChatGPT pueden bajar logs/artifacts por el
+  proxy: solo anotaciones.
+- **Propuesta:** extender lo que ya existe (`scripts/ci/run.sh`, `gates.yml`):
+  1. Todo job publica como anotación: SHA, `ImageOS/ImageVersion`, versiones
+     de Node/pnpm/Chrome/ffmpeg/PostgreSQL, y la cola del error. Hoy solo lo
+     hace e2e-m2c.
+  2. `test-results/` como artifact al fallar, en todos los jobs (hoy solo
+     e2e-m2c).
+  3. Clasificación obligatoria al comentar una falla en el PR, con tres
+     valores y su prueba: **regresión reproducible** (falla 2/2 en el mismo
+     SHA o en local) · **intermitente** (pasa y falla en el mismo SHA; se
+     abre/actualiza un issue `flaky` con la tabla run/SHA/región, como #26) ·
+     **infraestructura** (el error es del runner/red/paquete, con la línea
+     que lo prueba). Sin clasificación no se pide re-auditoría.
+  4. Prohibido explícito en AGENTS.md: `retries > 0`, subir timeouts, bajar
+     umbrales o `skip` para que algo pase. Ya es la práctica; se escribe.
+- **Esfuerzo:** 0,5 día. **Riesgo:** bajo.
+- **Criterio de aceptación:** una falla provocada en cada job deja la
+  anotación con entorno y cola; `rg "retries:" playwright.config.ts` sigue
+  en 0; un comentario de falla sin clasificación es hallazgo P2 del auditor.
+
+## P-05 · Trabajo paralelo controlado (prioridad 2)
+- **Problema observado:** cada 2 h uno de los dos espera. Ya se hizo en la
+  práctica (#40/#41 mientras E3c estaba en auditoría) y funcionó, pero sin
+  regla escrita: riesgo de tocar el PR auditado o de mergear sin AUDIT.
+- **Propuesta:** en AGENTS.md, sección "Paralelo":
+  - Mientras la pelota está en ChatGPT, Claude puede trabajar **solo** en
+    ítems de BACKLOG con estado `aceptada` y riesgo bajo/medio (P-03), en rama
+    propia desde `main`, **sin tocar la rama bajo auditoría ni `HANDOFF.md`**
+    salvo la tabla "Abierto" (una línea por PR lateral).
+  - Un PR lateral **nunca** se mergea sin `AUDIT: APROBADO` propio, y nunca
+    antes del PR de la fase si comparten archivos.
+  - CI: si un push toca la rama de un PR cuyo HANDOFF dice "en auditoría"
+    (`scripts/collab/handoff.sh` lo sabe), el script de P-01 lo bloquea.
+- **Esfuerzo:** 0,25 día (docs) + la regla en el script de P-01.
+- **Criterio de aceptación:** AGENTS.md lo define; el script rechaza un push
+  a la rama auditada; HISTORIAL muestra un lateral completo sin tocar la fase.
+
+## Lo que NO propongo
+- Un tercer agente permanente. El cuello de botella es el **ciclo de 2 h**, no
+  la capacidad: se resuelve con P-05 (paralelo) y P-03 (menos auditoría a lo
+  trivial). Un auditor externo **puntual** (como Fable en #26) sí sirve: para
+  seguridad antes de producción y para hardware cuando exista. Se pide por
+  issue `decisión-producto`, no se automatiza.
