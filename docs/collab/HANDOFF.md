@@ -1,17 +1,11 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador de briefs) — corregir únicamente la tabla §7 de [PR #50](https://github.com/fermalenoski86/dev/pull/50) según la [reauditoría](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6108767635), sin implementar código; y **Fer** — decidir Q0/Q2 en [#52](https://github.com/fermalenoski86/dev/issues/52).
+**Pelota en:** Claude (implementador) — **trabajo en curso**: [P2] de la ronda 2 corregido en `b4c9823` ([PR #50](https://github.com/fermalenoski86/dev/pull/50)); esperando CI 7/7 para responder. Después: **Fer** en [#52](https://github.com/fermalenoski86/dev/issues/52) (Q0/Q2) y auditoría final.
 **Fase:** F3(a) — brief documental, bloqueado por Q0/Q2. No implementar `fase/f3a`.
-**Estado:** sobre `52a6a88a3e3274909f2c735c26f06d2e3a25c4d5`, hallazgos P1 2 (backfill) y 3 (idempotencia/409 persistido) **cerrados**; P1 1 (Q0/Q2) abierto por Fer; nuevo P2 de tabla Markdown duplicada. `main` observado antes del HANDOFF: `89ebcebc832dc27e0f307e121bda5180c2e5e52e`.
+**Estado:** ronda 2: hallazgos 2 y 3 **cerrados** por ChatGPT; nuevo [P2] (tabla §7) corregido; hallazgo 1 depende de Fer. Pendiente de Fer: #52, tags (`bl31`, `bl07`, `bl08`) y #43.
 
 ## Ronda 2 brief F3(a) — 2026-10-11
-- Resultado: **AUDIT: CAMBIOS** sobre `52a6a88`; [comentario completo](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6108767635).
-- **Cerrado P1 backfill:** migración transaccional a `latest_approved_version_id`, `NULL` sin aprobaciones, down/up y prueba poblada. Acordado sin evento de audit por campaña: no es una decisión humana.
-- **Cerrado P1 reintentos/409:** pedir-confirmar-cancelar idempotentes; replay de éxito/409; COMMIT del estado terminal + audit + respuesta antes de contestar; pruebas y mutación explícitas.
-- **Abierto P1 producto:** #52 sigue sin respuesta; no se implementa ni se aprueba el brief final.
-- **Nuevo P2 documental:** §7 tiene dos cabeceras/separadores incompatibles; Claude deja una sola tabla de tres columnas.
-- CI exacta [38130632971](https://github.com/fermalenoski86/dev/actions/runs/38130632971): 7/7 al primer intento. El auditor verificó HEAD/jobs por API; no repitió localmente pnpm/PostgreSQL/ffmpeg/mutaciones/Playwright.
-- Siguiente: Claude corrige solo §7; Fer responde #52; Claude registra Q0/Q2 y devuelve un HEAD exacto para auditoría final. Prohibido implementar `fase/f3a` antes de aprobación.
+- [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6108767635) sobre `52a6a88`: hallazgos 2 (backfill, sin evento) y 3 (idempotencia/409) cerrados; 1 abierto por #52; nuevo [P2] tabla §7 con cabecera duplicada → corregido en `b4c9823`.
 
 ## Ronda 1 brief F3(a) — 2026-10-11
 - [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6107845111) sobre `e4983a4`: [P1] Q0/Q2 sin decisión de Fer; [P1] falta backfill de `active_version_id`; [P1] reintentos de confirmar/cancelar y 409 con efecto sin commit explícito. Acordadas Q1 (función endurecida), Q3, Q4, Q5 (reloj de la base), Q6 (UI aparte con issue).
