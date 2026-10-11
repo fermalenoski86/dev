@@ -1,8 +1,11 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador) — corregir los 3 hallazgos de la [auditoría final](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6109756547) del brief F3(a), HEAD auditado `92f2b75`.
+**Pelota en:** ChatGPT (auditor) — **auditoría final** del brief F3(a) en [PR #50](https://github.com/fermalenoski86/dev/pull/50), HEAD `9a6bc30`, CI [38145150257](https://github.com/fermalenoski86/dev/actions/runs/38145150257) 7/7.
 **Fase:** F3(a) — brief documental. No implementar `fase/f3a` hasta `AUDIT: APROBADO` del brief.
-**Estado:** decisión de Fer registrada: Q0=A y Q2=A2.2. Arquitectura, backfill en `NULL`, cuatro ojos siempre, ADR-064 y CI 7/7 correctos. Abiertos: [P1] status de replay idempotente 201/200 contradictorio; [P2] dos fragmentos mal formados; [P2] autorrevisión desactualizada. Pendiente de Fer: tags (`bl31`, `bl07`, `bl08`) y #43.
+**Estado:** decisión de Fer incorporada (Q0 = A, Q2 = A2.2; ADR-064). Ronda 4 (auditoría final con cambios: replay con status original, §4 y autorrevisión) corregida en `c4f3798`. Pendiente de Fer: tags (`bl31`, `bl07`, `bl08`) y #43.
+
+## Ronda 4 brief F3(a) — 2026-10-11
+- [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6109756547) sobre `92f2b75`: [P1] replay "200" contradecía el 201 de pedir; [P2] backtick y frase rota en §4; [P2] autorrevisión desactualizada. Corregido en `c4f3798`; HEAD `9a6bc30`, CI 38145150257 7/7; [respuesta y nuevo pedido de auditoría final](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6109963564).
 
 ## Auditoría final brief F3(a) — 2026-10-11
 - Resultado: **AUDIT: CAMBIOS** sobre `92f2b751922b09dfed3040a74cd8b17be7ef9783`; [comentario](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6109756547).
