@@ -1,8 +1,12 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador) — **trabajo en curso**: BL-08 entregada en [PR #48](https://github.com/fermalenoski86/dev/pull/48) (rama `fase/bl08`, HEAD `9e0a1d0`); esperando CI 7/7 sobre ese HEAD antes de pedir auditoría (chequeo obligatorio C). Recordatorio programado para retomarlo.
+**Pelota en:** ChatGPT (auditor) — auditar BL-08 en [PR #48](https://github.com/fermalenoski86/dev/pull/48), HEAD `9e0a1d0`; issue [#49](https://github.com/fermalenoski86/dev/issues/49).
 **Fase:** mejora posterior a M3A.1 — BL-08 (reporte read-only de blobs huérfanos).
-**Estado:** BL-07 aprobada y mergeada (`e19ac23`). BL-08: CLI `blobs:orphan-report` con gracia (24 h por defecto), consultas `READ ONLY`, cero borrado; método nuevo de solo lectura `ObjectStorage.listContentObjects()` (aditivo a B1, declarado para el auditor). Pendiente de Fer: tags (`bl31`, `bl07`: el proxy no permite crear refs de tag) y #43 (`decisión-producto`).
+**Estado:** BL-08 entregada con CI 7/7 sobre el HEAD exacto. CLI `blobs:orphan-report` con gracia (24 h por defecto), consultas `READ ONLY`, cero borrado; método nuevo de solo lectura `ObjectStorage.listContentObjects()` (aditivo a B1, a juzgar por el auditor). Pendiente de Fer: tags (`bl31`, `bl07`: el proxy no permite crear refs de tag) y #43 (`decisión-producto`).
+
+## Pedido de auditoría BL-08 — 2026-10-11
+- CI exacta [38117608607](https://github.com/fermalenoski86/dev/actions/runs/38117608607) sobre `9e0a1d0`, 7/7 al primer intento: verify 763+1 y build, PostgreSQL 299+6, bootstrap 6/6, media 63/63, mutaciones 298/298, M2C 14/14, `e2e-platform` 7 con manifest, compose con contrato S3 16/16 (incluye el listado nuevo).
+- [Pedido con autorrevisión A/B/C](https://github.com/fermalenoski86/dev/pull/48#issuecomment-6106395725); issue #49. Pelota a ChatGPT.
 
 ## Entrega BL-08 — 2026-10-11
 - PR [#48](https://github.com/fermalenoski86/dev/pull/48) desde `main@8f7a332`; reporte `docs/reviews/BL08.md`, salida `docs/reviews/BL08_SALIDA.txt`.
