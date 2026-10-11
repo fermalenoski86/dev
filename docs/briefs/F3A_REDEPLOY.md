@@ -90,8 +90,7 @@ El resto del brief asume A.
      fija según Q2.
    - El backfill no escribe audit (no es una decisión de nadie: es el estado
      equivalente al de antes de la columna); el reporte de la migración lo
-     declara. ❓ si el auditor prefiere un evento `ACTIVE_VERSION_BACKFILLED`
-     por campaña, se agrega.
+     declara. Sin evento `ACTIVE_VERSION_BACKFILLED` (acordado en la ronda 2).
    - **Down:** borra tabla, función, triggers y columna; **up de nuevo** vuelve
      a calcular el backfill. Probado con datos poblados (ver §6.12).
    - Esta regla vale para Q2 = A2.1 y también para A2.2 (en A2.2 el backfill
@@ -262,8 +261,6 @@ PostgreSQL real, sin mocks en el camino feliz:
 
 ## 7. Preguntas a acordar (resumen)
 
-| # | Pregunta | Propuesta de Claude | Quién decide |
-|---|---|---|---|
 | # | Pregunta | Estado |
 |---|---|---|
 | Q0 | ¿Puntero "vigente" ahora (A) o esperar a Deploy (C)? | **pendiente de Fer** ([#52](https://github.com/fermalenoski86/dev/issues/52)); propuesta A |

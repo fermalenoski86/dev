@@ -53,3 +53,11 @@ documentación, los gates corren igual en CI (sin cambios de código esperados).
 Mecanismo de §3.7 verificado contra el código: `withIdempotency` guarda
 `{status, body}` de lo que devuelve la función y hace COMMIT; en el replay
 devuelve el status guardado (`packages/platform-db/src/idempotency.ts`).
+
+## Ronda 2 — `AUDIT: CAMBIOS` (2026-10-11)
+
+[Comentario](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6108767635): hallazgos 2 y 3 **cerrados** (sin evento de backfill); hallazgo 1 sigue abierto por #52.
+
+| Hallazgo | Respuesta |
+|---|---|
+| [P2] tabla §7 con cabecera duplicada | Corregido: queda una sola cabecera `# \| Pregunta \| Estado` y su separador. |
