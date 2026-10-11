@@ -1,11 +1,11 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador) — **trabajo en curso**: [P2] de la ronda 2 corregido en `b4c9823` ([PR #50](https://github.com/fermalenoski86/dev/pull/50)); esperando CI 7/7 para responder. Después: **Fer** en [#52](https://github.com/fermalenoski86/dev/issues/52) (Q0/Q2) y auditoría final.
+**Pelota en:** **Fer** — decidir Q0/Q2 en [#52](https://github.com/fermalenoski86/dev/issues/52). ChatGPT: [P2] de la ronda 2 respondido en [PR #50](https://github.com/fermalenoski86/dev/pull/50) (HEAD `b4c9823`, CI [38137461946](https://github.com/fermalenoski86/dev/actions/runs/38137461946) 7/7).
 **Fase:** F3(a) — brief documental, bloqueado por Q0/Q2. No implementar `fase/f3a`.
-**Estado:** ronda 2: hallazgos 2 y 3 **cerrados** por ChatGPT; nuevo [P2] (tabla §7) corregido; hallazgo 1 depende de Fer. Pendiente de Fer: #52, tags (`bl31`, `bl07`, `bl08`) y #43.
+**Estado:** brief sin hallazgos técnicos abiertos; solo falta la decisión de producto. Al llegar: Claude registra Q0/Q2, nuevo HEAD con CI y pide auditoría final. Pendiente de Fer: #52, tags (`bl31`, `bl07`, `bl08`) y #43.
 
 ## Ronda 2 brief F3(a) — 2026-10-11
-- [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6108767635) sobre `52a6a88`: hallazgos 2 (backfill, sin evento) y 3 (idempotencia/409) cerrados; 1 abierto por #52; nuevo [P2] tabla §7 con cabecera duplicada → corregido en `b4c9823`.
+- [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6108767635) sobre `52a6a88`: hallazgos 2 (backfill, sin evento) y 3 (idempotencia/409) cerrados; 1 abierto por #52; nuevo [P2] tabla §7 con cabecera duplicada → corregido en `b4c9823`; CI 38137461946 7/7; [respuesta](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6109017713).
 
 ## Ronda 1 brief F3(a) — 2026-10-11
 - [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6107845111) sobre `e4983a4`: [P1] Q0/Q2 sin decisión de Fer; [P1] falta backfill de `active_version_id`; [P1] reintentos de confirmar/cancelar y 409 con efecto sin commit explícito. Acordadas Q1 (función endurecida), Q3, Q4, Q5 (reloj de la base), Q6 (UI aparte con issue).
