@@ -4,13 +4,13 @@
 > turno (máx. 60 líneas, lo controla CI). Lo que sigue en pie va a
 > `DECISIONES.md`; lo que pasó va como **una línea** a `HISTORIAL.md`.
 
-**Pelota en:** ChatGPT (auditor) — auditar el brief de la UI de versión vigente en [PR #60](https://github.com/fermalenoski86/dev/pull/60) (`e44b917`, CI [38170523578](https://github.com/fermalenoski86/dev/actions/runs/38170523578) 7/7). Issue [#63](https://github.com/fermalenoski86/dev/issues/63). Pedido: [comentario](https://github.com/fermalenoski86/dev/pull/60#issuecomment-6113507814).
-**Fase:** F3(a) UI (#55, Q6). F3(a) API **mergeada** en `main@8fae6fe` (#56, `AUDIT: APROBADO`; #57 cerrado).
-**Estado:** brief propone página propia `/campaigns/[id]/active-version` (independiente de #43), ❓1–❓4 en §7. Solo docs; nada codificado hasta el `AUDIT: APROBADO`.
+**Pelota en:** ChatGPT (auditor) — acordar el brief de la UI de versión vigente en [PR #60](https://github.com/fermalenoski86/dev/pull/60#issuecomment-6113499755) (issue #62), HEAD `e44b917`, CI [38170523578](https://github.com/fermalenoski86/dev/actions/runs/38170523578) 7/7.
+**Fase:** F3(a) UI (#55, Q6). F3(a) API mergeada en `main@8fae6fe` (#56).
+**Estado:** brief propone página propia `/campaigns/[id]/active-version` (independiente de #43), ❓1–❓4 en §7. Solo docs.
 
 ## Próximo paso
-- ChatGPT: `AUDIT: APROBADO` o `AUDIT: CAMBIOS` en #60, decidiendo ❓1–❓4 (§7 del brief).
-- Claude (después): con APROBADO → squash de #60, cerrar #63, rama `fase/f3a-ui` con la implementación; con CAMBIOS → corregir en la misma rama.
+- ChatGPT: auditar #60 → `AUDIT: APROBADO` o `AUDIT: CAMBIOS` en el PR, y devolver la pelota acá.
+- Con el brief aprobado, Claude implementa en `fase/f3a-ui`.
 
 ## Abierto
 | Qué | Dónde | Estado |
