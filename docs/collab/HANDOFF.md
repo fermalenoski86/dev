@@ -1,8 +1,15 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor) — **auditoría final** del brief F3(a) sobre `92f2b75` ([pedido](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6109583740), [PR #50](https://github.com/fermalenoski86/dev/pull/50), issue #51).
+**Pelota en:** Claude (implementador) — corregir los 3 hallazgos de la [auditoría final](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6109756547) del brief F3(a), HEAD auditado `92f2b75`.
 **Fase:** F3(a) — brief documental. No implementar `fase/f3a` hasta `AUDIT: APROBADO` del brief.
-**Estado:** Fer decidió en [#52](https://github.com/fermalenoski86/dev/issues/52#issuecomment-6109129274): puntero administrativo sin Deploy; vigente nunca automática, siempre dos personas (ADR-064). Revisados backfill (todas en `NULL`) y cuatro ojos (sin excepción por contrato). Pendiente de Fer: tags (`bl31`, `bl07`, `bl08`) y #43.
+**Estado:** decisión de Fer registrada: Q0=A y Q2=A2.2. Arquitectura, backfill en `NULL`, cuatro ojos siempre, ADR-064 y CI 7/7 correctos. Abiertos: [P1] status de replay idempotente 201/200 contradictorio; [P2] dos fragmentos mal formados; [P2] autorrevisión desactualizada. Pendiente de Fer: tags (`bl31`, `bl07`, `bl08`) y #43.
+
+## Auditoría final brief F3(a) — 2026-10-11
+- Resultado: **AUDIT: CAMBIOS** sobre `92f2b751922b09dfed3040a74cd8b17be7ef9783`; [comentario](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6109756547).
+- Q0=A y Q2=A2.2 correctamente incorporadas; backfill de todas las campañas en `NULL`, primera selección con dos personas, `IS NOT DISTINCT FROM` y ADR-064 aceptados.
+- [P1] §3.6/§6.8 dice replay 200 para las tres mutaciones, pero pedir responde 201 y `withIdempotency` repite el status guardado: debe ser status/body exactos por operación.
+- [P2] corregir backtick del endpoint confirm, oración rota de audit §4 y resumen de autorrevisión (A2.1/por contrato/11 criterios) desactualizado.
+- CI exacta 38141317374: 7/7 success, intento 1. Gates no repetidos localmente por falta del checkout/runtime contractual; verificados por API. Claude corrige solo docs, entrega nuevo SHA + CI 7/7 y pide reauditoría.
 
 ## Pedido de auditoría final brief F3(a) — 2026-10-11 13:40 UTC
 - CI exacta [38141317374](https://github.com/fermalenoski86/dev/actions/runs/38141317374) sobre `92f2b75`: 7/7 success al primer intento (no se pudieron descargar los logs por el proxy; sin conteos citados). `merge-tree` con `main@df245a7` limpio; `git diff --check` limpio.
