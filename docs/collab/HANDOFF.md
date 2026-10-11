@@ -1,8 +1,16 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor) — auditar BL-08 en [PR #48](https://github.com/fermalenoski86/dev/pull/48), HEAD `9e0a1d0`; issue [#49](https://github.com/fermalenoski86/dev/issues/49).
-**Fase:** mejora posterior a M3A.1 — BL-08 (reporte read-only de blobs huérfanos).
-**Estado:** BL-08 entregada con CI 7/7 sobre el HEAD exacto. CLI `blobs:orphan-report` con gracia (24 h por defecto), consultas `READ ONLY`, cero borrado; método nuevo de solo lectura `ObjectStorage.listContentObjects()` (aditivo a B1, a juzgar por el auditor). Pendiente de Fer: tags (`bl31`, `bl07`: el proxy no permite crear refs de tag) y #43 (`decisión-producto`).
+**Pelota en:** ChatGPT (auditor) — acordar el brief de F3(a) en [PR #50](https://github.com/fermalenoski86/dev/pull/50), HEAD `e4983a4` (solo docs); issue [#51](https://github.com/fermalenoski86/dev/issues/51). **Fer:** decidir Q0/Q2 en [#52](https://github.com/fermalenoski86/dev/issues/52) (`decisión-producto`).
+**Fase:** F3(a) — brief documental de "versión vigente" y rollback con cuatro ojos. No se implementa hasta acordar Q1–Q6 y que Fer resuelva Q0.
+**Estado:** BL-08 aprobada y mergeada (`5f06eff`). Pendiente de Fer: #52 (Q0/Q2), tags (`bl31`, `bl07`, `bl08`: el proxy no permite crear refs de tag) y #43.
+
+## Pedido de acuerdo F3(a) — 2026-10-11
+- CI exacta [38123614329](https://github.com/fermalenoski86/dev/actions/runs/38123614329) sobre `e4983a4`, 7/7 al primer intento (verify 763+1, M2C 14/14, e2e-platform 7, media 63/63; sin cambios de código).
+- [Pedido de acuerdo](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6107139357); issue #51; Q0/Q2 de producto → #52.
+
+## Cierre BL-08 y brief F3(a) — 2026-10-11
+- BL-08: **AUDIT: APROBADO** sobre `9e0a1d0`, [comentario](https://github.com/fermalenoski86/dev/pull/48#issuecomment-6106938699); squash `5f06eff`; issue #49 cerrado. Tag `bl08` sin crear (proxy) → Fer.
+- F3(a): brief en [PR #50](https://github.com/fermalenoski86/dev/pull/50) (`docs/briefs/F3A_REDEPLOY.md`, autorrevisión `docs/reviews/F3A_BRIEF.md`). Siguiente: con CI 7/7, pedir acuerdo a ChatGPT sobre Q0–Q6; Q0/Q2 → `decisión-producto` si no hay base registrada.
 
 ## Pedido de auditoría BL-08 — 2026-10-11
 - CI exacta [38117608607](https://github.com/fermalenoski86/dev/actions/runs/38117608607) sobre `9e0a1d0`, 7/7 al primer intento: verify 763+1 y build, PostgreSQL 299+6, bootstrap 6/6, media 63/63, mutaciones 298/298, M2C 14/14, `e2e-platform` 7 con manifest, compose con contrato S3 16/16 (incluye el listado nuevo).
