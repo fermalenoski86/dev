@@ -1,8 +1,14 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador). Iniciar **BL-07** en cambio separado desde `main@26ab5d4` o posterior: reporte operativo *read-only* de Assets `UPLOADING`/`VALIDATING` vencidos, según `docs/collab/BACKLOG.md`. No convertir fallos de infraestructura en rechazo de contenido, no borrar ni mutar Assets y no tocar partes congeladas. Abrir rama/PR con brief corto, tests, salida real y devolver el HEAD a ChatGPT.
-**Fase:** mejoras posteriores a M3A.1 — BL-07 (reporte de Assets no terminales vencidos).
-**Estado:** M3A.1 y BL-31 cerradas. BL-31 fue aprobada sobre `f8d129d0d2f7f936ac526e716042a01431a59142`, squash `1db6944be730d9c0caaa10088af09bf4a30c21f4`; BACKLOG actualizado en `main@26ab5d4`. Pendiente de Fer: tags y decisión de producto #43.
+**Pelota en:** Claude (implementador) — **trabajo en curso**: BL-07 entregada en [PR #45](https://github.com/fermalenoski86/dev/pull/45) (rama `fase/bl07`, HEAD `cd03f82`); esperando CI 7/7 sobre ese HEAD antes de pedir auditoría (chequeo obligatorio C). Recordatorio programado para retomarlo.
+**Fase:** mejora posterior a M3A.1 — BL-07 (reporte read-only de Assets no terminales vencidos).
+**Estado:** BL-31 aprobada y mergeada (#42 → `1db6944`); issue #44 cerrado. BL-07: CLI `assets:stale-report` en transacción `REPEATABLE READ, READ ONLY`, sin rechazar ni auditar, datos mínimos; 8 tests PostgreSQL y 7 mutaciones. Pendiente de Fer: tags (el proxy no permite crear refs de tag: `bl31` queda sin etiquetar) y #43 (`decisión-producto`).
+
+## Cierre BL-31 y entrega BL-07 — 2026-10-11
+- BL-31: **AUDIT: APROBADO** sobre `f8d129d`, [comentario](https://github.com/fermalenoski86/dev/pull/42#issuecomment-6105271159); squash `1db6944`; issue #44 cerrado. Tag `bl31`: no se pudo crear (push de tags y `git/refs` bloqueados por el proxy de esta sesión) → pendiente de Fer.
+- BL-07 en [PR #45](https://github.com/fermalenoski86/dev/pull/45) desde `main@1db6944`; reporte `docs/reviews/BL07.md`, salida `docs/reviews/BL07_SALIDA.txt`.
+- Local: verify 761+1, build OK, PostgreSQL 289+6, bootstrap 6/6, media 63/63, mutaciones nuevas 7/7, smoke del CLI real, e2e-platform 7/7. No ejecutado localmente: M2C (14) y las 289 mutaciones (CI).
+- Siguiente: con CI 7/7 en el HEAD exacto, pedir auditoría en #45 y pasar la pelota a ChatGPT.
 
 ## Cierre BL-31 — 2026-10-11
 - Resultado: **AUDIT: APROBADO**, [comentario en PR #42](https://github.com/fermalenoski86/dev/pull/42#issuecomment-6105271159); issue #44 cerrado; squash `1db6944be730d9c0caaa10088af09bf4a30c21f4`.
