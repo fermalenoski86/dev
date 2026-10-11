@@ -27,7 +27,7 @@ va a leer.
 |---|---|---|---|
 | POST | `/campaigns/:id/active-version-changes` `{versionId, versionHash, reason, expectedActiveVersionId}` | OPERATOR · ADMIN | 201 · 400 · 403 · 404 `CAMPAIGN_NOT_FOUND` / `SHOW_VERSION_NOT_FOUND` · 409 |
 | POST | `/active-version-changes/:id/confirm` `{versionHash}` | INTERNAL_APPROVER · ADMIN | 200 · 403 `FOUR_EYES_VIOLATION` · 404 · 409 |
-| POST | `/active-version-changes/:id/cancel` (sin cuerpo, o `{}`) | quien pidió o ADMIN | 200 · 403 · 404 · 409 |
+| POST | `/active-version-changes/:id/cancel` (sin cuerpo, o `{}`; cualquier otro cuerpo, incluido `null`, es 400) | quien pidió o ADMIN | 200 · 403 · 404 · 409 |
 | GET | `/campaigns/:id/active-version-changes?limit&cursor` | internos | 200 `{items, nextCursor}` · 400 `INVALID_CURSOR` · 404 |
 | GET | `/campaigns/:id` | internos | agrega `activeVersion` y `pendingActiveVersionChange` |
 
@@ -119,13 +119,16 @@ Aprobar una versión **no** genera ningún evento de vigente.
   - `SECURITY DEFINER`, `search_path = public, pg_temp`, `REVOKE … FROM
     PUBLIC`, `GRANT` a `trust_app`;
   - bloquea la campaña y después el pedido;
+  - no confía en el UUID que recibe: quien confirma tiene que ser un usuario
+    habilitado con INTERNAL_APPROVER o ADMIN (`CONFIRMER_NOT_AUTHORIZED`);
   - repite todas las invariantes: PENDING, cuatro ojos, hash, vencimiento,
     vigente = origen con `IS DISTINCT FROM` y destino APPROVED;
   - devuelve `CONFIRMED`, `EXPIRED` o `CONFLICT`. Lo demás es un error que no
     cambia nada.
 - **Tabla `active_version_changes`:**
   - un solo PENDING por campaña;
-  - nace PENDING con la fecha de la base;
+  - nace PENDING con la fecha de la base, pedido por un usuario habilitado con
+    OPERATOR o ADMIN (`REQUESTER_NOT_AUTHORIZED`);
   - una sola transición, en la que solo cambian `status`, `decided_by` y
     `decided_at`;
   - CONFIRMED solo desde la función (`CONFIRM_ONLY_VIA_FUNCTION`) y nunca por

@@ -84,6 +84,11 @@ BEGIN
     RAISE EXCEPTION 'INVALID_STATE_TRANSITION: un pedido nace PENDING' USING ERRCODE = 'P0001';
   END IF;
   NEW.requested_at := now();
+  -- quien pide es un usuario habilitado con OPERATOR o ADMIN (misma regla que la ruta)
+  IF NOT EXISTS (SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id = u.id
+                  WHERE u.id = NEW.requested_by AND u.enabled AND ur.role IN ('OPERATOR', 'ADMIN') AND ur.contract_id IS NULL) THEN
+    RAISE EXCEPTION 'REQUESTER_NOT_AUTHORIZED: el usuario % no puede pedir cambios de versión vigente', NEW.requested_by USING ERRCODE = 'P0001';
+  END IF;
   IF NEW.expires_at <= NEW.requested_at THEN
     RAISE EXCEPTION 'INVALID_EXPIRY: el pedido vence después de pedirse' USING ERRCODE = 'P0001';
   END IF;
@@ -131,6 +136,8 @@ CREATE TRIGGER avc_no_truncate BEFORE TRUNCATE ON active_version_changes FOR EAC
 -- ── confirmación: ÚNICA escritura de la vigente ────────────────────────
 -- Devuelve el resultado en vez de fallar en los dos casos que terminalizan el
 -- pedido (para que la app registre el audit y responda 409 con COMMIT):
+-- Quien confirma tiene que ser un usuario habilitado con INTERNAL_APPROVER o
+-- ADMIN: la función no confía en el UUID que le pasa la app (auditoría F3A #1).
 --   'CONFIRMED' · 'EXPIRED' (venció según now()) · 'CONFLICT' (la vigente ya no
 --   es la del pedido → CANCELLED). Lo demás es un error y no cambia nada.
 CREATE FUNCTION trust_confirm_active_version_change(p_change_id uuid, p_actor uuid, p_version_hash text)
@@ -148,6 +155,11 @@ BEGIN
   END IF;
   IF p_actor IS NULL OR p_actor = r.requested_by THEN
     RAISE EXCEPTION 'FOUR_EYES_VIOLATION: quien pidió el cambio no puede confirmarlo' USING ERRCODE = 'P0001';
+  END IF;
+  -- "segunda persona AUTORIZADA" (A2.2): usuario habilitado con INTERNAL_APPROVER o ADMIN (roles internos, sin contrato)
+  IF NOT EXISTS (SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id = u.id
+                  WHERE u.id = p_actor AND u.enabled AND ur.role IN ('INTERNAL_APPROVER', 'ADMIN') AND ur.contract_id IS NULL) THEN
+    RAISE EXCEPTION 'CONFIRMER_NOT_AUTHORIZED: el usuario % no puede confirmar cambios de versión vigente', p_actor USING ERRCODE = 'P0001';
   END IF;
   IF p_version_hash IS DISTINCT FROM r.to_version_hash THEN
     RAISE EXCEPTION 'VERSION_HASH_MISMATCH: el hash no es el del pedido %', r.id USING ERRCODE = 'P0001';

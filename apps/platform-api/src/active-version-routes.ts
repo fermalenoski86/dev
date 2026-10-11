@@ -79,7 +79,8 @@ export function registerActiveVersionRoutes(app: FastifyInstance, deps: { db: Ky
     const actor = await requireActor(deps.actors, req, CANCEL_ROLES);
     const { id } = ActiveVersionChangeParamsSchema.parse(req.params);
     const key = idempotencyKey(req.headers);
-    if (req.body !== undefined && req.body !== null) {
+    // Cualquier cuerpo presente se valida, también el JSON `null` (auditoría F3A #2).
+    if (req.body !== undefined) {
       exigirJson(req.headers['content-type']);
       CancelBodySchema.parse(req.body);
     }

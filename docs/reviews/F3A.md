@@ -1,6 +1,6 @@
 # F3(a) — Versión vigente administrativa con cuatro ojos
 
-**Estado:** entregado para auditoría. Brief aprobado en
+**Estado:** ronda 1 corregida (`AUDIT: CAMBIOS` sobre `823fe89`, ver al final); de nuevo en auditoría. Brief aprobado en
 [#50](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6110866495)
 (`docs/briefs/F3A_REDEPLOY.md`, `main@0742479`). El auditor escribió: "Se
 autoriza iniciar `fase/f3a` en PR separado, con revisión A/B/C, gates
@@ -28,9 +28,9 @@ Nada en esta fase despliega, programa ni envía contenido.
 | `packages/platform-audit/src/index.ts` | Las 4 acciones nuevas |
 | `apps/platform-api/src/{active-version-routes,contracts,openapi,app,server}.ts` | Rutas, schemas, OpenAPI y `ACTIVE_VERSION_CHANGE_TTL_MINUTES` |
 | `apps/platform-api/src/active-version.db.test.ts` | 19 tests HTTP: Fastify, PostgreSQL y sesiones reales |
-| `packages/platform-db/src/active-version-schema.db.test.ts` | 8 tests de la base sin la app (segunda barrera, función, migración con datos) |
+| `packages/platform-db/src/active-version-schema.db.test.ts` | 10 tests de la base sin la app (segunda barrera, función, migración con datos) |
 | `packages/platform-db/src/{schema,bootstrap.smoke}.db.test.ts` | Lista de migraciones con 0004; 0004 baja sola |
-| `scripts/mutation-check.py` | 24 mutaciones `f3a:` |
+| `scripts/mutation-check.py` | 27 mutaciones `f3a:` (24 + 3 de la ronda 1) |
 | `docs/platform/{ACTIVE_VERSION,ERD,CAMPAIGNS,DELIVERY}.md`, `openapi.json`, `.env.example` | Documentación e inventario regenerado |
 | `docs/architecture/DECISIONS.md` (ADR-064), `docs/collab/BACKLOG.md` | Estado |
 
@@ -90,10 +90,10 @@ Issue de UI (Q6), abierto antes de declarar la operación usable por personas:
 |---|---|
 | `pnpm verify` | 763 passed + 1 skipped (sin cambios: los tests nuevos son de PostgreSQL). Lint: 0 errores, los mismos 12 warnings |
 | `pnpm build` (https) | OK |
-| PostgreSQL 16 | **326 passed + 6 skipped** (+27: 19 HTTP y 8 de base) |
+| PostgreSQL 16 | **328 passed + 6 skipped** (+29: 19 HTTP y 10 de base) |
 | `bootstrap-smoke.sh` | 6 passed, con 0004 en la lista |
 | media | 63 passed |
-| mutaciones | **24/24 nuevas `f3a:` atrapadas** (tanda 298:322); las 322 en el job de CI |
+| mutaciones | **27/27 `f3a:` atrapadas** (tanda 298:325); las 325 en el job de CI |
 | `e2e-platform` y E2E M2C (14) | **No ejecutados localmente** (sin Chrome con H.264). Evidencia: jobs de CI |
 | contrato S3 | **No ejecutado localmente** (sin cambios de storage). Evidencia: `compose-smoke` de CI |
 
@@ -125,6 +125,7 @@ brief se aprobó sin hallazgos bloqueantes.
 ### B. Revisión adversaria
 
 - **Saltear la app:**
+  - la función solo acepta como confirmador a un usuario habilitado con INTERNAL_APPROVER o ADMIN, y la tabla solo acepta pedidos de un usuario habilitado con OPERATOR o ADMIN (ronda 1);
   - `trust_app` no puede escribir el puntero (42501);
   - no puede confirmar con un UPDATE directo (`CONFIRM_ONLY_VIA_FUNCTION`);
   - no puede borrar pedidos;
@@ -163,3 +164,24 @@ brief se aprobó sin hallazgos bloqueantes.
 
 Se cita en el PR el link de la corrida y el SHA exacto del HEAD entregado. No
 se pide auditoría sin los 7 jobs en verde.
+
+## Ronda 1 — `AUDIT: CAMBIOS` sobre `823fe89`
+
+1. **[P1] La función aceptaba como confirmador cualquier UUID de usuario.**
+   Corregido: `trust_confirm_active_version_change` exige que `p_actor` sea un
+   usuario habilitado con INTERNAL_APPROVER o ADMIN interno
+   (`CONFIRMER_NOT_AUTHORIZED`, que la app traduce a 403 `FORBIDDEN`).
+   - Test de base que llama a la función directo: falla con un usuario solo
+     OPERATOR, uno sin roles, un INTERNAL_APPROVER deshabilitado, un
+     EXTERNAL_APPROVER y un UUID inexistente; pasa con ADMIN y con
+     INTERNAL_APPROVER. Mutación atrapada.
+   - Mismo hueco del lado del pedido, cerrado en la misma ronda: el trigger de
+     alta exige que `requested_by` sea un usuario habilitado con OPERATOR o ADMIN
+     (`REQUESTER_NOT_AUTHORIZED`). Tiene test y mutación.
+   - Queda declarado, sin cambio: `decided_by` de una cancelación no se liga
+     al rol en la base. Cancelar nunca mueve el puntero; la app exige que
+     cancele quien pidió o un ADMIN.
+2. **[P2] Cancelar aceptaba el JSON `null`.** Corregido: todo cuerpo presente
+   se valida con el schema estricto, y `null`, `{"x":1}` y `[]` dan 400
+   `VALIDATION_ERROR` sin tocar el pedido. `{}` sigue siendo válido. Hay test
+   HTTP y mutación.

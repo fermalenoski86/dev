@@ -21,6 +21,7 @@ const u = () => `${Math.random().toString(36).slice(2)}@affinitas.com`;
 async function campaniaCon(db: Kysely<Database>, decisiones: Array<'APPROVED' | 'REJECTED' | null>) {
   const op = await seedUser(db, u());
   const apr = await seedUser(db, u());
+  await db.insertInto('user_roles').values([{ user_id: op.id, role: 'OPERATOR' }, { user_id: apr.id, role: 'INTERNAL_APPROVER' }]).execute();
   const ct = await seedContract(db);
   const { campaignId, draftId } = await seedCampaignWithDraft(db, ct.id, op.id);
   const vs: Array<{ id: string; hash: string }> = [];
@@ -105,6 +106,37 @@ describe('CRITERIO F3(a) §1.3: pedidos inmutables salvo la transición única',
     expect(r.rows[0]?.o).toBe('CONFIRMED');
     expect(await vigente(c.campaignId)).toBe(c.vs[0]!.id);
     expect(await falla(sql`SELECT trust_confirm_active_version_change(${p.id}::uuid, ${c.apr.id}::uuid, ${c.vs[0]!.hash})`.execute(t.app))).toMatch(/INVALID_STATE_TRANSITION/);
+  });
+
+  it('auditoría F3A #1: la función solo acepta como confirmador a un usuario habilitado con INTERNAL_APPROVER o ADMIN', async () => {
+    const c = await campaniaCon(t.app, ['APPROVED']);
+    const p = await pedir(t.app, c, c.vs[0]!);
+    const conRol = async (role: 'OPERATOR' | 'INTERNAL_APPROVER' | 'ADMIN' | null, enabled = true) => {
+      const x = await seedUser(t.app, u());
+      if (role) await t.app.insertInto('user_roles').values({ user_id: x.id, role }).execute();
+      if (!enabled) await t.app.updateTable('users').set({ enabled: false }).where('id', '=', x.id).execute();
+      return x.id;
+    };
+    const ext = await seedUser(t.app, u());
+    await t.app.insertInto('user_roles').values({ user_id: ext.id, role: 'EXTERNAL_APPROVER', contract_id: (await seedContract(t.app)).id }).execute();
+    const confirmarCon = (actor: string) => sql<{ o: string }>`SELECT trust_confirm_active_version_change(${p.id}::uuid, ${actor}::uuid, ${c.vs[0]!.hash}) AS o`.execute(t.app);
+    for (const actor of [await conRol('OPERATOR'), await conRol(null), await conRol('INTERNAL_APPROVER', false), ext.id, '00000000-0000-4000-8000-000000000000']) {
+      expect(await falla(confirmarCon(actor))).toMatch(/CONFIRMER_NOT_AUTHORIZED/);
+    }
+    expect(await vigente(c.campaignId)).toBeNull();
+    expect((await t.app.selectFrom('active_version_changes').select('status').where('id', '=', p.id).executeTakeFirstOrThrow()).status).toBe('PENDING');
+    // un ADMIN habilitado sí (y uno con INTERNAL_APPROVER, en el test anterior)
+    expect((await confirmarCon(await conRol('ADMIN'))).rows[0]?.o).toBe('CONFIRMED');
+    expect(await vigente(c.campaignId)).toBe(c.vs[0]!.id);
+  });
+
+  it('la base tampoco acepta un pedido de alguien sin OPERATOR/ADMIN habilitado', async () => {
+    const c = await campaniaCon(t.app, ['APPROVED']);
+    const sinRol = await seedUser(t.app, u());
+    expect(await falla(pedir(t.app, { campaignId: c.campaignId, op: sinRol }, c.vs[0]!))).toMatch(/REQUESTER_NOT_AUTHORIZED/);
+    expect(await falla(pedir(t.app, { campaignId: c.campaignId, op: c.apr }, c.vs[0]!))).toMatch(/REQUESTER_NOT_AUTHORIZED/);
+    await t.app.updateTable('users').set({ enabled: false }).where('id', '=', c.op.id).execute();
+    expect(await falla(pedir(t.app, c, c.vs[0]!))).toMatch(/REQUESTER_NOT_AUTHORIZED/);
   });
 
   it('§6.15 en la función: NULL de los dos lados se compara con IS NOT DISTINCT FROM', async () => {

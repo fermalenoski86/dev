@@ -202,6 +202,15 @@ describe('CRITERIO F3(a) §6.2: cuatro ojos siempre', () => {
     const sinKey = await cancelar(ch.id, U.op!, null);
     expect(sinKey.statusCode).toBe(400);
     esError(sinKey.json(), 'IDEMPOTENCY_KEY_REQUIRED');
+    // auditoría F3A #2: un cuerpo presente se valida siempre, también el JSON null
+    for (const payload of ['null', '{"x":1}', '[]']) {
+      const r = await app.inject({ method: 'POST', url: `/api/v1/active-version-changes/${ch.id}/cancel`, headers: auth(U.op!, { ...json, 'idempotency-key': k() }), payload });
+      expect(r.statusCode, payload).toBe(400);
+      esError(r.json(), 'VALIDATION_ERROR');
+    }
+    expect(await estado(ch.id)).toBe('PENDING');
+    const vacio = await app.inject({ method: 'POST', url: `/api/v1/active-version-changes/${ch.id}/cancel`, headers: auth(U.op2!, { ...json, 'idempotency-key': k() }), payload: '{}' });
+    expect(vacio.statusCode).toBe(403); // `{}` es válido: llega al chequeo de quién cancela
     const adm = await cancelar(ch.id, U.admin!);
     expect(adm.statusCode, adm.body).toBe(200);
     expect(ActiveVersionChangeResponseSchema.parse(adm.json())).toMatchObject({ status: 'CANCELLED', decidedBy: U.admin!.id });

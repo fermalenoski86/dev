@@ -339,6 +339,9 @@ export function fromActiveVersionDbError(e: unknown): CampaignError | null {
     if (msg.startsWith('VERSION_HASH_MISMATCH')) return new CampaignError(409, 'VERSION_HASH_MISMATCH', 'El hash no es el de la versión.');
     if (msg.startsWith('ACTIVE_NOT_APPROVED')) return new CampaignError(409, 'INVALID_STATE_TRANSITION', 'Solo una versión APPROVED puede ser la vigente.');
     if (msg.startsWith('INVALID_STATE_TRANSITION')) return new CampaignError(409, 'INVALID_STATE_TRANSITION', 'El pedido ya no está pendiente.');
+    if (msg.startsWith('CONFIRMER_NOT_AUTHORIZED') || msg.startsWith('REQUESTER_NOT_AUTHORIZED')) {
+      return new CampaignError(403, 'FORBIDDEN', 'El usuario no tiene un rol que permita esta operación.');
+    }
     if (msg.startsWith('CHANGE_NOT_FOUND')) return new CampaignError(404, 'ACTIVE_VERSION_CHANGE_NOT_FOUND', 'El pedido de cambio no existe.');
   }
   if (x?.code === '23505' && x.constraint === 'avc_one_pending_per_campaign') {
