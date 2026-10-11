@@ -1,0 +1,73 @@
+BL-07 · reporte de Assets no terminales vencidos — salida REAL de los gates
+Entorno: v22.22.0 · pnpm 12.5.1 · psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) · ffprobe version 6.1.1-3ubuntu5 · 2026-10-11T04:15Z
+Base: origin/main@1db6944 · rama fase/bl07 (el SHA exacto auditado y su CI van en el PR)
+
+== pnpm verify
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  50 passed | 1 skipped (51)
+      Tests  761 passed | 1 skipped (762)
+
+== NEXT_PUBLIC_TRUST_API_URL=https://api.trust.test:8443 pnpm build
+build=0
+
+== bash scripts/dev/pg-up.sh
+pg_ctl: server is running
+
+== npx vitest run -c vitest.platform.config.ts (PostgreSQL 16 real)
+ ✓ apps/platform-api/src/cli/assets-stale-report.db.test.ts (8 tests) 384ms
+ Test Files  26 passed | 1 skipped (27)
+      Tests  289 passed | 6 skipped (295)
+
+== bash packages/platform-db/scripts/bootstrap-smoke.sh
+      Tests  6 passed (6)
+boot=0
+
+== npx vitest run -c vitest.media.config.ts
+ Test Files  3 passed (3)
+      Tests  63 passed (63)
+
+== python3 scripts/mutation-check.py --tanda 282:289 (las 7 nuevas de BL-07; las 289 completas: job de CI)
+tanda 282:289 — 7 de 289 reglas
+ATRAPADA   bl07: el reporte incluye terminales (READY/REJECTED)
+ATRAPADA   bl07: el umbral no se aplica (recientes como vencidos)
+ATRAPADA   bl07: el reporte deja de ser READ ONLY
+ATRAPADA   bl07: el reporte rechaza el contenido vencido (infra → REJECTED)
+ATRAPADA   bl07: truncated mira la página y no el total
+ATRAPADA   bl07: el reporte expone la fila cruda (datos de más)
+ATRAPADA   bl07: umbral de 0 minutos aceptado
+atrapadas 7 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+(en la primera corrida la regla de datos mínimos sobrevivía porque agregaba una columna que el mapeo ignora; se reemplazó por la que expone la fila cruda, que sí es la fuga real, y quedó ATRAPADA)
+
+== smoke del CLI real (pnpm --filter @trust/platform-api assets:stale-report -- --older-than-minutes 60) sobre una base descartable con un VALIDATING de 2 h y un UPLOADING reciente
+{
+  "generatedAt": "2026-10-11T04:19:20.956Z",
+  "olderThanMs": 3600000,
+  "total": 1,
+  "byStatus": {
+    "UPLOADING": 0,
+    "VALIDATING": 1
+  },
+  "truncated": false,
+  "items": [
+    {
+      "assetId": "f85c848e-3093-4079-b400-cdee3b68f4e7",
+      "status": "VALIDATING",
+      "surfaceType": "towers_ab",
+      "createdBy": "eaf226e4-8b6c-457a-8650-9ded59b1a77a",
+      "createdAt": "2026-10-11T04:19:20.109Z",
+      "updatedAt": "2026-10-11T02:19:20.115Z",
+      "staleForMs": 7200841
+    }
+  ]
+}
+
+== playwright test -c playwright.platform.config.ts (sin cambios de UI; regresión)
+  7 passed (36.3s)
+
+== pnpm acceptance:check --playwright-results
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 4 tests [E3-N], todos passed en Playwright; docs/reviews/M3A1_ACEPTACION.md al día
+
+== NO EJECUTADO localmente
+- E2E M2C congelado (14): sin Chrome con H.264 en este entorno → job e2e-m2c de CI.
+- Las 289 mutaciones completas: job de CI. Local: tanda nueva 282:289.

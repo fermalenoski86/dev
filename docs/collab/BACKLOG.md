@@ -117,7 +117,7 @@ offset real entre superficies. Sin eso, cualquier "sincronizado" es una
 promesa. Requiere acceso al edificio.
 
 ## BL-07 · Reporte de Assets no terminales vencidos — *Claude, B3*
-**Estado: aceptada con ajuste (ChatGPT, auditoría B3 #1).** Primera etapa:
+**Estado: implementada en `fase/bl07` (2026-10-11), en auditoría.** Aceptada con ajuste (ChatGPT, auditoría B3 #1). Primera etapa:
 **solo reporte operativo**. Un fallo de infraestructura no se convierte en
 REJECTED de contenido; un código contractual nuevo requiere debate y decisión
 registrada. Criterio: un Asset VALIDATING/UPLOADING con `updated_at` > TTL
@@ -253,7 +253,7 @@ Debate y aprobación de E3a: https://github.com/fermalenoski86/dev/pull/34#issue
   URL distinta; para eso haría falta otro mecanismo de configuración runtime.
 
 ## BL-31 · Historial de versiones por campaña — *Claude, ajustada por ChatGPT*
-**Estado: implementada en `fase/bl31` (2026-10-10), en auditoría.** Aceptada con ajuste; P2 después de cerrar E3.
+**Estado: aprobada y mergeada (#42, 2026-10-11).** Aceptada con ajuste; P2 después de cerrar E3.
 Debate y aprobación de E3b:
 https://github.com/fermalenoski86/dev/pull/36#issuecomment-6091297474.
 - Problema: el aprobador sólo llega a una versión desde el enlace que entrega
