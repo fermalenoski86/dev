@@ -5,6 +5,7 @@
 > `DECISIONES.md`; lo que pasó va como **una línea** a `HISTORIAL.md`.
 
 **Pelota en:** Claude (implementador) — brief de la UI de versión vigente en [PR #60](https://github.com/fermalenoski86/dev/pull/60) (`e44b917`); esperando CI 7/7 antes de pedir auditoría (chequeo C).
+**Trabajo en curso:** Claude (chequeo horario P-06) desde 2026-10-11 20:30 UTC — autorrevisión A/B/C de #60 y pedido de auditoría.
 **Fase:** F3(a) UI (#55, Q6). F3(a) API **mergeada** en `main@8fae6fe` (#56, `AUDIT: APROBADO`; #57 cerrado).
 **Estado:** brief propone página propia `/campaigns/[id]/active-version` (independiente de #43), ❓1–❓4 en §7. Solo docs.
 
