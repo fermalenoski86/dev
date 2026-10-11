@@ -1,0 +1,61 @@
+F3(a) · versión vigente administrativa con cuatro ojos — salida REAL de los gates
+Entorno: v22.22.0 · pnpm 12.5.1 · psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) · ffprobe version 6.1.1-3ubuntu5 · 2026-10-11T16:22Z
+Base: origin/main@8043b99 · rama fase/f3a (el SHA exacto auditado y su CI van en el PR)
+
+== pnpm verify
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  50 passed | 1 skipped (51)
+      Tests  763 passed | 1 skipped (764)
+
+== NEXT_PUBLIC_TRUST_API_URL=https://api.trust.test:8443 pnpm build
+build=0
+
+== npx vitest run -c vitest.platform.config.ts (PostgreSQL 16 real)
+ ✓ apps/platform-api/src/active-version.db.test.ts (19 tests) 2270ms
+ ✓ packages/platform-db/src/schema.db.test.ts (31 tests) 1606ms
+ ✓ packages/platform-db/src/active-version-schema.db.test.ts (8 tests) 1276ms
+ ✓ packages/platform-db/src/approval-schema.db.test.ts (5 tests) 683ms
+ Test Files  29 passed | 1 skipped (30)
+      Tests  326 passed | 6 skipped (332)
+
+== bash packages/platform-db/scripts/bootstrap-smoke.sh
+== roles antes del bootstrap: 0
+== bootstrap corrido dos veces (idempotente)
+== roles después: trust_app,trust_owner
+      Tests  6 passed (6)
+
+== npx vitest run -c vitest.media.config.ts
+      Tests  63 passed (63)
+
+== python3 scripts/mutation-check.py --tanda 298:322 (las 24 nuevas f3a:)
+ATRAPADA   f3a: cuatro ojos en la app (quien pidió confirma)
+ATRAPADA   f3a: cuatro ojos en la función
+ATRAPADA   f3a: cuatro ojos en el trigger de la tabla
+ATRAPADA   f3a: CONFIRMED por fuera de la función
+ATRAPADA   f3a: hash al pedir (app)
+ATRAPADA   f3a: hash al confirmar (app)
+ATRAPADA   f3a: versión de otra campaña
+ATRAPADA   f3a: destino no APPROVED (app)
+ATRAPADA   f3a: destino no APPROVED (base)
+ATRAPADA   f3a: concurrencia optimista al pedir
+ATRAPADA   f3a: IS NOT DISTINCT FROM reemplazado por <> en la función
+ATRAPADA   f3a: vencimiento ignorado al confirmar
+ATRAPADA   f3a: vencimiento perezoso ignorado al pedir
+ATRAPADA   f3a: TTL en horas en vez de minutos
+ATRAPADA   f3a: 409 por vigente cambiada con throw (rollback)
+ATRAPADA   f3a: 409 por vencido con throw (rollback)
+ATRAPADA   f3a: el cambio no se audita como ACTIVE_VERSION_CHANGED
+ATRAPADA   f3a: cancela cualquiera
+ATRAPADA   f3a: replay del pedido responde 200
+ATRAPADA   f3a: backfill de la vigente con la última aprobada
+ATRAPADA   f3a: aprobar mueve la vigente
+ATRAPADA   f3a: search_path sin pg_temp
+ATRAPADA   f3a: EXECUTE para PUBLIC
+ATRAPADA   f3a: trust_app conserva UPDATE de active_version_id
+atrapadas 24 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+
+== no ejecutado localmente
+E2E M2C (14) y e2e-platform: sin Chrome con H.264 en este entorno → evidencia en los jobs e2e-m2c y e2e-platform de CI.
+Las 298 mutaciones anteriores: no se re-corrieron acá (no cambian esas áreas) → evidencia en el job mutations de CI (las 322).
+Contrato S3 (compose-smoke): sin cambios de storage → evidencia en el job compose-smoke de CI.

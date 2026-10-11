@@ -1,4 +1,5 @@
 import { VERSION_PAGE_DEFAULT, VERSION_PAGE_MAX } from '@trust/platform-approval';
+import { CHANGE_PAGE_DEFAULT, CHANGE_PAGE_MAX } from '@trust/platform-campaigns';
 import { AssetRejectionSchema } from '@trust/platform-contracts';
 import { z } from 'zod';
 
@@ -220,9 +221,29 @@ export const CampaignResponseSchema = z.object({
   id: Uuid, contractId: Uuid, name: z.string(), lifecycleStatus: z.enum(['ACTIVE', 'ARCHIVED']),
   currentDraft: z.object({ id: Uuid, revision: z.number().int().positive(), updatedAt: IsoDate }).nullable(),
   latestApprovedVersion: z.object({ id: Uuid, versionNumber: z.number().int().positive(), versionHash: Sha }).nullable(),
+  activeVersion: z.object({ id: Uuid, versionNumber: z.number().int().positive(), versionHash: Sha }).nullable(),
+  pendingActiveVersionChange: z.object({ id: Uuid, toVersionId: Uuid, toVersionHash: Sha, requestedBy: Uuid, requestedAt: IsoDate, expiresAt: IsoDate }).nullable(),
   createdAt: IsoDate, updatedAt: IsoDate,
 });
 export const DraftResponseSchema = z.object({
   campaignId: Uuid, draftId: Uuid, revision: z.number().int().positive(), updatedAt: IsoDate, takeoverDraft: z.record(z.string(), z.unknown()),
 });
 export const pageOf = <T extends z.ZodTypeAny>(item: T) => z.object({ items: z.array(item), nextCursor: Uuid.nullable() });
+
+/* ── F3(a): versión vigente con cuatro ojos ─────────────────────────── */
+/** `expectedActiveVersionId` es obligatorio y puede ser null (primera selección): concurrencia optimista. */
+export const ActiveVersionRequestBodySchema = z
+  .object({ versionId: Uuid, versionHash: Sha, reason: z.string().trim().min(1).max(2000), expectedActiveVersionId: Uuid.nullable() })
+  .strict();
+export const ActiveVersionConfirmBodySchema = z.object({ versionHash: Sha }).strict();
+export const ActiveVersionChangeParamsSchema = z.object({ id: Uuid }).strict();
+export const ActiveVersionChangeResponseSchema = z
+  .object({
+    id: Uuid, campaignId: Uuid, fromVersionId: Uuid.nullable(), toVersionId: Uuid, toVersionHash: Sha, reason: z.string(),
+    requestedBy: Uuid, requestedAt: IsoDate, expiresAt: IsoDate, status: z.enum(['PENDING', 'CONFIRMED', 'CANCELLED', 'EXPIRED']),
+    decidedBy: Uuid.nullable(), decidedAt: IsoDate.nullable(),
+  })
+  .strict();
+export const ActiveVersionChangeListQuerySchema = z
+  .object({ limit: z.coerce.number().int().min(1).max(CHANGE_PAGE_MAX).default(CHANGE_PAGE_DEFAULT), cursor: Uuid.optional() })
+  .strict();

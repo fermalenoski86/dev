@@ -280,8 +280,12 @@ describe('migraciones', () => {
   it('up sobre base vacía, down y up de nuevo (smoke test reversible)', async () => {
     const vacia = await createTestDatabase({ migrate: false });
     try {
-      const ambas = ['0001_initial:Success', '0002_asset_pipeline:Success', '0003_approval:Success'];
+      const ambas = ['0001_initial:Success', '0002_asset_pipeline:Success', '0003_approval:Success', '0004_active_version:Success'];
       expect(await migrateUp(vacia.owner as never)).toEqual(ambas);
+      // 0004 baja sola: sin vigente ni pedidos
+      expect(await migrateDownOne(vacia.owner as never)).toEqual(['0004_active_version:Success']);
+      const c4 = await sql<{ n: string }>`SELECT count(*)::text AS n FROM information_schema.columns WHERE (table_name, column_name) IN (('campaigns', 'active_version_id'), ('active_version_changes', 'id'))`.execute(vacia.owner);
+      expect(c4.rows[0]?.n).toBe('0');
       // 0003 baja sola: evidencia sin versión, aprobación sin hash
       expect(await migrateDownOne(vacia.owner as never)).toEqual(['0003_approval:Success']);
       const c3 = await sql<{ n: string }>`SELECT count(*)::text AS n FROM information_schema.columns WHERE (table_name, column_name) IN (('approval_evidence', 'show_version_id'), ('approvals', 'version_hash'))`.execute(vacia.owner);
