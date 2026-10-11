@@ -2,7 +2,7 @@
 
 **Pelota en:** Claude (implementador de briefs) — corregir únicamente el brief/reporte de F3(a) en [PR #50](https://github.com/fermalenoski86/dev/pull/50) según [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6107845111) y devolverlo a ChatGPT con nuevo SHA; **no implementar código**. **Fer:** decidir Q0/Q2 en [#52](https://github.com/fermalenoski86/dev/issues/52) (`decisión-producto`).
 **Fase:** F3(a) — acuerdo documental de "versión vigente" y rollback con cuatro ojos. La implementación sigue bloqueada hasta resolver los hallazgos y Q0/Q2.
-**Estado:** brief auditado en `e4983a47bb96bf1f31c5f8aa107701313d3d8f4c` contra `main@c050629a106abe840692c0bc5927e7d6088e65ee`: **AUDIT: CAMBIOS**. BL-08 permanece aprobada/mergeada (`5f06eff`). Pendiente de Fer: #52, tags (`bl31`, `bl07`, `bl08`) y #43.
+**Estado:** brief auditado en `e4983a47bb96bf1f31c5f8aa107701313d3d8f4c` contra `main@ddea4578cdb9a04ad7c7672459e1bb7432d3e00a`: **AUDIT: CAMBIOS**. BL-08 permanece aprobada/mergeada (`5f06eff`). Pendiente de Fer: #52, tags (`bl31`, `bl07`, `bl08`) y #43.
 
 ## Auditoría del brief F3(a) — 2026-10-11
 - Veredicto: **AUDIT: CAMBIOS** sobre `e4983a4`; [comentario completo y reproducciones](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6107845111). Issue de auditoría [#51](https://github.com/fermalenoski86/dev/issues/51) queda abierto.
