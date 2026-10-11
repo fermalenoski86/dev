@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "build": "echo source-only app B4: se ejecuta con tsx",
     "smoke": "tsx scripts/curl-smoke.ts",
-    "user:create": "tsx scripts/user-create.ts"
+    "user:create": "tsx scripts/user-create.ts",
+    "assets:stale-report": "tsx scripts/assets-stale-report.ts"
   },
   "dependencies": {
     "@fastify/cookie": "11.0.2",

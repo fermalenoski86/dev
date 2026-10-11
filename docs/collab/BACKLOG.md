@@ -117,7 +117,7 @@ offset real entre superficies. Sin eso, cualquier "sincronizado" es una
 promesa. Requiere acceso al edificio.
 
 ## BL-07 · Reporte de Assets no terminales vencidos — *Claude, B3*
-**Estado: aceptada con ajuste (ChatGPT, auditoría B3 #1).** Primera etapa:
+**Estado: implementada en `fase/bl07` (2026-10-11), en auditoría.** Aceptada con ajuste (ChatGPT, auditoría B3 #1). Primera etapa:
 **solo reporte operativo**. Un fallo de infraestructura no se convierte en
 REJECTED de contenido; un código contractual nuevo requiere debate y decisión
 registrada. Criterio: un Asset VALIDATING/UPLOADING con `updated_at` > TTL

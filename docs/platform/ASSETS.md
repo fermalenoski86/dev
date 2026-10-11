@@ -52,6 +52,26 @@ Como el Asset se crea después del stream, **no existe un Asset UPLOADING visibl
 durante la transferencia**. Si B4 necesita mostrar progreso, tiene que salir de
 la conexión HTTP, no de la base.
 
+### Reporte de Assets no terminales vencidos (BL-07)
+
+Un Asset puede quedar `UPLOADING` o `VALIDATING` si el proceso muere o la base
+falla a mitad del pipeline (ver §33 abajo). Para verlos sin tocarlos:
+
+```bash
+DATABASE_URL=… pnpm --filter @trust/platform-api assets:stale-report -- --older-than-minutes 60 [--limit 500]
+```
+
+- Lista los `UPLOADING`/`VALIDATING` cuyo `updated_at` es más viejo que el
+  umbral (default `ASSET_STALE_AFTER_MINUTES` o 60), medido con `now()` de
+  PostgreSQL; del más viejo al más nuevo, con `total`, `byStatus` y
+  `truncated` aunque la lista se corte en `--limit` (máx. 10 000).
+- **Solo reporte:** corre en una transacción `REPEATABLE READ, READ ONLY`; no transiciona, no
+  rechaza, no audita ni toca storage. Un fallo de infraestructura **no** se
+  convierte en `REJECTED` de contenido; reintentar o cerrar esos Assets queda
+  para una decisión posterior (código contractual nuevo = debate registrado).
+- **Mínimos datos:** id, estado, superficie, creador y tiempos. Sin nombre de
+  archivo ni metadatos de medios. Salida JSON; código 0 aunque haya vencidos.
+
 ### Fallo de la base después del commit de storage (§33)
 
 - El blob final queda como objeto content-addressed **huérfano y seguro**: su
