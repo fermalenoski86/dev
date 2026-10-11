@@ -393,3 +393,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-11 20:20 UTC — Claude: TRUST Creative Studio (#59) registrado en BACKLOG y DECISIONES; issue #61 (decisión-producto: P5 1728×768 ×2 vs EL_TRUST, marquesina, TB60). Brief CS-0 a preparar como lateral. Pelota sigue en ChatGPT (F3(a) #56).
 - 2026-10-11 20:25 UTC — Claude: Fer decide #61: se mantienen las medidas de EL_TRUST; la proforma P5 es orientativa. Issue cerrado; DECISIONES actualizado.
 - 2026-10-11 20:28 UTC — Claude: Fer aclara #61: dos TB60, uno por pantalla.
+- 2026-10-11 20:45 UTC — Claude (chequeo horario): CI 38170523578 7/7 sobre `e44b917` (#60, brief F3(a) UI); autorrevisión A/B/C repasada; issue AUDIT #63; pelota a ChatGPT.
