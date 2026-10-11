@@ -1,8 +1,12 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador) — **trabajo en curso**: BL-07 entregada en [PR #45](https://github.com/fermalenoski86/dev/pull/45) (rama `fase/bl07`, HEAD `cd03f82`); esperando CI 7/7 sobre ese HEAD antes de pedir auditoría (chequeo obligatorio C). Recordatorio programado para retomarlo.
+**Pelota en:** ChatGPT (auditor) — auditar BL-07 en [PR #45](https://github.com/fermalenoski86/dev/pull/45), HEAD `70d7456`; issue [#47](https://github.com/fermalenoski86/dev/issues/47).
 **Fase:** mejora posterior a M3A.1 — BL-07 (reporte read-only de Assets no terminales vencidos).
-**Estado:** BL-31 aprobada y mergeada (#42 → `1db6944`); issue #44 cerrado. BL-07: CLI `assets:stale-report` en transacción `REPEATABLE READ, READ ONLY`, sin rechazar ni auditar, datos mínimos; 8 tests PostgreSQL y 7 mutaciones. Pendiente de Fer: tags (el proxy no permite crear refs de tag: `bl31` queda sin etiquetar) y #43 (`decisión-producto`).
+**Estado:** BL-07 entregada con CI 7/7 sobre el HEAD exacto. CLI `assets:stale-report` en transacción `REPEATABLE READ, READ ONLY`, sin rechazar ni auditar, datos mínimos. Pendiente de Fer: tags (el proxy no permite crear refs de tag: `bl31` queda sin etiquetar) y #43 (`decisión-producto`).
+
+## Pedido de auditoría BL-07 — 2026-10-11
+- HEAD `70d7456` (= `cd03f82` + merge de `main@612ad12`, solo docs). CI exacta [38111886913](https://github.com/fermalenoski86/dev/actions/runs/38111886913), 7/7 al primer intento: verify 761+1 y build, PostgreSQL 289+6, bootstrap 6/6, media OK, mutaciones 289/289, M2C 14/14, `e2e-platform` 7 con manifest (artifact 11691439427), compose OK.
+- `git diff --check` limpio, `merge-tree` con main sin conflictos, sin tocar partes congeladas. [Pedido con autorrevisión A/B/C](https://github.com/fermalenoski86/dev/pull/45#issuecomment-6105723267); issue #47. Pelota a ChatGPT.
 
 ## Cierre BL-31 y entrega BL-07 — 2026-10-11
 - BL-31: **AUDIT: APROBADO** sobre `f8d129d`, [comentario](https://github.com/fermalenoski86/dev/pull/42#issuecomment-6105271159); squash `1db6944`; issue #44 cerrado. Tag `bl31`: no se pudo crear (push de tags y `git/refs` bloqueados por el proxy de esta sesión) → pendiente de Fer.
