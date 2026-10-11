@@ -1,8 +1,15 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor). Auditar **BL-31** en [PR #42](https://github.com/fermalenoski86/dev/pull/42), HEAD `f8d129d0d2f7f936ac526e716042a01431a59142`, CI [38034544895](https://github.com/fermalenoski86/dev/actions/runs/38034544895) 7/7 verde. Issue de auditoría [#44](https://github.com/fermalenoski86/dev/issues/44). Responder en #42 con `AUDIT: APROBADO` o `AUDIT: CAMBIOS`.
-**Fase:** mejora posterior a M3A.1 — BL-31 (historial de versiones por campaña).
-**Estado:** M3A.1 sigue cerrada. BL-31 entregada: `GET /api/v1/campaigns/:id/versions` (resúmenes, keyset, autorización por objeto = lectura de versión, 404/400 sin oráculo), OpenAPI, UI `/campaigns/[id]/versions`, tests y 7 mutaciones. Observación previa fuera de alcance en #43 (`decisión-producto`). Pendiente de Fer: tags y #43.
+**Pelota en:** Claude (implementador). Iniciar **BL-07** en cambio separado desde `main@26ab5d4` o posterior: reporte operativo *read-only* de Assets `UPLOADING`/`VALIDATING` vencidos, según `docs/collab/BACKLOG.md`. No convertir fallos de infraestructura en rechazo de contenido, no borrar ni mutar Assets y no tocar partes congeladas. Abrir rama/PR con brief corto, tests, salida real y devolver el HEAD a ChatGPT.
+**Fase:** mejoras posteriores a M3A.1 — BL-07 (reporte de Assets no terminales vencidos).
+**Estado:** M3A.1 y BL-31 cerradas. BL-31 fue aprobada sobre `f8d129d0d2f7f936ac526e716042a01431a59142`, squash `1db6944be730d9c0caaa10088af09bf4a30c21f4`; BACKLOG actualizado en `main@26ab5d4`. Pendiente de Fer: tags y decisión de producto #43.
+
+## Cierre BL-31 — 2026-10-11
+- Resultado: **AUDIT: APROBADO**, [comentario en PR #42](https://github.com/fermalenoski86/dev/pull/42#issuecomment-6105271159); issue #44 cerrado; squash `1db6944be730d9c0caaa10088af09bf4a30c21f4`.
+- HEAD auditado: `f8d129d0d2f7f936ac526e716042a01431a59142`. Integración limpia con `main@b859c14` mediante `git merge-tree`; `git diff --check` limpio; sin cambios en `apps/control`, `e2e/`, storage ni migraciones.
+- CI exacta [38034544895](https://github.com/fermalenoski86/dev/actions/runs/38034544895), 7/7 al primer intento: verify 761+1, PostgreSQL 281+6, bootstrap 6/6, media 63/63, mutaciones 282/282, M2C 14/14, `e2e-platform` 7/7 con manifest/hashes, y compose 15/15.
+- Auditor: revisión completa del delta, autorización por objeto, paginación keyset, negativos anti-enumeración, OpenAPI y UI; 3/3 tests focales del cliente API. No ejecutados localmente: suite completa, PostgreSQL, bootstrap, media, mutaciones completas, M2C, E2E multihost, compose y test de vista React por Node 24/pnpm 11 y dependencias locales incompletas frente a Node 22/pnpm 12.5.1; cubiertos por los logs exactos de CI, no declarados como ejecución local.
+- #43 queda fuera de BL-31 y a decisión de Fer. Próxima unidad aceptada: BL-07, estrictamente de reporte operativo, sin mutaciones automáticas.
 
 ## Entrega BL-31 — 2026-10-10
 - PR [#42](https://github.com/fermalenoski86/dev/pull/42), rama `fase/bl31` desde `main@25a4bfa`; reporte `docs/reviews/BL31.md`, salida `docs/reviews/BL31_SALIDA.txt`.
