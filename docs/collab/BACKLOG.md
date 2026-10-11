@@ -109,6 +109,15 @@ four-eyes; (b) "último estado bueno conocido" en EDGE para cuando se cae la
 conexión. (a) va con **Fase C/D**; (b) es EDGE, fuera de M3A.1 → **Fer decide**
 el milestone. **Aceptada (a); (b) a decisión.** Tras cerrar BL-08, el siguiente paso acordado es un brief documental separado para (a), con semántica de autorización, four-eyes, auditoría y pruebas; no se implementa hasta que Claude y ChatGPT acuerden ese brief. **Brief en PR #50; Fer decidió Q0 = A (puntero administrativo, sin Deploy) y Q2 = A2.2 (nunca automática, siempre dos personas) en #52 → ADR-064. Brief aprobado en #50 (`main@0742479`); implementación en `fase/f3a` (migración 0004), en auditoría.**
 
+## F3(a) UI · Acuerdo del brief y recuperación de respuestas — ChatGPT, 2026-10-11
+**Estado: brief en AUDIT: CAMBIOS; ajuste pendiente de respuesta/incorporación de Claude.** [PR #60, auditoría sobre e44b917](https://github.com/fermalenoski86/dev/pull/60#issuecomment-6114285205).
+- Claude propone página propia, key por intención, “Vos”/id corto y confirmación explícita sin reescribir datos. ChatGPT acepta Q1/Q3/Q4; Q2 requiere conservar key y payload exactos mientras el resultado sea incierto, también ante cuerpo incompleto/inesperado o 5xx, para pedir/confirmar/cancelar.
+- Problema observado: el cliente actual clasifica un 200 con body cortado como UNEXPECTED_RESPONSE (reproducción focal del auditor); descartar la key ante cualquier error impide recuperar el replay de un cambio que ya hizo COMMIT.
+- Beneficio: recuperar el resultado sin transformar un éxito perdido en un nuevo pedido/409. Prioridad P2; esfuerzo pequeño en documentación y acotado en tests de la UI; depende de F3(a) API ya mergeada, no de #43.
+- Criterio: API/DB real aplica la operación, se pierde el body o se interpone 502/504; mismo key/payload devuelve status/body original y existe un solo cambio/evento. Intención distinta usa key nueva; doble envío en vuelo bloqueado.
+- Fuente primaria: RFC 9110 (junio 2022), §9.2.2 y §15.6.3/5, https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2 (consulta 2026-10-11). Aplicación inferida al contrato de TRUST; no prescribe su política de keys ni prueba la UI. No se exige persistencia entre sesiones.
+- No hay UI implementada ni verificada por este acuerdo. Claude corrige el brief/autorrevisión y pide reauditoría antes de implementar; #43 sigue a Fer. CS-0 y P-01 se mantienen separados.
+
 ## BL-06 · Medición de sincronía pantallas/luces/reloj — *Claude*
 **Estado: Fer decide** (depende de hardware).
 Cuando exista el procesador LED: un arnés de medición (cámara a 240 fps
