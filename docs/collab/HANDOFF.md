@@ -1,8 +1,16 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** ChatGPT (auditor) — auditar BL-07 en [PR #45](https://github.com/fermalenoski86/dev/pull/45), HEAD `70d7456`; issue [#47](https://github.com/fermalenoski86/dev/issues/47).
-**Fase:** mejora posterior a M3A.1 — BL-07 (reporte read-only de Assets no terminales vencidos).
-**Estado:** BL-07 entregada con CI 7/7 sobre el HEAD exacto. CLI `assets:stale-report` en transacción `REPEATABLE READ, READ ONLY`, sin rechazar ni auditar, datos mínimos. Pendiente de Fer: tags (el proxy no permite crear refs de tag: `bl31` queda sin etiquetar) y #43 (`decisión-producto`).
+**Pelota en:** Claude (implementador) — implementar BL-08 desde el `main` vigente; abrir PR separado y devolver SHA + CI a ChatGPT.
+**Fase:** mejora posterior a M3A.1 — BL-08 (reporte read-only de blobs huérfanos).
+**Estado:** BL-07 aprobada y mergeada. BL-08 autorizada: solo reporte, período de gracia, contraste verificable contra `StoredObject` y cero borrados. Pendiente de Fer: tags (el proxy no permite crear refs de tag: `bl31` queda sin etiquetar) y #43 (`decisión-producto`).
+
+## Cierre BL-07 y encargo BL-08 — 2026-10-11
+- Resultado: **AUDIT: APROBADO**, [comentario en PR #45](https://github.com/fermalenoski86/dev/pull/45#issuecomment-6106041561); issue #47 cerrado; squash `e19ac239e10fef2c5d5017aea062ead90a1f97f2`.
+- HEAD auditado: `70d7456bf01f5d0a09e819718a1b861a7a27b644`. Integración simulada limpia con `main@b999caa`; `git diff --check` limpio; sin cambios en áreas congeladas.
+- CI exacta [38111886913](https://github.com/fermalenoski86/dev/actions/runs/38111886913), 7/7 al primer intento: verify 761+1 y build; PostgreSQL 289+6; bootstrap 6/6; media 63/63; mutaciones 289/289 (7/7 BL-07); M2C 14/14; `e2e-platform` 7/7 con hashes (artifact 11691439427); compose 15/15.
+- Auditor: revisión completa del delta, instantánea `REPEATABLE READ`, primera sentencia `READ ONLY`, datos mínimos, negativos y no mutación. No repetidos localmente: suites completas, PostgreSQL, build, mutaciones y E2E por Node 24/pnpm 11, sin dependencias ni PostgreSQL frente al contrato Node 22/pnpm 12.5.1/PostgreSQL 16; cubiertos por logs exactos, no declarados como ejecución local.
+- Fuente primaria contrastada: PostgreSQL 17, `SET TRANSACTION` (consultada 2026-10-11), https://www.postgresql.org/docs/17/sql-set-transaction.html. Aplicación: `READ ONLY` prohíbe DML/DDL sobre tablas no temporales; límite: es una garantía SQL de alto nivel, no cero escritura física interna.
+- Próximo paso autorizado: Claude implementa **BL-08** desde `main@784ff9c9650a`, en cambio separado. Criterio vigente de BACKLOG: reporte *read-only* con período de gracia; con el huérfano real de §33 y un blob referenciado por `StoredObject`, solo el primero aparece; **cero borrado automático**. Ejecutar todos los gates y devolver PR/HEAD/CI a ChatGPT.
 
 ## Pedido de auditoría BL-07 — 2026-10-11
 - HEAD `70d7456` (= `cd03f82` + merge de `main@612ad12`, solo docs). CI exacta [38111886913](https://github.com/fermalenoski86/dev/actions/runs/38111886913), 7/7 al primer intento: verify 761+1 y build, PostgreSQL 289+6, bootstrap 6/6, media OK, mutaciones 289/289, M2C 14/14, `e2e-platform` 7 con manifest (artifact 11691439427), compose OK.
