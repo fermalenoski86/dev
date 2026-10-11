@@ -409,3 +409,152 @@ auditado como cualquier otro.
   trivial). Un auditor externo **puntual** (como Fable en #26) sí sirve: para
   seguridad antes de producción y para hardware cuando exista. Se pide por
   issue `decisión-producto`, no se automatiza.
+
+---
+
+# P-06 · TRUST Agent Bridge — Zero Cost — *Claude, 2026-10-11, pedido de Fer*
+
+**Estado: propuesta.** Investigación con fuentes primarias (fecha de consulta
+2026-10-11). Nada se implementa hasta acuerdo con ChatGPT. Condición de Fer:
+**USD 0 adicionales** (sin API paga, sin servidor, sin suscripción nueva).
+
+## Qué comprobé sobre cómo se despierta cada agente (sin suponer)
+
+| Agente | Mecanismo | Verificado | Fuente |
+|---|---|---|---|
+| Claude (turnos actuales) | Tarea programada cron en la nube de Claude | **Mínimo 1 hora**: probé crear `*/30` y el sistema lo rechaza ("the minimum interval is 1 hour"). No hay webhook ni endpoint para dispararla desde GitHub. | prueba directa, hoy |
+| Claude (GitHub Action) | `anthropics/claude-code-action@v1` en un workflow del repo. Se activa con `@claude` en un comentario de issue/PR (modo interactivo) o con un `prompt` fijo en cualquier evento de GitHub (modo automático). Autenticación con **`CLAUDE_CODE_OAUTH_TOKEN`** generado con `claude setup-token`: "available on Pro, Max, Team, and Enterprise plans"; "runs use your Claude subscription instead of API billing". Guardado como **GitHub Secret** (no en el repo). Rechaza actores bot salvo `allowed_bots` (anti-bucle). | doc oficial | https://code.claude.com/docs/en/github-actions · https://github.com/anthropics/claude-code-action/blob/main/docs/setup.md |
+| ChatGPT/Codex (GitHub) | Comentario **`@codex review`** en un PR → revisión; **Automatic review** en Codex settings → revisa sin comentario (el evento exacto lo elige "Review trigger"). Sigue las reglas de `AGENTS.md` ("Codex searches your repository for AGENTS.md files and follows the applicable code review rules", sección `## Code Review Rules`). Publica **solo P0 y P1**. `@codex <otra cosa>` abre un chat cloud con el PR como contexto. **No documentado:** reacción a comentarios en issues (no PR) ni a comentarios de cuentas bot. | doc oficial | https://developers.openai.com/codex/integrations/github.md (redirige a learn.chatgpt.com/docs/third-party/github.md) |
+| ChatGPT (turnos actuales) | Tarea programada que Fer configuró en ChatGPT, cada 2 h | Funciona hoy; su mínimo lo conoce Fer | — |
+| GitHub Actions | Repo **público** → minutos ilimitados gratis para runners estándar | ya lo usamos (gates.yml) | docs GitHub billing |
+
+**Consecuencia:** la sesión en la nube de Claude que corre hoy **no** puede
+ser despertada por GitHub. Pero existe **otro runtime de Claude** (la Action)
+que sí es por eventos y usa la suscripción. Codex sí puede ser despertado por
+un evento de PR. Eso hace viable la alternativa 3, con límites.
+
+## Alternativa 1 · GitHub Actions + notificaciones (avisar, no ejecutar)
+- **Arquitectura:** workflow `bridge-notify.yml` en `main`, sobre eventos
+  `issue_comment`, `pull_request`, `push` a `main` (HANDOFF). Detecta `AUDIT:`,
+  PR abierto, "Pelota en:" cambiado. Publica una **anotación** y, si Fer lo
+  quiere, un issue/label `pelota:claude` / `pelota:chatgpt` (visible en la app
+  de GitHub del celular; notificaciones de GitHub, gratis).
+- **Funcionamiento:** nadie se despierta; el turno de 2 h sigue, pero el que
+  llega ya encuentra la señal lista y no tiene que leer todo.
+- **Costo:** 0. **Humano:** 0 (opcional: Fer mira el label).
+- **Limitaciones:** no baja la latencia por sí sola.
+- **Latencia entre entregas:** la de hoy (≤ 2 h por lado).
+
+## Alternativa 2 · Puente semiautomático (lo que ya tenemos, mejor usado)
+- **Arquitectura:** (a) **turno de chequeo** de Claude cada hora en :26
+  (mínimo permitido), de solo lectura: si hay `AUDIT:` nuevo o la pelota
+  cambió, ejecuta el turno completo ahí mismo; si no, termina en segundos.
+  (b) Codex con **Automatic review** encendida: cuando Claude abre o actualiza
+  un PR, Codex lo revisa en minutos sin esperar las :56 pares. Su turno de 2 h
+  queda como respaldo y para lo que no es PR (briefs, issues).
+- **Funcionamiento:** Claude entrega → Codex revisa en minutos → Claude lo ve
+  en ≤ 1 h → corrige → Codex revisa en minutos.
+- **Costo:** 0 (la revisión automática está dentro del plan que Fer ya usa;
+  confirmar en Codex settings que la opción aparece).
+- **Humano:** una vez: Fer enciende "Automatic review" y elige "Review trigger".
+- **Limitaciones:** la revisión automática de Codex es **P0/P1 y formato de
+  review de GitHub**, no el protocolo `AUDIT: APROBADO/CAMBIOS` completo. Hay
+  que escribir el protocolo en `AGENTS.md` bajo `## Code Review Rules` y
+  verificar en la PoC que lo respeta. Codex no reacciona a issues: los briefs
+  siguen en el turno de 2 h.
+- **Latencia entre entregas:** de ~4 h por ronda a **~1 h** (dominada por el
+  chequeo horario de Claude).
+
+## Alternativa 3 · Puente completamente automático (eventos → agentes)
+- **Arquitectura:**
+  ```
+  Claude (Action) abre/actualiza PR ──► Codex Automatic review (minutos)
+        ▲                                     │ review con "AUDIT: CAMBIOS"/"APROBADO"
+        │ issue_comment / pull_request_review │ (cuenta de Fer = actor humano ✔)
+        └──── claude-code-action@v1 ◄─────────┘
+              prompt fijo: "sos el implementador, leé AGENTS/HANDOFF/DECISIONES,
+              respondé esta auditoría"; CLAUDE_CODE_OAUTH_TOKEN en Secrets
+  ```
+  El turno cron de 2 h de Claude queda como **respaldo manual** y para
+  tareas largas; la Action hace lo corto (responder hallazgos, pedir
+  re-auditoría, mover la pelota con el script de P-01).
+- **Costo:** 0 adicional: minutos de Actions gratis (repo público), token de
+  suscripción (consume la cuota del plan de Fer, no USD), Codex dentro del
+  plan actual.
+- **Humano:** una vez: Fer corre `claude setup-token` en su máquina y pega el
+  token en GitHub → Settings → Secrets (nunca en el repo); enciende Automatic
+  review en Codex. Después: solo `decisión-producto`.
+- **Limitaciones reales (no suposiciones):**
+  1. Codex revisa **PRs**, no issues: los briefs documentales (como F3(a) en
+     #50) sí son PRs, así que entran. Lo que no es PR cae al turno de 2 h.
+  2. Codex publica P0/P1 en formato review; el veredicto `AUDIT:` depende de
+     que acate `AGENTS.md`. **Hay que probarlo** (PoC).
+  3. `claude-code-action` rechaza actores **bot**. Los comentarios de Codex
+     llegan con la cuenta de Fer (humano) → disparan. Los de la Action llegan
+     como app → **no** disparan a la propia Action (anti-bucle gratis). Si
+     Codex ignora comentarios de bots, el flujo igual cierra porque Codex
+     reacciona al **push** del PR, no al comentario.
+  4. Un job de Actions no tiene PostgreSQL ni ffmpeg listos: para gates
+     completos la Action **no corre tests**, espera a `gates.yml` (ya existe)
+     y lee su resultado por API. Evita duplicar 20 min de CI.
+  5. Cuota de la suscripción: un turno de la Action gasta lo que un turno
+     normal. Con `--max-turns 40` y un timeout de 45 min por job se acota.
+  6. Token: `setup-token` da un token de larga vida; si vence, la Action
+     falla ruidosamente (rojo), nunca silenciosamente.
+- **Guardas anti-bucle y anti-duplicado (obligatorias):**
+  - `concurrency: { group: bridge-${{ github.event.issue.number }}, cancel-in-progress: false }`;
+  - **máximo 4 rondas AUDIT por PR** contadas por la Action; a la 5.ª no
+    responde: etiqueta `decisión-producto` y para (regla ya vigente de
+    "dos rondas sin acuerdo", endurecida);
+  - la Action solo actúa si `HANDOFF.md` en `main` dice `Pelota en: Claude`
+    **o** el comentario es un `AUDIT:` nuevo; si la pelota es de ChatGPT y no
+    hay AUDIT nuevo, sale sin hacer nada;
+  - el cron de 2 h **lee** la misma línea "trabajo en curso" de P-01: si la
+    Action ya tomó el PR hace < 60 min, el cron termina con "sin novedades";
+  - la Action **nunca mergea**: solo responde, corrige en la rama de la fase,
+    pide re-auditoría. El merge sigue siendo del turno cron tras
+    `AUDIT: APROBADO` + gates verdes (regla intacta).
+  - **nunca** toca una rama que `HANDOFF.md` marque "en auditoría" (P-05).
+- **Latencia entre entregas:** **minutos** por ronda (Codex ~2–10 min, Action
+  ~5–20 min según el trabajo). De ~4 h a ~15–30 min.
+
+## Recomendación
+**Alternativa 3 con la 2 como respaldo**, en este orden, cada paso un PR
+auditado:
+1. **PoC-0 (sin tocar el flujo real, 1 h):** PR de prueba `poc/bridge` con un
+   cambio trivial. Fer enciende Automatic review. Medimos: ¿Codex revisa solo?
+   ¿en cuánto? ¿respeta una regla `## Code Review Rules` que le pide abrir con
+   `AUDIT: APROBADO`/`AUDIT: CAMBIOS`? ¿reacciona a un `@codex review` escrito
+   por la Action (bot)? Resultado en el issue, con tiempos.
+2. **PoC-1 (1 h):** workflow `bridge-claude.yml` en modo automático sobre
+   `issue_comment` que contenga `AUDIT:`, con `prompt` de solo lectura:
+   "resumí el hallazgo en un comentario; no toques código". Token en Secrets.
+   Medimos latencia y que **no** se dispare con sus propios comentarios.
+3. **Si 1 y 2 pasan:** PR del puente real (prompt del implementador acotado,
+   guardas de arriba, P-01 como única vía de escritura del HANDOFF). Si Codex
+   **no** respeta el formato `AUDIT:`, nos quedamos en la alternativa 2 y el
+   turno de 2 h de ChatGPT sigue siendo el que pone el veredicto.
+4. Alternativa 2(a) (chequeo horario de Claude) se hace **igual** en todos los
+   casos: es gratis y no depende de nadie.
+
+## Criterios verificables de aceptación
+- PoC-0: tabla con 3 PRs de prueba → tiempo hasta review de Codex, y si el
+  texto empieza con `AUDIT:`. Sin eso, la alternativa 3 queda descartada con
+  evidencia, no con opinión.
+- PoC-1: 3 comentarios `AUDIT:` → 3 respuestas de la Action en < 15 min; 3
+  comentarios de la propia Action → 0 disparos; un comentario de un tercero
+  sin permisos de escritura → 0 disparos (chequeo de "write access" de la Action).
+- Puente real: una ronda completa (CAMBIOS → corrección → re-auditoría →
+  APROBADO) en < 60 min sin intervención de Fer, con HANDOFF consistente al
+  final (`Pelota en:` único, ≤ 60 líneas) y 0 merges automáticos.
+- Bucle: prueba provocada con 5 rondas → la 5.ª termina en `decisión-producto`.
+- Respaldo manual: apagar el workflow (`gh workflow disable`) devuelve el
+  flujo exactamente al de hoy, sin otro cambio.
+- Secretos: `git log -p | rg -i "oauth|sk-ant"` vacío; el token solo en
+  Settings → Secrets.
+- F3(a): ningún PR de P-06 toca `fase/f3a` ni espera a su cierre.
+
+## Lo que NO es gratis y por eso se descarta
+Un servidor propio o un webhook externo para despertar la sesión en la nube
+de Claude (no existe endpoint; habría que pagar hosting), la API de Anthropic
+o de OpenAI por uso, y cualquier "bot" de terceros con suscripción.
