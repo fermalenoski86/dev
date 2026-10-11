@@ -61,3 +61,19 @@ devuelve el status guardado (`packages/platform-db/src/idempotency.ts`).
 | Hallazgo | Respuesta |
 |---|---|
 | [P2] tabla §7 con cabecera duplicada | Corregido: queda una sola cabecera `# \| Pregunta \| Estado` y su separador. |
+
+## Ronda 3 — decisión de Fer incorporada (2026-10-11)
+
+[Decisión en #52](https://github.com/fermalenoski86/dev/issues/52#issuecomment-6109129274): **Q0 = A**, **Q2 = A2.2**. [Pedido en #50](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6109131290): incorporar ambas, revisar backfill y máquina de estados para A2.2, documentar el producto y pedir auditoría final.
+
+| Cambio | Dónde |
+|---|---|
+| Q0 = A registrada (puntero administrativo, sin Deploy) | brief §0, §7; ADR-064 |
+| Q2 = A2.2: nunca automática; `platform-approval` no se toca; sin `ACTIVE_VERSION_FOLLOWED_APPROVAL` | brief §2 (tabla de la máquina de estados), §4, §6.7 |
+| **Backfill revisado:** todas las campañas arrancan en `NULL` (copiar la última aprobada sería una selección sin dos personas). Reemplaza lo cerrado en la ronda 2 | brief §1.5, §6.12 (con mutación) |
+| Cuatro ojos **siempre**, también con `four_eyes_required = false` ("segunda persona autorizada" para toda selección) | brief §3, §3.2, §6.2 |
+| Primera selección con `expectedActiveVersionId: null` | brief §3.1, §6.7 |
+| Documentación de producto | `docs/architecture/DECISIONS.md` ADR-064; `docs/collab/BACKLOG.md` F3 |
+
+Declarado para la auditoría final: (1) backfill en `NULL` en vez de la última
+aprobada; (2) cuatro ojos sin excepción por contrato.
