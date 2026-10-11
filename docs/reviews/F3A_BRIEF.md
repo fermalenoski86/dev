@@ -13,19 +13,20 @@ migración, sin cambios de API. Encargado por el `AUDIT: APROBADO` de BL-08
 | Pedido | Dónde |
 |---|---|
 | Semántica de autorización | brief §3 (roles por paso, scope por contrato, 404/403) y Q3/Q4 |
-| Four-eyes | §3 ("quien pide no confirma", app + trigger, por contrato) |
+| Four-eyes | §3 ("quien pide no confirma", **siempre**, también con `four_eyes_required = false`; app + función + trigger) |
 | Auditoría | §4 (acciones nuevas, misma transacción, `verifyChain`) |
-| Pruebas | §6 (11 criterios verificables + mutaciones `f3a:`) |
-| No inventar producto | §0 (choque con "no deploy" del master) y Q0/Q2 marcadas como decisión de Fer |
+| Pruebas | §6 (15 criterios verificables + mutaciones `f3a:`) |
+| No inventar producto | §0 (choque con "no deploy" del master); Q0/Q2 decididas por Fer en #52 (Q0 = A, Q2 = A2.2; ADR-064) |
 
 ### B. Revisión adversaria del brief
 
 - **"Redeploy" sin deploy:** el master prohíbe Deploy en M3A.1; el brief no lo
-  esconde: lo pone como Q0 y propone un puntero de control plane, no un push.
+  esconde. Fer eligió (Q0 = A) un puntero de control plane, no un push.
 - **Romper invariantes vigentes:** se descarta mover `latest_approved_version_id`
   hacia atrás (opción B) porque el servicio de aprobación asume que solo avanza.
-- **Partes estables tocadas:** A2.1 toca `platform-approval`; está declarado
-  para que se juzgue. Nada en `apps/control`, M2C, storage B1 ni ShowPackage.
+- **Partes estables tocadas:** ninguna. Con A2.2 (decisión de Fer)
+  `platform-approval` no cambia; A2.1, que lo tocaba, quedó descartada. Nada
+  en `apps/control`, M2C, storage B1 ni ShowPackage.
 - **Carreras:** pedido/confirmación con campaña bloqueada, `expectedActiveVersionId`
   y un solo PENDING por campaña (índice único parcial).
 - **Cuatro ojos eludible:** segunda barrera en la base, como `trust_four_eyes`.
@@ -85,3 +86,13 @@ aprobada; (2) cuatro ojos sin excepción por contrato.
 | Con `from_version_id = NULL` (primera selección), un chequeo `vigente <> from` en SQL da `NULL` y no dispara el conflicto: un pedido viejo podría pisar una vigente fijada por otro camino | Regla explícita `IS NOT DISTINCT FROM` en pedir y confirmar (§3.1, §3.2) y criterio §6.15 con mutación |
 | Cuatro ojos siempre: un contrato con una sola persona con roles nunca puede fijar vigente | Declarado como consecuencia en §3 (sin excepción en código; si molesta, decide Fer) |
 | Cambio de backfill respecto de la ronda 2 | Declarado arriba para que el auditor lo juzgue |
+
+## Ronda 4 — `AUDIT: CAMBIOS` de la auditoría final (2026-10-11)
+
+[Comentario](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6109756547) sobre `92f2b75`: Q0/Q2, `NULL`, ADR-064 y rondas 1–2 correctos.
+
+| Hallazgo | Respuesta |
+|---|---|
+| [P1] replay "200" contradice el 201 de pedir | §3.6: replay = **mismo status y body** que la respuesta original (pedir 201→201; confirmar/cancelar 200→200; terminalización 409→409), como hace `withIdempotency`. §6.8: una prueba por operación y mutación. |
+| [P2] backtick sin cerrar en confirmar y frase rota en §4 | Endpoint de confirmar en una sola línea de código; §4 reescrito: A2.2 no genera ningún evento al aprobar. |
+| [P2] autorrevisión inicial desactualizada | §A/§B actualizados: cuatro ojos siempre, 15 criterios, A2.1 descartada, `platform-approval` sin cambios. |

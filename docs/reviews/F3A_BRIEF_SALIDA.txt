@@ -1,16 +1,20 @@
-F3(a) brief, ronda 3 — salida REAL de los chequeos (solo documentación)
-Fecha: 2026-10-11T12:43:44Z · base origin/main@5b834a9
+F3(a) brief, ronda 4 — salida REAL de los chequeos (solo documentación)
+Fecha: 2026-10-11T13:55:44Z · base origin/main@43cdcec
 
 == git diff --check origin/main
-limpio
+docs/reviews/F3A_BRIEF.md:99: new blank line at EOF.
+
+== code spans balanceados por línea en el brief
+ok, ninguna línea con backtick impar
 
 == archivos del cambio respecto de main
  docs/architecture/DECISIONS.md    |  28 ++++
- docs/briefs/F3A_REDEPLOY.md       | 301 ++++++++++++++++++++++++++++++++++++++
+ docs/briefs/F3A_REDEPLOY.md       | 321 ++++++++++++++++++++++++++++++++++++++
  docs/collab/BACKLOG.md            |   2 +-
- docs/reviews/F3A_BRIEF.md         |  79 ++++++++++
+ docs/collab/HANDOFF.md            |  17 +-
+ docs/reviews/F3A_BRIEF.md         |  99 ++++++++++++
  docs/reviews/F3A_BRIEF_SALIDA.txt |  19 +++
- 5 files changed, 428 insertions(+), 1 deletion(-)
+ 6 files changed, 471 insertions(+), 15 deletions(-)
 
 == pnpm docs:contract && git diff --exit-code docs/platform (sin cambios de API)
 docs/platform/openapi.json y docs/platform/DELIVERY.md regenerados (28 rutas registradas)

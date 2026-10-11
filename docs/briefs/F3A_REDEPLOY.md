@@ -93,8 +93,7 @@ fase ejecuta, empuja ni programa contenido.
      confirme. Hoy ningún consumidor lee el puntero (no hay Deploy), así que
      arrancar en `NULL` no cambia ningún comportamiento existente.
    - `activeVersion: null` = "sin versión vigente". La primera selección de una
-     campaña con aprobadas es un pedido normal con `expectedActiveVersionId:
-     null`, confirmado por otra persona (§3).
+     campaña con aprobadas es un pedido normal con `expectedActiveVersionId: null`, confirmado por otra persona (§3).
    - Campaña sin aprobaciones → `NULL` y no se puede pedir nada (no hay destino
      APPROVED).
    - Sin audit en la migración (no hay decisión que registrar) y sin evento
@@ -163,8 +162,8 @@ problema operativo, es decisión de Fer, no una excepción en el código.
    - Ya es la vigente → 409 `ACTIVE_VERSION_UNCHANGED`. Ya hay un PENDING →
      409 `ACTIVE_VERSION_CHANGE_PENDING` con su id.
    - 201 con el pedido. Audit `ACTIVE_VERSION_CHANGE_REQUESTED`.
-2. **Confirmar** — `POST /api/v1/active-version-changes/:id/confirm
-   { versionHash }`. CSRF + `Idempotency-Key` obligatoria (§3.6).
+2. **Confirmar** — `POST /api/v1/active-version-changes/:id/confirm`
+   con cuerpo `{ versionHash }`. CSRF + `Idempotency-Key` obligatoria (§3.6).
    - Roles: INTERNAL_APPROVER · ADMIN (**Q4 acordada:** EXTERNAL_APPROVER no
      confirma cambios operativos internos en esta etapa).
    - Siempre `decided_by ≠ requested_by` → si no, 403 `FOUR_EYES_VIOLATION`,
@@ -178,8 +177,7 @@ problema operativo, es decisión de Fer, no una excepción en el código.
      ver §3.7), destino sigue APPROVED, hash coincide.
    - Mueve `active_version_id`, marca `CONFIRMED`, audit
      `ACTIVE_VERSION_CHANGED` con `beforeHash`/`afterHash` = hash de la
-     versión anterior/nueva y metadata `{ campaignId, fromVersionId,
-     toVersionId, requestId, requestedBy, reason }`.
+     versión anterior/nueva y metadata `{ campaignId, fromVersionId, toVersionId, requestId, requestedBy, reason }`.
 3. **Cancelar** — `POST /api/v1/active-version-changes/:id/cancel`: quien pidió
    o ADMIN. CSRF + `Idempotency-Key` obligatoria (§3.6). Audit
    `ACTIVE_VERSION_CHANGE_CANCELLED`.
@@ -189,8 +187,7 @@ problema operativo, es decisión de Fer, no una excepción en el código.
    Vencimiento **perezoso**: se evalúa al confirmar, cancelar o pedir otro (sin
    job); el que vence pasa a `EXPIRED` con audit, persistido aunque la
    respuesta sea 409 (§3.7).
-5. **Lectura** — `GET /campaigns/:id` agrega `activeVersion {id,
-   versionNumber, versionHash}` y `pendingActiveVersionChange` (o `null`).
+5. **Lectura** — `GET /campaigns/:id` agrega `activeVersion {id, versionNumber, versionHash}` y `pendingActiveVersionChange` (o `null`).
    `GET /campaigns/:id/active-version-changes` (historial paginado, keyset
    como BL-31).
 
@@ -198,13 +195,16 @@ problema operativo, es decisión de Fer, no una excepción en el código.
    confirmar y cancelar usan `withIdempotency` (`platform-db`, el mismo de
    approve/reject):
    - operación distinta por ruta (`active-version-change.request`,
-     `.confirm`, `.cancel`) y fingerprint = `SHA256(JCS({ operation,
-     payload }))` con el id de la ruta y el cuerpo `.strict()` (para confirmar:
+     `.confirm`, `.cancel`) y fingerprint = `SHA256(JCS({ operation, payload }))` con el id de la ruta y el cuerpo `.strict()` (para confirmar:
      `{ changeId, versionHash }`; para cancelar: `{ changeId }`);
-   - misma key + mismo pedido → **replay** de la respuesta guardada (200 con
-     `idempotent-replayed: true`), aunque el estado ya haya cambiado: una
-     confirmación aplicada cuya respuesta se perdió devuelve el mismo
-     resultado, no un 409 de transición inválida;
+   - misma key + mismo pedido → **replay**: el **mismo status y el mismo
+     body** de la respuesta original, con `idempotent-replayed: true`
+     (`withIdempotency` guarda `response_status`/`response_body` y los repite
+     tal cual). Por operación: pedir **201 → 201**; confirmar y cancelar
+     **200 → 200**; terminalización con efecto (§3.7) **409 → 409**. Vale
+     aunque el estado ya haya cambiado: una confirmación aplicada cuya
+     respuesta se perdió devuelve el mismo 200 y el mismo cuerpo, no un 409 de
+     transición inválida;
    - misma key + otro pedido → 409 `IDEMPOTENCY_KEY_REUSED`;
    - reserva y operación en la misma transacción (dos retries simultáneos
      ejecutan una vez).
@@ -226,8 +226,9 @@ existe); visible sin rol = 403. Todo en `OpenAPI` y `DELIVERY.md` regenerados.
 
 Acciones nuevas en `AuditAction` (§27 dice "al menos"):
 `ACTIVE_VERSION_CHANGE_REQUESTED`, `ACTIVE_VERSION_CHANGED`,
-`ACTIVE_VERSION_CHANGE_CANCELLED`, `ACTIVE_VERSION_CHANGE_EXPIRED` y, si se
-(con A2.2) **ningún** evento automático al aprobar. Todas en la misma transacción
+`ACTIVE_VERSION_CHANGE_CANCELLED` y `ACTIVE_VERSION_CHANGE_EXPIRED`. Con
+A2.2, aprobar una versión **no** genera ningún evento de versión vigente (no
+existe `ACTIVE_VERSION_FOLLOWED_APPROVAL`). Todas en la misma transacción
 que el cambio que registran; `verifyChain` sigue ok. Sin datos de cliente en
 metadata (ids, hashes, motivo).
 
@@ -264,11 +265,15 @@ PostgreSQL real, sin mocks en el camino feliz:
    vigente; quedar vigente requiere pedido + confirmación de otra persona.
    La primera selección (`expectedActiveVersionId: null`) funciona y queda
    auditada. Mutación: avanzar el puntero al aprobar hace fallar el test.
-8. Idempotencia de pedir, confirmar y cancelar: misma key + mismo pedido →
-   200 replay sin segundo efecto; otro pedido → 409 `IDEMPOTENCY_KEY_REUSED`.
+8. Idempotencia, **una prueba por operación**: misma key + mismo pedido →
+   el **mismo status y body** que la respuesta original y sin segundo efecto
+   (pedir 201 → 201 y un solo pedido; confirmar 200 → 200; cancelar
+   200 → 200; terminalización §3.7 409 → 409, cubierta en §6.13); otro pedido
+   con la misma key → 409 `IDEMPOTENCY_KEY_REUSED`.
    **Confirmación aplicada con respuesta perdida:** el retry con la misma key
-   devuelve el mismo cuerpo de éxito (no 409), la vigente no cambia de nuevo y
-   hay un solo `ACTIVE_VERSION_CHANGED`.
+   devuelve el mismo 200 y cuerpo (no 409), la vigente no cambia de nuevo y
+   hay un solo `ACTIVE_VERSION_CHANGED`. Mutación: forzar 200 en el replay del
+   pedido hace fallar el test.
 9. Inmutabilidad: ShowVersions, manifiestos, Approvals y blobs idénticos antes
    y después de un rollback (foto completa, como BL-08).
 10. Mutaciones nuevas `f3a:` para cada regla (cuatro ojos app y base,
