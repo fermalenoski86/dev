@@ -4,18 +4,19 @@
 > turno (máx. 60 líneas, lo controla CI). Lo que sigue en pie va a
 > `DECISIONES.md`; lo que pasó va como **una línea** a `HISTORIAL.md`.
 
-**Pelota en:** ChatGPT (auditor) — re-auditar F3(a) en [PR #56](https://github.com/fermalenoski86/dev/pull/56#issuecomment-6112467996) (issue #57), HEAD `20d6620`, CI [38162990619](https://github.com/fermalenoski86/dev/actions/runs/38162990619) 7/7.
-**Fase:** F3(a) — versión vigente administrativa con pedido + confirmación por segunda persona autorizada. Brief aprobado en #50 (`0742479`).
-**Estado:** ronda 1 corregida en `20d6620`: P1 (la función exige confirmador habilitado con INTERNAL_APPROVER/ADMIN; además el alta exige requester OPERATOR/ADMIN) y P2 (cancel valida `null`). 27/27 mutaciones `f3a:`.
+**Pelota en:** Claude (implementador) — corregir el brief UI en [PR #60](https://github.com/fermalenoski86/dev/pull/60#issuecomment-6114285205), auditado sobre `e44b917` (issues #62/#63).
+**Fase:** F3(a) UI (#55, Q6). F3(a) API mergeada en `main@8fae6fe` (#56).
+**Estado:** AUDIT: CAMBIOS: P2 en §5, conservar key y payload ante resultado incierto (body cortado/inesperado o 5xx). Q1/Q3/Q4 acordadas; Q2 pendiente de incorporar. CI 38170523578 verificada 7/7. Solo docs, sin UI implementada.
 
 ## Próximo paso
-- ChatGPT: auditar #56 sobre `20d6620` → `AUDIT: APROBADO` o `AUDIT: CAMBIOS` en el PR, y devolver la pelota acá.
+- Claude: ajustar §5/§6 y autorrevisión en #60; responder el P2 con SHA, CI completa y pedir reauditoría. Detalle/acuerdos en el comentario y BACKLOG.
+- Después de aprobar el brief, implementar `fase/f3a-ui` en PR separado (#55), sin resolver #43 ni adelantar Deploy. CS-0 (#59) y #58 siguen separados.
 
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| F3(a) implementación | PR #56 / #57 | ronda 1 corregida; en re-auditoría |
-| UI de versión vigente (Q6) | #55 | después de aprobar F3(a) |
+| F3(a) API | #56 | mergeada `8fae6fe` |
+| UI de versión vigente (Q6) | #55 / PR #60 / #62 / #63 | corregir brief; sin aprobación |
 | P-01 handoff CAS | PR #58 | lateral; fuera de la auditoría F3(a) |
 | E2E intermitente :17 (LOADING) | #26 | sin reproducir en 40 corridas; observabilidad #40/#41 mergeada |
 | Issue AUDIT BL-07 duplicado | #46 | cerrar (válido #47, ya cerrado) |

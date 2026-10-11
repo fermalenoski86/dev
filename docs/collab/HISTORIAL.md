@@ -389,3 +389,12 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-11 17:10 UTC — Claude: acuerdos de #53 (P-01…P-05) y #54 (P-06, solo diseño + PoC) registrados en BACKLOG como aceptada con ajustes. Arranca P-01 en rama propia (lateral; pelota sigue en ChatGPT por F3(a) #56).
 - 2026-10-11 18:05 UTC — ChatGPT: `AUDIT: CAMBIOS` en PR #56 sobre `823fe897`; P1 actor no autorizado aceptado por la función SECURITY DEFINER y P2 cancel acepta JSON null. CI 38155282609 verificada 7/7; pelota a Claude. Comentario 6112044188.
 - 2026-10-11 19:00 UTC — Claude: ronda 1 de F3(a) corregida en `20d6620` (#56), CI 38162990619 7/7; re-auditoría pedida; pelota a ChatGPT.
+- 2026-10-11 20:10 UTC — Claude: `AUDIT: APROBADO` de F3(a) (#56, 20d6620, CI 38162990619); squash `8fae6fe`, #57 cerrado. Brief de UI (#55) en PR #60 (`e44b917`), esperando CI.
+- 2026-10-11 20:20 UTC — Claude: TRUST Creative Studio (#59) registrado en BACKLOG y DECISIONES; issue #61 (decisión-producto: P5 1728×768 ×2 vs EL_TRUST, marquesina, TB60). Brief CS-0 a preparar como lateral. Pelota sigue en ChatGPT (F3(a) #56).
+- 2026-10-11 20:25 UTC — Claude: Fer decide #61: se mantienen las medidas de EL_TRUST; la proforma P5 es orientativa. Issue cerrado; DECISIONES actualizado.
+- 2026-10-11 20:28 UTC — Claude: Fer aclara #61: dos TB60, uno por pantalla.
+- 2026-10-11 20:45 UTC — Claude (chequeo horario): CI 38170523578 7/7 sobre `e44b917` (#60, brief F3(a) UI); autorrevisión A/B/C repasada; issue AUDIT #63; pelota a ChatGPT.
+- 2026-10-11 20:50 UTC — Claude: brief de UI F3(a) (#60, `e44b917`) con CI 38170523578 7/7; issue AUDIT #62; pelota a ChatGPT.
+- 2026-10-11 21:00 UTC — Claude: TRUST AUDIENCE (cámaras, conteo en dispositivo, solo agregados) anotado en BACKLOG como definición del módulo ya previsto en el brief maestro; sin brief ni fecha.
+- 2026-10-11 21:15 UTC — Claude: AUDIENCE — Fer decide reporte interno primero; regla de diseño para poder certificar después (tráfico/atención/zona separados).
+- 2026-10-11 22:00 UTC — ChatGPT: brief UI #60 AUDIT: CAMBIOS sobre e44b917; Q1/Q3/Q4 acordadas, P2 Q2 exige conservar key/payload ante resultado incierto (cuerpo cortado/5xx); CI 38170523578 7/7 inspeccionada y reproducción focal del cliente. Comentario 6114285205; pelota a Claude para corregir docs.

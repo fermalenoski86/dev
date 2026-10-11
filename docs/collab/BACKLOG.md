@@ -109,6 +109,15 @@ four-eyes; (b) "último estado bueno conocido" en EDGE para cuando se cae la
 conexión. (a) va con **Fase C/D**; (b) es EDGE, fuera de M3A.1 → **Fer decide**
 el milestone. **Aceptada (a); (b) a decisión.** Tras cerrar BL-08, el siguiente paso acordado es un brief documental separado para (a), con semántica de autorización, four-eyes, auditoría y pruebas; no se implementa hasta que Claude y ChatGPT acuerden ese brief. **Brief en PR #50; Fer decidió Q0 = A (puntero administrativo, sin Deploy) y Q2 = A2.2 (nunca automática, siempre dos personas) en #52 → ADR-064. Brief aprobado en #50 (`main@0742479`); implementación en `fase/f3a` (migración 0004), en auditoría.**
 
+## F3(a) UI · Acuerdo del brief y recuperación de respuestas — ChatGPT, 2026-10-11
+**Estado: brief en AUDIT: CAMBIOS; ajuste pendiente de respuesta/incorporación de Claude.** [PR #60, auditoría sobre e44b917](https://github.com/fermalenoski86/dev/pull/60#issuecomment-6114285205).
+- Claude propone página propia, key por intención, “Vos”/id corto y confirmación explícita sin reescribir datos. ChatGPT acepta Q1/Q3/Q4; Q2 requiere conservar key y payload exactos mientras el resultado sea incierto, también ante cuerpo incompleto/inesperado o 5xx, para pedir/confirmar/cancelar.
+- Problema observado: el cliente actual clasifica un 200 con body cortado como UNEXPECTED_RESPONSE (reproducción focal del auditor); descartar la key ante cualquier error impide recuperar el replay de un cambio que ya hizo COMMIT.
+- Beneficio: recuperar el resultado sin transformar un éxito perdido en un nuevo pedido/409. Prioridad P2; esfuerzo pequeño en documentación y acotado en tests de la UI; depende de F3(a) API ya mergeada, no de #43.
+- Criterio: API/DB real aplica la operación, se pierde el body o se interpone 502/504; mismo key/payload devuelve status/body original y existe un solo cambio/evento. Intención distinta usa key nueva; doble envío en vuelo bloqueado.
+- Fuente primaria: RFC 9110 (junio 2022), §9.2.2 y §15.6.3/5, https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2 (consulta 2026-10-11). Aplicación inferida al contrato de TRUST; no prescribe su política de keys ni prueba la UI. No se exige persistencia entre sesiones.
+- No hay UI implementada ni verificada por este acuerdo. Claude corrige el brief/autorrevisión y pide reauditoría antes de implementar; #43 sigue a Fer. CS-0 y P-01 se mantienen separados.
+
 ## BL-06 · Medición de sincronía pantallas/luces/reloj — *Claude*
 **Estado: Fer decide** (depende de hardware).
 Cuando exista el procesador LED: un arnés de medición (cámara a 240 fps
@@ -577,3 +586,31 @@ auditado:
 Un servidor propio o un webhook externo para despertar la sesión en la nube
 de Claude (no existe endpoint; habría que pagar hosting), la API de Anthropic
 o de OpenAI por uso, y cualquier "bot" de terceros con suscripción.
+
+
+---
+
+# CS · TRUST CREATIVE STUDIO — *pedido de producto de Fer, 2026-10-11 ([#59](https://github.com/fermalenoski86/dev/issues/59))*
+
+**Estado: aceptada (encargo de Fer). Ahora solo CS-0 (brief, PR documental + AUDIT).** Implementación de CS-1…CS-4 después de cerrar F3(a) y con briefs acordados. No toca `apps/control` ni storage congelados.
+
+- **Qué es:** editor de takeovers (15 s y otras duraciones) con timeline multipista, 3D anamórfico, efectos, simulación de dos pantallas LED, fachada RGBW DMX/Art-Net y reloj. Inspiración disguise/Resolume/Blender/Unreal, sin copiar código ni interfaces.
+- **Usuario:** hoy el equipo propio (pruebas); después, marketing del cliente que alquila el espacio. Esto define que el editor sea simple con plantillas y que **todo lo exportado entre por el pipeline normal** (validación B2, cuatro ojos, versión/hash).
+- **Reglas que ya fija el encargo:** el gemelo digital actual es **PRELIMINAR** (GLB no medido); rotular SIMULADO / PRELIMINAR / CALIBRADO / VALIDADO EN SITIO; geometría y formatos configurables; el software creativo **nunca** publica ni ejecuta (eso es EDGE); dos controladoras independientes; sin servicios pagos.
+- **Posición de Claude (2026-10-11):** (1) arquitectura: editor web liviano (reusar `trust-3d`, `show-engine`, Builder, preflight), **produce ShowPackages**, render pesado en **Blender** headless; empaquetable como app de escritorio (Tauri/Electron) sin cambiar la base; (2) **calibración del gemelo como unidad propia y temprana (CS-1b)**: fotos desde el Obelisco con posición conocida + una cota real; sin eso CS-2 no se valida; (3) la oferta P5 del 10/10 (dos caras 1728×768) es solo orientativa: **Fer decidió (#61) mantener las medidas de `EL_TRUST`** (Corrientes más chica, Pellegrini más grande); formatos configurables igual.
+- **Siguiente:** brief **CS-0** en PR documental (lateral, rama propia) → AUDIT → recién después discutir orden CS-1 vs UI de F3(a).
+
+---
+
+# AUD · TRUST AUDIENCE — conteo de personas y atención con cámaras — *Fer, 2026-10-11*
+
+**Estado: anotada (módulo ya previsto en el brief maestro como "Audience Analytics / cámaras", lista "después de M3A.1"). Sin brief ni fecha; se define después del Studio o antes si tiene prioridad comercial.** Esto fija qué es, para que el Studio y EDGE no lo contradigan.
+
+- **Qué es:** un equipo propio en el edificio (**Jetson Orin NX 16 GB industrial**, separado de EDGE) con 2 cámaras IP PoE exteriores (una por vereda) que cuenta **en el dispositivo** y manda a TRUST CONTROL **solo números agregados** por franja horaria y por campaña: personas que pasan, cuántas miran la fachada y por cuánto tiempo (atención por orientación de la cabeza), peatones vs vehículos, opcionalmente rango etario/género como estadística agregada.
+- **Qué no hace, por diseño:** no reconoce caras ni identifica a nadie; no guarda ni transmite video ni imágenes (se procesan y descartan en memoria); no sigue personas entre cámaras. Así no hay dato personal (Ley 25.326) y no hace falta consentimiento. Es una regla de arquitectura, no una opción.
+- **Por qué separado de EDGE:** el show nunca depende de la visión. Si AUDIENCE se cae o se actualiza, las pantallas siguen; un takeover pesado no le roba GPU al conteo.
+- **Valor:** impresiones y atención **por takeover** ("4.200 expuestas, 31% miró, 2,8 s"), la métrica que compra el mercado DOOH. Conecta con la medición de tráfico de Affinitas.
+- **Interfaz que ya entra en CS-0:** el ShowPackage lleva un `campaignId`/`versionId` y AUDIENCE reporta contra ese identificador; Proof of Play y AUDIENCE comparten la línea de tiempo de EDGE.
+- **Hardware orientativo:** Jetson Orin NX 16 GB en caja industrial sin ventilador USD 1.000–1.500; 2 cámaras IP PoE exteriores USD 200–400 c/u; switch PoE. Total ~USD 1.800–2.500. No se compra hasta tener brief.
+- **Decisión de Fer (2026-10-11 18:10 ART):** arranca como **reporte interno**, con la opción de certificarlo después. Para que eso sea posible sin rehacer nada, regla de diseño desde el día uno: el dispositivo registra **tráfico, atención y zona de visibilidad por separado** (nunca un solo número mezclado), con datos agregados por franja horaria conservados para recalibrar. Camino a certificación, cuando se quiera: (1) metodología escrita (impresiones = tráfico × factor de visibilidad por zona, calibrado con la atención medida); (2) calibración manual de 2–3 jornadas con margen de error publicado, repetida anualmente o al cambiar una cámara; (3) verificación por un tercero (local, ~USD 3.000–8.000 por única vez; estándar internacional Geopath/Route/ESOMAR solo si lo exigen anunciantes globales).
+- **Pendiente de Fer cuando llegue el momento:** prioridad frente al Studio.
