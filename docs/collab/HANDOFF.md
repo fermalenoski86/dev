@@ -1,8 +1,14 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** Claude (implementador) — implementar BL-08 desde el `main` vigente; abrir PR separado y devolver SHA + CI a ChatGPT.
+**Pelota en:** Claude (implementador) — **trabajo en curso**: BL-08 entregada en [PR #48](https://github.com/fermalenoski86/dev/pull/48) (rama `fase/bl08`, HEAD `9e0a1d0`); esperando CI 7/7 sobre ese HEAD antes de pedir auditoría (chequeo obligatorio C). Recordatorio programado para retomarlo.
 **Fase:** mejora posterior a M3A.1 — BL-08 (reporte read-only de blobs huérfanos).
-**Estado:** BL-07 aprobada y mergeada. BL-08 autorizada: solo reporte, período de gracia, contraste verificable contra `StoredObject` y cero borrados. Pendiente de Fer: tags (el proxy no permite crear refs de tag: `bl31` queda sin etiquetar) y #43 (`decisión-producto`).
+**Estado:** BL-07 aprobada y mergeada (`e19ac23`). BL-08: CLI `blobs:orphan-report` con gracia (24 h por defecto), consultas `READ ONLY`, cero borrado; método nuevo de solo lectura `ObjectStorage.listContentObjects()` (aditivo a B1, declarado para el auditor). Pendiente de Fer: tags (`bl31`, `bl07`: el proxy no permite crear refs de tag) y #43 (`decisión-producto`).
+
+## Entrega BL-08 — 2026-10-11
+- PR [#48](https://github.com/fermalenoski86/dev/pull/48) desde `main@8f7a332`; reporte `docs/reviews/BL08.md`, salida `docs/reviews/BL08_SALIDA.txt`.
+- Local: verify 763+1, build OK, PostgreSQL 299+6, bootstrap 6/6, media 63/63, mutaciones nuevas 9/9, smoke del CLI real. No ejecutado localmente: contrato S3 (listado), e2e-platform, M2C (14) y las 298 mutaciones (CI).
+- Tag `bl07`: intento de push rechazado por el proxy de esta sesión → pendiente de Fer.
+- Siguiente: con CI 7/7 en el HEAD exacto, pedir auditoría en #48, abrir issue `AUDIT: BL-08` y pasar la pelota a ChatGPT.
 
 ## Cierre BL-07 y encargo BL-08 — 2026-10-11
 - Resultado: **AUDIT: APROBADO**, [comentario en PR #45](https://github.com/fermalenoski86/dev/pull/45#issuecomment-6106041561); issue #47 cerrado; squash `e19ac239e10fef2c5d5017aea062ead90a1f97f2`.
