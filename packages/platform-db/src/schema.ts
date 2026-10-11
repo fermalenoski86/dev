@@ -12,7 +12,7 @@ export type Role = 'OPERATOR' | 'INTERNAL_APPROVER' | 'ADMIN' | 'EXTERNAL_APPROV
 export interface UserRolesTable { id: Generated<string>; user_id: string; role: Role; contract_id: string | null; created_at: Ts }
 export interface SessionsTable { id: Generated<string>; user_id: string; token_hash: string; csrf_token_hash: string; created_at: Ts; expires_at: TsReq; revoked_at: Date | null }
 export interface StoredObjectsTable { id: Generated<string>; sha256: string; storage_key: string; mime_type: string; size_bytes: ColumnType<string, number | string, never>; created_at: Ts }
-export interface CampaignsTable { id: Generated<string>; contract_id: string; name: string; current_draft_id: string | null; latest_approved_version_id: string | null; lifecycle_status: Generated<'ACTIVE' | 'ARCHIVED'>; created_at: Ts; updated_at: Ts }
+export interface CampaignsTable { id: Generated<string>; contract_id: string; name: string; current_draft_id: string | null; latest_approved_version_id: string | null; active_version_id: ColumnType<string | null, never, never>; lifecycle_status: Generated<'ACTIVE' | 'ARCHIVED'>; created_at: Ts; updated_at: Ts }
 export interface CampaignDraftsTable { id: Generated<string>; campaign_id: string; takeover_draft: Json; revision: Generated<number>; created_by: string; created_at: Ts; updated_at: Ts }
 export type AssetStatus = 'UPLOADING' | 'VALIDATING' | 'READY' | 'REJECTED';
 export interface AssetsTable { id: Generated<string>; stored_object_id: string | null; original_filename: string; mime_type: string | null; size_bytes: string | number | null; width: number | null; height: number | null; fps: string | number | null; codec: string | null; duration_ms: number | null; surface_type: string; status: Generated<AssetStatus>; rejection_code: string | null; rejection_detail: Json<Record<string, unknown>> | null; sha256: string | null; container: string | null; created_by: string; created_at: Ts; updated_at: Ts }
@@ -21,6 +21,9 @@ export interface ShowVersionAssetsTable { show_version_id: string; logical_ref: 
 export type EvidenceType = 'EMAIL' | 'PDF' | 'MESSAGE' | 'OTHER';
 export interface ApprovalEvidenceTable { id: Generated<string>; show_version_id: string; type: EvidenceType; original_filename: string; stored_object_id: string; uploaded_by: string; uploaded_at: Ts }
 export interface ApprovalsTable { id: Generated<string>; show_version_id: string; decision: 'APPROVED' | 'REJECTED'; actor_user_id: string; evidence_id: string | null; reason: string | null; version_hash: string; created_at: Ts }
+export type ActiveVersionChangeStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'EXPIRED';
+/** F3(a) · 0004. `requested_at` lo fija la base; `decided_at` también (trigger). CONFIRMED solo por la función. */
+export interface ActiveVersionChangesTable { id: Generated<string>; campaign_id: string; from_version_id: string | null; to_version_id: string; to_version_hash: string; reason: string; requested_by: string; requested_at: ColumnType<Date, never, never>; expires_at: TsReq; status: ColumnType<ActiveVersionChangeStatus, never, 'CANCELLED' | 'EXPIRED'>; decided_by: string | null; decided_at: ColumnType<Date | null, never, never> }
 export interface IdempotencyKeysTable { key: string; actor_id: string; operation: string; request_fingerprint: string; response_status: number | null; response_body: Json | null; created_at: Ts; expires_at: TsReq }
 export interface AuditEventsTable { id: Generated<string>; seq: ColumnType<string, number | string, never>; actor_user_id: string | null; action: string; entity_type: string; entity_id: string | null; occurred_at: TsReq; before_hash: string | null; after_hash: string | null; metadata: Json; previous_event_hash: string; event_hash: string }
 export interface AuditHeadTable { id: number; last_seq: string; last_hash: string }
@@ -29,5 +32,5 @@ export interface Database {
   users: UsersTable; advertisers: AdvertisersTable; contracts: ContractsTable; user_roles: UserRolesTable; sessions: SessionsTable;
   stored_objects: StoredObjectsTable; campaigns: CampaignsTable; campaign_drafts: CampaignDraftsTable; assets: AssetsTable;
   show_versions: ShowVersionsTable; show_version_assets: ShowVersionAssetsTable; approval_evidence: ApprovalEvidenceTable;
-  approvals: ApprovalsTable; idempotency_keys: IdempotencyKeysTable; audit_events: AuditEventsTable; audit_head: AuditHeadTable;
+  approvals: ApprovalsTable; active_version_changes: ActiveVersionChangesTable; idempotency_keys: IdempotencyKeysTable; audit_events: AuditEventsTable; audit_head: AuditHeadTable;
 }

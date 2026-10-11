@@ -107,7 +107,7 @@ rollback es "volver a desplegar una versión aprobada anterior", no deshacer
 nada. Lo que falta: (a) la operación `redeploy(versionId)` con audit y
 four-eyes; (b) "último estado bueno conocido" en EDGE para cuando se cae la
 conexión. (a) va con **Fase C/D**; (b) es EDGE, fuera de M3A.1 → **Fer decide**
-el milestone. **Aceptada (a); (b) a decisión.** Tras cerrar BL-08, el siguiente paso acordado es un brief documental separado para (a), con semántica de autorización, four-eyes, auditoría y pruebas; no se implementa hasta que Claude y ChatGPT acuerden ese brief. **Brief en PR #50; Fer decidió Q0 = A (puntero administrativo, sin Deploy) y Q2 = A2.2 (nunca automática, siempre dos personas) en #52 → ADR-064. Falta la auditoría final del brief.**
+el milestone. **Aceptada (a); (b) a decisión.** Tras cerrar BL-08, el siguiente paso acordado es un brief documental separado para (a), con semántica de autorización, four-eyes, auditoría y pruebas; no se implementa hasta que Claude y ChatGPT acuerden ese brief. **Brief en PR #50; Fer decidió Q0 = A (puntero administrativo, sin Deploy) y Q2 = A2.2 (nunca automática, siempre dos personas) en #52 → ADR-064. Brief aprobado en #50 (`main@0742479`); implementación en `fase/f3a` (migración 0004), en auditoría.**
 
 ## BL-06 · Medición de sincronía pantallas/luces/reloj — *Claude*
 **Estado: Fer decide** (depende de hardware).

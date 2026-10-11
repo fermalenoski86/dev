@@ -1,5 +1,5 @@
 import { DECIDE_ROLES, READ_ROLES as APPROVAL_READ, SUBMIT_ROLES } from '@trust/platform-approval';
-import { EDIT_ROLES, READ_ROLES as CAMPAIGN_READ } from '@trust/platform-campaigns';
+import { CANCEL_ROLES, CONFIRM_ROLES, EDIT_ROLES, READ_ROLES as CAMPAIGN_READ, REQUEST_ROLES } from '@trust/platform-campaigns';
 import { z } from 'zod';
 import * as C from './contracts';
 
@@ -155,6 +155,11 @@ export const COMPONENTS: Record<string, z.ZodTypeAny> = {
   CampaignPage: C.pageOf(C.CampaignResponseSchema),
   DraftPutBody: C.DraftPutBodySchema,
   Draft: C.DraftResponseSchema,
+  ActiveVersionRequestBody: C.ActiveVersionRequestBodySchema,
+  ActiveVersionConfirmBody: C.ActiveVersionConfirmBodySchema,
+  ActiveVersionChange: C.ActiveVersionChangeResponseSchema,
+  ActiveVersionChangeListQuery: C.ActiveVersionChangeListQuerySchema,
+  ActiveVersionChangePage: C.pageOf(C.ActiveVersionChangeResponseSchema),
 };
 
 type Body = { json: keyof typeof COMPONENTS } | { multipart: z.ZodTypeAny; file: string };
@@ -182,6 +187,9 @@ const ASSETS = ['OPERATOR', 'ADMIN']; // ASSET_ROLES de app.ts (§22)
 const LECTURA_VERSION = [...APPROVAL_READ];
 const DECISORES = [...DECIDE_ROLES];
 const SUBMIT = [...SUBMIT_ROLES];
+const PIDEN_VIGENTE = [...REQUEST_ROLES];
+const CONFIRMAN_VIGENTE = [...CONFIRM_ROLES];
+const CANCELAN_VIGENTE = [...CANCEL_ROLES];
 
 export const ROUTES: RouteDoc[] = [
   { method: 'GET', path: '/health', summary: 'El proceso vive', roles: null, csrf: false, idempotency: false, responses: { 200: 'Health' }, errors: [] },
@@ -215,8 +223,18 @@ export const ROUTES: RouteDoc[] = [
   { method: 'PATCH', path: '/api/v1/contracts/:id', summary: 'Edita un contrato (no el anunciante)', roles: ['ADMIN'], csrf: true, idempotency: false, body: { json: 'ContractPatch' }, responses: { 200: 'Contract' }, errors: [400, 401, 403, 404, 422] },
   { method: 'POST', path: '/api/v1/campaigns', summary: 'Alta de campaña con su draft inicial', roles: OP_ADMIN, csrf: true, idempotency: false, body: { json: 'CampaignBody' }, responses: { 201: 'Campaign' }, errors: [400, 401, 403, 404, 413, 422] },
   { method: 'GET', path: '/api/v1/campaigns', summary: 'Campañas (cursor, filtro por contrato)', roles: INTERNOS, csrf: false, idempotency: false, query: 'ListQuery', responses: { 200: 'CampaignPage' }, errors: [400, 401, 403] },
-  { method: 'GET', path: '/api/v1/campaigns/:id', summary: 'Campaña: última versión aprobada y draft de trabajo', roles: INTERNOS, csrf: false, idempotency: false, responses: { 200: 'Campaign' }, errors: [400, 401, 403, 404] },
+  { method: 'GET', path: '/api/v1/campaigns/:id', summary: 'Campaña: última versión aprobada, versión vigente, pedido pendiente y draft de trabajo', roles: INTERNOS, csrf: false, idempotency: false, responses: { 200: 'Campaign' }, errors: [400, 401, 403, 404] },
   { method: 'GET', path: '/api/v1/campaigns/:id/draft', summary: 'Draft de trabajo con su revisión', roles: INTERNOS, csrf: false, idempotency: false, responses: { 200: 'Draft' }, errors: [400, 401, 403, 404] },
+  {
+    method: 'POST', path: '/api/v1/campaigns/:id/active-version-changes', summary: 'F3(a): pide cambiar la versión vigente (administrativa, sin Deploy) a una APPROVED de la campaña; replay = mismo status y body',
+    roles: PIDEN_VIGENTE, csrf: true, idempotency: true, body: { json: 'ActiveVersionRequestBody' }, responses: { 201: 'ActiveVersionChange' }, errors: [400, 401, 403, 404, 409, 415],
+  },
+  { method: 'GET', path: '/api/v1/campaigns/:id/active-version-changes', summary: 'F3(a): historial de pedidos de cambio de versión vigente, más nuevo primero (cursor)', roles: INTERNOS, csrf: false, idempotency: false, query: 'ActiveVersionChangeListQuery', responses: { 200: 'ActiveVersionChangePage' }, errors: [400, 401, 403, 404] },
+  {
+    method: 'POST', path: '/api/v1/active-version-changes/:id/confirm', summary: 'F3(a): confirma el pedido otra persona (cuatro ojos siempre); 409 por vencido o vigente cambiada deja el pedido terminado',
+    roles: CONFIRMAN_VIGENTE, csrf: true, idempotency: true, body: { json: 'ActiveVersionConfirmBody' }, responses: { 200: 'ActiveVersionChange' }, errors: [400, 401, 403, 404, 409, 415],
+  },
+  { method: 'POST', path: '/api/v1/active-version-changes/:id/cancel', summary: 'F3(a): cancela el pedido (quien lo pidió o ADMIN)', roles: CANCELAN_VIGENTE, csrf: true, idempotency: true, responses: { 200: 'ActiveVersionChange' }, errors: [400, 401, 403, 404, 409, 415] },
   { method: 'PUT', path: '/api/v1/campaigns/:id/draft', summary: 'Guarda el draft con expectedRevision (409 DRAFT_CONFLICT, sin last-write-wins)', roles: OP_ADMIN, csrf: true, idempotency: false, body: { json: 'DraftPutBody' }, responses: { 200: 'Draft' }, errors: [400, 401, 403, 404, 409, 413, 422] },
 ];
 
