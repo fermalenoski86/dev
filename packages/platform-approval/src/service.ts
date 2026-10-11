@@ -93,6 +93,24 @@ export interface ShowVersionView {
   assets: Array<{ logicalRef: string; assetId: string; sha256: string }>;
 }
 
+/**
+ * BL-31 · resumen de una versión en el historial de su campaña. Solo lo que
+ * hace falta para elegir cuál abrir: ni paquete, ni evidencia, ni quién
+ * envió o decidió (eso lo da `GET /show-versions/:id`, con su autorización).
+ */
+export interface VersionSummaryView {
+  id: string;
+  versionNumber: number;
+  versionHash: string;
+  status: VersionStatus;
+  sourceDraftRevision: number;
+  submittedAt: string;
+}
+
+/** BL-31: tope y default de página del historial. */
+export const VERSION_PAGE_MAX = 100;
+export const VERSION_PAGE_DEFAULT = 20;
+
 export interface ApprovalDeps {
   db: Kysely<Database>;
   storage: ObjectStorage;
@@ -140,6 +158,54 @@ export class ApprovalService {
     const v = await this.cargar(this.deps.db, versionId);
     this.exigirVisible(actor, v);
     return this.viewVersion(this.deps.db, versionId);
+  }
+
+  /**
+   * BL-31 · historial de versiones de una campaña, de la más nueva a la más
+   * vieja (`version_number` desc, índice UNIQUE (campaign_id, version_number)).
+   *
+   * Misma autorización por objeto que `getVersion`: el scope sale del contrato
+   * de la campaña, nunca del request. Campaña inexistente y fuera de scope
+   * responden igual (404 CAMPAIGN_NOT_FOUND) y ANTES de mirar el cursor, así
+   * que ni el id de campaña ni el cursor sirven de oráculo (OWASP API1:2023).
+   *
+   * El cursor es el id de la última versión de la página anterior y se
+   * resuelve DENTRO de esta campaña: un id de otra campaña (visible o no) o
+   * inexistente da el mismo 400 INVALID_CURSOR, sin revelar cuál de los dos es.
+   */
+  async listCampaignVersions(actor: Principal, campaignId: string, o: { limit: number; cursor?: string }): Promise<{ items: VersionSummaryView[]; nextCursor: string | null }> {
+    if (!Number.isSafeInteger(o.limit) || o.limit < 1 || o.limit > VERSION_PAGE_MAX) throw new Error(`limit fuera de rango: ${o.limit}`);
+    const db = this.deps.db;
+    const cp = await db
+      .selectFrom('campaigns as cp')
+      .select(['cp.id', 'cp.contract_id'])
+      .where('cp.id', '=', campaignId)
+      .executeTakeFirst();
+    if (!cp || !canAccessContract(actor, cp.contract_id, READ_ROLES)) {
+      throw new ApprovalError(404, 'CAMPAIGN_NOT_FOUND', 'La campaña no existe.');
+    }
+    let antesDe: number | null = null;
+    if (o.cursor !== undefined) {
+      const c = await db.selectFrom('show_versions').select('version_number').where('id', '=', o.cursor).where('campaign_id', '=', campaignId).executeTakeFirst();
+      if (!c) throw new ApprovalError(400, 'INVALID_CURSOR', 'El cursor no corresponde a este historial.');
+      antesDe = c.version_number;
+    }
+    let q = db
+      .selectFrom('show_versions as v')
+      .leftJoin('approvals as ap', 'ap.show_version_id', 'v.id')
+      .select(['v.id', 'v.version_number', 'v.version_hash', 'v.source_draft_revision', 'v.submitted_at', 'ap.decision as decision'])
+      .where('v.campaign_id', '=', campaignId);
+    if (antesDe !== null) q = q.where('v.version_number', '<', antesDe);
+    const filas = await q.orderBy('v.version_number', 'desc').limit(o.limit + 1).execute();
+    const items = filas.slice(0, o.limit).map((f) => ({
+      id: f.id,
+      versionNumber: f.version_number,
+      versionHash: f.version_hash,
+      status: f.decision ?? ('SUBMITTED' as const),
+      sourceDraftRevision: f.source_draft_revision,
+      submittedAt: iso(f.submitted_at),
+    }));
+    return { items, nextCursor: filas.length > o.limit ? (items.at(-1)?.id ?? null) : null };
   }
 
   async openEvidence(actor: Principal, versionId: string, evidenceId: string): Promise<{ evidence: EvidenceView; storageKey: string; stream: Readable }> {

@@ -1,0 +1,77 @@
+BL-31 · historial de versiones por campaña — salida REAL de los gates
+Entorno: v22.22.0 · pnpm 12.5.1 · psql (PostgreSQL) 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) · ffprobe version 6.1.1-3ubuntu5 · 2026-10-10T07:25Z
+Base: origin/main@25a4bfa · rama fase/bl31 (el SHA exacto auditado y su CI van en el PR)
+
+== pnpm install --frozen-lockfile
+
+Done in 4.4s using pnpm v12.5.1
+
+== pnpm verify (lint + typecheck + suite default)
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  50 passed | 1 skipped (51)
+      Tests  761 passed | 1 skipped (762)
+
+== NEXT_PUBLIC_TRUST_API_URL=https://api.trust.test:8443 pnpm build (rutas de platform-web)
+apps/platform-web build: ┌ ○ /                                    703 B            88 kB
+apps/platform-web build: ├ ○ /_not-found                          872 B          88.2 kB
+apps/platform-web build: ├ ○ /campaigns                           1.66 kB         107 kB
+apps/platform-web build: ├ ƒ /campaigns/[id]                      3.21 kB         108 kB
+apps/platform-web build: ├ ƒ /campaigns/[id]/versions             1.41 kB         106 kB
+apps/platform-web build: ├ ○ /login                               777 B           106 kB
+apps/platform-web build: └ ƒ /versions/[id]                       2.36 kB         107 kB
+apps/platform-web build: ○  (Static)   prerendered as static content
+build=0
+
+== bash scripts/dev/pg-up.sh
+pg_ctl: server is running (PID: 636)
+pg=0
+
+== npx vitest run -c vitest.platform.config.ts (PostgreSQL 16 real)
+ ✓ apps/platform-api/src/versions-history.db.test.ts (11 tests) 808ms
+ ✓ apps/platform-api/src/contract.db.test.ts (8 tests) 771ms
+ ✓ apps/platform-api/src/platform-web-bl31.db.test.ts (3 tests) 752ms
+ Test Files  25 passed | 1 skipped (26)
+      Tests  281 passed | 6 skipped (287)
+
+== bash packages/platform-db/scripts/bootstrap-smoke.sh
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+boot=0
+
+== npx vitest run -c vitest.media.config.ts
+ Test Files  3 passed (3)
+      Tests  63 passed (63)
+
+== python3 scripts/mutation-check.py --tanda 275:282 (las 7 nuevas de BL-31; las 282 completas: job de CI)
+tanda 275:282 — 7 de 282 reglas
+ATRAPADA   bl31: historial sin scope por contrato (BOLA, OWASP API1)
+ATRAPADA   bl31: cursor resuelto fuera de la campaña (enumera versiones ajenas)
+ATRAPADA   bl31: historial en orden viejo→nuevo
+ATRAPADA   bl31: última página anuncia más (nextCursor sin fin)
+ATRAPADA   bl31: el resumen expone quién envió (datos de más)
+ATRAPADA   bl31: la fila del historial no enlaza a su versión
+ATRAPADA   bl31: "ver anteriores" aunque no haya más páginas
+atrapadas 7 · sobreviven 0 · sin salida 0
+TODAS ATRAPADAS
+
+== playwright test -c playwright.platform.config.ts (e2e-platform, Chromium 141 de Playwright, 2 workers)
+  ✓  1 [chromium] › e2e-platform/flow-41.spec.ts:47:5 › 1 · OPERATOR: login → crea la campaña → el Builder guarda el draft en el backend → sube assets → envía → hash visible → logout [E3-41] [E3-47] (9.2s)
+  ✓  2 [chromium] › e2e-platform/a11y.spec.ts:48:5 › axe: login, campañas, detalle de campaña y revisión sin violaciones [BL-28] (11.7s)
+  ✓  3 [chromium] › e2e-platform/flow-41.spec.ts:107:5 › 2 · INTERNAL_APPROVER (otro usuario): login → ve la versión → adjunta evidencia → aprueba el hash exacto [E3-41] [E3-47] (3.3s)
+  ✓  5 [chromium] › e2e-platform/flow-41.spec.ts:132:5 › 3 · OPERATOR (login nuevo): APPROVED VERSION + hash exacto + working draft aparte → edita → la versión aprobada no cambia [E3-41] [E3-47] (7.3s)
+  ✓  4 [chromium] › e2e-platform/a11y.spec.ts:78:5 › teclado: login (error anunciado) → campaña → enviar; login → revisión → aprobar, con foco visible [BL-28] (9.3s)
+  ✓  6 [chromium] › e2e-platform/history.spec.ts:12:5 › historial: el aprobador va de la versión al historial de su campaña (más nueva primero), abre otra versión y axe sin violaciones [BL-31] (6.4s)
+  ✓  7 [chromium] › e2e-platform/session-multihost.spec.ts:13:5 › sesión multihost: login en web, el Builder en control usa la cookie del host de la API, CSRF, origen bloqueado y logout [E3-41] (5.7s)
+  7 passed (37.4s)
+
+== pnpm acceptance:check --playwright-results + manifest BL-29 (build + validate)
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 4 tests [E3-N], todos passed en Playwright; docs/reviews/M3A1_ACEPTACION.md al día
+manifest: 7 tests, 1 flujos, 26 archivos
+GATE evidencia: 7 tests passed, 1 flujo(s) §41, 8 screenshots, 18 videos, SHA-256 verificados (headSha local = base sin commit: el de CI es el que vale)
+
+== git diff --cached --check
+(sin salida: limpio)
+
+== NO EJECUTADO localmente
+- E2E M2C congelado (14): no hay Chrome con H.264 en este entorno. Evidencia: job e2e-m2c de CI sobre el HEAD entregado.
+- Corrida completa de mutaciones (282): ~40 s por regla aquí; corre en el job de CI. Localmente: la tanda nueva 275:282.

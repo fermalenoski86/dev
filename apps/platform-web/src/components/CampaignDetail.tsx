@@ -67,6 +67,11 @@ export function CampaignDetailView(p: CampaignDetailViewProps) {
         <p data-testid="working-draft">
           <strong>WORKING DRAFT</strong> · rev {p.draft.revision} · actualizado {p.draft.updatedAt}
         </p>
+        <p>
+          <a href={`/campaigns/${c.id}/versions`} data-testid="versions-link">
+            Historial de versiones
+          </a>
+        </p>
         {p.builderUrl ? (
           <p>
             <a href={p.builderUrl}>Editar el draft en el Builder</a>

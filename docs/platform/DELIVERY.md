@@ -6,7 +6,7 @@
 Contrato HTTP: [`openapi.json`](openapi.json) (OpenAPI 3.1, mismo origen). Modelo de datos: [ERD.md](ERD.md).
 Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [../ops/BACKUPS.md](../ops/BACKUPS.md).
 
-## Rutas (27, del registro de Fastify)
+## Rutas (28, del registro de Fastify)
 
 | Método | Ruta | Roles | CSRF | Idempotency-Key | Respuestas |
 |---|---|---|---|---|---|
@@ -16,6 +16,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | POST | `/api/v1/auth/logout` | cualquier sesión | sí | — | 204 |
 | GET | `/api/v1/auth/me` | cualquier sesión | — | — | 200 |
 | GET | `/api/v1/show-versions/:id` | OPERATOR, INTERNAL_APPROVER, ADMIN, EXTERNAL_APPROVER | — | — | 200 |
+| GET | `/api/v1/campaigns/:id/versions` | OPERATOR, INTERNAL_APPROVER, ADMIN, EXTERNAL_APPROVER | — | — | 200 |
 | POST | `/api/v1/show-versions/:id/evidence` | INTERNAL_APPROVER, EXTERNAL_APPROVER | sí | sí | 200, 201 |
 | GET | `/api/v1/show-versions/:id/evidence/:evidenceId` | OPERATOR, INTERNAL_APPROVER, ADMIN, EXTERNAL_APPROVER | — | — | 200 |
 | POST | `/api/v1/show-versions/:id/approve` | INTERNAL_APPROVER, EXTERNAL_APPROVER | sí | sí | 200, 201 |
@@ -44,7 +45,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 - `0002_asset_pipeline` (reversible)
 - `0003_approval` (reversible)
 
-## Archivos de test (83)
+## Archivos de test (88)
 
 | Archivo | Suite |
 |---|---|
@@ -61,20 +62,25 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | `apps/platform-api/src/cors.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/e2e-flow.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/logs-sin-secretos.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
+| `apps/platform-api/src/platform-web-bl31.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/platform-web-client.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/platform-web-e3b.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/restore-drill.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/submit.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/upload-limits.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
+| `apps/platform-api/src/versions-history.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-web/src/build-env.test.ts` | Unidad de app (vitest del paquete) |
+| `apps/platform-web/src/components/views-bl31.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/components/views-e3b.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/components/views.test.ts` | Unidad de app (vitest del paquete) |
+| `apps/platform-web/src/lib/api-bl31.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/api-e3b.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/api.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/draft-assets.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/session.test.ts` | Unidad de app (vitest del paquete) |
 | `e2e-platform/a11y.spec.ts` | E2E (Playwright, CI) |
 | `e2e-platform/flow-41.spec.ts` | E2E (Playwright, CI) |
+| `e2e-platform/history.spec.ts` | E2E (Playwright, CI) |
 | `e2e-platform/session-multihost.spec.ts` | E2E (Playwright, CI) |
 | `e2e/builder.spec.ts` | E2E (Playwright, CI) |
 | `e2e/diag/signature-window.spec.ts` | Diagnóstico E2E (`diag-e2e.yml`, no es gate) |

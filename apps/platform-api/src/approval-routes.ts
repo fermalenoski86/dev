@@ -18,7 +18,10 @@ import {
   RejectBodySchema,
   ShowVersionResponseSchema,
   SubmitBodySchema,
+  VersionListQuerySchema,
   VersionParamsSchema,
+  VersionSummaryResponseSchema,
+  pageOf,
 } from './contracts';
 import { ApiError } from './errors';
 
@@ -32,6 +35,7 @@ import { ApiError } from './errors';
  *   POST /api/v1/show-versions/:id/reject                 { reason, versionHash }
  *   PUT  /api/v1/contracts/:id/four-eyes                  { fourEyesRequired } — solo ADMIN
  *   POST /api/v1/campaigns/:id/submit                     { draftRevision } — C3
+ *   GET  /api/v1/campaigns/:id/versions                   historial paginado (BL-31)
  *
  * El rol se chequea en la ruta (403 antes de leer el cuerpo) y el scope de
  * contrato en el servicio. Las mutaciones exigen CSRF (requireActor) y las de
@@ -63,6 +67,14 @@ export function registerApprovalRoutes(app: FastifyInstance, deps: ApprovalRoute
     const actor = await requireActor(deps.actors, req, READ_ROLES);
     const { id } = VersionParamsSchema.parse(req.params);
     return ShowVersionResponseSchema.parse(await service.getVersion(actor, id));
+  });
+
+  // BL-31: mismos roles que leer una versión; el scope por contrato lo aplica el servicio.
+  app.get('/api/v1/campaigns/:id/versions', async (req) => {
+    const actor = await requireActor(deps.actors, req, READ_ROLES);
+    const { id } = CampaignParamsSchema.parse(req.params);
+    const q = VersionListQuerySchema.parse(req.query);
+    return pageOf(VersionSummaryResponseSchema).parse(await service.listCampaignVersions(actor, id, q));
   });
 
   app.post('/api/v1/show-versions/:id/evidence', async (req, reply) => {

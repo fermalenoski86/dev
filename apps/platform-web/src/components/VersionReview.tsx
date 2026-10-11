@@ -58,6 +58,11 @@ export function VersionReviewView(p: VersionReviewViewProps) {
         <p>
           Enviada {v.submittedAt} desde el draft rev {v.sourceDraftRevision}.
         </p>
+        <p>
+          <a href={`/campaigns/${v.campaignId}/versions`} data-testid="versions-link">
+            Historial de versiones de la campaña
+          </a>
+        </p>
         {v.approval ? (
           <p role="status" data-testid="version-decision">
             {v.approval.decision} el {v.approval.createdAt} sobre el hash <code className="hash">{v.approval.versionHash}</code>

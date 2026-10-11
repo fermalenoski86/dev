@@ -11,6 +11,7 @@ Brief: `docs/briefs/M3A1_FASE_C.md` §C2 (decisiones 2 y 4 del auditor).
 | GET | `/show-versions/:id` | OPERATOR · INTERNAL_APPROVER · ADMIN · EXTERNAL_APPROVER (su contrato) | 200 · 401 · 403 · 404 |
 | POST | `/show-versions/:id/evidence` | INTERNAL_APPROVER · EXTERNAL_APPROVER (su contrato) | 201 · 200 replay · 400 · 403 · 404 · 409 · 413 · 415 · 422 |
 | GET | `/show-versions/:id/evidence/:evidenceId` | como la lectura | 200 (descarga) · 404 |
+| GET | `/campaigns/:id/versions?limit=&cursor=` | como la lectura (scope por el contrato de la campaña) | 200 `{items, nextCursor}` · 400 (`INVALID_CURSOR`) · 401 · 403 · 404 (BL-31) |
 | POST | `/show-versions/:id/approve` | INTERNAL_APPROVER · EXTERNAL_APPROVER (su contrato) | 201 · 200 replay · 400 · 403 · 404 · 409 · 422 |
 | POST | `/show-versions/:id/reject` | ídem | 201 · 200 replay · 400 · 403 · 404 · 409 |
 | PUT | `/contracts/:id/four-eyes` | ADMIN | 200 · 403 · 404 |
@@ -135,3 +136,20 @@ Una transacción con la campaña bloqueada (`FOR UPDATE`):
 
 Respuesta 201 con la ShowVersion (mismo contrato que `GET /show-versions/:id`);
 el retry con la misma key devuelve 200 y la misma versión.
+
+## Historial de versiones por campaña (BL-31)
+
+`GET /api/v1/campaigns/:id/versions` devuelve resúmenes `{ id, versionNumber,
+versionHash, status, sourceDraftRevision, submittedAt }`, de la más nueva a la
+más vieja (`version_number` desc), en páginas de 1–100 (default 20).
+
+- **Mínimos datos:** sin paquete, evidencia, contrato ni actores; el detalle
+  completo sigue en `GET /show-versions/:id`, con su autorización.
+- **Autorización por objeto:** los mismos roles que leer una versión; el scope
+  sale del contrato de la campaña en la base. Campaña inexistente y fuera de
+  scope responden el mismo 404 `CAMPAIGN_NOT_FOUND`, **antes** de mirar el cursor.
+- **Cursor:** el id de la última versión de la página anterior, resuelto
+  **dentro** de la campaña. Un id de otra campaña (visible o no) o inexistente
+  da el mismo 400 `INVALID_CURSOR`: el cursor no sirve para enumerar
+  versiones ajenas (OWASP API1:2023). Keyset por número: una versión nueva entre
+  páginas no duplica ni saltea las anteriores.

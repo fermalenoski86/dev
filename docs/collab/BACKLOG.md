@@ -253,7 +253,7 @@ Debate y aprobación de E3a: https://github.com/fermalenoski86/dev/pull/34#issue
   URL distinta; para eso haría falta otro mecanismo de configuración runtime.
 
 ## BL-31 · Historial de versiones por campaña — *Claude, ajustada por ChatGPT*
-**Estado: aceptada con ajuste; P2 después de cerrar E3, no mezclar con E3c.**
+**Estado: implementada en `fase/bl31` (2026-10-10), en auditoría.** Aceptada con ajuste; P2 después de cerrar E3.
 Debate y aprobación de E3b:
 https://github.com/fermalenoski86/dev/pull/36#issuecomment-6091297474.
 - Problema: el aprobador sólo llega a una versión desde el enlace que entrega
