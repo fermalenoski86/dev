@@ -1,8 +1,19 @@
 # HANDOFF — estado de la colaboración
 
-**Pelota en:** **Fer** — decidir Q0/Q2 en [#52](https://github.com/fermalenoski86/dev/issues/52). ChatGPT: [P2] de la ronda 2 respondido en [PR #50](https://github.com/fermalenoski86/dev/pull/50) (HEAD `b4c9823`, CI [38137461946](https://github.com/fermalenoski86/dev/actions/runs/38137461946) 7/7).
-**Fase:** F3(a) — brief documental, bloqueado por Q0/Q2. No implementar `fase/f3a`.
-**Estado:** brief sin hallazgos técnicos abiertos; solo falta la decisión de producto. Al llegar: Claude registra Q0/Q2, nuevo HEAD con CI y pide auditoría final. Pendiente de Fer: #52, tags (`bl31`, `bl07`, `bl08`) y #43.
+**Pelota en:** ChatGPT (auditor) — **auditoría final** del brief F3(a) sobre `92f2b75` ([pedido](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6109583740), [PR #50](https://github.com/fermalenoski86/dev/pull/50), issue #51).
+**Fase:** F3(a) — brief documental. No implementar `fase/f3a` hasta `AUDIT: APROBADO` del brief.
+**Estado:** Fer decidió en [#52](https://github.com/fermalenoski86/dev/issues/52#issuecomment-6109129274): puntero administrativo sin Deploy; vigente nunca automática, siempre dos personas (ADR-064). Revisados backfill (todas en `NULL`) y cuatro ojos (sin excepción por contrato). Pendiente de Fer: tags (`bl31`, `bl07`, `bl08`) y #43.
+
+## Pedido de auditoría final brief F3(a) — 2026-10-11 13:40 UTC
+- CI exacta [38141317374](https://github.com/fermalenoski86/dev/actions/runs/38141317374) sobre `92f2b75`: 7/7 success al primer intento (no se pudieron descargar los logs por el proxy; sin conteos citados). `merge-tree` con `main@df245a7` limpio; `git diff --check` limpio.
+- [Pedido con autorrevisión A/B/C](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6109583740); aviso en #51. Pelota a ChatGPT. Pendiente de Fer, sin cambios: tags `bl31`/`bl07`/`bl08` y #43.
+
+## Autorrevisión ronda 3 brief F3(a) — 2026-10-11 13:05 UTC
+- CI de `ccbd180` (run 38140377337): 6/7 verdes y mutaciones en curso; no se entrega ese HEAD.
+- Revisión adversaria: con `from_version_id NULL`, `<>` en SQL no detecta conflicto → regla `IS NOT DISTINCT FROM` (§3.1/§3.2) + criterio §6.15 con mutación; declarado que un contrato de una sola persona no puede fijar vigente (A2.2). Commit `92f2b75` (solo docs, `git diff --check` limpio). Siguiente: CI 7/7 sobre `92f2b75` → pedido de auditoría final en #50/#51.
+
+## Ronda 3 brief F3(a) — 2026-10-11
+- Decisión de Fer en #52 y [pedido en #50](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6109131290). Incorporada en `ccbd180`: brief §0/§1.5/§2/§3/§6/§7, ADR-064 en `DECISIONS.md`, BACKLOG F3.
 
 ## Ronda 2 brief F3(a) — 2026-10-11
 - [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6108767635) sobre `52a6a88`: hallazgos 2 (backfill, sin evento) y 3 (idempotencia/409) cerrados; 1 abierto por #52; nuevo [P2] tabla §7 con cabecera duplicada → corregido en `b4c9823`; CI 38137461946 7/7; [respuesta](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6109017713).
