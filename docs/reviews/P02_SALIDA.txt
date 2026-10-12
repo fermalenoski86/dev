@@ -1,0 +1,104 @@
+# P-02 · salida real — 2026-10-12 10:43 UTC · node v22.22.0 · pnpm 12.5.1 · rama proc/p02-progreso sobre main@b76dc56
+
+## 1. pnpm progress:generate
+$ node scripts/collab/progress.mjs generate
+docs/collab/PROGRESO.md generado: 31 entradas (24 de producto) en 5 pistas
+
+## 2. pnpm progress:check (manifiesto válido + doc al día)
+$ node scripts/collab/progress.mjs check
+GATE progreso (P-02): manifiesto válido (31 entradas), docs/collab/PROGRESO.md al día
+
+## 3. NEGATIVO: PROGRESO.md editado a mano ("0/24" → "3/24" en equipo real) → check falla
+$ node scripts/collab/progress.mjs check
+✗ progreso (P-02): 1 problema(s)
+  - docs/collab/PROGRESO.md desactualizado: correr `pnpm progress:generate`
+[ELIFECYCLE] Command failed with exit code 1.
+exit=1
+
+## 4. NEGATIVO: manifiesto con PR sin AUDIT, test rotulado como equipo real y responsable agente → el validador los rechaza
+  - NS-DEMO: PR #99: mergeado sin AUDIT enlazado — no cuenta; si no hubo auditoría, dejá el PR fuera y explicalo en codigo.sin
+  - NS-DEMO: evidencia real con responsable «Claude»: tiene que ser una persona, no un agente
+  - NS-DEMO: evidencia real que cita una prueba simulada «apps/platform-api/src/active-version.db.test.ts»: un test, una corrida de CI o un simulador no son equipo real
+
+## 5. node scripts/collab/progress.mjs verificar-github (fuera de CI; gh api con argumentos, sin shell)
+M3A1-B1-FIX: PR #12 mergeado en 87591f0, AUDIT 6074016623 sobre 34dcf24 OK
+M3A1-B2: PR #2 mergeado en 5ba9f1a, AUDIT 6030654008 sobre a35eb5b OK
+M3A1-B3: PR #3 mergeado en decbb00, AUDIT 6033692739 sobre 4e28768 OK
+M3A1-B4: PR #5 mergeado en 0341d15, AUDIT 6037450237 sobre 3311097 OK
+M3A1-C1: PR #7 mergeado en 4ea6cbd, AUDIT 6043735018 sobre 8c4709a OK
+M3A1-C2: PR #8 mergeado en 4a75fa4, AUDIT 6047750632 sobre cf7f23e OK
+M3A1-C3: PR #10 mergeado en 053318d, AUDIT 6050622175 sobre 1e9e965 OK
+M3A1-D1: PR #16 mergeado en 164f518, AUDIT 6055509787 sobre 14f0ca2 OK
+M3A1-D2: PR #18 mergeado en f23f262, AUDIT 6061535285 sobre d42bf12 OK
+M3A1-D3: PR #27 mergeado en 2e39d3f, AUDIT 6076998058 sobre 66b1f44 OK
+M3A1-E1: PR #23 mergeado en 4c42e91, AUDIT 6075263530 sobre 2f30671 OK
+MEDIA-FIXTURES-FIX: PR #25 mergeado en 0db8730, AUDIT 6071404533 sobre df98ff9 OK
+M3A1-E2: PR #29 mergeado en 0234055, AUDIT 6080498773 sobre ea635b1 OK
+M3A1-E3A: PR #34 mergeado en 88f8a9a, AUDIT 6089938993 sobre f8ff978 OK
+M3A1-E3B: PR #36 mergeado en 754d319, AUDIT 6091297474 sobre 24336db OK
+M3A1-E3C: PR #38 mergeado en cc6c4d8, AUDIT 6093558367 sobre a233ee2 OK
+BL-31: PR #42 mergeado en 1db6944, AUDIT 6105271159 sobre f8d129d OK
+BL-07: PR #45 mergeado en e19ac23, AUDIT 6106041561 sobre 70d7456 OK
+BL-08: PR #48 mergeado en 5f06eff, AUDIT 6106938699 sobre 9e0a1d0 OK
+F3A: PR #56 mergeado en 8fae6fe, AUDIT 6113127134 sobre 20d6620 OK
+F3A-UI: PR #64 mergeado en 2ee3551, AUDIT 6118661022 sobre 9830a07 OK
+BRIEF-D: PR #13 mergeado en c845f35, AUDIT 6051885581 sobre 5135901 OK
+BRIEF-E: PR #20 mergeado en 8debee5, AUDIT 6067934329 sobre e88ed3c OK
+BRIEF-E3: PR #32 mergeado en 1494c15, AUDIT 6088307539 sobre 178f8d1 OK
+BRIEF-F3A: PR #50 mergeado en 0742479, AUDIT 6110866495 sobre 9a6bc30 OK
+BRIEF-F3A-UI: PR #60 mergeado en 1140616, AUDIT 6115363443 sobre 9907002 OK
+ISSUE26-OBS: PR #40 mergeado en d4b15e8, AUDIT 6094441354 sobre fd07e14 OK
+ISSUE26-OBS: PR #41 mergeado en 9482624, AUDIT 6094441446 sobre 85ba52f OK
+P-01: PR #58 mergeado en e7bac5a, AUDIT 6121930565 sobre fb77a49 OK
+verificar-github: todos los PR y comentarios AUDIT citados existen y coinciden
+
+## 6. npx vitest run scripts/collab/progreso.test.ts
+ RUN  v2.1.9 /home/claude/dev
+ ✓ scripts/collab/progreso.test.ts (16 tests) 18ms
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  10:44:31
+   Duration  366ms (transform 79ms, setup 0ms, collect 84ms, tests 18ms, environment 0ms, prepare 62ms)
+
+## 7. pnpm verify (lint + typecheck + suite default; los warnings de lint son preexistentes en apps/packages, eslint no cubre scripts/)
+exit=0
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  53 passed | 1 skipped (54)
+      Tests  827 passed | 1 skipped (828)
+
+## 8. bash -n handoff.sh y pnpm acceptance:check (no se tocó la matriz)
+bash -n OK
+$ node scripts/acceptance/cli.mjs check
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día
+
+## 9. git diff --check
+diff --check OK
+
+## No ejecutado localmente (lo corre CI sobre el HEAD exacto): pnpm build, PostgreSQL, media, mutaciones, E2E M2C, e2e-platform, compose-smoke. El cambio no toca código de producto ni gates existentes: agrega un step a verify-build.
+
+# Ronda 1 — 2026-10-12 12:11 UTC · corrección del P2 de #67 (AUDIT: CAMBIOS sobre ca7b6df)
+
+## Reproducción del auditor con el progreso.lib.mjs de ca7b6df (antes)
+condicion_simulada [] 1/1
+agente_con_espacio [] 1/1
+fecha_imposible [] 1/1
+
+## Misma reproducción con la corrección
+condicion_simulada ["X: evidencia real cuya condiciones describe una prueba simulada «simulador NovaStar en Docker»: un test, una corrida de CI o un simulador no son equipo real"] 0/1
+agente_con_espacio ["X: evidencia real con responsable «Claude»: tiene que ser una persona, no un agente"] 0/1
+fecha_imposible ["X: evidencia real con fecha inválida «2026-99-99» (AAAA-MM-DD del calendario)"] 0/1
+
+## Tests nuevos contra el lib viejo (tienen que fallar) y contra el corregido
+   × P-02 · progreso verificable > NEGATIVO: una prueba simulada rotulada como "equipo real" se rechaza, esté en la referencia o en las condiciones 10ms
+   × P-02 · progreso verificable > NEGATIVO: evidencia real incompleta, con fecha inválida o firmada por un agente se rechaza 2ms
+   × P-02 · progreso verificable > NEGATIVO: la fecha tiene que existir en el calendario, no solo tener la forma AAAA-MM-DD 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 14 passed (17)
+      Tests  17 passed (17)
+
+## pnpm progress:check · pnpm verify · git diff --check
+GATE progreso (P-02): manifiesto válido (31 entradas), docs/collab/PROGRESO.md al día
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  53 passed | 1 skipped (54)
+      Tests  828 passed | 1 skipped (829)
+diff --check OK

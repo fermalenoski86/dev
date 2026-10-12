@@ -37,6 +37,8 @@ Memoria de la colaboración: tres archivos con ciclos de vida distintos (2026-10
 | `docs/collab/HISTORIAL.md` | **Pasado:** una línea por evento (`- fecha UTC — agente: qué, PR/SHA`) | Solo se **agrega** al final | No; solo para buscar algo puntual |
 
 El detalle de cada auditoría o entrega va en el comentario del PR/issue, no en estos archivos: ahí se enlaza.
+
+`docs/collab/PROGRESO.md` **no** es un cuarto archivo de memoria: es un reporte **generado** (P-02) desde el manifiesto `scripts/collab/entregables.mjs` con `pnpm progress:generate`; CI corre `pnpm progress:check` y falla si no coincide. Cinco pistas × tres columnas (`código` = PR mergeado + `AUDIT: APROBADO` enlazado; `probado simulado` = tests que CI corre; `probado con equipo real` = evidencia física con referencia, condiciones, fecha y responsable). Solo conteos `n/N`, sin porcentaje global; `0/0` = sin entregables definidos. Cuando un PR se mergea con AUDIT, el implementador agrega su entrada al manifiesto y regenera. La evidencia con equipo real la carga una persona; el validador rechaza tests o corridas de CI rotulados como "real".
 La pelota se transfiere **solo** con `scripts/collab/handoff.sh` (P-01):
 
 ```bash
