@@ -45,11 +45,17 @@ y los entrega por la **API que ya existe** (`POST /assets`, `PUT /campaigns/:id/
 `BACKLOG.md` (sección AUD) pide que lo entregado lleve `campaignId`/`versionId` para que AUDIENCE y Proof of Play reporten contra la versión aprobada. `ShowPackageSchema` v1 no tiene esos campos y este brief **no** los agrega: la identidad ya existe del lado del servidor, en la `ShowVersion` que se crea en el submit (`packages/platform-approval/src/submit.ts`: `campaignId`, id de la versión, `versionNumber`, `versionHash` sobre el sobre de `packages/platform-contracts/src/version-hash.ts`). El mecanismo de correlación acordado es un **sobre de entrega** que envuelve al ShowPackage sin modificarlo:
 
 ```
-{ deliveryEnvelopeVersion: 1, campaignId, showVersionId, versionNumber, versionHash, showPackage }
+{ deliveryEnvelopeVersion: 1,
+  campaignId, showVersionId, versionNumber,
+  versionHash, hashAlgorithm, canonicalizationVersion, hashEnvelopeVersion, showPackageSchemaVersion,
+  showPackage,
+  assets: [{ logicalRef, sha256 }] }      ← el manifiesto sellado de la ShowVersion, tal cual se hasheó
 ```
 
 - Lo arma el servidor a partir de la `ShowVersion` aprobada, nunca el Studio (el cliente no puede declarar identidad).
-- EDGE/Proof of Play y AUDIENCE reportan contra `showVersionId` + `versionHash`; el `versionHash` permite comprobar que lo reproducido es byte a byte lo aprobado.
+- `assets` es **el mismo manifiesto** que `submit` pasó a `computeVersionHash()` y guardó en la versión (todas las ranuras no nulas del draft, incluidas las de superficies inactivas, que no se pueden reconstruir desde el ShowPackage compilado). Sin él el hash no se puede recalcular (hallazgo de Codex en #74).
+- Verificación en destino: (1) `computeVersionHash(showPackage, assets)` = `versionHash`; (2) el `sha256` de cada archivo descargado = el de su `logicalRef` en `assets`. Recién con las dos se afirma que lo reproducido es byte a byte lo aprobado. Si falla cualquiera, no se reproduce.
+- EDGE/Proof of Play y AUDIENCE reportan contra `showVersionId` + `versionHash`.
 - Se implementa en la fase de Deploy/EDGE (fuera de CS, §0); CS-1 a CS-4 no lo necesitan porque terminan en la aprobación. Si al llegar ahí se prefiere llevar la identidad dentro del paquete, es una SHOW PACKAGE v2 con ADR. La línea correspondiente de `BACKLOG.md` (AUD) queda alineada con este sobre.
 
 ## 3. Arquitectura

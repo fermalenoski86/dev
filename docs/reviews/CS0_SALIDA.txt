@@ -1,0 +1,35 @@
+### 2026-10-12T21:42:53Z · rama docs/cs0-brief · base del working tree: 986867f6350c0c8da6d7d5daca6e2fe4b3fba77f + cambios de esta ronda
+### node v22.22.0 · pnpm 12.5.1
+
+$ git diff --check origin/main...HEAD && git diff --check
+exit 0
+
+$ git diff --stat origin/main...HEAD
+ docs/briefs/CS0_CREATIVE_STUDIO.md | 150 +++++++++++++++++++++++++++++++++++++
+ docs/collab/BACKLOG.md             |   2 +-
+ 2 files changed, 151 insertions(+), 1 deletion(-)
+
+$ pnpm verify  (lint + typecheck + suite default; cola)
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  53 passed | 1 skipped (54)
+      Tests  828 passed | 1 skipped (829)
+exit 0
+
+$ pnpm progress:check
+$ node scripts/collab/progress.mjs check
+GATE progreso (P-02): manifiesto válido (32 entradas), docs/collab/PROGRESO.md al día
+exit 0
+
+$ pnpm acceptance:check
+$ node scripts/acceptance/cli.mjs check
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día
+exit 0
+
+### No ejecutados localmente (motivo)
+- PostgreSQL (vitest.platform), bootstrap-smoke, media (ffmpeg), mutaciones, E2E M2C/platform, compose/S3:
+  no se corrieron en este entorno. El PR no toca código, tests, rutas, env, CI ni congelados (solo
+  docs/briefs/CS0_CREATIVE_STUDIO.md, docs/collab/BACKLOG.md y estos dos reportes), así que no cambian
+  su resultado. La CI de GitHub los corre completos sobre el HEAD exacto:
+  - 986867f6350c0c8da6d7d5daca6e2fe4b3fba77f → https://github.com/fermalenoski86/dev/actions/runs/38307776606
+    7/7 success (postgres, verify-build, e2e-m2c, media, e2e-platform, mutations, compose-smoke).
+  - HEAD final de esta ronda: se cita en el PR al terminar su corrida (no se escribe acá un resultado que todavía no existe).
