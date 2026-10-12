@@ -153,3 +153,7 @@ paralelo.test: 56 ok, 3 fallos
 paralelo.test: 59 ok, 0 fallos
 paralelo.test: 59 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
+
+=== ronda 7 (vite.config)
+paralelo.test: 60 ok, 0 fallos
+paralelo.test: 60 ok, 0 fallos

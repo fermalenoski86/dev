@@ -151,6 +151,8 @@ SV=$(rama lateral/vitest-anidado packages/foo/vitest.config.ts)
 corre 41 "$SV"; check "lateral que toca packages/foo/vitest.config.ts → exit 8" '[ "$RC" = 8 ]'
 SP=$(rama lateral/pw-anidado apps/bar/playwright.e2e.config.mjs)
 corre 42 "$SP"; check "lateral que toca apps/bar/playwright.e2e.config.mjs → exit 8" '[ "$RC" = 8 ]'
+SVI=$(rama lateral/vite-anidado packages/foo/vite.config.ts)
+corre 44 "$SVI"; check "lateral que toca packages/foo/vite.config.ts (vitest lo lee) → exit 8" '[ "$RC" = 8 ]'
 SX=$(rama lateral/no-config packages/foo/vitest-helpers.ts)
 corre 43 "$SX"; check "un archivo que solo empieza con 'vitest' pero no es config → OK" '[ "$RC" = 0 ]'
 handoff_main Claude "ninguno"

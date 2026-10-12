@@ -41,7 +41,7 @@ FILE=docs/collab/HANDOFF.md
 # lo reutilice. Configs de vitest/playwright a CUALQUIER profundidad y extensión
 # (Codex, ronda 5, P2); auth = packages/platform-auth y auth* de platform-api
 # (auditor, AUDIT: CAMBIOS sobre 49acd37).
-GATES_RE='^(\.github/workflows/|scripts/ci/|scripts/collab/|scripts/mutation-check\.py$|packages/platform-auth/|apps/platform-api/src/auth)|(^|/)(vitest|playwright)[^/]*\.config\.[cm]?[jt]s$'
+GATES_RE='^(\.github/workflows/|scripts/ci/|scripts/collab/|scripts/mutation-check\.py$|packages/platform-auth/|apps/platform-api/src/auth)|(^|/)(vite|vitest|playwright)[^/]*\.config\.[cm]?[jt]s$'
 
 fallo() { echo "paralelo: $*" >&2; exit "${2:-1}"; }
 rechazo() { local code=$1; shift; echo "paralelo: RECHAZADO — $*" >&2; exit "$code"; }
