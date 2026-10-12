@@ -1,0 +1,36 @@
+== P-01 · salida real · 2026-10-12 · HEAD de la rama tras merge de main
+== bash scripts/collab/handoff.sh validar docs/collab/HANDOFF.md
+handoff: OK (docs/collab/HANDOFF.md)
+== bash scripts/collab/handoff.test.sh
+1) ambos leen el mismo SHA
+  ✓ misma base
+2) A escribe primero: fast-forward OK
+  ✓ A escribe
+  ✓ remoto avanzó
+  ✓ historial recibió la línea
+3) B escribe con base vieja: debe ABORTAR y no tocar el remoto
+  ✓ B aborta con exit 3
+  ✓ mensaje explica el avance
+  ✓ remoto intacto
+  ✓ remoto conserva la versión de A
+4) B relee y entonces sí puede escribir, sobre la versión de A
+  ✓ B leyó la nueva base
+  ✓ B escribe tras releer
+  ✓ historia lineal: A es padre de B
+5) carrera entre fetch y push: el push no fast-forward se rechaza
+  ✓ push non-fast-forward rechazado por git
+  ✓ remoto conserva 'A otra vez'
+6) validaciones de formato
+  ✓ dos pelotas → rechazo
+  ✓ pelota inválida → rechazo
+  ✓ marcador ======= → rechazo
+  ✓ 61+ líneas → rechazo
+  ✓ sin HANDOFF_BASE_SHA → rechazo
+  ✓ ningún git push lleva --force / --force-with-lease / -f
+
+handoff.test: 19 ok, 0 fallos
+== pnpm verify
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  52 passed | 1 skipped (53)
+      Tests  811 passed | 1 skipped (812)
+== no ejecutado localmente: PostgreSQL, media, mutaciones, E2E, S3 (P-01 no toca código de producto) → evidencia en los 7 jobs de CI del PR
