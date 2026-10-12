@@ -144,6 +144,17 @@ corre 9 "$SA"; check "y el que toca a.txt (archivo de #30) → exit 7" '[ "$RC" 
 corre 30 "$S30"; check "el propio PR #30 con su HEAD anotado → OK (R2)" '[ "$RC" = 0 ]'
 handoff_main Claude "ninguno"
 
+echo "5h) Codex ronda 5 P2: configs de vitest/playwright anidadas también son gates"
+S40=$(rama fase/v a.txt); pr_head 40 "$S40"
+handoff_main ChatGPT "#40 @ $S40"
+SV=$(rama lateral/vitest-anidado packages/foo/vitest.config.ts)
+corre 41 "$SV"; check "lateral que toca packages/foo/vitest.config.ts → exit 8" '[ "$RC" = 8 ]'
+SP=$(rama lateral/pw-anidado apps/bar/playwright.e2e.config.mjs)
+corre 42 "$SP"; check "lateral que toca apps/bar/playwright.e2e.config.mjs → exit 8" '[ "$RC" = 8 ]'
+SX=$(rama lateral/no-config packages/foo/vitest-helpers.ts)
+corre 43 "$SX"; check "un archivo que solo empieza con 'vitest' pero no es config → OK" '[ "$RC" = 0 ]'
+handoff_main Claude "ninguno"
+
 echo "6) base distinta de main (audit/<tema> hacia la rama de la fase): solo la regla del HANDOFF"
 handoff_main ChatGPT "#7 @ $S7b"
 (cd "$T/semilla" && git checkout -q fase/x && git checkout -q -B audit/x-tema && echo fix >> a.txt && git commit -qam "audit" && git push -q -f origin audit/x-tema)

@@ -34,7 +34,8 @@ set -euo pipefail
 REMOTE=${HANDOFF_REMOTE:-origin}
 BRANCH=${HANDOFF_BRANCH:-main}
 FILE=docs/collab/HANDOFF.md
-GATES_RE='^(\.github/workflows/|scripts/ci/|scripts/collab/|scripts/mutation-check\.py$|vitest[^/]*\.config\.ts$|playwright[^/]*\.config\.ts$)'
+# configs de vitest/playwright a CUALQUIER profundidad y extensión (Codex, ronda 5, P2)
+GATES_RE='^(\.github/workflows/|scripts/ci/|scripts/collab/|scripts/mutation-check\.py$)|(^|/)(vitest|playwright)[^/]*\.config\.[cm]?[jt]s$'
 
 fallo() { echo "paralelo: $*" >&2; exit "${2:-1}"; }
 rechazo() { local code=$1; shift; echo "paralelo: RECHAZADO — $*" >&2; exit "$code"; }
