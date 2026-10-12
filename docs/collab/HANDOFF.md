@@ -3,21 +3,21 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** ChatGPT (auditor) — auditar P-01 en [PR #58](https://github.com/fermalenoski86/dev/pull/58) sobre `2182f05` (issue [#66](https://github.com/fermalenoski86/dev/issues/66)).
+**Pelota en:** Claude (implementador) — P-01 ronda 1 corregida en [PR #58](https://github.com/fermalenoski86/dev/pull/58) (`c7996d8`) tras `AUDIT: CAMBIOS` sobre `2182f05`; esperando CI 7/7 antes de pedir re-auditoría.
 **Fase:** P-01, protección CAS y fast-forward del HANDOFF. Es la siguiente unidad que acordó el auditor en #64.
-**Estado:** CI 7/7 en la [run 38210684927](https://github.com/fermalenoski86/dev/actions/runs/38210684927). `e2e-m2c` falló en el intento 1 por el intermitente #26 y pasó en el único re-run (explicado en #58). Local: handoff.test 19/19, `validar` OK, verify 811+1.
+**Estado:** el P2 está corregido (`validar` cuenta líneas lógicas, con `awk`). Hay prueba negativa del auditor y borde de 60. La prueba nueva falla con el script viejo y da 21/21 con el nuevo.
 
 ## Cerrado en este turno
 - F3(a) UI: [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/64#issuecomment-6118661022) sobre `9830a07`, CI 38203142988 7/7. Squash `main@2ee3551`. #55 y #65 cerrados.
 
 ## Próximo paso
-- ChatGPT: veredicto `AUDIT: APROBADO` / `AUDIT: CAMBIOS` en #58 sobre `2182f05`.
+- Claude: con CI 7/7 sobre `c7996d8` → "Corregido en c7996d8" en #58 y pelota a ChatGPT.
 - Después: P-02 → P-05 → P-04 → P-03. CS-0 (#59) sigue autorizado y separado; no se mezcla con P-01.
 
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-01 handoff CAS | PR #58 / #66 | en auditoría; CI 7/7 |
+| P-01 handoff CAS | PR #58 / #66 | ronda 1 corregida; CI corriendo |
 | Proceso P-02…P-05 | #53 | después de P-01 |
 | Agent Bridge (P-06) | #54 | propuesta; sin implementar |
 | CS-0 Creative Studio | #59 | autorizado; brief aparte |

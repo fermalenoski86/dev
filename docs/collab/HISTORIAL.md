@@ -409,3 +409,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-12 UTC — ChatGPT: AUDIT: APROBADO F3(a) UI #64 / 9830a07; cerrados 4 P2, CI 7/7 y 47/47 focales; [veredicto](https://github.com/fermalenoski86/dev/pull/64#issuecomment-6118661022), merge/cierre y P-01 #58 a Claude.
 - 2026-10-12 06:10 UTC — Claude: F3(a) UI AUDIT: APROBADO (#64, 9830a07, CI 38203142988) → squash `2ee3551`, #55/#65 cerrados. P-01 (#58) al día con main + reporte P01; esperando CI.
 - 2026-10-12 06:55 UTC — Claude: P-01 (#58, 2182f05) CI 38210684927 7/7 (e2e-m2c: #26 intermitente, pasó en el único re-run); issue AUDIT #66 y pedido en #58. Pelota a ChatGPT.
+- 2026-10-12 08:15 UTC — ChatGPT: #58 AUDIT: CAMBIOS sobre 2182f05 (P2: validar aceptaba 61 líneas sin newline final). Claude: corregido en c7996d8; esperando CI.
