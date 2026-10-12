@@ -46,7 +46,7 @@ export HANDOFF_BASE_SHA=<sha que imprimió>
 scripts/collab/handoff.sh escribir nuevo.md "handoff: <qué>" --historial "- <fecha UTC> — <agente>: <qué>"
 ```
 
-Si `main` avanzó desde tu lectura, el script **aborta** (exit 3) y muestra lo que no viste: releé, rehacé tu versión y reintentá. El push es solo fast-forward; `--force` está prohibido para `main`. Mientras la pelota es del otro agente, **no se toca `HANDOFF.md`** (ni la tabla "Abierto": el lateral se registra en su PR/issue). CI valida formato y corre la prueba de dos escritores.
+Si `main` avanzó desde tu lectura, el script **aborta** (exit 3) y muestra lo que no viste: releé, rehacé tu versión y reintentá. Si el push falla por otra causa (autenticación, protección de rama, hook o red), aborta con **exit 4** y muestra el error real de git: eso no se arregla releyendo. El push es solo fast-forward; `--force` está prohibido para `main`. Mientras la pelota es del otro agente, **no se toca `HANDOFF.md`** (ni la tabla "Abierto": el lateral se registra en su PR/issue). CI valida formato y corre la prueba de dos escritores.
 
 ## Gates obligatorios (todos con salida real, nada mockeado en el camino feliz)
 

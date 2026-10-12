@@ -57,6 +57,47 @@ set +e; (cd "$T/B" && git push -q origin HEAD:refs/heads/main 2>/dev/null); RC=$
 check "push non-fast-forward rechazado por git" '[ "$RC" != 0 ]'
 check "remoto conserva 'A otra vez'" 'git -C "$T/remoto.git" show main:docs/collab/HANDOFF.md | grep -q "A otra vez"'
 
+echo "5b) el script clasifica el fallo del push (#58, AUDIT: CAMBIOS)"
+# Carrera real DENTRO del script: un `git` de prueba en el PATH (solo en este test)
+# empuja un commit de A justo antes del push de B; el CAS de B ya pasó.
+(cd "$T/B" && git checkout -q main 2>/dev/null || true)
+mkdir -p "$T/shim"; REAL_GIT=$(command -v git)
+cat > "$T/shim/git" <<SHIM
+#!/usr/bin/env bash
+if [ "\$1" = push ] && [ ! -e "$T/shim/usado" ]; then
+  touch "$T/shim/usado"
+  ( cd "$T/A" && "$REAL_GIT" pull -q && printf '# HANDOFF\n\n**Pelota en:** ChatGPT — A en carrera\n' > docs/collab/HANDOFF.md && "$REAL_GIT" commit -qam "A en carrera" && "$REAL_GIT" push -q origin main )
+fi
+exec "$REAL_GIT" "\$@"
+SHIM
+chmod +x "$T/shim/git"
+SR=$(cd "$T/B" && $H leer | sed -n 's/^HANDOFF_BASE_SHA=//p')
+handoff_valido Claude "B en carrera" > "$T/nuevoBr.md"
+set +e; (cd "$T/B" && PATH="$T/shim:$PATH" HANDOFF_BASE_SHA=$SR $H escribir "$T/nuevoBr.md" "B: carrera" 2>"$T/errR" >/dev/null); RC=$?; set -e
+check "carrera real entre CAS y push → exit 3" '[ "$RC" = 3 ]'
+check "carrera: el mensaje dice que main avanzó" 'grep -q "entre tu fetch y tu push (carrera)" "$T/errR"'
+check "carrera: el remoto conserva la versión de A" 'git -C "$T/remoto.git" show main:docs/collab/HANDOFF.md | grep -q "A en carrera"'
+
+# pushurl inválido: el fetch funciona (CAS OK) y el push falla por otra causa
+SP=$(cd "$T/B" && $H leer | sed -n 's/^HANDOFF_BASE_SHA=//p')
+git -C "$T/B" remote set-url --push origin "$T/no-existe.git"
+handoff_valido Claude "B sin permiso" > "$T/nuevoBp.md"
+set +e; (cd "$T/B" && HANDOFF_BASE_SHA=$SP $H escribir "$T/nuevoBp.md" "B: pushurl" 2>"$T/errP" >/dev/null); RC=$?; set -e
+git -C "$T/B" remote set-url --push origin "$T/remoto.git"
+check "pushurl inválido → exit 4 (no 3)" '[ "$RC" = 4 ]'
+check "pushurl inválido: muestra el error real de git" 'grep -qi "no-existe.git" "$T/errP"'
+check "pushurl inválido: NO dice carrera" '! grep -qE "carrera\)|otro escribió|no fast-forward" "$T/errP"'
+check "pushurl inválido: remoto sin cambios" '[ "$(git -C "$T/remoto.git" rev-parse main)" = "$SP" ]'
+
+# el servidor rechaza (hook, como una protección de rama)
+printf '#!/bin/sh\necho "rama protegida: requiere PR" >&2\nexit 1\n' > "$T/remoto.git/hooks/pre-receive"; chmod +x "$T/remoto.git/hooks/pre-receive"
+handoff_valido Claude "B contra hook" > "$T/nuevoBh.md"
+set +e; (cd "$T/B" && HANDOFF_BASE_SHA=$SP $H escribir "$T/nuevoBh.md" "B: hook" 2>"$T/errH" >/dev/null); RC=$?; set -e
+rm -f "$T/remoto.git/hooks/pre-receive"
+check "hook del servidor rechaza → exit 4" '[ "$RC" = 4 ]'
+check "hook: se ve el motivo del servidor" 'grep -q "rama protegida: requiere PR" "$T/errH"'
+check "hook: NO dice carrera" '! grep -qE "carrera\)|otro escribió|no fast-forward" "$T/errH"'
+
 echo "6) validaciones de formato"
 printf '**Pelota en:** Claude\n**Pelota en:** ChatGPT\n' > "$T/dos.md"
 check "dos pelotas → rechazo" '! (cd "$T/A" && $H validar "$T/dos.md" 2>/dev/null)'

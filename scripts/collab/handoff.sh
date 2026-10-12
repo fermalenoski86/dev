@@ -8,6 +8,7 @@
 #            Compare-and-swap: si origin/main ya no es HANDOFF_BASE_SHA, ABORTA y
 #            muestra el diff para releer. Si coincide: valida el archivo, commitea
 #            sobre origin/main y hace push SOLO fast-forward. Nunca --force.
+#            Exit 3 = main avanzó (releer); exit 4 = el push falló por otra causa.
 #
 # Variables: HANDOFF_BASE_SHA (obligatoria para escribir), HANDOFF_REMOTE (origin),
 #            HANDOFF_BRANCH (main), GIT_AUTHOR_NAME/EMAIL como siempre.
@@ -70,14 +71,23 @@ case "${1:-}" in
     NUEVO_SHA=$(git -C "$WT" rev-parse HEAD)
     # Push estrictamente fast-forward. Si alguien ganó la carrera en estos ms, git
     # rechaza (non-fast-forward) y no se reescribe nada.
-    if git push -q "$REMOTE" "$NUEVO_SHA:refs/heads/$BRANCH"; then
+    if ERR_PUSH=$(git push -q "$REMOTE" "$NUEVO_SHA:refs/heads/$BRANCH" 2>&1); then
       echo "handoff: escrito en $REMOTE/$BRANCH → ${NUEVO_SHA:0:7} (base ${ACTUAL:0:7})"
       echo "HANDOFF_BASE_SHA=$NUEVO_SHA"
     else
-      echo "handoff: ABORTADO — push rechazado (no fast-forward: otro escribió entre tu fetch y tu push). Releé y reintentá." >&2
-      exit 3
+      # No todo fallo de push es una carrera (#58, AUDIT: CAMBIOS): puede ser
+      # autenticación, protección de rama, un hook del servidor o la red. Siempre
+      # se muestra el error real de git; "carrera" solo si se comprueba que main
+      # avanzó desde ACTUAL.
+      printf '%s\n' "$ERR_PUSH" >&2
+      if git fetch -q "$REMOTE" "$BRANCH" 2>/dev/null && [ "$(git rev-parse "$REMOTE/$BRANCH")" != "$ACTUAL" ]; then
+        echo "handoff: ABORTADO — $REMOTE/$BRANCH avanzó de ${ACTUAL:0:7} a $(git rev-parse --short "$REMOTE/$BRANCH") entre tu fetch y tu push (carrera). Releé con 'handoff.sh leer' y reintentá. Nada se escribió." >&2
+        exit 3
+      fi
+      echo "handoff: ABORTADO — el push falló y no es una carrera comprobada ($REMOTE/$BRANCH sigue en ${ACTUAL:0:7} o no se pudo verificar). Mirá el error de git de arriba (autenticación, protección de rama, hook o red). Nada se escribió." >&2
+      exit 4
     fi
     ;;
   *)
-    sed -n '2,13p' "$0"; exit 2;;
+    sed -n '2,14p' "$0"; exit 2;;
 esac
