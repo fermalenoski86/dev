@@ -36,9 +36,9 @@ Por lo tanto el Studio **renderiza** su proyecto (capas, keyframes, 3D, partícu
 1. un MP4 por superficie (o el master de torres), con las resoluciones de `building.ts`;
 2. un `TakeoverDraft` con los moments, las directivas de iluminación y reloj, y los assets asignados;
 
-y los entrega por la **API que ya existe** (`POST /assets`, `PUT /campaigns/:id/draft`, `POST /campaigns/:id/submit`). El servidor revalida todo: no confía en el cliente. Consecuencia: **CS-1 a CS-3 no tocan `platform-api`, `shared-types` ni `show-engine`.** El proyecto creativo vive en un modelo propio y versionado (`CreativeProject`), del mismo modo que el draft vive separado del ShowPackage.
+y los entrega por la **API que ya existe** (`POST /assets`, `PUT /campaigns/:id/draft`, `POST /campaigns/:id/submit`). El servidor revalida todo: no confía en el cliente. Consecuencia: **CS-1, CS-1b y CS-2 no tocan `platform-api`, `shared-types` ni `show-engine`;** CS-1a toca solo `show-authoring` y CS-3 agrega un endpoint nuevo y aditivo para la IA (con su brief, sin cambiar rutas existentes). El proyecto creativo vive en un modelo propio y versionado (`CreativeProject`), del mismo modo que el draft vive separado del ShowPackage.
 
-**Límite del draft actual (hallazgo de Codex en #74):** `TakeoverDraft` solo expresa iluminación como `inherit` o una escena del catálogo (`LightingDirectiveSchema`, `packages/show-authoring/src/draft-schema.ts`); no tiene cómo pedir RGBW por zona, aunque el contrato ya tiene el evento `lighting.zone.set` (`shared-types`). Para que lo que se edita en Pro Studio sea lo que se aprueba, se agrega la unidad **CS-1a** (§7): una directiva aditiva `zones` en el draft (por zona: `color` RGBW, `intensity`, `fadeMs`) que `compileTakeoverDraft()` traduce a `lighting.zone.set`, con ADR, tests del compilador, mutaciones y bump de `compilerVersion` (metadata; el hash no cambia de formato). Toca `show-authoring`, no `shared-types` ni `show-engine`. **Hasta que CS-1a esté mergeada, la pista de luces del editor queda restringida a escenas del catálogo** y `toTakeoverDraft()` rechaza (error tipado, test) cualquier cue por zona en vez de descartarlo en silencio. El Builder de `apps/control` (congelado) lee `LightingDirective`: el brief de CS-1a debe probar con test que abrir un draft con `zones` no lo rompe; si para eso hay que tocar `apps/control`, va a `decisión-producto` para Fer antes de mergear.
+**Límite del draft actual (hallazgo de Codex en #74):** `TakeoverDraft` solo expresa iluminación como `inherit` o una escena del catálogo (`LightingDirectiveSchema`, `packages/show-authoring/src/draft-schema.ts`); no tiene cómo pedir RGBW por zona, aunque el contrato ya tiene el evento `lighting.zone.set` (`shared-types`). Para que lo que se edita en Pro Studio sea lo que se aprueba, se agrega la unidad **CS-1a** (§7): una directiva aditiva `zones` en el draft (por zona: `color` RGBW, `intensity`, `fadeMs`) que `compileTakeoverDraft()` traduce a `lighting.zone.set`. El compilador debe **llevar la cuenta de las zonas sobrescritas**: hoy la guarda final solo re-emite la escena de cierre si `escenaActual !== closingSceneId` (`compiler.ts`), así que una secuencia escena de cierre → cue `zones` → fin dejaría el RGBW custom activo después de `durationMs`. CS-1a exige: un cue `zones` invalida la escena vigente; el cierre se re-emite (o se restauran las zonas tocadas) siempre que haya overrides pendientes; y una escena posterior a un cue `zones` deja el estado de todas las zonas igual al de la escena, sin restos. Cada caso con test de regresión que evalúa el estado resuelto por `show-engine` en `durationMs`, no solo los eventos emitidos. Con ADR, tests del compilador, mutaciones y bump de `compilerVersion` (metadata; el hash no cambia de formato). Toca `show-authoring`, no `shared-types` ni `show-engine`. **Hasta que CS-1a esté mergeada, la pista de luces del editor queda restringida a escenas del catálogo** y `toTakeoverDraft()` rechaza (error tipado, test) cualquier cue por zona en vez de descartarlo en silencio. El Builder de `apps/control` (congelado) lee `LightingDirective`: el brief de CS-1a debe probar con test que abrir un draft con `zones` no lo rompe; si para eso hay que tocar `apps/control`, va a `decisión-producto` para Fer antes de mergear.
 
 ### 2.1 Identidad de campaña y versión (Audience y Proof of Play)
 
@@ -68,7 +68,7 @@ y los entrega por la **API que ya existe** (`POST /assets`, `PUT /campaigns/:id/
                                       │                                  │
                         Creative Web (apps/creative-web)       Creative Desktop (Electron)
                         storyboard, plantillas, timeline       Pro Studio: timeline por frame,
-                        simple, preview WebGL, colaboración    3D/GLB, partículas, render local,
+                        simple, preview WebGL                 3D/GLB, partículas, render local,
                                       │                        Blender headless opcional
                                       └──────────── render → MP4 por superficie + TakeoverDraft
                                                                  │
@@ -78,7 +78,7 @@ y los entrega por la **API que ya existe** (`POST /assets`, `PUT /campaigns/:id/
 ```
 
 - **Un solo motor:** `creative-core` es TypeScript puro y determinista (mismo proyecto + mismo `t` ⇒ mismo frame lógico). Web y desktop lo importan; ninguno reimplementa semántica. El preview final por superficie pasa siempre por `show-engine` (`compileTakeoverDraft` + `resolve`), así lo que se aprueba es lo que se ve.
-- **Render:** el MVP renderiza en el cliente (WebGL → frames → `ffmpeg` en desktop / WebCodecs en web) y valida con el pipeline de `platform-media` (códec, resolución, fps, duración) antes de subir. Blender headless queda como proceso externo opcional para escenas pesadas (CS-3), nunca enlazado como biblioteca.
+- **Render:** el MVP renderiza en el cliente (WebGL → frames → `ffmpeg` en desktop / WebCodecs en web) y valida con el pipeline de `platform-media` (códec, resolución, fps, duración) antes de subir. Blender headless queda como proceso externo opcional para escenas pesadas (CS-4), nunca enlazado como biblioteca.
 - **IA:** corre del lado del servidor, con la clave fuera del cliente. Devuelve un `CreativePlan` tipado (zod) que el motor convierte en `CreativeProject`. **Nunca se ejecuta texto libre.** Cada propuesta muestra modelo, versión, costo estimado y real, y procedencia. La IA no sube assets, no hace submit y no aprueba.
 
 ## 4. Los dos modos (el mismo proyecto)
@@ -91,6 +91,11 @@ y los entrega por la **API que ya existe** (`POST /assets`, `PUT /campaigns/:id/
 | Depende de IA o servicios pagos | sí, con tope de costo | **no** |
 
 Se pasa de un modo a otro sin pérdida: el AI Director solo produce `CreativeProject` y Pro Studio lo abre tal cual.
+
+**Persistencia del proyecto (hallazgo de Codex en #74).** La API actual solo guarda `TakeoverDraft`, que no conserva capas, keyframes, curvas ni cámaras, y en el repo no hay almacén de proyectos. Por eso el MVP **no promete colaboración multiusuario ni sincronía entre navegadores**. Lo que sí promete, y cómo:
+- El `CreativeProject` se guarda como **archivo versionado** (JSON validado con zod, `schemaVersion`, con los assets referenciados por `sha256`), local en web (descarga/apertura de archivo) y en desktop (disco). El pase web ↔ desktop y entre personas es **por archivo**: abrir lo que otro exportó.
+- Criterio medible: `parse(serialize(p))` es idéntico a `p` (property test) y un proyecto exportado en web abre en desktop con el mismo frame lógico en todo `t` (CS-4). Una versión de esquema desconocida se rechaza con error claro, nunca se abre a medias.
+- Un almacén de proyectos en el servidor (versionado, con `expectedRevision` como el draft, permisos por campaña) es la unidad **CS-5**, posterior al MVP, con brief propio porque toca `platform-api` y la base. Sin CS-5 no se ofrece edición concurrente.
 
 ## 5. Desktop: comparación y recomendación
 
@@ -117,12 +122,13 @@ El gemelo actual es **preliminar e impreciso**. Todo preview lleva la etiqueta *
 | **CS-1a** cues RGBW por zona | directiva aditiva `zones` en `TakeoverDraft` → `lighting.zone.set`; ADR; prueba de que el Builder congelado no se rompe (§2) | `show-authoring` | ~3 días |
 | **CS-1b** calibración | modelo de cámara/superficie calibrable + plan de toma de fotos y medidas (necesita a Fer en sitio) | `creative-core` | en paralelo, depende de datos |
 | **CS-2** Creative Web MVP | `apps/creative-web`: timeline, preview de 2 superficies + DMX + reloj simulados, render MP4, entrega por la API existente | app nueva | ~1,5 sem |
-| **CS-3** AI Director | `CreativePlan` tipado, endpoint servidor, tope de costo, procedencia; sin proveedor pago hasta que Fer lo autorice | `creative-core` + endpoint | ~1 sem |
+| **CS-3** AI Director | `CreativePlan` tipado, endpoint servidor, tope de costo, procedencia; sin proveedor pago hasta que Fer lo autorice. **No se da por terminada sin una corrida real de un modelo** (ver §9) | `creative-core` + endpoint nuevo | ~1 sem + espera del proveedor |
+| **CS-5** almacén de proyectos (posterior) | `CreativeProject` versionado en el servidor, `expectedRevision`, permisos por campaña; habilita colaboración | `platform-api` + migración | a definir en su brief |
 | **CS-4** Creative Desktop MVP | Electron + `creative-core` + GLB + render local + Blender opcional; firmado | app nueva | ~1,5 sem; necesita la PC con RTX |
 
 \*Estimados con el circuito actual (Codex automático, ChatGPT cada hora). Se miden y se informan; no son compromiso.
 
-**Hito demo (fin de CS-3, ~3 semanas desde este AUDIT):** prompt → storyboard → timeline editable → preview web de las 2 pantallas + luces y reloj simulados → 2 MP4 + cues → draft enviado a TRUST → aprobación por dos personas. Rotulado **geometría preliminar**, sin hardware.
+**Hito demo (fin de CS-3, ~3 semanas desde este AUDIT, condicionado a tener un modelo real según §9):** prompt → storyboard → timeline editable → preview web de las 2 pantallas + luces y reloj simulados → 2 MP4 + cues → draft enviado a TRUST → aprobación por dos personas. Rotulado **geometría preliminar**, sin hardware.
 
 ## 8. Criterios de aceptación medibles (para los briefs de cada unidad)
 
@@ -141,14 +147,14 @@ El gemelo actual es **preliminar e impreciso**. Todo preview lleva la etiqueta *
 
 ## 9. Costos
 
-- **Sin costo nuevo:** CS-1, CS-1b, CS-2 y CS-4 (Electron, Three.js y Blender son gratuitos).
-- **Con costo, a decisión de Fer:** el modelo de IA de CS-3. Antes de activar cualquier proveedor pago, Claude presenta el costo estimado por propuesta y un tope mensual. Hasta entonces, CS-3 se prueba con un plan simulado (fixture) y con un proveedor solo si Fer lo autoriza.
+- **Sin costo nuevo:** CS-1, CS-1a, CS-1b, CS-2 y CS-4 (Electron, Three.js y Blender son gratuitos).
+- **Con costo, a decisión de Fer:** el modelo de IA de CS-3. Antes de activar cualquier proveedor pago, Claude presenta el costo estimado por propuesta y un tope mensual. Los fixtures (planes simulados) sirven para los tests de validación y de conversión plan → proyecto, pero **no acreditan el camino feliz**: CS-3 solo se entrega como terminada, y el hito demo solo se declara, con al menos una generación de punta a punta con un modelo real, registrada en el reporte de la fase (modelo y versión, prompt, `CreativePlan` devuelto, proyecto resultante, costo real, fecha). Dos caminos, a elegir por Fer (❓2): (a) un proveedor pago autorizado con tope; (b) un modelo de pesos abiertos corriendo **local y sin costo** en la PC con RTX, si su calidad alcanza (se mide con el mismo registro). Sin ninguno de los dos, CS-3 puede mergear su parte tipada como "AI Director sin modelo" con ese rótulo, y la unidad queda abierta.
 - **Hardware:** la PC con RTX para CS-4 y como runner propio de render.
 
 ## 10. Preguntas abiertas
 
 - ❓1 **Pantalla horizontal:** la oferta P5 no la incluye (#61), pero `EL_TRUST` sí la modela. Propuesta: el Studio la soporta como superficie opcional y el MVP renderiza solo `screen_a` y `screen_b`, salvo que Fer diga otra cosa.
-- ❓2 **Proveedor y tope de IA** (decisión de Fer, con costo).
+- ❓2 **Modelo de IA para CS-3** (decisión de Fer): proveedor pago con tope, o modelo de pesos abiertos local sin costo en la PC con RTX (§9). CS-3 no se cierra sin uno de los dos.
 - ❓3 **Desktop:** ¿MVP solo Windows? La propuesta es que sí, porque es la PC con RTX que se va a armar.
 - ❓4 **Ubicación:** `packages/creative-core`, `apps/creative-web` y `apps/creative-desktop`. ¿Alguna objeción del auditor?
 - ❓5 **Render en web:** ¿WebCodecs en el navegador, o render siempre en desktop/servidor y la web solo previsualiza? La propuesta es WebCodecs con fallback a desktop.
