@@ -268,3 +268,10 @@ handoff.test: 39 ok, 0 fallos
 paralelo.test: 132 ok, 0 fallos
 paralelo.test: 132 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
+
+=== ronda 24 (Codex sobre 1ed5fb6: revalidar el PR después de publicar el directo) — 2026-10-12T21:40:32Z
+--- código de 1ed5fb6 + chequeo nuevo: paralelo.test: 131 ok, 1 fallo (chequeo estático del workflow)
+--- corregido
+paralelo.test: 132 ok, 0 fallos
+paralelo.test: 132 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos

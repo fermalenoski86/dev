@@ -168,6 +168,14 @@ jobs:
           git fetch -q origin "$BASE_REF"; BASE_PUB=$(git rev-parse FETCH_HEAD)
           if [ "${BASE_MOVIDA:-1}" != 0 ] || [ "$BASE_PUB" != "$BASE_JOB" ]; then publicar failure "paralelo: SIN VEREDICTO (la base $BASE_REF avanzó de ${BASE_JOB:0:7} a ${BASE_PUB:0:7} durante el job)" "El chequeo directo se calculó con $BASE_REF@${BASE_JOB:0:7}; re-run del job para evaluar con la base actual."; exit 0; fi
           publicar success "paralelo: OK" "$(head -c 60000 "$RUNNER_TEMP/paralelo.out")"
+          # Revalidar DESPUÉS de publicar (Codex sobre 1ed5fb6, P1), como paralelo-reevaluar.sh:
+          # un retarget a main entre la consulta y la publicación dejaría el success R1 sobre
+          # el HEAD; el edited queda encolado detrás de este run. Se pisa con failure.
+          DESPUES=$(gh api "repos/${{ github.repository }}/pulls/$PR" --jq '"\(.base.ref) \(.head.sha)"' 2>/dev/null) || DESPUES=""
+          if [ "$DESPUES" != "$BASE_REF $HEAD_SHA" ]; then
+            publicar failure "paralelo: CADUCADO (#$PR cambió de base o HEAD mientras se publicaba: ahora ${DESPUES:-desconocido})" "El success recién publicado se calculó para base $BASE_REF @ ${HEAD_SHA:0:7}; la corrida encolada decide."
+            exit 1
+          fi
       - name: Veredicto de este PR
         run: |
           [ "$RC" = 0 ] || exit "$RC"
