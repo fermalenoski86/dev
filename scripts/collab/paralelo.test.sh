@@ -290,6 +290,22 @@ chmod +x "$T/listar-mueve-main.sh"
 set +e; (cd "$T/ci" && PARALELO_LISTAR="$T/listar-mueve-main.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" scripts/collab/paralelo-reevaluar.sh "carrera" >/dev/null 2>"$T/err"); RC=$?; set -e
 check "main avanza durante la re-evaluación → exit 1, nada publicado y el motivo lo dice" '[ "$RC" = 1 ] && [ ! -s "$T/publicado" ] && grep -q "avanzó" "$T/err"'
 check "paralelo.yml publica el veredicto del PR como check sobre HEAD_SHA por API y usa un solo carril serial" 'grep -q "head_sha=\"\$HEAD_SHA\"" "$AQUI/../../.github/workflows/paralelo.yml" && grep -qE "^  group: paralelo$" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "cancel-in-progress: false" "$AQUI/../../.github/workflows/paralelo.yml"'
+# auditor (AUDIT: CAMBIOS sobre 7700da3, P1): un evento con base ≠ main también desplaza al run
+# pendiente; por eso la re-evaluación corre en TODO evento y con los scripts de main.
+check "paralelo.yml re-evalúa en TODO evento pull_request_target, sin condición por rama base, con un worktree de origin/main" '! grep -qE "if: github.event.pull_request.base.ref == .main." "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "git worktree add -q --detach \"\$RUNNER_TEMP/main\" origin/main" "$AQUI/../../.github/workflows/paralelo.yml"'
+# Codex sobre 7700da3, P1: la fase avanza entre la evaluación y la publicación → no se publica
+handoff_main ChatGPT "#70 @ $S70b"
+cat > "$T/listar-mueve-fase.sh" <<LISTAR
+#!/usr/bin/env bash
+echo "71 $SL70"
+(cd "$T/semilla" && git checkout -q -f fase/toctou && echo s3 >> c3.txt && git add -A && git commit -qm "fase S3" && git push -q -f origin fase/toctou && git push -q origin "fase/toctou:refs/pull/70/head") >/dev/null 2>&1
+exit 0
+LISTAR
+chmod +x "$T/listar-mueve-fase.sh"
+: > "$T/publicado"
+set +e; (cd "$T/ci" && PARALELO_LISTAR="$T/listar-mueve-fase.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" scripts/collab/paralelo-reevaluar.sh "carrera fase" >/dev/null 2>"$T/err"); RC=$?; set -e
+check "la fase activa avanza durante la re-evaluación → exit 1, nada publicado y el motivo lo dice" '[ "$RC" = 1 ] && [ ! -s "$T/publicado" ] && grep -q "fase activa #70 avanzó" "$T/err"'
+(cd "$T/semilla" && git checkout -q -f main)
 check "paralelo.yml re-evalúa TODOS los PR en cada evento hacia main (no solo cuando el PR es la fase: GitHub descarta runs pendientes)" '! grep -q "FASE=\$(git show origin/main" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "name: Re-evaluar todos los PR abiertos hacia main" "$AQUI/../../.github/workflows/paralelo.yml"'
 check "paralelo.yml re-evalúa en push a main y cuando el PR evaluado es la fase activa" 'grep -q "^  push:" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "paralelo-reevaluar.sh" "$AQUI/../../.github/workflows/paralelo.yml" && grep -qE "checks: write" "$AQUI/../../.github/workflows/paralelo.yml" && ! grep -qE "contents: write|pull-requests: write" "$AQUI/../../.github/workflows/paralelo.yml"'
 check "ningún git push en paralelo-reevaluar.sh (solo lee y publica checks)" '! grep -E "git push" "$AQUI/paralelo-reevaluar.sh" | grep -v "^\s*#" | grep -q .'

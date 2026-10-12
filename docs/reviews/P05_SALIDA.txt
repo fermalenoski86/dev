@@ -207,3 +207,10 @@ handoff.test: 39 ok, 0 fallos
 paralelo.test: 112 ok, 0 fallos
 paralelo.test: 112 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
+
+=== ronda 15 (AUDIT: CAMBIOS sobre 7700da3: re-evaluar en todo evento desde main; + Codex: revalidar HEAD de la fase) — 2026-10-12T20:03:15Z
+--- código de 7700da3 + pruebas nuevas: paralelo.test: 112 ok, 2 fallos
+--- corregido
+paralelo.test: 114 ok, 0 fallos
+paralelo.test: 114 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos

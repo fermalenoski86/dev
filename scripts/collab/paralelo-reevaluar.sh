@@ -37,8 +37,14 @@ publicar() { # <nro> <sha> <conclusion> <titulo> <detalle>
     -f "output[title]=$tit" -f "output[summary]=$(printf '%s' "$det" | head -c 60000)" >/dev/null
 }
 
+# HEAD de la fase activa (refs/pull/N/head) según el HANDOFF de main: se captura al
+# empezar y se revalida antes de publicar, igual que main (Codex sobre 7700da3, P1).
+fase_pr() { git show "$REMOTE/$BRANCH:docs/collab/HANDOFF.md" 2>/dev/null | sed -nE 's/^\*\*En auditor(í|i)a:\*\* #([0-9]+) @ [0-9a-f]{40}\b.*/\2/p' | head -1; }
+fase_head() { [ -n "$1" ] || { echo ""; return; }; git fetch -q "$REMOTE" "refs/pull/$1/head" 2>/dev/null && git rev-parse -q --verify FETCH_HEAD^{commit} 2>/dev/null || echo "sin-ref"; }
+
 git fetch -q "$REMOTE" "$BRANCH"
 MAIN0=$(git rev-parse "$REMOTE/$BRANCH")
+FASE_PR=$(fase_pr); FASE0=$(fase_head "$FASE_PR")
 PRS=$(listar) || { echo "paralelo-reevaluar: no se pudo listar los PR abiertos; sin veredicto nuevo" >&2; exit 1; }
 [ -n "$PRS" ] || { echo "paralelo-reevaluar: sin PR abiertos hacia $BRANCH"; exit 0; }
 # 1) evaluar todo con la política de MAIN0 …
@@ -57,6 +63,11 @@ git fetch -q "$REMOTE" "$BRANCH"
 MAIN1=$(git rev-parse "$REMOTE/$BRANCH")
 if [ "$MAIN1" != "$MAIN0" ]; then
   echo "paralelo-reevaluar: $BRANCH avanzó de ${MAIN0:0:7} a ${MAIN1:0:7} durante la evaluación; no se publica (la corrida del push nuevo decide)" >&2
+  exit 1
+fi
+FASE1=$(fase_head "$FASE_PR")
+if [ "$FASE1" != "$FASE0" ]; then
+  echo "paralelo-reevaluar: la fase activa #$FASE_PR avanzó de ${FASE0:0:7} a ${FASE1:0:7} durante la evaluación; no se publica (la corrida de su synchronize decide)" >&2
   exit 1
 fi
 fallos=0; total=0

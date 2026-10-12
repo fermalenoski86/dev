@@ -95,13 +95,22 @@ jobs:
       # run pendiente (el último) y descarta los anteriores aunque cancel-in-progress sea
       # false (Codex ronda 14, P1). Así, el run que sobreviva siempre deja a todos los
       # laterales comparados con el estado actual, haya habido o no un run descartado.
-      - name: Re-evaluar todos los PR abiertos hacia main
-        if: github.event.pull_request.base.ref == 'main'
+      # Sin condición por rama base (auditor, AUDIT: CAMBIOS sobre 7700da3, P1): un evento
+      # de un PR hacia la rama de la fase (audit/<tema>) comparte el carril y también puede
+      # desplazar al run pendiente; si no re-evaluara, el TOCTOU S1→S2 reaparecería. Corre
+      # SIEMPRE y con los scripts de la revisión actual de main (worktree aparte), nunca
+      # con los del checkout de una base distinta de main.
+      - name: Re-evaluar todos los PR abiertos hacia main (cualquier evento, scripts de main)
         env:
           PR: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: scripts/collab/paralelo-reevaluar.sh "evento en #$PR (${{ github.event.action }}) @ ${{ github.event.pull_request.head.sha }}"
+        run: |
+          git fetch -q origin main
+          git worktree add -q --detach "$RUNNER_TEMP/main" origin/main
+          cd "$RUNNER_TEMP/main"
+          echo "scripts de main=$(git rev-parse HEAD)"
+          scripts/collab/paralelo-reevaluar.sh "evento en #$PR (${{ github.event.action }}, base ${{ github.event.pull_request.base.ref }}) @ ${{ github.event.pull_request.head.sha }}"
       - name: Veredicto de este PR
         run: exit "$RC"
 
