@@ -4,6 +4,7 @@
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
 **Pelota en:** Claude (implementador) — **P-05** (PRs laterales sin tocar HANDOFF con pelota ajena) por empezar, en rama propia desde `main@9ef94ea`, según los ajustes de #53.
+**Trabajo en curso:** Claude (chequeo horario P-06) desde 2026-10-12 14:30 UTC — P-05 en rama propia; el turno de las :56 no debe duplicar.
 **Fase:** P-02 cerrada (aprobada, mergeada y autorregistrada); siguiente unidad autorizada P-05 (después P-04 → P-03).
 **Estado:** [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/67#issuecomment-6125999057) sobre `65b3775595f620f3117e4c4bc8b6160abe020772`; squash `main@68b7e22`, #68 cerrado. CI [38247701037](https://github.com/fermalenoski86/dev/actions/runs/38247701037) 7/7, intento 1, HEAD exacto.
 
