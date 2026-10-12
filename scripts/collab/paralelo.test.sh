@@ -153,6 +153,8 @@ SP=$(rama lateral/pw-anidado apps/bar/playwright.e2e.config.mjs)
 corre 42 "$SP"; check "lateral que toca apps/bar/playwright.e2e.config.mjs → exit 8" '[ "$RC" = 8 ]'
 SVI=$(rama lateral/vite-anidado packages/foo/vite.config.ts)
 corre 44 "$SVI"; check "lateral que toca packages/foo/vite.config.ts (vitest lo lee) → exit 8" '[ "$RC" = 8 ]'
+SVM=$(rama lateral/vite-mts apps/bar/vite.config.mts)
+corre 47 "$SVM"; check "apps/bar/vite.config.mts → exit 8" '[ "$RC" = 8 ]'
 SX=$(rama lateral/no-config packages/foo/vitest-helpers.ts)
 corre 43 "$SX"; check "un archivo que solo empieza con 'vitest' pero no es config → OK" '[ "$RC" = 0 ]'
 handoff_main Claude "ninguno"
@@ -167,6 +169,16 @@ SRA=$(rama lateral/auth-routes apps/platform-api/src/auth-routes.ts)
 corre 18 "$SRA"; check "lateral que toca apps/platform-api/src/auth-routes.ts → exit 8" '[ "$RC" = 8 ]'
 SRN=$(rama lateral/no-auth packages/platform-media/src/x.ts apps/platform-api/src/campaigns.ts)
 corre 19 "$SRN"; check "lateral de producto fuera de las familias de riesgo alto (media, campañas) → OK" '[ "$RC" = 0 ]'
+# Codex ronda 7: TODAS las familias "alto" de P-03 (BACKLOG), no solo auth
+for par in "migr:packages/platform-db/src/migrations/0009_x.sql" "migrator:packages/platform-db/src/migrator.ts" "bootstrap:packages/platform-db/src/bootstrap.sql" \
+           "approval:packages/platform-approval/src/x.ts" "approval-routes:apps/platform-api/src/approval-routes.ts" "storage:packages/platform-storage/src/x.ts" \
+           "process:packages/platform-media/src/process.ts" "server:apps/platform-api/src/server.ts" "cors:apps/platform-api/src/cors.ts" "actor:apps/platform-api/src/actor.ts" \
+           "control:apps/control/src/x.ts"; do
+  SF=$(rama "lateral/alto-${par%%:*}" "${par#*:}")
+  corre 48 "$SF"; check "familia alto P-03: ${par#*:} → exit 8" '[ "$RC" = 8 ]'
+done
+SRM=$(rama lateral/media-ok packages/platform-media/src/validator.ts packages/platform-db/src/fixtures.ts)
+corre 49 "$SRM"; check "media (sin process.ts) y platform-db fuera de migraciones → OK" '[ "$RC" = 0 ]'
 SRAU=$(rama lateral/authoring packages/show-authoring/src/x.ts)
 corre 44 "$SRAU"; check "'show-authoring' no es auth: → OK (sin falsos positivos por prefijo)" '[ "$RC" = 0 ]'
 handoff_main Claude "ninguno"

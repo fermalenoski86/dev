@@ -17,9 +17,10 @@
 #       sha anotado, porque con la pelota en Claude la rama puede haber avanzado  → exit 7
 #   R4  un lateral no toca las familias de riesgo ALTO acordadas en #53 (P-03) mientras
 #       hay fase activa: gates y scripts de proceso (workflows, scripts/ci,
-#       scripts/collab, mutation-check, configs de vitest y playwright) y auth
-#       (packages/platform-auth, rutas de auth de platform-api). La transferencia
-#       de pelota (HANDOFF.md) la cubre R1 para todo PR.                        → exit 8
+#       scripts/collab, mutation-check, configs de vite/vitest/playwright),
+#       migraciones, auth/CSRF/CORS, aprobación, storage, procesos externos y
+#       apps/control congelado (mapa de rutas en GATES_RE). La transferencia de
+#       pelota (HANDOFF.md) la cubre R1 para todo PR.                           → exit 8
 #   Renames: se listan origen y destino (--no-renames); mover a.txt→b.txt no esquiva R3/R4.
 #   Sin fase activa (`ninguno` o sin línea) y pelota en Claude: OK.
 #   Uso incorrecto, HANDOFF ilegible o SHA que no se puede traer                → exit 1
@@ -36,12 +37,20 @@ set -euo pipefail
 REMOTE=${HANDOFF_REMOTE:-origin}
 BRANCH=${HANDOFF_BRANCH:-main}
 FILE=docs/collab/HANDOFF.md
-# Familias de riesgo ALTO acordadas (#53, P-03: "scripts de CI/collab y cambios a
-# gates/auth/transferencia de pelota son riesgo alto"). Un solo lugar, para que P-03
-# lo reutilice. Configs de vitest/playwright a CUALQUIER profundidad y extensión
-# (Codex, ronda 5, P2); auth = packages/platform-auth y auth* de platform-api
-# (auditor, AUDIT: CAMBIOS sobre 49acd37).
-GATES_RE='^(\.github/workflows/|scripts/ci/|scripts/collab/|scripts/mutation-check\.py$|packages/platform-auth/|apps/platform-api/src/auth)|(^|/)(vite|vitest|playwright)[^/]*\.config\.[cm]?[jt]s$'
+# Familias de riesgo ALTO acordadas en #53 (P-03 "alto" + ajuste del auditor: scripts
+# de CI/collab, gates, auth, transferencia de pelota), en UN solo lugar para que P-03
+# lo reutilice. Mapeo a rutas del repo, sin inventar familias nuevas:
+#   gates/proceso: workflows, scripts/ci, scripts/collab, mutation-check, configs de
+#                  vite/vitest/playwright a cualquier profundidad y extensión
+#   migraciones:   packages/platform-db/src/{migrations,migrator.ts,bootstrap.sql}
+#   auth/CSRF/CORS: packages/platform-auth, apps/platform-api/src/{auth*,actor.ts,cors.ts}
+#   aprobación:    packages/platform-approval, apps/platform-api/src/approval*
+#   storage:       packages/platform-storage
+#   procesos externos (ffmpeg/ffprobe, execFile): packages/platform-media/src/process.ts,
+#                  apps/platform-api/src/server.ts
+#   congelado:     apps/control (M2C.2)
+# Hardware: sin rutas todavía (no existe). HANDOFF.md lo cubre R1 para todo PR.
+GATES_RE='^(\.github/workflows/|scripts/ci/|scripts/collab/|scripts/mutation-check\.py$|packages/platform-db/src/(migrations/|migrator\.ts$|bootstrap\.sql$)|packages/platform-auth/|apps/platform-api/src/(auth|approval)|apps/platform-api/src/(actor|cors|server)\.ts$|packages/platform-approval/|packages/platform-storage/|packages/platform-media/src/process\.ts$|apps/control/)|(^|/)(vite|vitest|playwright)[^/]*\.config\.[cm]?[jt]s$'
 
 fallo() { echo "paralelo: $*" >&2; exit "${2:-1}"; }
 rechazo() { local code=$1; shift; echo "paralelo: RECHAZADO — $*" >&2; exit "$code"; }
@@ -138,7 +147,7 @@ fi
 # R4 · el lateral no toca gates ni scripts de proceso mientras hay fase activa
 GATES=$(printf '%s\n' "$MIOS" | grep -E "$GATES_RE" || true)
 if [ -n "$GATES" ]; then
-  rechazo 8 "el lateral #$PR toca gates, scripts de proceso o auth (riesgo alto según #53, no lateral) mientras #$AUD_PR es la fase activa (pelota en $PELOTA):"$'\n'"$GATES"
+  rechazo 8 "el lateral #$PR toca una familia de riesgo alto según #53/P-03 (gates, proceso, migraciones, auth/CSRF/CORS, aprobación, storage, procesos externos, apps/control): no es lateral mientras #$AUD_PR es la fase activa (pelota en $PELOTA):"$'\n'"$GATES"
 fi
 
 echo "paralelo: OK — lateral #$PR (${HEAD_SHA:0:7}) no comparte archivos con la fase activa #$AUD_PR (${FASE_SHA:0:7}) ni toca gates."

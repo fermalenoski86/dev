@@ -157,3 +157,10 @@ handoff.test: 39 ok, 0 fallos
 === ronda 7 (vite.config)
 paralelo.test: 60 ok, 0 fallos
 paralelo.test: 60 ok, 0 fallos
+
+=== ronda 8 (Codex sobre 66cfc64: todas las familias alto de P-03)
+--- script de 310653d + pruebas nuevas: paralelo.test: 62 ok, 11 fallos
+--- corregido
+paralelo.test: 73 ok, 0 fallos
+paralelo.test: 73 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
