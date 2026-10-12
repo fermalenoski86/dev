@@ -8,10 +8,14 @@
 #            Compare-and-swap: si origin/main ya no es HANDOFF_BASE_SHA, ABORTA y
 #            muestra el diff para releer. Si coincide: valida el archivo, commitea
 #            sobre origin/main y hace push SOLO fast-forward. Nunca --force.
-#            Exit 3 = main avanzó (releer); exit 4 = el push falló por otra causa.
+#            Exit 3 = main avanzó (releer); exit 4 = el push falló por otra causa;
+#            exit 5 = la fase activa anterior ('En auditoría: #N @ sha') desaparece o
+#            cambia de PR sin que #N esté mergeado en main (P-05; Codex sobre 89bd718).
 #
 # Variables: HANDOFF_BASE_SHA (obligatoria para escribir), HANDOFF_REMOTE (origin),
 #            HANDOFF_BRANCH (main), GIT_AUTHOR_NAME/EMAIL como siempre.
+#            HANDOFF_PR_MERGEADO: comando que recibe <nro> e imprime true|false (default:
+#            gh api repos/<owner>/<repo>/pulls/<nro> --jq .merged). Sin verificación → exit 5.
 set -euo pipefail
 REMOTE=${HANDOFF_REMOTE:-origin}
 BRANCH=${HANDOFF_BRANCH:-main}
@@ -20,6 +24,21 @@ HIST=docs/collab/HISTORIAL.md
 MAX_LINEAS=60
 
 fallo() { echo "handoff: $*" >&2; exit 1; }
+
+# P-05 · la línea 'En auditoría: #N @ sha' es la fase activa y queda hasta que #N esté
+# en main. Pasar la pelota a Claude NO la borra (AUDIT: CAMBIOS la deja); solo el turno
+# que mergea la pone en 'ninguno' o la cambia por otro PR. Se verifica contra GitHub.
+fase_de() { { grep -E '^\*\*En auditor(í|i)a:\*\* #[0-9]+ @ [0-9a-f]{40}\b' "$1" 2>/dev/null || true; } | head -1 | sed -E 's/^\*\*En auditor(í|i)a:\*\* #([0-9]+) @.*/\2/'; }
+repo_github() {
+  if [ -n "${GITHUB_REPOSITORY:-}" ]; then echo "$GITHUB_REPOSITORY"; return; fi
+  git remote get-url "$REMOTE" 2>/dev/null | sed -nE 's#^(https://github\.com/|git@github\.com:)([^/]+/[^/]+)/?$#\2#p' | sed -E 's/\.git$//'
+}
+pr_mergeado() { # $1 = nro → imprime true|false; falla si no puede verificar
+  if [ -n "${HANDOFF_PR_MERGEADO:-}" ]; then "${HANDOFF_PR_MERGEADO}" "$1"; return; fi
+  local repo; repo=$(repo_github); [ -n "$repo" ] || return 1
+  command -v gh >/dev/null || return 1
+  gh api "repos/$repo/pulls/$1" --jq '.merged' 2>/dev/null
+}
 
 validar() { # $1 = archivo
   local f=$1 n pelotas
@@ -61,6 +80,7 @@ case "${1:-}" in
     while [ $# -gt 0 ]; do case "$1" in --historial) LINEA_HIST=$2; shift 2;; *) fallo "opción desconocida $1";; esac; done
     [ -n "${HANDOFF_BASE_SHA:-}" ] || fallo "falta HANDOFF_BASE_SHA: primero 'handoff.sh leer'"
     validar "$NUEVO"
+    WT_PREV=$(mktemp); trap 'rm -f "$WT_PREV"' EXIT
     git fetch -q "$REMOTE" "$BRANCH"
     ACTUAL=$(git rev-parse "$REMOTE/$BRANCH")
     if [ "$ACTUAL" != "$HANDOFF_BASE_SHA" ]; then
@@ -70,10 +90,20 @@ case "${1:-}" in
       echo "handoff: releé con 'handoff.sh leer', rehacé tu versión sobre eso y reintentá. Nada se escribió." >&2
       exit 3
     fi
+    # P-05: la fase activa anterior no puede desaparecer ni cambiar de PR sin merge.
+    git show "$ACTUAL:$FILE" > "$WT_PREV" 2>/dev/null || : > "$WT_PREV"
+    FASE_PREV=$(fase_de "$WT_PREV"); FASE_NUEVA=$(fase_de "$NUEVO")
+    if [ -n "$FASE_PREV" ] && [ "$FASE_PREV" != "$FASE_NUEVA" ]; then
+      MERGEADO=$(pr_mergeado "$FASE_PREV" 2>/dev/null) || MERGEADO=""
+      if [ "$MERGEADO" != true ]; then
+        echo "handoff: ABORTADO — el HANDOFF actual tiene la fase activa #$FASE_PREV y la versión nueva la ${FASE_NUEVA:+cambia por #$FASE_NUEVA}${FASE_NUEVA:-quita}, pero #$FASE_PREV no está mergeado en $BRANCH (${MERGEADO:-no se pudo verificar}). La línea 'En auditoría' queda hasta el merge; con AUDIT: CAMBIOS se conserva. Nada se escribió." >&2
+        exit 5
+      fi
+    fi
     # Commit construido SOBRE origin/main exacto, en un worktree aparte: no depende
     # del estado de la rama local y el push solo puede ser fast-forward.
     WT=$(mktemp -d)
-    trap 'git worktree remove --force "$WT" 2>/dev/null || true' EXIT
+    trap 'git worktree remove --force "$WT" 2>/dev/null || true; rm -f "$WT_PREV"' EXIT
     git worktree add -q --detach "$WT" "$ACTUAL"
     cp "$NUEVO" "$WT/$FILE"
     if [ -n "$LINEA_HIST" ]; then printf '%s\n' "$LINEA_HIST" >> "$WT/$HIST"; fi

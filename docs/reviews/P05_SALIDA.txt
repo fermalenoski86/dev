@@ -296,3 +296,11 @@ handoff.test: 39 ok, 0 fallos
 paralelo.test: 133 ok, 0 fallos
 paralelo.test: 133 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
+
+=== ronda 28 (Codex sobre 89bd718: handoff.sh no deja quitar/cambiar la fase activa sin merge) — 2026-10-12T22:20:22Z
+--- código de 89bd718 + pruebas nuevas: handoff.test: 42 ok, 5 fallos
+--- corregido
+handoff.test: 47 ok, 0 fallos
+handoff.test: 47 ok, 0 fallos
+paralelo.test: 133 ok, 0 fallos
+paralelo.test: 133 ok, 0 fallos

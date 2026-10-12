@@ -23,6 +23,14 @@ git add -A && git commit -qm init && git remote add origin "$T/remoto.git" && gi
 # dos clones = dos agentes
 git clone -q "$T/remoto.git" "$T/A"; git clone -q "$T/remoto.git" "$T/B"
 H=scripts/collab/handoff.sh
+# P-05 (Codex sobre 89bd718): quitar/cambiar la fase activa exige que el PR esté mergeado.
+# En la prueba no hay GitHub: stub que responde según $MERGEADOS (lista de nros).
+cat > "$T/mergeado.sh" <<'STUB'
+#!/usr/bin/env bash
+[ -z "${MERGEADO_FALLA:-}" ] || exit 1
+case " ${MERGEADOS:-} " in *" $1 "*) echo true;; *) echo false;; esac
+STUB
+chmod +x "$T/mergeado.sh"; export HANDOFF_PR_MERGEADO="$T/mergeado.sh" MERGEADOS="1"
 
 echo "1) ambos leen el mismo SHA"
 SA=$(cd "$T/A" && $H leer | sed -n 's/^HANDOFF_BASE_SHA=//p'); SB=$(cd "$T/B" && $H leer | sed -n 's/^HANDOFF_BASE_SHA=//p')
@@ -132,6 +140,30 @@ check "pelota en Claude sin la línea → OK (compatible con HANDOFFs anteriores
 printf '**Pelota en:** Claude — x\n**En auditoría:** #7\n' > "$T/aud-mal.md"
 check "'En auditoría' sin sha → rechazo" '! (cd "$T/A" && $H validar "$T/aud-mal.md" 2>/dev/null)'
 check "sin HANDOFF_BASE_SHA → rechazo" '! (cd "$T/A" && env -u HANDOFF_BASE_SHA $H escribir "$T/nuevoA.md" m 2>/dev/null)'
+echo "7) P-05 (Codex sobre 89bd718): la fase activa no desaparece ni cambia de PR sin merge"
+SF=$(cd "$T/A" && $H leer | sed -n 's/^HANDOFF_BASE_SHA=//p')
+printf '# HANDOFF\n\n**Pelota en:** ChatGPT — fase 9\n**En auditoría:** #9 @ %s\n' "$SHA40" > "$T/f9.md"
+check "se anota la fase #9 (desde 'sin fase' o #1 mergeado)" '(cd "$T/A" && HANDOFF_BASE_SHA=$SF $H escribir "$T/f9.md" "fase 9" >/dev/null 2>&1)'
+SF=$(cd "$T/A" && $H leer | sed -n 's/^HANDOFF_BASE_SHA=//p')
+printf '# HANDOFF\n\n**Pelota en:** Claude — cambios\n' > "$T/f9-quita.md"
+set +e; (cd "$T/A" && HANDOFF_BASE_SHA=$SF $H escribir "$T/f9-quita.md" "pelota a Claude sin fase" 2>"$T/err7"); RC=$?; set -e
+check "pelota a Claude QUITANDO 'En auditoría' con #9 sin mergear → exit 5, nada escrito" '[ "$RC" = 5 ] && grep -q "no está mergeado" "$T/err7" && [ "$(git -C "$T/remoto.git" rev-parse main)" = "$SF" ]'
+printf '# HANDOFF\n\n**Pelota en:** Claude — cambios\n**En auditoría:** ninguno\n' > "$T/f9-ninguno.md"
+set +e; (cd "$T/A" && HANDOFF_BASE_SHA=$SF $H escribir "$T/f9-ninguno.md" "ninguno" 2>"$T/err7"); RC=$?; set -e
+check "'En auditoría: ninguno' con #9 sin mergear → exit 5" '[ "$RC" = 5 ]'
+printf '# HANDOFF\n\n**Pelota en:** ChatGPT — otra\n**En auditoría:** #10 @ %s\n' "$SHA40" > "$T/f10.md"
+set +e; (cd "$T/A" && HANDOFF_BASE_SHA=$SF $H escribir "$T/f10.md" "cambia a #10" 2>"$T/err7"); RC=$?; set -e
+check "cambiar la fase a #10 con #9 sin mergear → exit 5 y lo dice" '[ "$RC" = 5 ] && grep -q "cambia por #10" "$T/err7"'
+set +e; (cd "$T/A" && MERGEADO_FALLA=1 HANDOFF_BASE_SHA=$SF $H escribir "$T/f9-ninguno.md" "sin verificar" 2>"$T/err7"); RC=$?; set -e
+check "sin poder verificar el merge → exit 5 (falla cerrado)" '[ "$RC" = 5 ] && grep -q "no se pudo verificar" "$T/err7"'
+SHA40B=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+printf '# HANDOFF\n\n**Pelota en:** Claude — AUDIT: CAMBIOS\n**En auditoría:** #9 @ %s\n' "$SHA40" > "$T/f9-claude.md"
+check "pelota a Claude CONSERVANDO '#9 @ sha' (AUDIT: CAMBIOS) → OK sin consultar" '(cd "$T/A" && MERGEADO_FALLA=1 HANDOFF_BASE_SHA=$SF $H escribir "$T/f9-claude.md" "cambios" >/dev/null 2>&1)'
+SF=$(cd "$T/A" && $H leer | sed -n 's/^HANDOFF_BASE_SHA=//p')
+printf '# HANDOFF\n\n**Pelota en:** ChatGPT — reauditar\n**En auditoría:** #9 @ %s\n' "$SHA40B" > "$T/f9-sha2.md"
+check "mismo #9 con sha nuevo (corrección entregada) → OK sin consultar" '(cd "$T/A" && MERGEADO_FALLA=1 HANDOFF_BASE_SHA=$SF $H escribir "$T/f9-sha2.md" "reauditar" >/dev/null 2>&1)'
+SF=$(cd "$T/A" && $H leer | sed -n 's/^HANDOFF_BASE_SHA=//p')
+check "con #9 mergeado, 'ninguno' → OK" '(cd "$T/A" && MERGEADOS="1 9" HANDOFF_BASE_SHA=$SF $H escribir "$T/f9-ninguno.md" "mergeado" >/dev/null 2>&1)'
 check "ningún git push lleva --force / --force-with-lease / -f" '! grep -E "git push.*(--force|-f\b)" "$AQUI/handoff.sh" | grep -v "^\s*#" | grep -q .'
 
 echo; echo "handoff.test: $ok ok, $fallos fallos"
