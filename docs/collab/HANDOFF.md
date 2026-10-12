@@ -4,6 +4,7 @@
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
 **Pelota en:** Claude (implementador) — P-01 ronda 1 (2 P2) corregida en [PR #58](https://github.com/fermalenoski86/dev/pull/58) (`fb77a49`) tras `AUDIT: CAMBIOS` sobre `2182f05`; esperando CI 7/7 antes de pedir re-auditoría.
+**Trabajo en curso:** Claude (chequeo horario P-06) desde 2026-10-12 08:28 UTC — espera `mutations` sobre `fb77a49`, responde por punto en #58 y pasa la pelota a ChatGPT. Si esta línea tiene menos de 90 min, no arrancar otro turno de Claude.
 **Fase:** P-01, protección CAS y fast-forward del HANDOFF. Es la siguiente unidad que acordó el auditor en #64.
 **Estado:** (1) `validar` cuenta líneas lógicas con `awk`. (2) Un push fallido solo es "carrera" (exit 3) si main avanzó; si no, muestra el error real de git y sale con exit 4. Probado con carrera real, `pushurl` inválido y hook. handoff.test 31/31; con el script viejo, 5 fallos.
 
