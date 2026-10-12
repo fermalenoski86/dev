@@ -10,7 +10,7 @@
 
 - `apps/control` y la experiencia ejecutiva M2C.2 (congelada), renderers, geometría y screenshots congelados; los 14 E2E de M2C siguen siendo gate.
 - Storage B1/B1.1, `platform-approval`, `platform-auth` y los permisos del servidor.
-- **SHOW PACKAGE v1** (`packages/shared-types`) y `show-engine`: el MVP no los cambia (ver §2). Una v2 solo se discute si una ❓ lo exige, con bump de versión y ADR.
+- **SHOW PACKAGE v1** (`packages/shared-types`) y `show-engine`: el MVP no los cambia (ver §2). Una v2 solo se discute si una ❓ lo exige, con bump de versión y ADR. La identidad de campaña/versión no viaja dentro del ShowPackage sino en la `ShowVersion` que lo envuelve (ver §2.1).
 - `HANDOFF.md` fuera del protocolo; gates de CI.
 - Nada de Deploy, EDGE, Scheduler, TB60, Art-Net ni sensores: todo eso es posterior y depende de equipos reales.
 
@@ -37,6 +37,20 @@ Por lo tanto el Studio **renderiza** su proyecto (capas, keyframes, 3D, partícu
 2. un `TakeoverDraft` con los moments, las directivas de iluminación y reloj, y los assets asignados;
 
 y los entrega por la **API que ya existe** (`POST /assets`, `PUT /campaigns/:id/draft`, `POST /campaigns/:id/submit`). El servidor revalida todo: no confía en el cliente. Consecuencia: **CS-1 a CS-3 no tocan `platform-api`, `shared-types` ni `show-engine`.** El proyecto creativo vive en un modelo propio y versionado (`CreativeProject`), del mismo modo que el draft vive separado del ShowPackage.
+
+**Límite del draft actual (hallazgo de Codex en #74):** `TakeoverDraft` solo expresa iluminación como `inherit` o una escena del catálogo (`LightingDirectiveSchema`, `packages/show-authoring/src/draft-schema.ts`); no tiene cómo pedir RGBW por zona, aunque el contrato ya tiene el evento `lighting.zone.set` (`shared-types`). Para que lo que se edita en Pro Studio sea lo que se aprueba, se agrega la unidad **CS-1a** (§7): una directiva aditiva `zones` en el draft (por zona: `color` RGBW, `intensity`, `fadeMs`) que `compileTakeoverDraft()` traduce a `lighting.zone.set`, con ADR, tests del compilador, mutaciones y bump de `compilerVersion` (metadata; el hash no cambia de formato). Toca `show-authoring`, no `shared-types` ni `show-engine`. **Hasta que CS-1a esté mergeada, la pista de luces del editor queda restringida a escenas del catálogo** y `toTakeoverDraft()` rechaza (error tipado, test) cualquier cue por zona en vez de descartarlo en silencio. El Builder de `apps/control` (congelado) lee `LightingDirective`: el brief de CS-1a debe probar con test que abrir un draft con `zones` no lo rompe; si para eso hay que tocar `apps/control`, va a `decisión-producto` para Fer antes de mergear.
+
+### 2.1 Identidad de campaña y versión (Audience y Proof of Play)
+
+`BACKLOG.md` (sección AUD) pide que lo entregado lleve `campaignId`/`versionId` para que AUDIENCE y Proof of Play reporten contra la versión aprobada. `ShowPackageSchema` v1 no tiene esos campos y este brief **no** los agrega: la identidad ya existe del lado del servidor, en la `ShowVersion` que se crea en el submit (`packages/platform-approval/src/submit.ts`: `campaignId`, id de la versión, `versionNumber`, `versionHash` sobre el sobre de `packages/platform-contracts/src/version-hash.ts`). El mecanismo de correlación acordado es un **sobre de entrega** que envuelve al ShowPackage sin modificarlo:
+
+```
+{ deliveryEnvelopeVersion: 1, campaignId, showVersionId, versionNumber, versionHash, showPackage }
+```
+
+- Lo arma el servidor a partir de la `ShowVersion` aprobada, nunca el Studio (el cliente no puede declarar identidad).
+- EDGE/Proof of Play y AUDIENCE reportan contra `showVersionId` + `versionHash`; el `versionHash` permite comprobar que lo reproducido es byte a byte lo aprobado.
+- Se implementa en la fase de Deploy/EDGE (fuera de CS, §0); CS-1 a CS-4 no lo necesitan porque terminan en la aprobación. Si al llegar ahí se prefiere llevar la identidad dentro del paquete, es una SHOW PACKAGE v2 con ADR. La línea correspondiente de `BACKLOG.md` (AUD) queda alineada con este sobre.
 
 ## 3. Arquitectura
 
@@ -94,6 +108,7 @@ El gemelo actual es **preliminar e impreciso**. Todo preview lleva la etiqueta *
 | Unidad | Qué | Toca | Estimado* |
 |---|---|---|---|
 | **CS-1** motor | `packages/creative-core`: `CreativeProject` v1, `evaluate`, `validate`, `toTakeoverDraft` con tests y mutaciones | paquete nuevo | ~1 sem |
+| **CS-1a** cues RGBW por zona | directiva aditiva `zones` en `TakeoverDraft` → `lighting.zone.set`; ADR; prueba de que el Builder congelado no se rompe (§2) | `show-authoring` | ~3 días |
 | **CS-1b** calibración | modelo de cámara/superficie calibrable + plan de toma de fotos y medidas (necesita a Fer en sitio) | `creative-core` | en paralelo, depende de datos |
 | **CS-2** Creative Web MVP | `apps/creative-web`: timeline, preview de 2 superficies + DMX + reloj simulados, render MP4, entrega por la API existente | app nueva | ~1,5 sem |
 | **CS-3** AI Director | `CreativePlan` tipado, endpoint servidor, tope de costo, procedencia; sin proveedor pago hasta que Fer lo autorice | `creative-core` + endpoint | ~1 sem |
@@ -110,7 +125,7 @@ El gemelo actual es **preliminar e impreciso**. Todo preview lleva la etiqueta *
 3. **Cumplimiento de formato:** el render pasa la validación de `platform-media` a la primera (resolución exacta por superficie, H.264, fps y duración); el submit pasa el preflight server-side sin warnings de aspecto.
 4. **Rendimiento:** preview ≥ 30 fps con la escena de referencia en la máquina objetivo (se fija en CS-2); render de 15 s en ≤ 3 min en la PC con RTX (se mide, no se promete).
 5. **Seguridad:** ningún tipo del Studio puede emitir un comando a hardware; la IA solo devuelve `CreativePlan`; ningún secreto en el cliente; el servidor revalida todo.
-6. **Offline (desktop):** se edita y se renderiza sin red; la subida reanuda sin duplicar (idempotencia ya existente en upload/submit).
+6. **Offline (desktop):** se edita y se renderiza sin red; las entregas quedan en una cola local. Al volver la red, cada upload se **reintenta sin duplicar**: misma `Idempotency-Key` ⇒ un solo Asset (ya probado en `apps/platform-api/src/api.db.test.ts`). **No es una subida reanudable:** `POST /api/v1/assets` recibe un único multipart y `AssetUploadService.upload()` lee el archivo completo antes de calcular la huella y borra el temporal en `finally`, así que un corte obliga a retransmitir desde el byte 0. Para el MVP se acepta: un master de 15 s a estas resoluciones pesa decenas de MB. El criterio medible es "reintento sin duplicado, con la cola persistida entre reinicios de la app". Una subida reanudable (por partes) es una unidad aparte que toca `platform-api` y Storage B1 (aprobado), así que solo se abre con una medición que la justifique (❓6).
 7. **Etiquetado:** todo preview muestra su estado de geometría; un test falla si falta.
 
 ## 9. Costos
@@ -126,9 +141,10 @@ El gemelo actual es **preliminar e impreciso**. Todo preview lleva la etiqueta *
 - ❓3 **Desktop:** ¿MVP solo Windows? La propuesta es que sí, porque es la PC con RTX que se va a armar.
 - ❓4 **Ubicación:** `packages/creative-core`, `apps/creative-web` y `apps/creative-desktop`. ¿Alguna objeción del auditor?
 - ❓5 **Render en web:** ¿WebCodecs en el navegador, o render siempre en desktop/servidor y la web solo previsualiza? La propuesta es WebCodecs con fallback a desktop.
+- ❓6 **Subida reanudable:** ¿hace falta para el desktop? La propuesta es que no en el MVP (§8.6); se reabre si se mide un caso real (masters largos o enlace inestable en sitio).
 
 ## 11. Orden y dependencias
 
 1. AUDIT de este brief, sin interrumpir la fase activa (P-05) ni las de proceso que siguen.
-2. CS-1 y CS-1b → CS-2 → CS-3 → CS-4. Paralelo solo cuando los contratos estén cerrados (regla P-05).
+2. CS-1, CS-1a y CS-1b → CS-2 → CS-3 → CS-4. Paralelo solo cuando los contratos estén cerrados (regla P-05).
 3. Cada unidad: brief corto → PR → CI completa → `AUDIT: APROBADO` → merge. Sin relajar gates.
