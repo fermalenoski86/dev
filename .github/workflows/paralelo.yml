@@ -151,11 +151,20 @@ jobs:
             echo "::error::no se pudo publicar el check paralelo=$1 sobre $HEAD_SHA tras 3 intentos; queda pendiente"; return 1; }
           if [ "$RC" != 0 ]; then publicar failure "paralelo: RECHAZADO exit $RC" "$(head -c 60000 "$RUNNER_TEMP/paralelo.out" 2>/dev/null || echo "sin salida del chequeo")"; exit 0; fi
           if [ "$RC2" != 0 ]; then publicar failure "paralelo: SIN VEREDICTO (la re-evaluación global no completó, exit $RC2)" "$(head -c 60000 "$RUNNER_TEMP/reevaluar.out" 2>/dev/null || echo "sin salida de la re-evaluación")"; exit 0; fi
-          if [ "$BASE_REF" = main ]; then
+          # El evento puede estar viejo (Codex sobre 7bff98d, P1): un retarget de la rama de
+          # fase a main, o un push, mientras este run corre. Se consulta el PR AHORA por la
+          # API y se falla cerrado si base o HEAD difieren del evento; la base que decide el
+          # camino es la actual, no la del evento.
+          AHORA=$(gh api "repos/${{ github.repository }}/pulls/$PR" --jq '"\(.base.ref) \(.head.sha) \(.state)"' 2>/dev/null) || AHORA=""
+          read -r BASE_NOW HEAD_NOW ESTADO <<< "$AHORA"
+          if [ -z "$AHORA" ]; then publicar failure "paralelo: SIN VEREDICTO (no se pudo consultar el estado actual de #$PR)" "Re-run del job."; exit 0; fi
+          if [ "$HEAD_NOW" != "$HEAD_SHA" ]; then publicar failure "paralelo: SIN VEREDICTO (el HEAD de #$PR cambió durante el job: ahora ${HEAD_NOW:0:7})" "La corrida del synchronize decide."; exit 0; fi
+          if [ "$BASE_NOW" = main ]; then
             LINEA=$(grep -E "^#$PR @ ${HEAD_SHA:0:7} " "$RUNNER_TEMP/reevaluar.out" || true)
             if [ -n "$LINEA" ]; then echo "veredicto del HEAD publicado por la re-evaluación global (no se pisa): $LINEA"; exit 0; fi
             publicar failure "paralelo: SIN VEREDICTO (la re-evaluación global no incluyó #$PR @ ${HEAD_SHA:0:7})" "$(head -c 60000 "$RUNNER_TEMP/reevaluar.out")"; exit 0
           fi
+          if [ "$BASE_NOW" != "$BASE_REF" ]; then publicar failure "paralelo: SIN VEREDICTO (#$PR cambió de base durante el job: evento $BASE_REF, ahora $BASE_NOW)" "La corrida del edited decide."; exit 0; fi
           git fetch -q origin "$BASE_REF"; BASE_PUB=$(git rev-parse FETCH_HEAD)
           if [ "${BASE_MOVIDA:-1}" != 0 ] || [ "$BASE_PUB" != "$BASE_JOB" ]; then publicar failure "paralelo: SIN VEREDICTO (la base $BASE_REF avanzó de ${BASE_JOB:0:7} a ${BASE_PUB:0:7} durante el job)" "El chequeo directo se calculó con $BASE_REF@${BASE_JOB:0:7}; re-run del job para evaluar con la base actual."; exit 0; fi
           publicar success "paralelo: OK" "$(head -c 60000 "$RUNNER_TEMP/paralelo.out")"
