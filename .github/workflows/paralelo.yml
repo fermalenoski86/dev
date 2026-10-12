@@ -172,8 +172,11 @@ jobs:
           # un retarget a main entre la consulta y la publicación dejaría el success R1 sobre
           # el HEAD; el edited queda encolado detrás de este run. Se pisa con failure.
           DESPUES=$(gh api "repos/${{ github.repository }}/pulls/$PR" --jq '"\(.base.ref) \(.head.sha)"' 2>/dev/null) || DESPUES=""
-          if [ "$DESPUES" != "$BASE_REF $HEAD_SHA" ]; then
-            publicar failure "paralelo: CADUCADO (#$PR cambió de base o HEAD mientras se publicaba: ahora ${DESPUES:-desconocido})" "El success recién publicado se calculó para base $BASE_REF @ ${HEAD_SHA:0:7}; la corrida encolada decide."
+          # … y también el SHA de la base (Codex sobre 8516d31, P2): un push a una base ≠ main
+          # no dispara otra corrida (push: solo main), así que el verde se invalida acá.
+          git fetch -q origin "$BASE_REF" 2>/dev/null && BASE_FIN=$(git rev-parse FETCH_HEAD) || BASE_FIN=""
+          if [ "$DESPUES" != "$BASE_REF $HEAD_SHA" ] || [ "$BASE_FIN" != "$BASE_JOB" ]; then
+            publicar failure "paralelo: CADUCADO (#$PR cambió de base/HEAD o la base $BASE_REF avanzó mientras se publicaba: ahora ${DESPUES:-desconocido}, base @ ${BASE_FIN:0:7})" "El success recién publicado se calculó para base $BASE_REF@${BASE_JOB:0:7} y HEAD ${HEAD_SHA:0:7}; re-run del job para evaluar con la base actual."
             exit 1
           fi
       - name: Veredicto de este PR

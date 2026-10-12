@@ -275,3 +275,10 @@ handoff.test: 39 ok, 0 fallos
 paralelo.test: 132 ok, 0 fallos
 paralelo.test: 132 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
+
+=== ronda 25 (Codex sobre 8516d31: revalidar también el SHA de la base tras publicar) — 2026-10-12T21:47:11Z
+--- código de 8516d31 + chequeo nuevo: paralelo.test: 131 ok, 1 fallo (chequeo estático del workflow)
+--- corregido
+paralelo.test: 132 ok, 0 fallos
+paralelo.test: 132 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
