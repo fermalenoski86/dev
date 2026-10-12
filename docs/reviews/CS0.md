@@ -23,8 +23,9 @@ No hay código, tests, rutas, variables de entorno, CI, `HANDOFF.md` ni partes c
 | `3187fe2` | [P1] El draft no expresa RGBW por zona | Corregido en `986867f`: unidad CS-1a (directiva aditiva `zones` → `lighting.zone.set`); hasta entonces el editor se limita a escenas del catálogo y `toTakeoverDraft()` rechaza cues por zona |
 | `3187fe2` | [P2] Identidad campaña/versión para Audience/PoP | Corregido en `986867f`: sobre de entrega armado por el servidor desde la `ShowVersion` (§2.1) + BACKLOG AUD |
 | `3187fe2` | [P2] Reintento ≠ subida reanudable | Corregido en `986867f`: §8.6 promete reintento sin duplicado; reanudable queda como ❓6 |
-| `986867f` | [P1] Faltan `docs/reviews/CS0.md` y `_SALIDA.txt` | Corregido en esta ronda: este archivo y la salida real |
-| `986867f` | [P2] El sobre no permite recalcular `versionHash` | Corregido en esta ronda: el sobre lleva el manifiesto sellado `assets: [{logicalRef, sha256}]` y los metadatos del hash; verificación en destino en dos pasos (§2.1) |
+| `986867f` | [P1] Faltan `docs/reviews/CS0.md` y `_SALIDA.txt` | Corregido en `7fd9de0`: este archivo y la salida real |
+| `986867f` | [P2] El sobre no permite recalcular `versionHash` | Corregido en `7fd9de0`: el sobre lleva el manifiesto sellado `assets: [{logicalRef, sha256}]` y los metadatos del hash; verificación en destino en dos pasos (§2.1) |
+| `7fd9de0` | [P2] La garantía de reintento idempotente no tiene límites | Corregido en esta ronda: §8.6 enumera lo que el servidor garantiza (replay dentro de 24 h; operación interrumpida ⇒ otro Asset con el mismo blob; >24 h ⇒ posible segundo Asset) y fija el criterio medible: un blob por `sha256`, draft al último Asset, pendientes >24 h con confirmación manual; dedup de Asset en servidor a ❓6 |
 
 ## Decisiones tomadas en el brief
 
@@ -42,6 +43,7 @@ No hay código, tests, rutas, variables de entorno, CI, `HANDOFF.md` ni partes c
 - Sobre de entrega: un manifiesto ausente o recompuesto desde el ShowPackage no reproduce el hash (ranuras inactivas). Por eso se exige el manifiesto sellado tal cual y la verificación en dos pasos.
 - Identidad declarada por el cliente: el sobre lo arma solo el servidor.
 - `BACKLOG.md` también lo escriben directo en `main` otros turnos: puede haber conflicto de merge en esa línea; se resuelve con merge de `main` sin reescribir historia.
-- No corregido, con motivo: subida reanudable (❓6; toca Storage B1 aprobado, se abre solo con medición).
+- Reintento de upload: la idempotencia vence a las 24 h y una operación interrumpida deja otro Asset; el brief ya no promete "sin duplicar" sin condiciones (§8.6).
+- No corregido, con motivo: subida reanudable y dedup de Asset en servidor (❓6; tocan Storage B1 aprobado, se abren solo con medición).
 
-**C. CI.** `986867f` → [38307776606](https://github.com/fermalenoski86/dev/actions/runs/38307776606) 7/7 verde. La corrida del HEAD final se cita en el pedido de auditoría del PR.
+**C. CI.** `986867f` → [38307776606](https://github.com/fermalenoski86/dev/actions/runs/38307776606) 7/7 verde; `7fd9de0` → [38312602839](https://github.com/fermalenoski86/dev/actions/runs/38312602839) 7/7 verde. La corrida del HEAD final se cita en el pedido de auditoría del PR.
