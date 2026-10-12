@@ -75,21 +75,6 @@ jobs:
           if [ "$RC" = 0 ]; then echo "::notice title=paralelo (exit 0)::$ENC"; else echo "::error title=paralelo RECHAZADO (exit $RC)::$ENC"; fi
           echo "RC=$RC" >> "$GITHUB_ENV"
           printf '%s' "$OUT" > "$RUNNER_TEMP/paralelo.out"
-      # En pull_request_target el check del job cuelga del sha de la BASE, no del HEAD
-      # del PR (Codex ronda 13, P1): un required check "paralelo" no se vería sobre el
-      # último commit del PR. Por eso el veredicto se publica además por la API de
-      # Checks sobre HEAD_SHA, igual que hace paralelo-reevaluar.sh.
-      - name: Publicar el veredicto como check sobre el HEAD del PR
-        env:
-          PR: ${{ github.event.pull_request.number }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if [ "$RC" = 0 ]; then CON=success; TIT="paralelo: OK"; else CON=failure; TIT="paralelo: RECHAZADO exit $RC"; fi
-          gh api -X POST "repos/${{ github.repository }}/check-runs" \
-            -f name=paralelo -f head_sha="$HEAD_SHA" -f status=completed -f conclusion="$CON" \
-            -f "output[title]=$TIT" -f "output[summary]=$(head -c 60000 "$RUNNER_TEMP/paralelo.out")" >/dev/null
-          echo "check paralelo=$CON publicado sobre $HEAD_SHA (#$PR)"
       # Cualquier evento re-evalúa TODOS los PR abiertos hacia main, no solo cuando el PR
       # evaluado es la fase activa: en un grupo de concurrencia GitHub conserva un solo
       # run pendiente (el último) y descarta los anteriores aunque cancel-in-progress sea
@@ -99,20 +84,62 @@ jobs:
       # de un PR hacia la rama de la fase (audit/<tema>) comparte el carril y también puede
       # desplazar al run pendiente; si no re-evaluara, el TOCTOU S1→S2 reaparecería. Corre
       # SIEMPRE y con los scripts de la revisión actual de main (worktree aparte), nunca
-      # con los del checkout de una base distinta de main.
+      # con los del checkout de una base distinta de main. Corre ANTES de publicar el
+      # veredicto de este PR y su resultado (RC2) lo condiciona (Codex sobre e511687, P1):
+      # si la re-evaluación global no completó, el HEAD de este PR no recibe success.
       - name: Re-evaluar todos los PR abiertos hacia main (cualquier evento, scripts de main)
         env:
           PR: ${{ github.event.pull_request.number }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
+          BASE_JOB=$(git rev-parse HEAD)
+          git fetch -q origin "$BASE_REF"
+          BASE_AHORA=$(git rev-parse FETCH_HEAD)
           git fetch -q origin main
           git worktree add -q --detach "$RUNNER_TEMP/main" origin/main
           cd "$RUNNER_TEMP/main"
-          echo "scripts de main=$(git rev-parse HEAD)"
-          scripts/collab/paralelo-reevaluar.sh "evento en #$PR (${{ github.event.action }}, base ${{ github.event.pull_request.base.ref }}) @ ${{ github.event.pull_request.head.sha }}"
+          echo "scripts de main=$(git rev-parse HEAD) · base del chequeo directo=$BASE_JOB · base ahora=$BASE_AHORA"
+          set +e
+          if [ "$BASE_JOB" != "$BASE_AHORA" ]; then
+            # la base avanzó entre el chequeo directo y acá: ese veredicto se calculó con
+            # política vieja; no se publica success (la corrida del push nuevo decide)
+            echo "paralelo.yml: la base $BASE_REF avanzó de ${BASE_JOB:0:7} a ${BASE_AHORA:0:7} durante el job; el veredicto directo quedó viejo" | tee "$RUNNER_TEMP/reevaluar.out"
+            RC2=1
+          else
+            scripts/collab/paralelo-reevaluar.sh "evento en #$PR (${{ github.event.action }}, base $BASE_REF) @ ${{ github.event.pull_request.head.sha }}" 2>&1 | tee "$RUNNER_TEMP/reevaluar.out"
+            RC2=${PIPESTATUS[0]}
+          fi
+          set -e
+          echo "RC2=$RC2" >> "$GITHUB_ENV"
+          [ "$RC2" = 0 ] || echo "::error title=re-evaluación global sin veredicto (exit $RC2)::$(tail -c 3000 "$RUNNER_TEMP/reevaluar.out" | tr '\n' ' ')"
+      # En pull_request_target el check del job cuelga del sha de la BASE, no del HEAD
+      # del PR (Codex ronda 13, P1): un required check "paralelo" no se vería sobre el
+      # último commit del PR. Por eso el veredicto se publica además por la API de
+      # Checks sobre HEAD_SHA, igual que hace paralelo-reevaluar.sh. Se publica DESPUÉS
+      # de la re-evaluación global y solo es success si ambas completaron en verde: un
+      # fallo del job sobre el sha de la base no alcanza para que el required check del
+      # HEAD quede rojo, así que el rojo se publica explícitamente (Codex sobre e511687, P1).
+      - name: Publicar el veredicto como check sobre el HEAD del PR
+        if: always()
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RC=${RC:-1}; RC2=${RC2:-1}
+          if [ "$RC" != 0 ]; then CON=failure; TIT="paralelo: RECHAZADO exit $RC"; DET=$(head -c 60000 "$RUNNER_TEMP/paralelo.out" 2>/dev/null || echo "sin salida del chequeo")
+          elif [ "$RC2" != 0 ]; then CON=failure; TIT="paralelo: SIN VEREDICTO (la re-evaluación global no completó, exit $RC2)"; DET=$(head -c 60000 "$RUNNER_TEMP/reevaluar.out" 2>/dev/null || echo "sin salida de la re-evaluación")
+          else CON=success; TIT="paralelo: OK"; DET=$(head -c 60000 "$RUNNER_TEMP/paralelo.out"); fi
+          gh api -X POST "repos/${{ github.repository }}/check-runs" \
+            -f name=paralelo -f head_sha="$HEAD_SHA" -f status=completed -f conclusion="$CON" \
+            -f "output[title]=$TIT" -f "output[summary]=$DET" >/dev/null
+          echo "check paralelo=$CON publicado sobre $HEAD_SHA (#$PR): $TIT"
       - name: Veredicto de este PR
-        run: exit "$RC"
+        run: |
+          [ "$RC" = 0 ] || exit "$RC"
+          exit "$RC2"
 
   reevaluar:
     if: github.event_name == 'push'

@@ -24,6 +24,9 @@ handoff_main() {
 }
 # simula GitHub: refs/pull/N/head apunta al HEAD actual del PR N
 pr_head() { git -C "$T/remoto.git" update-ref "refs/pull/$1/head" "$2"; }
+# corre paralelo-reevaluar.sh desde el clon "ci" parado en origin/main (como el worktree del
+# workflow): el script exige que los scripts en ejecución sean los de main (Codex sobre e511687)
+reeval() { (cd "$T/ci" && git fetch -q origin && git checkout -q --detach origin/main && scripts/collab/paralelo-reevaluar.sh "$@"); }
 # crea una rama desde main que toca los archivos dados; imprime el sha
 rama() { # $1 nombre, resto archivos
   local n=$1; shift
@@ -262,7 +265,7 @@ printf '%s %s %s | %s\n' "$1" "${2:0:7}" "$3" "$4" >> "$PUBLICADO"
 PUBLICAR
 chmod +x "$T/listar.sh" "$T/publicar.sh"
 : > "$T/publicado"
-set +e; (cd "$T/ci" && PARALELO_LISTAR="$T/listar.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" scripts/collab/paralelo-reevaluar.sh "fase a S2" >"$T/out" 2>"$T/err"); RC=$?; set -e
+set +e; PARALELO_LISTAR="$T/listar.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" reeval "fase a S2" >"$T/out" 2>"$T/err"; RC=$?; set -e
 check "re-evaluación corre sobre todos los PR abiertos → exit 0" '[ "$RC" = 0 ]'
 check "el lateral de b.txt pasa a failure (exit 7) sin haber cambiado" 'grep -q "^71 ${SL70:0:7} failure | paralelo: RECHAZADO exit 7" "$T/publicado"'
 check "la fase misma, con la pelota en ChatGPT y HEAD ≠ anotado, queda failure (exit 6)" 'grep -q "^70 ${S70b:0:7} failure | paralelo: RECHAZADO exit 6" "$T/publicado"'
@@ -270,11 +273,11 @@ corre 71 "$SL70"; check "y el chequeo directo del lateral coincide (exit 7)" '[ 
 # el HANDOFF cambia (fase mergeada → ninguno): la re-evaluación por push a main vuelve a aprobar
 handoff_main Claude "ninguno"
 : > "$T/publicado"
-(cd "$T/ci" && PARALELO_LISTAR="$T/listar.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" scripts/collab/paralelo-reevaluar.sh "handoff" >/dev/null 2>&1)
+PARALELO_LISTAR="$T/listar.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" reeval "handoff" >/dev/null 2>&1
 check "tras el cambio de HANDOFF, ambos PR vuelven a success" '[ "$(grep -c " success | " "$T/publicado")" = 2 ]'
 # sin poder listar → exit 1 y nada publicado (no se inventa un veredicto)
 : > "$T/publicado"
-set +e; (cd "$T/ci" && PARALELO_LISTAR=/bin/false PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" scripts/collab/paralelo-reevaluar.sh >/dev/null 2>"$T/err"); RC=$?; set -e
+set +e; PARALELO_LISTAR=/bin/false PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" reeval >/dev/null 2>"$T/err"; RC=$?; set -e
 check "si no se pueden listar los PR → exit 1 y ningún check publicado" '[ "$RC" = 1 ] && [ ! -s "$T/publicado" ]'
 # Codex ronda 13 P2: si main avanza mientras se evalúa, NO se publica (la corrida nueva decide)
 handoff_main ChatGPT "#70 @ $S70b"
@@ -287,7 +290,7 @@ exit 0
 LISTAR
 chmod +x "$T/listar-mueve-main.sh"
 : > "$T/publicado"
-set +e; (cd "$T/ci" && PARALELO_LISTAR="$T/listar-mueve-main.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" scripts/collab/paralelo-reevaluar.sh "carrera" >/dev/null 2>"$T/err"); RC=$?; set -e
+set +e; PARALELO_LISTAR="$T/listar-mueve-main.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" reeval "carrera" >/dev/null 2>"$T/err"; RC=$?; set -e
 check "main avanza durante la re-evaluación → exit 1, nada publicado y el motivo lo dice" '[ "$RC" = 1 ] && [ ! -s "$T/publicado" ] && grep -q "avanzó" "$T/err"'
 check "paralelo.yml publica el veredicto del PR como check sobre HEAD_SHA por API y usa un solo carril serial" 'grep -q "head_sha=\"\$HEAD_SHA\"" "$AQUI/../../.github/workflows/paralelo.yml" && grep -qE "^  group: paralelo$" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "cancel-in-progress: false" "$AQUI/../../.github/workflows/paralelo.yml"'
 # auditor (AUDIT: CAMBIOS sobre 7700da3, P1): un evento con base ≠ main también desplaza al run
@@ -303,7 +306,7 @@ exit 0
 LISTAR
 chmod +x "$T/listar-mueve-fase.sh"
 : > "$T/publicado"
-set +e; (cd "$T/ci" && PARALELO_LISTAR="$T/listar-mueve-fase.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" scripts/collab/paralelo-reevaluar.sh "carrera fase" >/dev/null 2>"$T/err"); RC=$?; set -e
+set +e; PARALELO_LISTAR="$T/listar-mueve-fase.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" reeval "carrera fase" >/dev/null 2>"$T/err"; RC=$?; set -e
 check "la fase activa avanza durante la re-evaluación → exit 1, nada publicado y el motivo lo dice" '[ "$RC" = 1 ] && [ ! -s "$T/publicado" ] && grep -q "fase activa #70 avanzó" "$T/err"'
 (cd "$T/semilla" && git checkout -q -f main)
 # Codex sobre baec6ab, P1: main avanza DURANTE el bucle de publicación → lo publicado se invalida (failure CADUCADO)
@@ -318,8 +321,16 @@ fi
 exit 0
 PUBLICAR
 chmod +x "$T/publicar-mueve-main.sh"; rm -f "$T/publicado.movido"
-set +e; (cd "$T/ci" && PARALELO_LISTAR="$T/listar.sh" PARALELO_PUBLICAR="$T/publicar-mueve-main.sh" PUBLICADO="$T/publicado" SEMILLA="$T/semilla" scripts/collab/paralelo-reevaluar.sh "carrera en publicación" >/dev/null 2>"$T/err"); RC=$?; set -e
+set +e; PARALELO_LISTAR="$T/listar.sh" PARALELO_PUBLICAR="$T/publicar-mueve-main.sh" PUBLICADO="$T/publicado" SEMILLA="$T/semilla" reeval "carrera en publicación" >/dev/null 2>"$T/err"; RC=$?; set -e
 check "main avanza durante la publicación → exit 1 y todos los HEAD reciben failure CADUCADO después de lo publicado" '[ "$RC" = 1 ] && [ "$(grep -c " failure | paralelo: CADUCADO" "$T/publicado")" = 2 ] && grep -q "durante la publicación" "$T/err"'
+# Codex sobre e511687, P1: los scripts en ejecución tienen que SER la revisión de main que se
+# compara. Si el checkout quedó atrás (main avanzó entre el worktree y el fetch), no se evalúa.
+(cd "$T/semilla" && git checkout -q -f main && git pull -q origin main && echo tack >> docs/collab/HISTORIAL.md && git add -A && git commit -qm "historial 3" && git push -q origin main) >/dev/null 2>&1
+: > "$T/publicado"
+set +e; (cd "$T/ci" && git checkout -q --detach HEAD~0 && PARALELO_LISTAR="$T/listar.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" scripts/collab/paralelo-reevaluar.sh "checkout viejo" >/dev/null 2>"$T/err"); RC=$?; set -e
+check "checkout de main viejo (main ya avanzó) → exit 1, nada publicado y el motivo nombra la deriva" '[ "$RC" = 1 ] && [ ! -s "$T/publicado" ] && grep -q "scripts en ejecución" "$T/err"'
+check "y parado en origin/main actual vuelve a evaluar" 'PARALELO_LISTAR="$T/listar.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" reeval "al día" >/dev/null 2>&1 && [ -s "$T/publicado" ]'
+check "paralelo.yml re-evalúa ANTES de publicar el veredicto del HEAD y lo condiciona a RC2 (sin success si la re-evaluación no completó)" 'W="$AQUI/../../.github/workflows/paralelo.yml"; LR=$(grep -n "name: Re-evaluar todos los PR abiertos hacia main (cualquier evento" "$W" | cut -d: -f1); LP=$(grep -n "name: Publicar el veredicto como check sobre el HEAD del PR" "$W" | cut -d: -f1); [ -n "$LR" ] && [ -n "$LP" ] && [ "$LR" -lt "$LP" ] && grep -q "RC2=\${PIPESTATUS\[0\]}" "$W" && grep -q "SIN VEREDICTO" "$W" && grep -q "exit \"\$RC2\"" "$W" && grep -q "\"\$BASE_JOB\" != \"\$BASE_AHORA\"" "$W"'
 check "paralelo.yml re-evalúa TODOS los PR en cada evento hacia main (no solo cuando el PR es la fase: GitHub descarta runs pendientes)" '! grep -q "FASE=\$(git show origin/main" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "name: Re-evaluar todos los PR abiertos hacia main" "$AQUI/../../.github/workflows/paralelo.yml"'
 check "paralelo.yml re-evalúa en push a main y cuando el PR evaluado es la fase activa" 'grep -q "^  push:" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "paralelo-reevaluar.sh" "$AQUI/../../.github/workflows/paralelo.yml" && grep -qE "checks: write" "$AQUI/../../.github/workflows/paralelo.yml" && ! grep -qE "contents: write|pull-requests: write" "$AQUI/../../.github/workflows/paralelo.yml"'
 check "ningún git push en paralelo-reevaluar.sh (solo lee y publica checks)" '! grep -E "git push" "$AQUI/paralelo-reevaluar.sh" | grep -v "^\s*#" | grep -q .'

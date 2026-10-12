@@ -221,3 +221,10 @@ handoff.test: 39 ok, 0 fallos
 paralelo.test: 115 ok, 0 fallos
 paralelo.test: 115 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
+
+=== ronda 17 (Codex sobre e511687: checkout == main que se compara; publicar el HEAD después de la re-evaluación y condicionado) — 2026-10-12T20:31:18Z
+--- código de e511687 + pruebas nuevas: paralelo.test: 116 ok, 2 fallos
+--- corregido
+paralelo.test: 118 ok, 0 fallos
+paralelo.test: 118 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos

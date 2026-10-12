@@ -44,6 +44,16 @@ fase_head() { [ -n "$1" ] || { echo ""; return; }; git fetch -q "$REMOTE" "refs/
 
 git fetch -q "$REMOTE" "$BRANCH"
 MAIN0=$(git rev-parse "$REMOTE/$BRANCH")
+# Los scripts que se están ejecutando (este archivo, paralelo.sh, paralelo-deps.mjs)
+# son los del checkout; la política que se compara es la de origin/main recién traída.
+# Si main avanzó entre el checkout (worktree) y este fetch, serían dos revisiones
+# distintas y MAIN0 "estable" taparía la deriva (Codex sobre e511687, P1). Se exige
+# que el checkout SEA MAIN0; si no, se aborta sin publicar (la corrida del push decide).
+EJEC=$(git rev-parse HEAD)
+if [ "$EJEC" != "$MAIN0" ]; then
+  echo "paralelo-reevaluar: los scripts en ejecución son de ${EJEC:0:7} y $REMOTE/$BRANCH ya está en ${MAIN0:0:7}; no se evalúa con política superada (la corrida del push nuevo decide)" >&2
+  exit 1
+fi
 FASE_PR=$(fase_pr); FASE0=$(fase_head "$FASE_PR")
 PRS=$(listar) || { echo "paralelo-reevaluar: no se pudo listar los PR abiertos; sin veredicto nuevo" >&2; exit 1; }
 [ -n "$PRS" ] || { echo "paralelo-reevaluar: sin PR abiertos hacia $BRANCH"; exit 0; }
