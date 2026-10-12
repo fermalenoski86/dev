@@ -1,0 +1,100 @@
+== P-05 · salida real · 2026-10-12 · rama proc/p05-paralelo (este entorno: Node v22.22.0, pnpm 12.5.1, git 2.43.0)
+== bash scripts/collab/handoff.sh validar docs/collab/HANDOFF.md   (HANDOFF real de main, pelota en Claude, sin línea 'En auditoría')
+handoff: OK (docs/collab/HANDOFF.md)
+== bash scripts/collab/handoff.test.sh
+1) ambos leen el mismo SHA
+  ✓ misma base
+2) A escribe primero: fast-forward OK
+  ✓ A escribe
+  ✓ remoto avanzó
+  ✓ historial recibió la línea
+3) B escribe con base vieja: debe ABORTAR y no tocar el remoto
+  ✓ B aborta con exit 3
+  ✓ mensaje explica el avance
+  ✓ remoto intacto
+  ✓ remoto conserva la versión de A
+4) B relee y entonces sí puede escribir, sobre la versión de A
+  ✓ B leyó la nueva base
+  ✓ B escribe tras releer
+  ✓ historia lineal: A es padre de B
+5) carrera entre fetch y push: el push no fast-forward se rechaza
+  ✓ push non-fast-forward rechazado por git
+  ✓ remoto conserva 'A otra vez'
+5b) el script clasifica el fallo del push (#58, AUDIT: CAMBIOS)
+  ✓ carrera real entre CAS y push → exit 3
+  ✓ carrera: el mensaje dice que main avanzó
+  ✓ carrera: el remoto conserva la versión de A
+  ✓ pushurl inválido → exit 4 (no 3)
+  ✓ pushurl inválido: muestra el error real de git
+  ✓ pushurl inválido: NO dice carrera
+  ✓ pushurl inválido: remoto sin cambios
+  ✓ hook del servidor rechaza → exit 4
+  ✓ hook: se ve el motivo del servidor
+  ✓ hook: NO dice carrera
+6) validaciones de formato
+  ✓ dos pelotas → rechazo
+  ✓ pelota inválida → rechazo
+  ✓ marcador ======= → rechazo
+  ✓ 61+ líneas → rechazo
+  ✓ 61 líneas con la última sin newline → rechazo
+  ✓ exactamente 60 con la última sin newline → OK (borde)
+  ✓ pelota en ChatGPT sin 'En auditoría' → rechazo (P-05)
+  ✓ 'En auditoría' con sha corto → rechazo
+  ✓ pelota en ChatGPT con 'En auditoría: ninguno' → rechazo
+  ✓ dos líneas 'En auditoría' → rechazo
+  ✓ pelota en Claude con 'En auditoría: #7 @ sha' → OK
+  ✓ pelota en Claude con 'En auditoría: ninguno' → OK
+  ✓ pelota en Claude sin la línea → OK (compatible con HANDOFFs anteriores)
+  ✓ 'En auditoría' sin sha → rechazo
+  ✓ sin HANDOFF_BASE_SHA → rechazo
+  ✓ ningún git push lleva --force / --force-with-lease / -f
+
+handoff.test: 39 ok, 0 fallos
+== bash scripts/collab/paralelo.test.sh
+1) PR #7 (fase) toca a.txt; Claude lo entrega: pelota a ChatGPT con 'En auditoría: #7 @ sha'
+  ✓ el HANDOFF escrito pasa validar (handoff.sh)
+  ✓ el PR en auditoría con su HEAD exacto → OK
+2) la rama en auditoría se modifica mientras la pelota es de ChatGPT
+  ✓ nuevo HEAD en el PR auditado → exit 6
+  ✓ el mensaje nombra el sha auditado y el nuevo
+  ✓ el sha auditado sigue siendo válido (CI re-corrido sobre el mismo HEAD)
+3) laterales mientras #7 está en auditoría
+  ✓ lateral que toca b.txt (ajeno a #7) → OK
+  ✓ lateral que toca a.txt (archivo de #7) → exit 7 (posponer)
+  ✓ el mensaje lista el archivo compartido
+  ✓ lateral que modifica HANDOFF.md → exit 5
+  ✓ lateral que toca un workflow → exit 8 (gate, riesgo alto)
+  ✓ lateral que toca scripts/collab → exit 8
+  ✓ lateral mixto (b.txt + a.txt) → exit 7: un archivo compartido alcanza
+4) concurrencia: dos laterales independientes abiertos a la vez, ambos OK; el HANDOFF cambia en main y el chequeo lo sigue
+  ✓ dos laterales sin archivos en común → ambos OK
+  ✓ ahora #15 (toca b.txt) está en auditoría: el lateral de b.txt pasa a exit 7 sin cambiar su rama
+  ✓ y el lateral de a.txt ya es válido (lee main, no la copia de la rama)
+5) ausencia de merges fuera de orden: el lateral que comparte archivos queda rojo hasta que la fase se mergea
+  ✓ antes del merge de #15: rojo
+Automatic merge went well; stopped before committing as requested
+  ✓ después del merge y con la pelota en Claude: OK (nada en auditoría)
+  ✓ con la pelota en Claude, también el que toca a.txt: OK
+  ✓ con la pelota en Claude, la rama de la fase puede cambiar (Claude corrige hallazgos)
+  ✓ pero HANDOFF.md en un PR sigue rechazado con cualquier pelota → exit 5
+6) base distinta de main (audit/<tema> hacia la rama de la fase): solo la regla del HANDOFF
+  ✓ PR del auditor hacia fase/x tocando a.txt → OK
+  ✓ PR hacia fase/x que toca HANDOFF.md → exit 5
+7) errores de uso y HANDOFF inconsistente
+  ✓ nro de PR inválido → exit 1
+  ✓ sha inexistente → exit 1
+  ✓ pelota en ChatGPT sin 'En auditoría' → exit 1 (no se asume nada)
+  ✓ ningún git push en paralelo.sh (solo lee)
+
+paralelo.test: 26 ok, 0 fallos
+== LC_ALL=C bash scripts/collab/paralelo.test.sh (locale C: mismo resultado)
+paralelo.test: 26 ok, 0 fallos
+== scripts/ci/run.sh paralelo scripts/collab/paralelo.sh 69 HEAD main   (contra origin/main real)
+paralelo: OK — pelota en Claude (055591a): no hay PR en auditoría.
+::notice title=paralelo (exit 0)::paralelo: OK — pelota en Claude (055591a): no hay PR en auditoría.
+== bash -n scripts/collab/paralelo.sh scripts/collab/handoff.sh: OK; shellcheck: no instalado
+== pnpm verify
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  53 passed | 1 skipped (54)
+      Tests  828 passed | 1 skipped (829)
+== no ejecutado localmente: build, PostgreSQL, media, mutaciones, E2E, compose/S3 (P-05 no toca código de producto) → evidencia en los jobs de CI del PR

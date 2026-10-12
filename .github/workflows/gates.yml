@@ -61,7 +61,7 @@ jobs:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
       - name: Trabajo paralelo controlado (P-05)
-        run: scripts/collab/paralelo.sh "$PR" "$HEAD_SHA" "$BASE_REF"
+        run: scripts/ci/run.sh paralelo scripts/collab/paralelo.sh "$PR" "$HEAD_SHA" "$BASE_REF"
         env:
           PR: ${{ github.event.pull_request.number }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
