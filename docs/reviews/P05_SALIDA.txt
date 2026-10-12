@@ -325,3 +325,10 @@ handoff.test: 48 ok, 0 fallos
 paralelo.test: 139 ok, 0 fallos
 paralelo.test: 139 ok, 0 fallos
 handoff.test: 48 ok, 0 fallos
+
+=== ronda 32 (Codex sobre 545512c: la revalidación de main/fase es lo último, después de conciliar) — 2026-10-12T23:26:44Z
+--- código de 545512c + pruebas nuevas: paralelo.test: 139 ok, 2 fallos
+--- corregido
+paralelo.test: 141 ok, 0 fallos
+paralelo.test: 141 ok, 0 fallos
+handoff.test: 48 ok, 0 fallos

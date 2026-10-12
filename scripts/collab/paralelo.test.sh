@@ -357,6 +357,22 @@ check "un PR que aparece hacia main durante la re-evaluación → failure SIN VE
 rm -f "$T/listado.1"; : > "$T/publicado"
 PARALELO_LISTAR="$T/listar.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" reeval "estable" >/dev/null 2>&1
 check "con la misma lista antes y después → exit 0 y ningún SIN VEREDICTO" '! grep -q "SIN VEREDICTO" "$T/publicado"'
+# Codex sobre 545512c, P1: la revalidación de main/fase es lo ÚLTIMO: si main avanza durante la
+# conciliación (segundo listado), lo publicado se invalida con CADUCADO.
+cat > "$T/listar-mueve-en-conciliacion.sh" <<LISTAR
+#!/usr/bin/env bash
+echo "71 $SL70"
+echo "70 $S70b"
+if [ -e "$T/listado.2" ]; then
+  (cd "$T/semilla" && git checkout -q -f main && git pull -q origin main && echo tuck >> docs/collab/HISTORIAL.md && git add -A && git commit -qm "historial 4" && git push -q origin main) >/dev/null 2>&1
+fi
+touch "$T/listado.2"
+exit 0
+LISTAR
+chmod +x "$T/listar-mueve-en-conciliacion.sh"; rm -f "$T/listado.2"; : > "$T/publicado"
+set +e; PARALELO_LISTAR="$T/listar-mueve-en-conciliacion.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" reeval "carrera en conciliación" >/dev/null 2>"$T/err"; RC=$?; set -e
+check "main avanza durante la conciliación (segundo listado) → exit 1 y todos los HEAD reciben failure CADUCADO después de lo publicado" '[ "$RC" = 1 ] && [ "$(grep -c " failure | paralelo: CADUCADO" "$T/publicado")" = 2 ] && grep -q "durante la publicación" "$T/err"'
+check "en paralelo-reevaluar.sh la conciliación (3) precede a la revalidación final (4), que es lo último" 'L3=$(grep -n "^# 3) … volver a listar" "$AQUI/paralelo-reevaluar.sh" | cut -d: -f1); L4=$(grep -n "^# 4) … y revalidar DESPUÉS" "$AQUI/paralelo-reevaluar.sh" | cut -d: -f1); [ -n "$L3" ] && [ -n "$L4" ] && [ "$L3" -lt "$L4" ]'
 # Codex sobre e511687, P1: los scripts en ejecución tienen que SER la revisión de main que se
 # compara. Si el checkout quedó atrás (main avanzó entre el worktree y el fetch), no se evalúa.
 (cd "$T/semilla" && git checkout -q -f main && git pull -q origin main && echo tack >> docs/collab/HISTORIAL.md && git add -A && git commit -qm "historial 3" && git push -q origin main) >/dev/null 2>&1
