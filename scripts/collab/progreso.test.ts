@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error módulo .mjs sin tipos (script de CI, sin build)
-import { contar, evaluar, jobDe, render, validar } from './progreso.lib.mjs';
+import { contar, evaluar, fechaValida, jobDe, render, validar } from './progreso.lib.mjs';
 // @ts-expect-error módulo .mjs sin tipos
 import { ENTREGABLES, PISTAS, REPO } from './entregables.mjs';
 // @ts-expect-error módulo .mjs sin tipos
@@ -113,17 +113,39 @@ describe('P-02 · progreso verificable', () => {
     expect(validar([producto({ simulado: [{ tipo: 'navegador', ids: ['E3-99'] }] })], lab())).toEqual(['X-1: «E3-99» no es un id de navegador de points.mjs']);
   });
 
-  it('NEGATIVO: una prueba simulada rotulada como "equipo real" se rechaza', () => {
+  it('NEGATIVO: una prueba simulada rotulada como "equipo real" se rechaza, esté en la referencia o en las condiciones', () => {
     for (const referencia of ['apps/platform-api/src/x.db.test.ts', 'e2e-platform/f.spec.ts', 'https://github.com/fermalenoski86/dev/actions/runs/38222115237', 'simulador NovaStar en docker']) {
       const x = producto({ real: [{ ...real, referencia }] });
-      expect(validar([x], lab())).toEqual([expect.stringContaining('cita una prueba simulada')]);
+      expect(validar([x], lab())).toEqual([expect.stringContaining('cuya referencia describe una prueba simulada')]);
+      expect(contar([x], lab()).get('gestion')!.real).toBe(0);
     }
+    // #67 AUDIT: CAMBIOS (P2), reproducción del auditor: la simulación estaba solo en `condiciones`
+    const enCondiciones = producto({ real: [{ referencia: 'docs/evidencia.md', condiciones: 'simulador NovaStar en Docker', fecha: '2026-10-01', responsable: 'Fer' }] });
+    expect(validar([enCondiciones], lab())).toEqual([expect.stringContaining('cuya condiciones describe una prueba simulada')]);
+    expect(contar([enCondiciones], lab()).get('gestion')!.real).toBe(0);
+    expect(evaluar(enCondiciones, lab()).real).toEqual({ ok: false, motivo: 'evidencia inválida (ver validar)' });
   });
 
   it('NEGATIVO: evidencia real incompleta, con fecha inválida o firmada por un agente se rechaza', () => {
     expect(validar([producto({ real: [{ ...real, condiciones: '' }] })], lab())).toEqual(['X-1: evidencia real sin condiciones']);
+    expect(validar([producto({ real: [{ ...real, condiciones: '   ' }] })], lab())).toEqual(['X-1: evidencia real sin condiciones']);
     expect(validar([producto({ real: [{ ...real, fecha: '3/11/2026' }] })], lab())).toEqual([expect.stringContaining('fecha inválida')]);
     expect(validar([producto({ real: [{ ...real, responsable: 'Claude (implementador)' }] })], lab())).toEqual([expect.stringContaining('tiene que ser una persona, no un agente')]);
+    // #67 AUDIT: CAMBIOS (P2): el agente con espacio adelante pasaba por la ancla ^ sin normalizar
+    const conEspacio = producto({ real: [{ referencia: 'docs/evidencia.md', condiciones: 'pantalla real', fecha: '2026-10-01', responsable: ' Claude' }] });
+    expect(validar([conEspacio], lab())).toEqual([expect.stringContaining('responsable «Claude»: tiene que ser una persona, no un agente')]);
+    expect(contar([conEspacio], lab()).get('gestion')!.real).toBe(0);
+    for (const responsable of ['\tChatGPT', 'codex ', ' bot auditor']) expect(validar([producto({ real: [{ ...real, responsable }] })], lab())).toEqual([expect.stringContaining('no un agente')]);
+  });
+
+  it('NEGATIVO: la fecha tiene que existir en el calendario, no solo tener la forma AAAA-MM-DD', () => {
+    // #67 AUDIT: CAMBIOS (P2), reproducción del auditor
+    const imposible = producto({ real: [{ referencia: 'docs/evidencia.md', condiciones: 'pantalla real', fecha: '2026-99-99', responsable: 'Fer' }] });
+    expect(validar([imposible], lab())).toEqual(['X-1: evidencia real con fecha inválida «2026-99-99» (AAAA-MM-DD del calendario)']);
+    expect(contar([imposible], lab()).get('gestion')!.real).toBe(0);
+    for (const fecha of ['2026-00-10', '2026-13-01', '2026-02-29', '2026-04-31', '2026-10-00', '2026-1-5', '2026-10-12T00:00:00Z']) expect(fechaValida(fecha), fecha).toBe(false);
+    for (const fecha of ['2026-10-12', '2024-02-29', '2026-12-31', '2026-01-01']) expect(fechaValida(fecha), fecha).toBe(true);
+    expect(validar([producto({ real: [{ ...real, fecha: ' 2024-02-29 ' }] })], lab())).toEqual([]);
   });
 
   it('evidencia real completa cuenta 1/1 y se muestra con referencia, condiciones, fecha y responsable', () => {

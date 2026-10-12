@@ -11,10 +11,31 @@
 
 export const TIPOS = ['producto', 'brief', 'proceso'];
 const SHA = /^[0-9a-f]{40}$/;
-const FECHA = /^\d{4}-\d{2}-\d{2}$/;
+const FECHA = /^(\d{4})-(\d{2})-(\d{2})$/;
 const AGENTE = /^(claude|chatgpt|codex|gpt|copilot|bot)\b/i;
-/** Lo que un `real` NUNCA puede citar: tests, specs, corridas de CI, simuladores. */
-const SIMULADO_ROTULADO_REAL = /(\.(test|spec)\.(ts|tsx|sh|mjs)$|\/actions\/runs\/|\.github\/workflows|vitest|playwright|simulad|mock)/i;
+/** Lo que un `real` NUNCA puede citar ni describir: tests, specs, corridas de CI, simuladores. Se aplica a `referencia` Y a `condiciones`. */
+const SIMULADO_ROTULADO_REAL = /(\.(test|spec)\.(ts|tsx|sh|mjs)\b|\/actions\/runs\/|\.github\/workflows|vitest|playwright|simulad|mock)/i;
+const CAMPOS_REAL = ['referencia', 'condiciones', 'fecha', 'responsable'];
+
+/** `AAAA-MM-DD` que además existe en el calendario gregoriano (RFC 3339 §5.6: mes 01–12, día según mes y año). */
+export function fechaValida(s) {
+  const m = FECHA.exec(s ?? '');
+  if (!m) return false;
+  const [, a, mes, d] = m.map(Number);
+  if (mes < 1 || mes > 12 || d < 1) return false;
+  return d <= new Date(Date.UTC(a, mes, 0)).getUTCDate(); // día 0 del mes siguiente = último día del mes
+}
+
+/** Normaliza una evidencia real (strings recortados) y devuelve sus errores. Vacío = cuenta como equipo real. */
+export function erroresReal(r) {
+  const e = [];
+  const v = Object.fromEntries(CAMPOS_REAL.map((c) => [c, r?.[c] == null ? '' : String(r[c]).trim()]));
+  for (const c of CAMPOS_REAL) if (!v[c]) e.push(`evidencia real sin ${c}`);
+  if (v.fecha && !fechaValida(v.fecha)) e.push(`evidencia real con fecha inválida «${v.fecha}» (AAAA-MM-DD del calendario)`);
+  if (v.responsable && AGENTE.test(v.responsable)) e.push(`evidencia real con responsable «${v.responsable}»: tiene que ser una persona, no un agente`);
+  for (const c of ['referencia', 'condiciones']) if (v[c] && SIMULADO_ROTULADO_REAL.test(v[c])) e.push(`evidencia real cuya ${c} describe una prueba simulada «${v[c]}»: un test, una corrida de CI o un simulador no son equipo real`);
+  return e;
+}
 
 /** Job de CI que verifica un archivo de test, deducido de su nombre (misma regla que los configs de vitest y gates.yml). */
 export function jobDe(archivo) {
@@ -89,12 +110,7 @@ export function validar(entregables, ctx) {
     // real
     if (!Array.isArray(x.real)) w('real debe ser una lista (vacía si no hay evidencia física)');
     else {
-      for (const r of x.real) {
-        for (const campo of ['referencia', 'condiciones', 'fecha', 'responsable']) if (!r[campo] || !String(r[campo]).trim()) w(`evidencia real sin ${campo}`);
-        if (r.fecha && !FECHA.test(r.fecha)) w(`evidencia real con fecha inválida «${r.fecha}» (AAAA-MM-DD)`);
-        if (r.responsable && AGENTE.test(r.responsable)) w(`evidencia real con responsable «${r.responsable}»: tiene que ser una persona, no un agente`);
-        if (r.referencia && SIMULADO_ROTULADO_REAL.test(r.referencia)) w(`evidencia real que cita una prueba simulada «${r.referencia}»: un test, una corrida de CI o un simulador no son equipo real`);
-      }
+      for (const r of x.real) for (const m of erroresReal(r)) w(m);
       if (x.tipo !== 'producto' && x.real.length) w(`un ${x.tipo} no puede tener evidencia con equipo real`);
     }
   }
@@ -130,7 +146,10 @@ export function evaluar(x, ctx) {
     }
   }
   const simulado = x.simulado.length === 0 ? { ok: false, motivo: 'sin test' } : faltan.length ? { ok: false, motivo: `pendiente: ${faltan.join('; ')}`, partes } : { ok: true, partes };
-  const real = x.real.length ? { ok: true, evidencias: x.real } : { ok: false, motivo: 'sin evidencia' };
+  // Solo cuenta la evidencia que pasa `erroresReal`: aunque alguien llame a evaluar/contar sin validar
+  // antes (#67, AUDIT: CAMBIOS), una entrada inválida nunca habilita la celda ni el contador.
+  const validas = x.real.filter((r) => erroresReal(r).length === 0);
+  const real = validas.length ? { ok: true, evidencias: validas } : { ok: false, motivo: x.real.length ? 'evidencia inválida (ver validar)' : 'sin evidencia' };
   return { codigo, simulado, real };
 }
 
@@ -161,7 +180,8 @@ function celdaSimulado(ev) {
 }
 function celdaReal(ev) {
   if (!ev.ok) return `— ${ev.motivo}`;
-  return `✔ ${ev.evidencias.map((r) => `${esc(r.referencia)} (${esc(r.condiciones)}; ${r.fecha}; ${esc(r.responsable)})`).join(' · ')}`;
+  const t = (v) => esc(String(v).trim());
+  return `✔ ${ev.evidencias.map((r) => `${t(r.referencia)} (${t(r.condiciones)}; ${t(r.fecha)}; ${t(r.responsable)})`).join(' · ')}`;
 }
 
 /** Markdown completo de PROGRESO.md. Determinista: sin fechas ni porcentajes. */

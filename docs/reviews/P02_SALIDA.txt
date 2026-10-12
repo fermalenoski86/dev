@@ -75,3 +75,30 @@ GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-
 diff --check OK
 
 ## No ejecutado localmente (lo corre CI sobre el HEAD exacto): pnpm build, PostgreSQL, media, mutaciones, E2E M2C, e2e-platform, compose-smoke. El cambio no toca código de producto ni gates existentes: agrega un step a verify-build.
+
+# Ronda 1 — 2026-10-12 12:11 UTC · corrección del P2 de #67 (AUDIT: CAMBIOS sobre ca7b6df)
+
+## Reproducción del auditor con el progreso.lib.mjs de ca7b6df (antes)
+condicion_simulada [] 1/1
+agente_con_espacio [] 1/1
+fecha_imposible [] 1/1
+
+## Misma reproducción con la corrección
+condicion_simulada ["X: evidencia real cuya condiciones describe una prueba simulada «simulador NovaStar en Docker»: un test, una corrida de CI o un simulador no son equipo real"] 0/1
+agente_con_espacio ["X: evidencia real con responsable «Claude»: tiene que ser una persona, no un agente"] 0/1
+fecha_imposible ["X: evidencia real con fecha inválida «2026-99-99» (AAAA-MM-DD del calendario)"] 0/1
+
+## Tests nuevos contra el lib viejo (tienen que fallar) y contra el corregido
+   × P-02 · progreso verificable > NEGATIVO: una prueba simulada rotulada como "equipo real" se rechaza, esté en la referencia o en las condiciones 10ms
+   × P-02 · progreso verificable > NEGATIVO: evidencia real incompleta, con fecha inválida o firmada por un agente se rechaza 2ms
+   × P-02 · progreso verificable > NEGATIVO: la fecha tiene que existir en el calendario, no solo tener la forma AAAA-MM-DD 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 14 passed (17)
+      Tests  17 passed (17)
+
+## pnpm progress:check · pnpm verify · git diff --check
+GATE progreso (P-02): manifiesto válido (31 entradas), docs/collab/PROGRESO.md al día
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  53 passed | 1 skipped (54)
+      Tests  828 passed | 1 skipped (829)
+diff --check OK
