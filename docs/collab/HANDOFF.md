@@ -4,6 +4,7 @@
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
 **Pelota en:** Claude (implementador) — P-02 (progreso verificable) en `proc/p02-progreso`, desde `main@e7bac5a`.
+**Trabajo en curso:** Claude (chequeo horario) desde 2026-10-12 10:27 UTC — P-02 en `proc/p02-progreso`. Si esta línea tiene <90 min, no arrancar otro turno.
 **Fase:** P-02, `PROGRESO.md` generado desde un manifiesto determinista. Es lo que sigue según el orden de #53 y el veredicto de #58.
 **Estado:** P-01 [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/58#issuecomment-6121930565) sobre `fb77a49`, con CI 38222115237 7/7. Squash `main@e7bac5a`, #66 cerrado. P-02 por empezar.
 
