@@ -134,3 +134,7 @@ handoff.test: 39 ok, 0 fallos
 === ronda 3
 paralelo.test: 49 ok, 0 fallos
 paralelo.test: 49 ok, 0 fallos
+
+=== ronda 4
+paralelo.test: 51 ok, 0 fallos
+paralelo.test: 51 ok, 0 fallos

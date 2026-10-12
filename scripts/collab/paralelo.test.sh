@@ -130,15 +130,18 @@ corre 40 "$SNQ"; check "lateral que agrega .github/workflows/ñ.yml → exit 8" 
 check "el mensaje muestra la ruta sin comillas" 'grep -qF ".github/workflows/ñ.yml" "$T/err" && ! grep -qF "\".github" "$T/err"'
 check "paralelo.yml se dispara también con 'edited' (cambio de base)" 'grep -qE "types:.*\bedited\b" "$AQUI/../../.github/workflows/paralelo.yml"'
 
-echo "5g) Codex ronda 3 P2: sin refs/pull/N/head y pelota en Claude → falla cerrado; con ChatGPT usa el sha anotado"
+echo "5g) Codex rondas 3 y 4 P2: sin refs/pull/N/head el chequeo falla cerrado con CUALQUIER pelota"
 S30=$(rama fase/w a.txt); pr_head 30 "$S30"
 handoff_main Claude "#30 @ $S30"
 git -C "$T/remoto.git" update-ref -d refs/pull/30/head
 corre 31 "$SL"; check "pelota en Claude, ref del PR ausente, lateral ajeno → exit 1 (no se aprueba contra el sha viejo)" '[ "$RC" = 1 ]'
 check "el mensaje explica que falta refs/pull/30/head" 'grep -q "refs/pull/30/head" "$T/err"'
 handoff_main ChatGPT "#30 @ $S30"
-corre 31 "$SL"; check "pelota en ChatGPT (R2 congela la rama): usa el sha anotado → lateral ajeno OK" '[ "$RC" = 0 ]'
+corre 31 "$SL"; check "pelota en ChatGPT, ref ausente → también exit 1 (sin respaldo al sha anotado)" '[ "$RC" = 1 ]'
+pr_head 30 "$S30"
+corre 31 "$SL"; check "con la ref presente: lateral ajeno OK" '[ "$RC" = 0 ]'
 corre 9 "$SA"; check "y el que toca a.txt (archivo de #30) → exit 7" '[ "$RC" = 7 ]'
+corre 30 "$S30"; check "el propio PR #30 con su HEAD anotado → OK (R2)" '[ "$RC" = 0 ]'
 handoff_main Claude "ninguno"
 
 echo "6) base distinta de main (audit/<tema> hacia la rama de la fase): solo la regla del HANDOFF"

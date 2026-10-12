@@ -113,17 +113,13 @@ if [ "$PR" = "$AUD_PR" ]; then
   rechazo 6 "el PR #$PR está en auditoría sobre ${AUD_SHA:0:7} y su HEAD ahora es ${HEAD_SHA:0:7}. No se toca la rama mientras la pelota es del auditor; esperá AUDIT: CAMBIOS/APROBADO."
 fi
 
-# Fase activa: se compara contra el HEAD ACTUAL del PR (refs/pull/N/head). Con la
-# pelota en Claude la rama puede ir más allá del sha anotado, así que si la ref no
-# se puede traer se FALLA CERRADO (exit 1): aprobar contra el sha viejo dejaría pasar
-# un lateral que toca un archivo nuevo de la fase (Codex, ronda 3, P2). Con la pelota
-# en ChatGPT, R2 congela la rama en el sha anotado: ese sha es confiable y se usa
-# como respaldo si la ref no está.
+# Fase activa: se compara SIEMPRE contra el HEAD ACTUAL del PR (refs/pull/N/head) y
+# nunca contra el sha anotado: con la pelota en Claude la rama avanza, y con la pelota
+# en ChatGPT alguien puede haberla empujado igual (R2 pone rojo a ese PR, pero no
+# frena a un lateral). Si la ref no se puede traer se FALLA CERRADO, exit 1
+# (Codex, rondas 3 y 4, P2).
 FASE_SHA=$(head_del_pr "$AUD_PR")
-if [ -z "$FASE_SHA" ]; then
-  [ "$PELOTA" = ChatGPT ] || fallo "no se pudo traer refs/pull/$AUD_PR/head de $REMOTE y la pelota es de Claude: la fase activa puede haber avanzado; no se aprueba contra el sha anotado (${AUD_SHA:0:7})"
-  FASE_SHA=$AUD_SHA
-fi
+[ -n "$FASE_SHA" ] || fallo "no se pudo traer refs/pull/$AUD_PR/head de $REMOTE: sin el HEAD actual de la fase activa no se aprueba ningún lateral (sha anotado ${AUD_SHA:0:7}, no se usa como respaldo)"
 
 # R3 · el lateral no comparte archivos con la fase activa (cualquier pelota)
 AUDITADOS=$(archivos "$MAIN" "$FASE_SHA")
