@@ -66,6 +66,11 @@ check "pelota inválida → rechazo" '! (cd "$T/A" && $H validar "$T/fer.md" 2>/
 check "marcador ======= → rechazo" '! (cd "$T/A" && $H validar "$T/conf.md" 2>/dev/null)'
 { handoff_valido Claude x; seq 1 60; } > "$T/largo.md"
 check "61+ líneas → rechazo" '! (cd "$T/A" && $H validar "$T/largo.md" 2>/dev/null)'
+# Reproducción del auditor (#58): 61 líneas lógicas con solo 60 "\n" (la última sin terminador)
+{ printf '**Pelota en:** Claude — x\n'; seq 1 59; printf 'linea-sin-newline'; } > "$T/sin-nl-61.md"
+check "61 líneas con la última sin newline → rechazo" '! (cd "$T/A" && $H validar "$T/sin-nl-61.md" 2>/dev/null)'
+{ printf '**Pelota en:** Claude — x\n'; seq 1 58; printf 'linea-sin-newline'; } > "$T/sin-nl-60.md"
+check "exactamente 60 con la última sin newline → OK (borde)" '(cd "$T/A" && $H validar "$T/sin-nl-60.md" >/dev/null 2>&1)'
 check "sin HANDOFF_BASE_SHA → rechazo" '! (cd "$T/A" && env -u HANDOFF_BASE_SHA $H escribir "$T/nuevoA.md" m 2>/dev/null)'
 check "ningún git push lleva --force / --force-with-lease / -f" '! grep -E "git push.*(--force|-f\b)" "$AQUI/handoff.sh" | grep -v "^\s*#" | grep -q .'
 

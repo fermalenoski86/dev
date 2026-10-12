@@ -23,7 +23,9 @@ fallo() { echo "handoff: $*" >&2; exit 1; }
 validar() { # $1 = archivo
   local f=$1 n pelotas
   [ -s "$f" ] || fallo "archivo vacío: $f"
-  n=$(wc -l < "$f")
+  # Líneas LÓGICAS: `wc -l` cuenta saltos de línea y no ve una última línea sin
+  # "\n" (61 líneas con 60 "\n" pasaban; #58, AUDIT: CAMBIOS). awk sí la cuenta.
+  n=$(awk 'END { print NR }' "$f")
   [ "$n" -le $MAX_LINEAS ] || fallo "$n líneas (máx. $MAX_LINEAS). Mové decisiones a DECISIONES.md e historial a HISTORIAL.md."
   pelotas=$(grep -cE '^\*\*Pelota en:\*\* (Claude|ChatGPT)\b' "$f" || true)
   [ "$pelotas" -eq 1 ] || fallo "debe haber exactamente UNA línea '**Pelota en:** Claude|ChatGPT' (hay $pelotas)"
