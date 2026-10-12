@@ -31,6 +31,17 @@ validar() { # $1 = archivo
   pelotas=$(grep -cE '^\*\*Pelota en:\*\* (Claude|ChatGPT)\b' "$f" || true)
   [ "$pelotas" -eq 1 ] || fallo "debe haber exactamente UNA línea '**Pelota en:** Claude|ChatGPT' (hay $pelotas)"
   ! grep -qE '^(<<<<<<<|=======|>>>>>>>)' "$f" || fallo "marcadores de conflicto en $f"
+  # P-05: qué PR está congelado mientras audita el otro. Con la pelota en ChatGPT
+  # es obligatoria (#N @ sha completo); con la pelota en Claude puede faltar o
+  # decir "ninguno". paralelo.sh la lee de origin/main en cada PR.
+  local aud_lineas aud_validas
+  aud_lineas=$(grep -cE '^\*\*En auditor(í|i)a:\*\*' "$f" || true)
+  aud_validas=$(grep -cE '^\*\*En auditor(í|i)a:\*\* (#[0-9]+ @ [0-9a-f]{40}\b|ninguno\b)' "$f" || true)
+  [ "$aud_lineas" -le 1 ] || fallo "más de una línea '**En auditoría:**' (hay $aud_lineas)"
+  [ "$aud_lineas" -eq "$aud_validas" ] || fallo "línea '**En auditoría:**' inválida: tiene que ser '#<PR> @ <sha de 40 hex>' o 'ninguno'"
+  if grep -qE '^\*\*Pelota en:\*\* ChatGPT\b' "$f"; then
+    grep -qE '^\*\*En auditor(í|i)a:\*\* #[0-9]+ @ [0-9a-f]{40}\b' "$f" || fallo "con la pelota en ChatGPT hace falta '**En auditoría:** #<PR> @ <sha de 40 hex>' (P-05)"
+  fi
 }
 
 case "${1:-}" in

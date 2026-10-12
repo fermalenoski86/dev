@@ -50,6 +50,18 @@ scripts/collab/handoff.sh escribir nuevo.md "handoff: <qué>" --historial "- <fe
 
 Si `main` avanzó desde tu lectura, el script **aborta** (exit 3) y muestra lo que no viste: releé, rehacé tu versión y reintentá. Si el push falla por otra causa (autenticación, protección de rama, hook o red), aborta con **exit 4** y muestra el error real de git: eso no se arregla releyendo. El push es solo fast-forward; `--force` está prohibido para `main`. Mientras la pelota es del otro agente, **no se toca `HANDOFF.md`** (ni la tabla "Abierto": el lateral se registra en su PR/issue). CI valida formato y corre la prueba de dos escritores.
 
+## Paralelo (P-05)
+
+Mientras la pelota es de ChatGPT, Claude puede trabajar en un **lateral**: un PR propio, en rama nueva desde `main`, solo de un ítem de `BACKLOG.md` ya `aceptada` y de riesgo bajo/medio. Reglas (acordadas en #53):
+
+- **El HANDOFF dice qué está congelado.** Al pasar la pelota a ChatGPT, Claude escribe `**En auditoría:** #<PR> @ <sha completo>` (obligatoria con la pelota en ChatGPT; `handoff.sh validar` la exige). Con la pelota en Claude puede faltar o decir `ninguno`.
+- **No se toca la rama en auditoría** (ni merge de `main` en ella) hasta `AUDIT: CAMBIOS` o `AUDIT: APROBADO`.
+- **No se toca `HANDOFF.md`** en ningún PR: la pelota solo se mueve en `main` con `handoff.sh`. El lateral se registra en su PR/issue; el titular de la pelota lo refleja en el próximo HANDOFF.
+- **Se pospone** el lateral que comparta archivos o dependencias con el PR en auditoría, y el que toque gates o scripts de proceso (`.github/workflows/`, `scripts/ci/`, `scripts/collab/`, `scripts/mutation-check.py`, configs de vitest/playwright): eso es riesgo alto, no lateral.
+- **Nunca se mergea un lateral sin su propio `AUDIT: APROBADO`**, ni antes que el PR de la fase si comparten archivos. Antes de mergearlo, `scripts/collab/paralelo.sh <PR> <HEAD> main` tiene que dar OK contra el `main` del momento.
+
+CI corre `scripts/collab/paralelo.sh` en cada PR (job `paralelo`), leyendo el HANDOFF de `origin/main`: rechaza el PR que modifica `HANDOFF.md` (exit 5), el PR en auditoría cuyo HEAD cambió (exit 6), el lateral que comparte archivos con el auditado (exit 7) y el que toca gates (exit 8). Es un chequeo, no un candado: la **protección de rama `main`** (CI requerido, rama al día) sigue pendiente de Fer.
+
 ## Gates obligatorios (todos con salida real, nada mockeado en el camino feliz)
 
 ```bash

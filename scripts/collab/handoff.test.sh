@@ -10,7 +10,9 @@ export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 export GIT_AUTHOR_NAME=test GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=test GIT_COMMITTER_EMAIL=t@t
 ok=0; fallos=0
 check() { if eval "$2"; then echo "  ✓ $1"; ok=$((ok+1)); else echo "  ✗ $1"; fallos=$((fallos+1)); fi; }
-handoff_valido() { printf '# HANDOFF\n\n**Pelota en:** %s — %s\n' "$1" "$2"; }
+SHA40=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+# P-05: con la pelota en ChatGPT el HANDOFF tiene que decir qué PR está en auditoría
+handoff_valido() { printf '# HANDOFF\n\n**Pelota en:** %s — %s\n' "$1" "$2"; [ "$1" = ChatGPT ] && printf '**En auditoría:** #1 @ %s\n' "$SHA40"; true; }
 
 # remoto bare + estado inicial
 git init -q --bare -b main "$T/remoto.git"
@@ -112,6 +114,23 @@ check "61+ líneas → rechazo" '! (cd "$T/A" && $H validar "$T/largo.md" 2>/dev
 check "61 líneas con la última sin newline → rechazo" '! (cd "$T/A" && $H validar "$T/sin-nl-61.md" 2>/dev/null)'
 { printf '**Pelota en:** Claude — x\n'; seq 1 58; printf 'linea-sin-newline'; } > "$T/sin-nl-60.md"
 check "exactamente 60 con la última sin newline → OK (borde)" '(cd "$T/A" && $H validar "$T/sin-nl-60.md" >/dev/null 2>&1)'
+# P-05: línea "En auditoría"
+printf '**Pelota en:** ChatGPT — x\n' > "$T/aud-falta.md"
+check "pelota en ChatGPT sin 'En auditoría' → rechazo (P-05)" '! (cd "$T/A" && $H validar "$T/aud-falta.md" 2>/dev/null)'
+printf '**Pelota en:** ChatGPT — x\n**En auditoría:** #7 @ abc1234\n' > "$T/aud-corto.md"
+check "'En auditoría' con sha corto → rechazo" '! (cd "$T/A" && $H validar "$T/aud-corto.md" 2>/dev/null)'
+printf '**Pelota en:** ChatGPT — x\n**En auditoría:** ninguno\n' > "$T/aud-ninguno-cg.md"
+check "pelota en ChatGPT con 'En auditoría: ninguno' → rechazo" '! (cd "$T/A" && $H validar "$T/aud-ninguno-cg.md" 2>/dev/null)'
+printf '**Pelota en:** ChatGPT — x\n**En auditoría:** #7 @ %s\n**En auditoría:** #8 @ %s\n' "$SHA40" "$SHA40" > "$T/aud-dos.md"
+check "dos líneas 'En auditoría' → rechazo" '! (cd "$T/A" && $H validar "$T/aud-dos.md" 2>/dev/null)'
+printf '**Pelota en:** Claude — x\n**En auditoría:** #7 @ %s\n' "$SHA40" > "$T/aud-claude.md"
+check "pelota en Claude con 'En auditoría: #7 @ sha' → OK" '(cd "$T/A" && $H validar "$T/aud-claude.md" >/dev/null 2>&1)'
+printf '**Pelota en:** Claude — x\n**En auditoría:** ninguno\n' > "$T/aud-claude-n.md"
+check "pelota en Claude con 'En auditoría: ninguno' → OK" '(cd "$T/A" && $H validar "$T/aud-claude-n.md" >/dev/null 2>&1)'
+printf '**Pelota en:** Claude — x\n' > "$T/aud-claude-sin.md"
+check "pelota en Claude sin la línea → OK (compatible con HANDOFFs anteriores)" '(cd "$T/A" && $H validar "$T/aud-claude-sin.md" >/dev/null 2>&1)'
+printf '**Pelota en:** Claude — x\n**En auditoría:** #7\n' > "$T/aud-mal.md"
+check "'En auditoría' sin sha → rechazo" '! (cd "$T/A" && $H validar "$T/aud-mal.md" 2>/dev/null)'
 check "sin HANDOFF_BASE_SHA → rechazo" '! (cd "$T/A" && env -u HANDOFF_BASE_SHA $H escribir "$T/nuevoA.md" m 2>/dev/null)'
 check "ningún git push lleva --force / --force-with-lease / -f" '! grep -E "git push.*(--force|-f\b)" "$AQUI/handoff.sh" | grep -v "^\s*#" | grep -q .'
 
