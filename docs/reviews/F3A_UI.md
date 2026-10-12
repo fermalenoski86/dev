@@ -63,7 +63,7 @@ No se resuelve #43 y no se adelanta Deploy.
    nuevo; hay mutación que lo verifica.
 6. **Destinos ofrecidos:** solo versiones APPROVED que no son la vigente. El
    servidor igual valida (409/404).
-7. **El enlace de cada fila en `/campaigns` dice solo "Versión vigente".** Un
+7. **El enlace de cada fila en `/campaigns` dice solo "Versión vigente"** (nombre accesible propio, con la campaña como contexto de la fila; ver ronda 1). Un
    texto accesible con el nombre de la campaña rompía los E2E existentes, que
    buscan el enlace de la campaña por su nombre. El spec nuevo lo busca dentro
    de la fila.
@@ -137,3 +137,51 @@ No se resuelve #43 y no se adelanta Deploy.
 
 Se cita en el PR el link de la corrida y el SHA exacto del HEAD entregado. No
 se pide auditoría sin los 7 jobs en verde.
+
+## Ronda 1 — `AUDIT: CAMBIOS` sobre `ba20f8b` ([#64](https://github.com/fermalenoski86/dev/pull/64#issuecomment-6117503190))
+
+Los cuatro hallazgos P2 se aceptan y se corrigen. No hay cambios de API,
+OpenAPI, storage, `apps/control` ni M2C.
+
+| # | Hallazgo | Corrección | Prueba / mutación |
+|---|---|---|---|
+| 1 | El error de pedir se perdía al releer: con un pendiente nuevo o una campaña archivada, el formulario (y su `ErrorMessage`) se desmontaba | El error de pedir se muestra **fuera** del formulario (`data-testid="request-error"`), así sigue visible aunque el formulario desaparezca | views: pendiente de otro operador y archivada, después de releer; el mensaje aparece una sola vez si el formulario sigue; mutación "el error de pedir se pierde…" |
+| 2 | ADMIN podía confirmar con su cancelación en vuelo o incierta | `bloqueada(ops, op)`: confirmar y cancelar deciden sobre el mismo pedido, así que una bloquea a la otra mientras esté viva (en vuelo o incierta). La usan los botones ("Revisar y confirmar", "Confirmar cambio", "Cancelar pedido") **y** los handlers (`onConfirm`, `onCancel`, `onRequest`); `correr` tampoco reintenta contra una decisión opuesta viva | views: las dos direcciones × en vuelo / incierta, y la tabla de `bloqueada`; E2E `[F3A-UI-3]`: cancelación con la red cortada, "Confirmar cambio" deshabilitado, "Reintentar" cancela con la misma key; mutación "la decisión opuesta viva no bloquea" |
+| 3 | El atajo 204 del cliente anunciaba éxito y perdía la key en las mutaciones F3(a) | El 204 solo se acepta cuando la llamada no espera cuerpo (`schema === null`, hoy solo logout). En una ruta que promete un recurso, un 204 cae al schema y da `UNEXPECTED_RESPONSE`, que es incierto: la intención conserva la key | api: 204 en pedir, confirmar y cancelar → incierto, conserva la key; logout sigue aceptando 204; mutación "204 sin cuerpo pasa como éxito…" |
+| 4a | El E2E "volver a v1" hacía una primera selección | `[F3A-UI-1]` deja v2 vigente por el flujo autorizado de la API (op pide, ap confirma) y recorre en el navegador el cambio **v2 → v1**: el destino no ofrece la vigente; el pendiente y el paso de confirmación muestran origen v2 y destino v1 con sus dos hashes; el historial muestra `v2 → v1` | E2E local 10/10 |
+| 4b | El intermediario no guardaba el body original de la respuesta | `posts` guarda la respuesta ORIGINAL de la API (`resBody`, `status`, `idempotent-replayed`) antes de perderla. `mismoReplay` exige, en las 9 combinaciones (corte / 502 / 504 × pedir / confirmar / cancelar), mismo status, `idempotent-replayed` `false` → `true`, el **body completo** igual (`toStrictEqual`) y que el cliente reciba exactamente ese body; además de un solo efecto y un solo evento | PG 14/14 en ese archivo |
+
+**Sobre la decisión 7:** el auditor aclara, con razón, que el enlace **sí**
+tiene nombre accesible ("Versión vigente"), con la campaña como contexto de la
+misma celda (WCAG 2.4.4 / H79). La redacción de esta revisión decía "sin nombre
+accesible"; queda corregida: el enlace no repite el nombre de la campaña.
+
+### Autorrevisión de la ronda
+
+- **A (contra los hallazgos):** cada punto tiene una prueba que falla con el
+  código de `ba20f8b`, y las tres correcciones de código tienen mutación. El
+  E2E `[F3A-UI-3]` falla con el código anterior: "Confirmar cambio" no quedaba
+  deshabilitado.
+- **B (adversaria):**
+  - el bloqueo es por pedido compartido, no por acción;
+  - "Volver" del paso de confirmación sigue dependiendo solo de confirmar,
+    porque no decide nada;
+  - pedir no se bloquea por confirmar o cancelar, porque es otro pedido y el
+    servidor responde 409 PENDING si corresponde;
+  - el 204 sigue siendo válido para logout, que es la única llamada sin
+    schema: lo cubre un test.
+- **Límite:** el bloqueo de los handlers usa la misma función `bloqueada` que
+  prueban los tests y la mutación. No hay un test unitario que invoque el
+  handler del contenedor, porque `platform-web` no tiene DOM de test. El
+  recorrido real lo cubre `[F3A-UI-3]` en Chromium.
+
+### Resultados de la ronda (ejecución real, 2026-10-12, este entorno)
+
+| Gate | Resultado |
+|---|---|
+| `pnpm verify` | **811 passed + 1 skipped** (+11). Lint: 0 errores, 12 warnings (los mismos) |
+| `pnpm build` (con `NEXT_PUBLIC_TRUST_API_URL`) | OK. Una primera corrida sin esa variable falló a propósito por la guarda BL-30; no es un problema del cambio |
+| PostgreSQL 16 | **342 passed + 6 skipped** |
+| e2e-platform completo (local) | **10/10**, incluidos `[F3A-UI-1]` (v2 → v1), `[F3A-UI-2]` y `[F3A-UI-3]`; acceptance con resultados de Playwright OK (navegador 7 tests) |
+| mutaciones (tanda 298:339) | **41/41**: 27 `f3a:` + 14 `f3aui:` (3 nuevas) |
+| bootstrap, media, M2C, S3, manifest | **No re-ejecutados localmente.** Esta ronda no toca esas áreas. Evidencia: los jobs de CI sobre el nuevo HEAD |

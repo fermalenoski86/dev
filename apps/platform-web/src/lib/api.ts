@@ -217,7 +217,10 @@ export class PlatformClient {
     } catch {
       throw new PlatformApiError(0, 'NETWORK_ERROR', 'No se pudo conectar con la API.');
     }
-    if (res.status === 204) return undefined as z.infer<S>;
+    // 204 solo vale para las llamadas que NO esperan cuerpo (schema null: logout).
+    // Si la ruta promete un recurso (p. ej. las mutaciones de F3(a), 201/200), un
+    // 204 es una respuesta fuera de contrato: cae al schema y da UNEXPECTED_RESPONSE.
+    if (res.status === 204 && !schema) return undefined as z.infer<S>;
     const json: unknown = await res.json().catch(() => null);
     if (!res.ok) {
       if (res.status === 401) this.csrf = null;

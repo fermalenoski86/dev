@@ -89,7 +89,7 @@ describe('BL-23 · matriz de aceptación ejecutable', () => {
     const pw = scanPlaywrightTags([{ path: 'e2e-platform/v.spec.ts', source: "test('vigente [F3A-UI-1]', async () => {});" }]);
     expect(pw).toEqual([{ file: 'e2e-platform/v.spec.ts', title: 'vigente [F3A-UI-1]', ids: ['F3A-UI-1'] }]);
     const errores = validateNavegador({ navegador: NAV.filter((x: { id: string }) => x.id.startsWith('F3A-UI-')), pwTags: pw });
-    expect(errores).toEqual([expect.stringContaining('F3A-UI-2')]);
+    expect(errores).toEqual([expect.stringContaining('F3A-UI-2'), expect.stringContaining('F3A-UI-3')]);
   });
 
   it('E3c · NEGATIVO: navegador cubierto sin test de Playwright, tag a un ítem inexistente o pendiente sin motivo fallan', () => {

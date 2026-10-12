@@ -43,12 +43,13 @@ type Falla = 'cortar' | '502' | '504';
 async function sesion(email: string) {
   const nav = navegador(WEB, SESSION_COOKIE_DEV);
   let falla: Falla | null = null;
-  const posts: Array<{ url: string; key: string | null; body: string | null; status: number }> = [];
+  /** `body` = cuerpo de la SOLICITUD; `resBody`/`status`/`replayed` = respuesta ORIGINAL de la API, antes de perderla. */
+  const posts: Array<{ url: string; key: string | null; body: string | null; status: number; resBody: string; replayed: string | null }> = [];
   const fetch: FetchLike = async (url, init) => {
     const res = await nav.fetch(url, init);
     if (init.method !== 'POST' || url.endsWith('/auth/login')) return res;
     const body = await res.text();
-    posts.push({ url, key: new Headers(init.headers).get('idempotency-key'), body: typeof init.body === 'string' ? init.body : null, status: res.status });
+    posts.push({ url, key: new Headers(init.headers).get('idempotency-key'), body: typeof init.body === 'string' ? init.body : null, status: res.status, resBody: body, replayed: res.headers.get('idempotent-replayed') });
     const f = falla;
     falla = null;
     if (f === 'cortar') return new Response(new ReadableStream({ start(c) { c.error(new Error('body connection reset')); } }), { status: res.status });
@@ -102,6 +103,22 @@ const eventos = async (entityId: string, action: string) =>
   Number((await t.app.selectFrom('audit_events').select((eb) => eb.fn.countAll<string>().as('n')).where('entity_id', '=', entityId).where('action', '=', action).executeTakeFirstOrThrow()).n);
 const pedidos = async (campaignId: string) => t.app.selectFrom('active_version_changes').selectAll().where('campaign_id', '=', campaignId).execute();
 const vigente = async (campaignId: string) => (await sql<{ a: string | null }>`SELECT active_version_id AS a FROM campaigns WHERE id = ${campaignId}::uuid`.execute(t.owner)).rows[0]?.a ?? null;
+
+/**
+ * §6.3: el reintento devuelve el MISMO status y el MISMO body completo que la
+ * respuesta original que se perdió (no un subconjunto), marcado como replay, y
+ * el cliente recibe exactamente ese body.
+ */
+function mismoReplay(posts: Array<{ key: string | null; status: number; resBody: string; replayed: string | null }>, status: number, valor: unknown) {
+  const [orig, replay] = posts.slice(-2) as [(typeof posts)[number], (typeof posts)[number]];
+  expect(replay.key).toBe(orig.key);
+  expect([orig.status, replay.status]).toEqual([status, status]);
+  expect(orig.replayed).toBe('false');
+  expect(replay.replayed).toBe('true');
+  const original = JSON.parse(orig.resBody) as unknown;
+  expect(JSON.parse(replay.resBody)).toStrictEqual(original);
+  expect(valor).toStrictEqual(original);
+}
 
 const intentPedir = (client: PlatformClient, campaignId: string) =>
   new Intent<ActiveVersionRequestPayload, unknown>((pl, key) => client.requestActiveVersionChange(campaignId, pl, key));
@@ -165,6 +182,7 @@ describe('F3(a) UI · cliente contra la API real', () => {
         expect(op.posts.map((p) => [p.status, p.key])).toEqual([[201, op.posts[0]!.key], [201, op.posts[0]!.key]]);
         expect(op.posts[1]!.body).toBe(op.posts[0]!.body); // mismo payload, sin reconstruir
         expect(r2.kind === 'ok' && r2.value).toMatchObject({ id: (await pedidos(c.id))[0]!.id, status: 'PENDING' });
+        mismoReplay(op.posts, 201, r2.kind === 'ok' ? r2.value : null);
         expect(await pedidos(c.id)).toHaveLength(1);
         expect(await eventos((await pedidos(c.id))[0]!.id, 'ACTIVE_VERSION_CHANGE_REQUESTED')).toBe(1);
       });
@@ -183,6 +201,7 @@ describe('F3(a) UI · cliente contra la API real', () => {
         expect(r2).toMatchObject({ kind: 'ok', value: { id: pend.id, status: 'CONFIRMED' } });
         expect(ap.posts.map((p) => p.status)).toEqual([200, 200]);
         expect(ap.posts[1]!.key).toBe(ap.posts[0]!.key);
+        mismoReplay(ap.posts, 200, r2.kind === 'ok' ? r2.value : null);
         expect(await eventos(c.id, 'ACTIVE_VERSION_CHANGED')).toBe(1);
         expect((await verifyChain(t.owner)).ok).toBe(true);
       });
@@ -196,7 +215,9 @@ describe('F3(a) UI · cliente contra la API real', () => {
         op.perder(falla);
         expect((await intent.start({ changeId: pend.id })).kind).toBe('uncertain');
         expect((await pedidos(c.id))[0]?.status).toBe('CANCELLED');
-        expect((await intent.retry())).toMatchObject({ kind: 'ok', value: { status: 'CANCELLED' } });
+        const r2 = await intent.retry();
+        expect(r2).toMatchObject({ kind: 'ok', value: { status: 'CANCELLED' } });
+        mismoReplay(op.posts, 200, r2.kind === 'ok' ? r2.value : null);
         expect(op.posts.slice(-2).map((p) => [p.status, p.key])).toEqual([[200, op.posts.at(-2)!.key], [200, op.posts.at(-2)!.key]]);
         expect(await eventos(pend.id, 'ACTIVE_VERSION_CHANGE_CANCELLED')).toBe(1);
       });

@@ -29,6 +29,20 @@ export interface OpState {
 }
 const OP_IDLE: OpState = { phase: 'idle', message: null };
 
+/** Confirmar y cancelar deciden sobre el MISMO pedido: una bloquea a la otra (#64, hallazgo 2). */
+const OPUESTA: Partial<Record<OpKind, OpKind>> = { confirm: 'cancel', cancel: 'confirm' };
+
+/**
+ * ¿Se puede EMPEZAR `op`? No, si ya hay una intención de `op` viva (en vuelo o
+ * incierta) ni si la decisión opuesta sobre el mismo pedido está viva: hasta
+ * resolverla o descartarla explícitamente no se toma una decisión contraria.
+ */
+export function bloqueada(ops: Record<OpKind, OpState>, op: OpKind): boolean {
+  if (ops[op].phase !== 'idle') return true;
+  const o = OPUESTA[op];
+  return o ? ops[o].phase !== 'idle' : false;
+}
+
 export interface ActiveVersionViewProps {
   me: { id: string; roles: readonly Role[] } | null;
   campaign: Campaign | null;
@@ -197,7 +211,7 @@ export function ActiveVersionView(p: ActiveVersionViewProps) {
             {propio && tiene(roles, 'INTERNAL_APPROVER', 'ADMIN') ? <p data-testid="four-eyes-note">Lo tiene que confirmar otra persona.</p> : null}
             {puedeConfirmar && !p.confirmOpen ? (
               <p>
-                <button type="button" onClick={p.onOpenConfirm} disabled={ocupado('cancel')}>
+                <button type="button" onClick={p.onOpenConfirm} disabled={bloqueada(p.ops, 'confirm')}>
                   Revisar y confirmar
                 </button>
               </p>
@@ -216,7 +230,7 @@ export function ActiveVersionView(p: ActiveVersionViewProps) {
                   {pendDetalle ? ` Motivo: ${pendDetalle.reason}` : ''}
                 </p>
                 <p>
-                  <button type="button" onClick={p.onConfirm} disabled={ocupado('confirm')} aria-busy={p.ops.confirm.phase === 'inflight'}>
+                  <button type="button" onClick={p.onConfirm} disabled={bloqueada(p.ops, 'confirm')} aria-busy={p.ops.confirm.phase === 'inflight'}>
                     {p.ops.confirm.phase === 'inflight' ? 'Confirmando…' : 'Confirmar cambio'}
                   </button>{' '}
                   <button type="button" onClick={p.onCloseConfirm} disabled={ocupado('confirm')}>
@@ -227,7 +241,7 @@ export function ActiveVersionView(p: ActiveVersionViewProps) {
             ) : null}
             {puedeCancelar ? (
               <p>
-                <button type="button" onClick={p.onCancel} disabled={ocupado('cancel') || ocupado('confirm')} aria-busy={p.ops.cancel.phase === 'inflight'}>
+                <button type="button" onClick={p.onCancel} disabled={bloqueada(p.ops, 'cancel')} aria-busy={p.ops.cancel.phase === 'inflight'}>
                   {p.ops.cancel.phase === 'inflight' ? 'Cancelando…' : 'Cancelar pedido'}
                 </button>
               </p>
@@ -270,8 +284,14 @@ export function ActiveVersionView(p: ActiveVersionViewProps) {
             {p.ops.request.phase === 'inflight' ? 'Enviando…' : 'Pedir cambio'}
           </button>
           <Incierto op="request" state={p.ops.request} onRetry={p.onRetry} onDiscard={p.onDiscard} />
-          {p.ops.request.phase === 'idle' ? <ErrorMessage message={p.ops.request.message} /> : null}
         </form>
+      ) : null}
+      {/* Fuera del formulario: tras releer, el pedido puede haber quedado sin formulario
+          (otro pendiente, campaña archivada) y el mensaje del 409 tiene que seguir a la vista (§4). */}
+      {p.ops.request.phase === 'idle' && p.ops.request.message ? (
+        <div className="card" data-testid="request-error">
+          <ErrorMessage message={p.ops.request.message} />
+        </div>
       ) : null}
 
       <section aria-labelledby="historial-vigente" className="card">
@@ -404,6 +424,8 @@ export function ActiveVersion({ campaignId }: { campaignId: string }) {
 
   const correr = async <R,>(op: OpKind, run: () => Promise<IntentOutcome<R>>, ok: string) => {
     if (ops[op].phase === 'inflight') return;
+    const opuesta = OPUESTA[op];
+    if (opuesta && ops[opuesta].phase !== 'idle') return; // ni empezar ni reintentar contra una decisión opuesta viva
     setOps((o) => ({ ...o, [op]: { phase: 'inflight', message: null } }));
     let outcome: IntentOutcome<R>;
     try {
@@ -423,19 +445,19 @@ export function ActiveVersion({ campaignId }: { campaignId: string }) {
 
   const onRequest = () => {
     const v = versions.find((x) => x.id === form.versionId);
-    if (!v || !campaign) return;
+    if (!v || !campaign || bloqueada(ops, 'request')) return;
     // payload congelado con lo que la página MUESTRA (expectedActiveVersionId incluido)
     const payload: ActiveVersionRequestPayload = payloadPedido(campaign, v, form.reason);
     void correr('request', () => intents.current.request.start(payload), OK.request);
   };
   const onConfirm = () => {
     const pend = campaign?.pendingActiveVersionChange;
-    if (!pend) return;
+    if (!pend || bloqueada(ops, 'confirm')) return;
     void correr('confirm', () => intents.current.confirm.start({ changeId: pend.id, versionHash: pend.toVersionHash }), OK.confirm);
   };
   const onCancel = () => {
     const pend = campaign?.pendingActiveVersionChange;
-    if (!pend) return;
+    if (!pend || bloqueada(ops, 'cancel')) return;
     void correr('cancel', () => intents.current.cancel.start({ changeId: pend.id }), OK.cancel);
   };
   const onRetry = (op: OpKind) => {

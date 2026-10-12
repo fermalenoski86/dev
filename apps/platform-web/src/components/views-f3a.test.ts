@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { PlatformApiError, type ActiveVersionChange, type Campaign, type Role, type VersionSummary } from '../lib/api';
-import { ADMIN_NOTICE, ActiveVersionView, type ActiveVersionViewProps, mensajeError } from './ActiveVersion';
+import { ADMIN_NOTICE, ActiveVersionView, type ActiveVersionViewProps, bloqueada, mensajeError } from './ActiveVersion';
 
 /**
  * F3(a) UI · vista de versión vigente (brief `docs/briefs/F3A_UI.md` §2–§4,
@@ -147,5 +147,55 @@ describe('F3(a) UI · mensajes de los 409 (§4)', () => {
     expect(mensajeError('request', e('INVALID_STATE_TRANSITION', { lifecycleStatus: 'ARCHIVED' }))).toMatch(/^La campaña está archivada\./);
     expect(mensajeError('confirm', e('INVALID_STATE_TRANSITION', { status: 'CANCELLED' }))).toMatch(/^El pedido ya no está pendiente\./);
     expect(mensajeError('confirm', new PlatformApiError(403, 'FOUR_EYES_VIOLATION', 'Quien pidió el cambio no puede confirmarlo.', 'r'))).toBe('Quien pidió el cambio no puede confirmarlo. (FOUR_EYES_VIOLATION · r)');
+  });
+});
+
+describe('F3(a) UI · correcciones de la auditoría #64', () => {
+  const PEND_MSG = 'Ya hay un pedido pendiente. msg (ACTIVE_VERSION_CHANGE_PENDING · r)';
+  it('hallazgo 1: el error de pedir sigue visible después de releer, aunque ya no haya formulario (otro pendiente, o campaña archivada)', () => {
+    const ops = { request: { phase: 'idle' as const, message: PEND_MSG }, confirm: IDLE, cancel: IDLE };
+    const escenarios = [
+      props({ meId: U(6), campaign: conPendiente(), history: [change()], ops }), // pendiente de OTRO operador
+      props({ campaign: campaign({ lifecycleStatus: 'ARCHIVED' }), ops: { ...ops, request: { phase: 'idle', message: 'La campaña está archivada. x' } } }),
+    ];
+    for (const p of escenarios) {
+      const h = html(createElement(ActiveVersionView, p));
+      expect(h).not.toContain('Pedir un cambio de versión vigente'); // el formulario ya no está
+      expect(h).toContain(`<div class="card" data-testid="request-error"><p role="alert" class="error">${p.ops.request.message}</p></div>`);
+    }
+  });
+
+  it('hallazgo 1: el error aparece una sola vez cuando el formulario sigue visible', () => {
+    const h = html(createElement(ActiveVersionView, props({ ops: { request: { phase: 'idle', message: 'Esa versión ya es la vigente. x' }, confirm: IDLE, cancel: IDLE } })));
+    expect(h).toContain('Pedir un cambio de versión vigente');
+    expect(h.split('Esa versión ya es la vigente. x')).toHaveLength(2);
+  });
+
+  for (const fase of ['inflight', 'uncertain'] as const) {
+    it(`hallazgo 2: ADMIN con la cancelación ${fase === 'inflight' ? 'en vuelo' : 'incierta'} → "Confirmar cambio" y "Revisar y confirmar" deshabilitados`, () => {
+      const ops = { request: IDLE, confirm: IDLE, cancel: { phase: fase, message: fase === 'uncertain' ? 'x' : null } };
+      const abierto = html(createElement(ActiveVersionView, props({ roles: ['ADMIN'], meId: AP, campaign: conPendiente(), history: [change()], confirmOpen: true, ops })));
+      expect(abierto).toContain('<button type="button" disabled="" aria-busy="false">Confirmar cambio</button>');
+      const cerrado = html(createElement(ActiveVersionView, props({ roles: ['ADMIN'], meId: AP, campaign: conPendiente(), history: [change()], ops })));
+      expect(cerrado).toContain('<button type="button" disabled="">Revisar y confirmar</button>');
+    });
+    it(`hallazgo 2 (simétrico): con la confirmación ${fase === 'inflight' ? 'en vuelo' : 'incierta'} → "Cancelar pedido" deshabilitado`, () => {
+      const ops = { request: IDLE, confirm: { phase: fase, message: fase === 'uncertain' ? 'x' : null }, cancel: IDLE };
+      const h = html(createElement(ActiveVersionView, props({ roles: ['ADMIN'], meId: AP, campaign: conPendiente(), history: [change()], confirmOpen: true, ops })));
+      expect(h).toContain('<button type="button" disabled="" aria-busy="false">Cancelar pedido</button>');
+    });
+  }
+
+  it('hallazgo 2: `bloqueada` (la usan los botones Y los handlers) — la decisión opuesta viva bloquea; pedir no depende de confirmar/cancelar', () => {
+    const o = (request: string, confirm: string, cancel: string) =>
+      ({ request: { phase: request, message: null }, confirm: { phase: confirm, message: null }, cancel: { phase: cancel, message: null } }) as Parameters<typeof bloqueada>[0];
+    expect(bloqueada(o('idle', 'idle', 'idle'), 'confirm')).toBe(false);
+    expect(bloqueada(o('idle', 'idle', 'inflight'), 'confirm')).toBe(true);
+    expect(bloqueada(o('idle', 'idle', 'uncertain'), 'confirm')).toBe(true);
+    expect(bloqueada(o('idle', 'inflight', 'idle'), 'cancel')).toBe(true);
+    expect(bloqueada(o('idle', 'uncertain', 'idle'), 'cancel')).toBe(true);
+    expect(bloqueada(o('idle', 'uncertain', 'idle'), 'confirm')).toBe(true); // la propia viva también
+    expect(bloqueada(o('idle', 'uncertain', 'uncertain'), 'request')).toBe(false);
+    expect(bloqueada(o('uncertain', 'idle', 'idle'), 'request')).toBe(true);
   });
 });

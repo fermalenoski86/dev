@@ -82,6 +82,29 @@ describe('F3(a) UI · §5 qué resultado es incierto', () => {
   });
 });
 
+describe('F3(a) UI · §5 un 204 en una mutación que promete un recurso es fuera de contrato (#64, hallazgo 3)', () => {
+  const ops: Array<[string, (c: PlatformClient, key: string) => Promise<unknown>]> = [
+    ['pedir', (c, key) => c.requestActiveVersionChange(U(9), payload, key)],
+    ['confirmar', (c, key) => c.confirmActiveVersionChange(U(5), { versionHash: 'a'.repeat(64) }, key)],
+    ['cancelar', (c, key) => c.cancelActiveVersionChange(U(5), key)],
+  ];
+  for (const [nombre, op] of ops) {
+    it(`${nombre}: 204 sin cuerpo → UNEXPECTED_RESPONSE incierto; la intención conserva la key (no anuncia éxito)`, async () => {
+      const { client } = cliente(() => new Response(null, { status: 204 }));
+      const intent = new Intent((pl: { n: number }, key: string) => op(client, key), () => 'k204');
+      const r = await intent.start({ n: 1 });
+      expect(r.kind).toBe('uncertain');
+      expect(r.kind === 'uncertain' && r.error).toMatchObject({ status: 204, code: 'UNEXPECTED_RESPONSE' });
+      expect(intent.snapshot?.key).toBe('k204');
+    });
+  }
+  it('logout (ruta sin cuerpo por contrato) sigue aceptando 204', async () => {
+    const { llamadas, client } = cliente(() => new Response(null, { status: 204 }));
+    await expect(client.logout()).resolves.toBeUndefined();
+    expect(llamadas.map((l) => [l.init.method, l.url])).toEqual([['POST', `${API}/api/v1/auth/logout`]]);
+  });
+});
+
 describe('F3(a) UI · §5 ciclo de la intención', () => {
   it('incierto → se conserva; Reintentar manda la MISMA key y el MISMO payload (sin reconstruir nada)', async () => {
     let n = 0;

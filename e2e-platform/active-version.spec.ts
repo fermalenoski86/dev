@@ -33,6 +33,22 @@ async function dosAprobadas(info: Parameters<typeof cuenta>[0], nombre: string) 
   return { campaignId, v1, v2 };
 }
 
+/**
+ * Deja `version` como VIGENTE por el flujo autorizado de la API, con cuatro
+ * ojos reales: op pide (primera selección) y ap confirma. No es parte del
+ * recorrido en el navegador; solo prepara el punto de partida.
+ */
+async function fijarVigente(info: Parameters<typeof cuenta>[0], campaignId: string, version: { id?: unknown; versionHash?: unknown }) {
+  const k = () => `e2e-f3a-${Date.now()}-${Math.random()}`;
+  const op = await apiSesion(cuenta(info, 'op'));
+  const ch = await op.llamar('POST', `/api/v1/campaigns/${campaignId}/active-version-changes`, { versionId: version.id, versionHash: version.versionHash, reason: 'preparación: primera selección', expectedActiveVersionId: null }, { 'idempotency-key': k() });
+  await op.logout();
+  const ap = await apiSesion(cuenta(info, 'ap'));
+  const r = await ap.llamar('POST', `/api/v1/active-version-changes/${ch.id as string}/confirm`, { versionHash: version.versionHash }, { 'idempotency-key': k() });
+  expect(r.status).toBe('CONFIRMED');
+  await ap.logout();
+}
+
 async function abrirVigente(page: Page, nombre: string, campaignId: string) {
   await page.goto(`${ORIGIN.web}/campaigns`);
   await page.getByRole('row', { name: new RegExp(nombre) }).getByRole('link', { name: 'Versión vigente' }).click();
@@ -40,22 +56,26 @@ async function abrirVigente(page: Page, nombre: string, campaignId: string) {
   await expect(page.getByTestId('admin-notice')).toHaveText('Versión vigente administrativa: no despliega contenido al edificio.');
 }
 
-test('versión vigente: OPERATOR pide volver a v1, INTERNAL_APPROVER (otra sesión) entra por /campaigns y confirma; las dos sesiones ven la vigente; axe sin violaciones [F3A-UI-1]', async ({ browser }, info) => {
+test('versión vigente: con v2 vigente, OPERATOR pide volver a v1, INTERNAL_APPROVER (otra sesión) entra por /campaigns y confirma viendo los dos hashes; las dos sesiones ven v1; axe sin violaciones [F3A-UI-1]', async ({ browser }, info) => {
   const nombre = `vigente ${Date.now()}`;
-  const { campaignId, v1 } = await dosAprobadas(info, nombre);
+  const { campaignId, v1, v2 } = await dosAprobadas(info, nombre);
+  await fijarVigente(info, campaignId, v2);
 
   const ctxOp = await contexto(browser, info);
   const pOp = await ctxOp.newPage();
   await loginUI(pOp, cuenta(info, 'op'));
   await abrirVigente(pOp, nombre, campaignId);
-  await expect(pOp.getByTestId('active-version')).toHaveText('Sin versión vigente');
+  await expect(pOp.getByTestId('active-version')).toContainText(v2.versionHash as string);
   await expect(pOp.getByTestId('latest-approved')).toContainText('v2');
   await sinViolaciones(pOp, '/campaigns/[id]/active-version (operador)');
+  // la vigente (v2) no se ofrece como destino
+  await expect(pOp.getByLabel('Versión aprobada').locator(`option[value="${v2.id as string}"]`)).toHaveCount(0);
   await pOp.getByLabel('Versión aprobada').selectOption(v1.id as string);
   await pOp.getByLabel('Motivo').fill('Volver a la primera versión aprobada');
   await pOp.getByRole('button', { name: 'Pedir cambio' }).click();
   await expect(pOp.getByTestId('active-version-notice')).toHaveText('Pedido creado: lo tiene que confirmar otra persona.');
   await expect(pOp.getByTestId('pending')).toContainText(v1.versionHash as string);
+  await expect(pOp.getByTestId('pending')).toContainText(v2.versionHash as string);
   await expect(pOp.getByRole('button', { name: 'Revisar y confirmar' })).toHaveCount(0);
   await captura(pOp, info, 'f3a-1-pedido');
 
@@ -65,7 +85,8 @@ test('versión vigente: OPERATOR pide volver a v1, INTERNAL_APPROVER (otra sesi�
   await abrirVigente(pAp, nombre, campaignId);
   await expect(pAp.getByTestId('pending')).toContainText('Volver a la primera versión aprobada');
   await pAp.getByRole('button', { name: 'Revisar y confirmar' }).click();
-  await expect(pAp.getByTestId('confirm-step')).toContainText(v1.versionHash as string);
+  // paso explícito: origen v2 y destino v1, cada uno con su hash
+  await expect(pAp.getByTestId('confirm-step')).toContainText(`Vas a cambiar la vigente de v2 (${v2.versionHash as string}) a v1 (${v1.versionHash as string})`);
   await sinViolaciones(pAp, '/campaigns/[id]/active-version (paso de confirmación)');
   await captura(pAp, info, 'f3a-2-confirmar');
   await pAp.getByRole('button', { name: 'Confirmar cambio' }).click();
@@ -73,6 +94,7 @@ test('versión vigente: OPERATOR pide volver a v1, INTERNAL_APPROVER (otra sesi�
   await expect(pAp.getByTestId('active-version')).toContainText(v1.versionHash as string);
   await expect(pAp.getByTestId('no-pending')).toBeVisible();
   await expect(pAp.getByTestId('active-history').locator('tbody tr').first()).toContainText('CONFIRMED');
+  await expect(pAp.getByTestId('active-history').locator('tbody tr').first()).toContainText('v2 → v1');
 
   await pOp.reload();
   await expect(pOp.getByTestId('active-version')).toContainText(v1.versionHash as string);
@@ -97,5 +119,37 @@ test('cuatro ojos en el navegador: ADMIN pide y no ve "Confirmar" (lo tiene que 
   await expect(page.getByTestId('active-version-notice')).toHaveText('Pedido cancelado.');
   await expect(page.getByTestId('active-version')).toHaveText('Sin versión vigente');
   await expect(page.getByTestId('active-history').locator('tbody tr').first()).toContainText('CANCELLED');
+  await cerrar(ctx, info);
+});
+
+test('decisión opuesta bloqueada: ADMIN (no pidió) abre la confirmación, la cancelación queda INCIERTA (red cortada) y "Confirmar cambio" no se puede usar hasta resolverla; Reintentar cancela con la misma intención [F3A-UI-3]', async ({ browser }, info) => {
+  const nombre = `vigente-opuesta ${Date.now()}`;
+  const { campaignId, v1 } = await dosAprobadas(info, nombre);
+  const op = await apiSesion(cuenta(info, 'op'));
+  await op.llamar('POST', `/api/v1/campaigns/${campaignId}/active-version-changes`, { versionId: v1.id, versionHash: v1.versionHash, reason: 'pedido de otro', expectedActiveVersionId: null }, { 'idempotency-key': `e2e-f3a-${Date.now()}-${Math.random()}` });
+  await op.logout();
+
+  const ctx = await contexto(browser, info);
+  const page = await ctx.newPage();
+  await loginUI(page, cuenta(info, 'admin'));
+  await abrirVigente(page, nombre, campaignId);
+  await page.getByRole('button', { name: 'Revisar y confirmar' }).click();
+  await expect(page.getByTestId('confirm-step')).toBeVisible();
+  const keys: string[] = [];
+  page.on('request', (r) => {
+    if (r.method() === 'POST' && r.url().endsWith('/cancel')) keys.push(r.headers()['idempotency-key'] ?? '');
+  });
+  await page.route('**/api/v1/active-version-changes/*/cancel', (r) => r.abort('connectionreset'));
+  await page.getByRole('button', { name: 'Cancelar pedido' }).click();
+  await expect(page.getByTestId('uncertain-cancel')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Confirmar cambio' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Cancelar pedido' })).toBeDisabled();
+  await captura(page, info, 'f3a-4-opuesta-bloqueada');
+  await page.unroute('**/api/v1/active-version-changes/*/cancel');
+  await page.getByTestId('uncertain-cancel').getByRole('button', { name: 'Reintentar' }).click();
+  await expect(page.getByTestId('active-version-notice')).toHaveText('Pedido cancelado.');
+  await expect(page.getByTestId('active-history').locator('tbody tr').first()).toContainText('CANCELLED');
+  expect(keys).toHaveLength(2);
+  expect(keys[1]).toBe(keys[0]); // misma intención, misma key
   await cerrar(ctx, info);
 });

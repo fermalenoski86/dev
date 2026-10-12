@@ -47,8 +47,9 @@ export const POINTS = [
 export const NAVEGADOR = [
   { id: 'E3-41', texto: '§41 E2E Playwright: login, campaña, envío, aprobación por otro usuario y versión aprobada vs. working draft, en navegador', estado: 'cubierto', job: 'e2e-platform' },
   { id: 'E3-47', texto: '§47 screenshots y video del flujo', estado: 'cubierto', job: 'e2e-platform', nota: 'Artifact de CI `e2e-platform-evidence` con `evidence-manifest.json` validado (BL-29), retención 90 días; no se versionan binarios.' },
-  { id: 'F3A-UI-1', texto: 'F3(a) UI: versión vigente administrativa: OPERATOR pide, INTERNAL_APPROVER (otra sesión, entrando por /campaigns) confirma; las dos sesiones ven la vigente; axe sin violaciones', estado: 'cubierto', job: 'e2e-platform' },
+  { id: 'F3A-UI-1', texto: 'F3(a) UI: versión vigente administrativa: con v2 vigente, OPERATOR pide volver a v1, INTERNAL_APPROVER (otra sesión, entrando por /campaigns) confirma viendo origen y destino con sus hashes; las dos sesiones ven v1; axe sin violaciones', estado: 'cubierto', job: 'e2e-platform' },
   { id: 'F3A-UI-2', texto: 'F3(a) UI: cuatro ojos en navegador: quien pidió (ADMIN) no ve "Confirmar" y puede cancelar su pedido', estado: 'cubierto', job: 'e2e-platform' },
+  { id: 'F3A-UI-3', texto: 'F3(a) UI: decisión opuesta bloqueada: con la cancelación incierta (red cortada) "Confirmar cambio" queda deshabilitado; Reintentar cancela con la misma key', estado: 'cubierto', job: 'e2e-platform' },
 ];
 
 /** Directorio de los specs de navegador de plataforma (E3c). */

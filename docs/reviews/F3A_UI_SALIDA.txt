@@ -85,3 +85,75 @@ E2E M2C (14): sin Chrome con H.264 en este entorno → evidencia en el job e2e-m
 Las 298 mutaciones anteriores: no se re-corrieron acá (no cambian esas áreas) → evidencia en el job mutations de CI (las 336).
 Contrato S3 (compose-smoke): sin cambios de storage → evidencia en el job compose-smoke de CI.
 Manifest de evidencia (BL-29): lo arma y valida el job e2e-platform de CI con el SHA del PR.
+
+======== Ronda 1 (AUDIT: CAMBIOS sobre ba20f8b) — 2026-10-12, este entorno ========
+== pnpm verify
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  52 passed | 1 skipped (53)
+      Tests  811 passed | 1 skipped (812)
+== npx vitest run -c vitest.platform.config.ts (PostgreSQL 16 real)
+ Test Files  30 passed | 1 skipped (31)
+      Tests  342 passed | 6 skipped (348)
+== pnpm build sin NEXT_PUBLIC_TRUST_API_URL (corrida errónea mía; la guarda BL-30 la rechaza, como corresponde)
+apps/platform-web build: - NEXT_PUBLIC_TRUST_API_URL es obligatoria en `next build` (se incrusta en el bundle)
+== NEXT_PUBLIC_TRUST_API_URL=https://api.trust.test:8443 NEXT_PUBLIC_TRUST_BUILDER_URL=https://control.trust.test:8443 pnpm build
+exit 0
+== playwright test -c playwright.platform.config.ts (e2e-platform completo, local, 2 workers)
+✓   1 [chromium] › e2e-platform/a11y.spec.ts:48:5 › axe: login, campañas, detalle de campaña y revisión sin violaciones [BL-28] (14.5s)
+✓   2 [chromium] › e2e-platform/active-version.spec.ts:59:5 › versión vigente: con v2 vigente, OPERATOR pide volver a v1, INTERNAL_APPROVER (otra sesión) entra por /campaigns y confirma viendo los dos hashes; las dos sesiones ven v1; axe sin violaciones [F3A-UI-1] (14.9s)
+✓   4 [chromium] › e2e-platform/active-version.spec.ts:106:5 › cuatro ojos en el navegador: ADMIN pide y no ve "Confirmar" (lo tiene que confirmar otra persona); cancela su pedido [F3A-UI-2] (4.7s)
+✓   3 [chromium] › e2e-platform/a11y.spec.ts:78:5 › teclado: login (error anunciado) → campaña → enviar; login → revisión → aprobar, con foco visible [BL-28] (9.3s)
+✓   5 [chromium] › e2e-platform/active-version.spec.ts:125:5 › decisión opuesta bloqueada: ADMIN (no pidió) abre la confirmación, la cancelación queda INCIERTA (red cortada) y "Confirmar cambio" no se puede usar hasta resolverla; Reintentar cancela con la misma intención [F3A-UI-3] (4.8s)
+✓   7 [chromium] › e2e-platform/history.spec.ts:12:5 › historial: el aprobador va de la versión al historial de su campaña (más nueva primero), abre otra versión y axe sin violaciones [BL-31] (6.5s)
+✓   6 [chromium] › e2e-platform/flow-41.spec.ts:47:5 › 1 · OPERATOR: login → crea la campaña → el Builder guarda el draft en el backend → sube assets → envía → hash visible → logout [E3-41] [E3-47] (8.6s)
+✓   9 [chromium] › e2e-platform/flow-41.spec.ts:107:5 › 2 · INTERNAL_APPROVER (otro usuario): login → ve la versión → adjunta evidencia → aprueba el hash exacto [E3-41] [E3-47] (4.7s)
+✓   8 [chromium] › e2e-platform/session-multihost.spec.ts:13:5 › sesión multihost: login en web, el Builder en control usa la cookie del host de la API, CSRF, origen bloqueado y logout [E3-41] (6.9s)
+✓  10 [chromium] › e2e-platform/flow-41.spec.ts:132:5 › 3 · OPERATOR (login nuevo): APPROVED VERSION + hash exacto + working draft aparte → edita → la versión aprobada no cambia [E3-41] [E3-47] (5.8s)
+10 passed (54.9s)
+== node scripts/acceptance/cli.mjs check --playwright-results test-results/e2e-platform-results.json
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N], todos passed en Playwright; docs/reviews/M3A1_ACEPTACION.md al día
+== python3 scripts/mutation-check.py --tanda 298:339
+ATRAPADA   f3a: cuatro ojos en la app (quien pidió confirma)
+ATRAPADA   f3a: cuatro ojos en la función
+ATRAPADA   f3a: cuatro ojos en el trigger de la tabla
+ATRAPADA   f3a: CONFIRMED por fuera de la función
+ATRAPADA   f3a: hash al pedir (app)
+ATRAPADA   f3a: hash al confirmar (app)
+ATRAPADA   f3a: versión de otra campaña
+ATRAPADA   f3a: destino no APPROVED (app)
+ATRAPADA   f3a: destino no APPROVED (base)
+ATRAPADA   f3a: concurrencia optimista al pedir
+ATRAPADA   f3a: IS NOT DISTINCT FROM reemplazado por <> en la función
+ATRAPADA   f3a: vencimiento ignorado al confirmar
+ATRAPADA   f3a: vencimiento perezoso ignorado al pedir
+ATRAPADA   f3a: TTL en horas en vez de minutos
+ATRAPADA   f3a: 409 por vigente cambiada con throw (rollback)
+ATRAPADA   f3a: 409 por vencido con throw (rollback)
+ATRAPADA   f3a: el cambio no se audita como ACTIVE_VERSION_CHANGED
+ATRAPADA   f3a: cancela cualquiera
+ATRAPADA   f3a: replay del pedido responde 200
+ATRAPADA   f3a: backfill de la vigente con la última aprobada
+ATRAPADA   f3a: aprobar mueve la vigente
+ATRAPADA   f3a: search_path sin pg_temp
+ATRAPADA   f3a: EXECUTE para PUBLIC
+ATRAPADA   f3a: trust_app conserva UPDATE de active_version_id
+ATRAPADA   f3a: la función acepta cualquier confirmador (sin rol ni habilitado)
+ATRAPADA   f3a: la base acepta un pedido de cualquiera
+ATRAPADA   f3a: cancelar no valida un cuerpo JSON null
+ATRAPADA   f3aui: muestra Confirmar a quien pidió
+ATRAPADA   f3aui: expectedActiveVersionId sale de la última aprobada
+ATRAPADA   f3aui: key nueva en el reintento
+ATRAPADA   f3aui: descarta la intención ante cuerpo ilegible (UNEXPECTED_RESPONSE)
+ATRAPADA   f3aui: descarta la intención ante un 5xx (502/504)
+ATRAPADA   f3aui: el reintento usa el payload actual del formulario (no congelado)
+ATRAPADA   f3aui: permite empezar otra con una intención viva
+ATRAPADA   f3aui: permite doble envío en vuelo
+ATRAPADA   f3aui: no relee tras un error definitivo (409)
+ATRAPADA   f3aui: esconde el aviso administrativo
+ATRAPADA   f3aui: ofrece la vigente o una SUBMITTED como destino
+ATRAPADA   f3aui: el error de pedir se pierde al desaparecer el formulario (#64 h1)
+ATRAPADA   f3aui: la decisión opuesta viva no bloquea (#64 h2)
+ATRAPADA   f3aui: 204 sin cuerpo pasa como éxito en una mutación que promete un recurso (#64 h3)
+atrapadas 41 · sobreviven 0 · sin salida 0
+== no ejecutado localmente en esta ronda
+bootstrap, media, E2E M2C (14), contrato S3, manifest BL-29 y las mutaciones fuera de 298:339 → evidencia en los jobs de CI sobre el nuevo HEAD.

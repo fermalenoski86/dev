@@ -163,5 +163,11 @@ Aprobar una versión **no** genera ningún evento de vigente.
   congela key y payload. Ante un resultado incierto (red, cuerpo ilegible o
   5xx) se conserva la intención y "Reintentar" manda lo mismo. Ante un
   resultado definitivo se descarta y la página vuelve a leer el estado.
+- **Decisiones opuestas:** confirmar y cancelar deciden sobre el mismo pedido.
+  Mientras una está en vuelo o incierta, la otra queda bloqueada (botones y
+  handlers) hasta resolverla o descartarla. El error de un pedido rechazado se
+  sigue viendo aunque, al releer, el formulario ya no esté.
+- **204:** el cliente solo lo acepta en llamadas sin cuerpo (logout). En estas
+  mutaciones es una respuesta fuera de contrato y cuenta como incierta.
 - **Límite:** la recuperación de un resultado incierto dura lo que dura la
   Idempotency-Key en el servidor (24 h).
