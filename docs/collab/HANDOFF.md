@@ -15,7 +15,7 @@
 | Qué | Dónde | Estado |
 |---|---|---|
 | F3(a) API | #56 | mergeada `8fae6fe` |
-| UI de versión vigente (Q6) | #55 / PR #60 / #62 / #63 | corregir brief; sin aprobación |
+| UI de versión vigente (Q6) | #55 | brief aprobado (#60); implementación por empezar |
 | P-01 handoff CAS | PR #58 | lateral; fuera de la auditoría F3(a) |
 | E2E intermitente :17 (LOADING) | #26 | sin reproducir en 40 corridas; observabilidad #40/#41 mergeada |
 | Issue AUDIT BL-07 duplicado | #46 | cerrar (válido #47, ya cerrado) |
