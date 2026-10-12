@@ -42,6 +42,12 @@ FILE=docs/collab/HANDOFF.md
 # lo reutilice. Mapeo a rutas del repo, sin inventar familias nuevas:
 #   gates/proceso: workflows, scripts/ci, scripts/collab, mutation-check, configs de
 #                  vite/vitest/playwright a cualquier profundidad y extensión
+#                  + lo que gates.yml ejecuta o lo que define un gate (ronda 9, autorrevisión):
+#                  scripts/{dev,acceptance,e2e-platform}/, packages/platform-db/scripts/
+#                  (pg-up, acceptance:check, manifiesto e2e, bootstrap-smoke) y en la RAÍZ
+#                  package.json (define verify/acceptance:check/progress:check),
+#                  .eslintrc* (lint) y tsconfig.base.json (typecheck). Solo raíz: el
+#                  package.json de un paquete es producto; si lo comparte con la fase, R3.
 #   migraciones:   packages/platform-db/src/{migrations,migrator.ts,bootstrap.sql}
 #   auth/CSRF/CORS: packages/platform-auth, apps/platform-api/src/{auth*,actor.ts,cors.ts}
 #   aprobación:    packages/platform-approval, apps/platform-api/src/approval*
@@ -50,7 +56,7 @@ FILE=docs/collab/HANDOFF.md
 #                  apps/platform-api/src/server.ts
 #   congelado:     apps/control (M2C.2)
 # Hardware: sin rutas todavía (no existe). HANDOFF.md lo cubre R1 para todo PR.
-GATES_RE='^(\.github/workflows/|scripts/ci/|scripts/collab/|scripts/mutation-check\.py$|packages/platform-db/src/(migrations/|migrator\.ts$|bootstrap\.sql$)|packages/platform-auth/|apps/platform-api/src/(auth|approval)|apps/platform-api/src/(actor|cors|server)\.ts$|packages/platform-approval/|packages/platform-storage/|packages/platform-media/src/process\.ts$|apps/control/)|(^|/)(vite|vitest|playwright)[^/]*\.config\.[cm]?[jt]s$'
+GATES_RE='^(\.github/workflows/|scripts/ci/|scripts/collab/|scripts/mutation-check\.py$|scripts/(dev|acceptance|e2e-platform)/|packages/platform-db/scripts/|(package|tsconfig\.base)\.json$|\.eslintrc[^/]*$|packages/platform-db/src/(migrations/|migrator\.ts$|bootstrap\.sql$)|packages/platform-auth/|apps/platform-api/src/(auth|approval)|apps/platform-api/src/(actor|cors|server)\.ts$|packages/platform-approval/|packages/platform-storage/|packages/platform-media/src/process\.ts$|apps/control/)|(^|/)(vite|vitest|playwright)[^/]*\.config\.[cm]?[jt]s$'
 
 fallo() { echo "paralelo: $*" >&2; exit "${2:-1}"; }
 rechazo() { local code=$1; shift; echo "paralelo: RECHAZADO — $*" >&2; exit "$code"; }

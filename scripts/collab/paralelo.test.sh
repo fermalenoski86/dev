@@ -177,6 +177,14 @@ for par in "migr:packages/platform-db/src/migrations/0009_x.sql" "migrator:packa
   SF=$(rama "lateral/alto-${par%%:*}" "${par#*:}")
   corre 48 "$SF"; check "familia alto P-03: ${par#*:} → exit 8" '[ "$RC" = 8 ]'
 done
+# Ronda 9 (autorrevisión de Claude): lo que gates.yml ejecuta o lo que define un gate
+for par in "pgup:scripts/dev/pg-up.sh" "accept:scripts/acceptance/cli.mjs" "e2eman:scripts/e2e-platform/manifest.mjs" \
+           "bsmoke:packages/platform-db/scripts/bootstrap-smoke.sh" "pkg:package.json" "eslint:.eslintrc.json" "tsbase:tsconfig.base.json"; do
+  SF=$(rama "lateral/gate-${par%%:*}" "${par#*:}")
+  corre 50 "$SF"; check "script/config de gate: ${par#*:} → exit 8" '[ "$RC" = 8 ]'
+done
+SPK=$(rama lateral/pkg-paquete packages/platform-media/package.json apps/platform-api/tsconfig.json)
+corre 51 "$SPK"; check "package.json/tsconfig de un paquete (producto, no raíz) → OK" '[ "$RC" = 0 ]'
 SRM=$(rama lateral/media-ok packages/platform-media/src/validator.ts packages/platform-db/src/fixtures.ts)
 corre 49 "$SRM"; check "media (sin process.ts) y platform-db fuera de migraciones → OK" '[ "$RC" = 0 ]'
 SRAU=$(rama lateral/authoring packages/show-authoring/src/x.ts)

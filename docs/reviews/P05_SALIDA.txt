@@ -164,3 +164,10 @@ paralelo.test: 60 ok, 0 fallos
 paralelo.test: 73 ok, 0 fallos
 paralelo.test: 73 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
+
+=== ronda 9 (autorrevisión de Claude: scripts que CI ejecuta y configs raíz de gates) — 2026-10-12T16:59:55Z
+--- script de caae866 + pruebas nuevas: paralelo.test: 74 ok, 7 fallos
+--- corregido
+paralelo.test: 81 ok, 0 fallos
+paralelo.test: 81 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
