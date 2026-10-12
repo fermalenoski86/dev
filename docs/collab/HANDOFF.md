@@ -3,29 +3,28 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** ChatGPT (auditor) — re-auditar F3(a) UI ronda 1 en [PR #64](https://github.com/fermalenoski86/dev/pull/64) sobre `9830a07` (respuesta por punto: [comentario](https://github.com/fermalenoski86/dev/pull/64#issuecomment-6117894636)); issue #65.
-**Fase:** F3(a) UI (#55). Brief aprobado #60 (`1140616`); API en main (`8fae6fe`).
-**HEAD auditado:** `ba20f8bb984ef0a3ee702e10a4092654a2645a45`.
-**Veredicto:** [AUDIT: CAMBIOS — 4 hallazgos P2](https://github.com/fermalenoski86/dev/pull/64#issuecomment-6117503190). No mergear.
-**Estado:** los 4 P2 están corregidos en `9830a07`, con CI 7/7 en la [run 38203142988](https://github.com/fermalenoski86/dev/actions/runs/38203142988). Local: verify 811+1, PG 342+6, e2e-platform 10/10 y mutaciones 298:339 41/41.
+**Pelota en:** Claude (implementador) — completar el cierre de F3(a) UI y continuar P-01.
+**Fase:** F3(a) UI (#55), [PR #64](https://github.com/fermalenoski86/dev/pull/64), issue #65.
+**HEAD aprobado:** `9830a079ef8f111cc5463922a64b4be18daf17d5`.
+**Veredicto:** [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/64#issuecomment-6118661022). Los 4 P2 de la ronda anterior están cerrados; no quedan gates pendientes.
 
 ## Próximo paso
-- ChatGPT: veredicto `AUDIT: APROBADO` / `AUDIT: CAMBIOS` en #64 sobre `9830a07`.
-- Si aprueba, Claude mergea, cierra #55 y #65 y sigue con la próxima fase. #43 sigue pendiente de Fer; P-01 y CS-0 van por separado.
+- Claude: squash merge #64 contra el main vigente; cerrar #55/#65 y registrar el SHA de merge.
+- Después continuar la siguiente unidad acordada: **P-01 / PR #58** (CAS + push solo fast-forward para HANDOFF). Rebasar/reconstruir sobre main si corresponde, autorrevisión A/B/C, CI verde y devolver a ChatGPT.
+- Orden posterior acordado: P-02 → P-05 → P-04 → P-03. CS-0 sigue autorizado y separado; no mezclarlo con P-01.
 
-## Evidencia revisada
-- CI [38187868256](https://github.com/fermalenoski86/dev/actions/runs/38187868256): 7/7, logs leídos por ChatGPT.
-- Checkout CI `e82de401`: merge de ba20f8b sobre `dd49424`.
-- verify 800+1; PG 342+6; bootstrap 6/6; media 63/63; mutaciones 336/336; M2C 14/14; platform 9/9; S3 16/16.
-- Manifest validado por CI: 11 screenshots, 23 videos. No inspección visual local del auditor.
-- Local auditor: 36 unitarias nuevas pasan + 4 diagnósticos reproducen los defectos; diff check OK.
-- Gates completos no ejecutados localmente: install falla engines (Node 24/pnpm 11); sin PG/Chromium. Límites completos en el comentario.
+## Evidencia de aprobación
+- CI [38203142988](https://github.com/fermalenoski86/dev/actions/runs/38203142988): 7/7 en `9830a07`; logs leídos por ChatGPT.
+- verify/build 811+1; PG 342+6; bootstrap 6/6; media 63/63; mutaciones 339/339; M2C 14/14; platform 10/10; S3 16/16.
+- Manifest CI: 12 screenshots y 24 videos, SHA-256 verificados. Sin inspección visual local del auditor.
+- Local auditor: 47/47 focales corregidas; diff check OK; merge sintético limpio contra `main@d46385e`.
+- No ejecutado localmente: gates completos/PG/Chromium/S3; entorno Node 24/pnpm 11 fuera del requerido. Límites completos en el veredicto.
 
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| F3(a) UI | #55 / #64 / #65 | correcciones de Claude; no aprobada |
-| P-01 handoff CAS | #58 | lateral, no auditado en esta vuelta |
+| F3(a) UI | #55 / #64 / #65 | aprobada; merge/cierre a Claude |
+| P-01 handoff CAS | #58 | siguiente unidad |
 | E2E intermitente :17 | #26 | observabilidad #40/#41; estado previo sin reproducción |
 | AUDIT BL-07 duplicado | #46 | cierre pendiente; válido #47 ya cerrado |
 
