@@ -94,7 +94,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          BASE_JOB=$(git rev-parse HEAD)
+          BASE_JOB=$(git rev-parse HEAD); echo "BASE_JOB=$BASE_JOB" >> "$GITHUB_ENV"
           git fetch -q origin "$BASE_REF"
           BASE_AHORA=$(git rev-parse FETCH_HEAD)
           git fetch -q origin main
@@ -117,25 +117,38 @@ jobs:
       # En pull_request_target el check del job cuelga del sha de la BASE, no del HEAD
       # del PR (Codex ronda 13, P1): un required check "paralelo" no se vería sobre el
       # último commit del PR. Por eso el veredicto se publica además por la API de
-      # Checks sobre HEAD_SHA, igual que hace paralelo-reevaluar.sh. Se publica DESPUÉS
-      # de la re-evaluación global y solo es success si ambas completaron en verde: un
-      # fallo del job sobre el sha de la base no alcanza para que el required check del
-      # HEAD quede rojo, así que el rojo se publica explícitamente (Codex sobre e511687, P1).
+      # Checks sobre HEAD_SHA. Se publica DESPUÉS de la re-evaluación global y un rojo
+      # (RC≠0 o RC2≠0) se publica siempre, explícito: un fallo del job sobre el sha de
+      # la base no alcanza para que el required check del HEAD quede rojo (Codex sobre
+      # e511687, P1). Un VERDE del chequeo directo NUNCA pisa lo que publicó la
+      # re-evaluación global (Codex sobre 8b6c7d0, P1): para un PR hacia main, el
+      # veredicto que vale es el que publicó paralelo-reevaluar.sh con los scripts de
+      # main (== MAIN0, revalidado antes y después de publicar); acá solo se verifica
+      # que lo haya incluido con ESTE HEAD y, si no, se publica failure. Un PR hacia
+      # otra base (audit/<tema>) no entra en la re-evaluación: ahí sí se publica el
+      # directo, tras revalidar que la base no avanzó desde el chequeo.
       - name: Publicar el veredicto como check sobre el HEAD del PR
         if: always()
         env:
           PR: ${{ github.event.pull_request.number }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
           GH_TOKEN: ${{ github.token }}
         run: |
           RC=${RC:-1}; RC2=${RC2:-1}
-          if [ "$RC" != 0 ]; then CON=failure; TIT="paralelo: RECHAZADO exit $RC"; DET=$(head -c 60000 "$RUNNER_TEMP/paralelo.out" 2>/dev/null || echo "sin salida del chequeo")
-          elif [ "$RC2" != 0 ]; then CON=failure; TIT="paralelo: SIN VEREDICTO (la re-evaluación global no completó, exit $RC2)"; DET=$(head -c 60000 "$RUNNER_TEMP/reevaluar.out" 2>/dev/null || echo "sin salida de la re-evaluación")
-          else CON=success; TIT="paralelo: OK"; DET=$(head -c 60000 "$RUNNER_TEMP/paralelo.out"); fi
-          gh api -X POST "repos/${{ github.repository }}/check-runs" \
-            -f name=paralelo -f head_sha="$HEAD_SHA" -f status=completed -f conclusion="$CON" \
-            -f "output[title]=$TIT" -f "output[summary]=$DET" >/dev/null
-          echo "check paralelo=$CON publicado sobre $HEAD_SHA (#$PR): $TIT"
+          publicar() { gh api -X POST "repos/${{ github.repository }}/check-runs" \
+            -f name=paralelo -f head_sha="$HEAD_SHA" -f status=completed -f conclusion="$1" \
+            -f "output[title]=$2" -f "output[summary]=$3" >/dev/null; echo "check paralelo=$1 publicado sobre $HEAD_SHA (#$PR): $2"; }
+          if [ "$RC" != 0 ]; then publicar failure "paralelo: RECHAZADO exit $RC" "$(head -c 60000 "$RUNNER_TEMP/paralelo.out" 2>/dev/null || echo "sin salida del chequeo")"; exit 0; fi
+          if [ "$RC2" != 0 ]; then publicar failure "paralelo: SIN VEREDICTO (la re-evaluación global no completó, exit $RC2)" "$(head -c 60000 "$RUNNER_TEMP/reevaluar.out" 2>/dev/null || echo "sin salida de la re-evaluación")"; exit 0; fi
+          if [ "$BASE_REF" = main ]; then
+            LINEA=$(grep -E "^#$PR @ ${HEAD_SHA:0:7} " "$RUNNER_TEMP/reevaluar.out" || true)
+            if [ -n "$LINEA" ]; then echo "veredicto del HEAD publicado por la re-evaluación global (no se pisa): $LINEA"; exit 0; fi
+            publicar failure "paralelo: SIN VEREDICTO (la re-evaluación global no incluyó #$PR @ ${HEAD_SHA:0:7})" "$(head -c 60000 "$RUNNER_TEMP/reevaluar.out")"; exit 0
+          fi
+          git fetch -q origin "$BASE_REF"; BASE_PUB=$(git rev-parse FETCH_HEAD)
+          if [ "$BASE_PUB" != "$BASE_JOB" ]; then publicar failure "paralelo: SIN VEREDICTO (la base $BASE_REF avanzó de ${BASE_JOB:0:7} a ${BASE_PUB:0:7} durante el job)" "El chequeo directo se calculó con $BASE_REF@${BASE_JOB:0:7}; re-run del job para evaluar con la base actual."; exit 0; fi
+          publicar success "paralelo: OK" "$(head -c 60000 "$RUNNER_TEMP/paralelo.out")"
       - name: Veredicto de este PR
         run: |
           [ "$RC" = 0 ] || exit "$RC"

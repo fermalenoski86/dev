@@ -228,3 +228,8 @@ handoff.test: 39 ok, 0 fallos
 paralelo.test: 118 ok, 0 fallos
 paralelo.test: 118 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
+
+=== ronda 18 (Codex sobre 8b6c7d0: el verde directo nunca pisa el veredicto de la re-evaluación global) — 2026-10-12T20:41:52Z
+paralelo.test: 118 ok, 0 fallos
+paralelo.test: 118 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
