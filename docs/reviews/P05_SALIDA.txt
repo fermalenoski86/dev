@@ -304,3 +304,10 @@ handoff.test: 47 ok, 0 fallos
 handoff.test: 47 ok, 0 fallos
 paralelo.test: 133 ok, 0 fallos
 paralelo.test: 133 ok, 0 fallos
+
+=== ronda 29 (Codex sobre 8fe9a9f: mergeado EN main, no solo .merged) — 2026-10-12T22:26:43Z
+--- código de 8fe9a9f + pruebas nuevas: handoff.test: 34 ok, 14 fallos
+--- corregido
+handoff.test: 48 ok, 0 fallos
+handoff.test: 48 ok, 0 fallos
+paralelo.test: 133 ok, 0 fallos

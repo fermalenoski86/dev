@@ -27,10 +27,12 @@ H=scripts/collab/handoff.sh
 # En la prueba no hay GitHub: stub que responde según $MERGEADOS (lista de nros).
 cat > "$T/mergeado.sh" <<'STUB'
 #!/usr/bin/env bash
+# imprime "<merged> <base> <merge_commit_sha>" como la API; el merge commit es main del remoto
 [ -z "${MERGEADO_FALLA:-}" ] || exit 1
-case " ${MERGEADOS:-} " in *" $1 "*) echo true;; *) echo false;; esac
+MC=$(git -C "$REMOTO" rev-parse main)
+case " ${MERGEADOS:-} " in *" $1 "*) echo "true ${MERGEADO_BASE:-main} $MC";; *) echo "false main null";; esac
 STUB
-chmod +x "$T/mergeado.sh"; export HANDOFF_PR_MERGEADO="$T/mergeado.sh" MERGEADOS="1"
+chmod +x "$T/mergeado.sh"; export HANDOFF_PR_MERGEADO="$T/mergeado.sh" MERGEADOS="1" REMOTO="$T/remoto.git"
 
 echo "1) ambos leen el mismo SHA"
 SA=$(cd "$T/A" && $H leer | sed -n 's/^HANDOFF_BASE_SHA=//p'); SB=$(cd "$T/B" && $H leer | sed -n 's/^HANDOFF_BASE_SHA=//p')
@@ -163,7 +165,10 @@ SF=$(cd "$T/A" && $H leer | sed -n 's/^HANDOFF_BASE_SHA=//p')
 printf '# HANDOFF\n\n**Pelota en:** ChatGPT — reauditar\n**En auditoría:** #9 @ %s\n' "$SHA40B" > "$T/f9-sha2.md"
 check "mismo #9 con sha nuevo (corrección entregada) → OK sin consultar" '(cd "$T/A" && MERGEADO_FALLA=1 HANDOFF_BASE_SHA=$SF $H escribir "$T/f9-sha2.md" "reauditar" >/dev/null 2>&1)'
 SF=$(cd "$T/A" && $H leer | sed -n 's/^HANDOFF_BASE_SHA=//p')
-check "con #9 mergeado, 'ninguno' → OK" '(cd "$T/A" && MERGEADOS="1 9" HANDOFF_BASE_SHA=$SF $H escribir "$T/f9-ninguno.md" "mergeado" >/dev/null 2>&1)'
+# Codex sobre 8fe9a9f: .merged es relativo a la base actual del PR; retargeteado y mergeado en otra rama no vale
+set +e; (cd "$T/A" && MERGEADOS="1 9" MERGEADO_BASE="fase/otra" HANDOFF_BASE_SHA=$SF $H escribir "$T/f9-ninguno.md" "otra base" 2>"$T/err7"); RC=$?; set -e
+check "#9 'mergeado' pero con base ≠ main (retarget) → exit 5 y lo dice" '[ "$RC" = 5 ] && grep -q "no en main" "$T/err7"'
+check "con #9 mergeado EN main (base main, merge commit ancestro), 'ninguno' → OK" '(cd "$T/A" && MERGEADOS="1 9" HANDOFF_BASE_SHA=$SF $H escribir "$T/f9-ninguno.md" "mergeado" >/dev/null 2>&1)'
 check "ningún git push lleva --force / --force-with-lease / -f" '! grep -E "git push.*(--force|-f\b)" "$AQUI/handoff.sh" | grep -v "^\s*#" | grep -q .'
 
 echo; echo "handoff.test: $ok ok, $fallos fallos"

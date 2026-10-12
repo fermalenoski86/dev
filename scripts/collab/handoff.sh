@@ -14,8 +14,11 @@
 #
 # Variables: HANDOFF_BASE_SHA (obligatoria para escribir), HANDOFF_REMOTE (origin),
 #            HANDOFF_BRANCH (main), GIT_AUTHOR_NAME/EMAIL como siempre.
-#            HANDOFF_PR_MERGEADO: comando que recibe <nro> e imprime true|false (default:
-#            gh api repos/<owner>/<repo>/pulls/<nro> --jq .merged). Sin verificación → exit 5.
+#            HANDOFF_PR_MERGEADO: comando que recibe <nro> e imprime "<merged> <base.ref>
+#            <merge_commit_sha>" (default: gh api repos/<owner>/<repo>/pulls/<nro>). Mergeado
+#            "en main" = merged true, base == main y merge commit ancestro de origin/main
+#            (Codex sobre 8fe9a9f: .merged es relativo a la base actual del PR, un retarget
+#            mergeado en otra rama también da true). Sin verificación → exit 5.
 set -euo pipefail
 REMOTE=${HANDOFF_REMOTE:-origin}
 BRANCH=${HANDOFF_BRANCH:-main}
@@ -33,11 +36,22 @@ repo_github() {
   if [ -n "${GITHUB_REPOSITORY:-}" ]; then echo "$GITHUB_REPOSITORY"; return; fi
   git remote get-url "$REMOTE" 2>/dev/null | sed -nE 's#^(https://github\.com/|git@github\.com:)([^/]+/[^/]+)/?$#\2#p' | sed -E 's/\.git$//'
 }
-pr_mergeado() { # $1 = nro → imprime true|false; falla si no puede verificar
+pr_estado() { # $1 = nro → "<merged> <base.ref> <merge_commit_sha>"; falla si no puede consultar
   if [ -n "${HANDOFF_PR_MERGEADO:-}" ]; then "${HANDOFF_PR_MERGEADO}" "$1"; return; fi
   local repo; repo=$(repo_github); [ -n "$repo" ] || return 1
   command -v gh >/dev/null || return 1
-  gh api "repos/$repo/pulls/$1" --jq '.merged' 2>/dev/null
+  gh api "repos/$repo/pulls/$1" --jq '"\(.merged) \(.base.ref) \(.merge_commit_sha)"' 2>/dev/null
+}
+pr_mergeado() { # $1 = nro → imprime true|false|<motivo>; "true" solo si está EN $BRANCH
+  local est merged base mc
+  est=$(pr_estado "$1") || { echo "no se pudo consultar #$1"; return 1; }
+  read -r merged base mc <<< "$est"
+  [ "$merged" = true ] || { echo "false"; return 0; }
+  [ "$base" = "$BRANCH" ] || { echo "mergeado en '$base', no en $BRANCH"; return 0; }
+  git fetch -q "$REMOTE" "$BRANCH" 2>/dev/null || true
+  [ -n "$mc" ] && [ "$mc" != null ] && git merge-base --is-ancestor "$mc" "$REMOTE/$BRANCH" 2>/dev/null \
+    || { echo "el merge commit ${mc:0:7} no es ancestro de $REMOTE/$BRANCH"; return 0; }
+  echo true
 }
 
 validar() { # $1 = archivo
