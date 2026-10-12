@@ -5,7 +5,16 @@
 # scripts/collab/paralelo.sh, scripts/ci/run.sh o este archivo no puede alterar el
 # chequeo que lo evalúa (Codex, PR #69, P1). El PR aporta solo su número, su sha y
 # su base como DATOS; nunca se ejecuta código del PR: no hay checkout de su ref ni
-# `run` de nada suyo. Sin secretos; permisos de solo lectura.
+# `run` de nada suyo. Sin secretos.
+#
+# Re-evaluación (auditor, AUDIT: CAMBIOS sobre 0f73e0c, P1): un lateral verde contra
+# la fase S1 no puede seguir verde cuando la fase avanza a S2. Por eso, además del
+# chequeo del PR que disparó el evento, se re-evalúan TODOS los PR abiertos hacia main
+# (a) cuando el PR evaluado es la fase activa del HANDOFF (su `synchronize`) y
+# (b) en cada push a main (cambio de HANDOFF o merge). El resultado se publica como
+# check-run "paralelo" sobre el HEAD de cada PR: el último publicado es el que vale.
+# Ambos caminos corren código de la base/main, nunca del PR. Permiso de escritura
+# SOLO sobre checks; nada de contents ni pull-requests write.
 #
 # Límite: el control entra en vigor cuando este archivo está en la base. En el PR
 # que lo introduce no corre (no hay fallback al script del PR, a propósito).
@@ -16,15 +25,20 @@ on:
     # de una fase recibe solo R1; si después apunta a main, R2–R4 se evalúan de nuevo
     # (Codex, ronda 2, P1).
     types: [opened, synchronize, reopened, ready_for_review, edited]
+  push:
+    branches: [main]
 permissions:
   contents: read
+  checks: write
+  pull-requests: read
 concurrency:
-  group: paralelo-${{ github.event.pull_request.number }}
+  group: paralelo-${{ github.event.pull_request.number || 'main' }}
   cancel-in-progress: true
 jobs:
   paralelo:
+    if: github.event_name == 'pull_request_target'
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       # checkout de la BASE del PR (comportamiento por defecto de pull_request_target)
       - uses: actions/checkout@v4
@@ -47,4 +61,37 @@ jobs:
           echo "$OUT"
           ENC=$(printf '%s' "$OUT" | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
           if [ "$RC" = 0 ]; then echo "::notice title=paralelo (exit 0)::$ENC"; else echo "::error title=paralelo RECHAZADO (exit $RC)::$ENC"; fi
-          exit "$RC"
+          echo "RC=$RC" >> "$GITHUB_ENV"
+      # Si este PR es la fase activa del HANDOFF de main, su avance invalida a los laterales:
+      # se re-evalúan todos los PR abiertos hacia main con el estado actual.
+      - name: Re-evaluar laterales abiertos (este PR es la fase activa)
+        if: github.event.pull_request.base.ref == 'main'
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          git fetch -q origin main
+          FASE=$(git show origin/main:docs/collab/HANDOFF.md | sed -nE 's/^\*\*En auditor(í|i)a:\*\* #([0-9]+) @ [0-9a-f]{40}\b.*/\2/p' | head -1)
+          if [ "$FASE" = "$PR" ]; then
+            scripts/collab/paralelo-reevaluar.sh "la fase activa #$PR avanzó a ${{ github.event.pull_request.head.sha }}"
+          else
+            echo "PR #$PR no es la fase activa (${FASE:-ninguna}): sin re-evaluación"
+          fi
+      - name: Veredicto de este PR
+        run: exit "$RC"
+
+  reevaluar:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      # push a main = cambió el HANDOFF (pelota, fase activa) o entró un merge: todos los
+      # PR abiertos se vuelven a comparar contra el estado nuevo.
+      - name: Re-evaluar todos los PR abiertos hacia main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: scripts/collab/paralelo-reevaluar.sh "main avanzó a ${{ github.sha }}"

@@ -34,7 +34,7 @@ rama() { # $1 nombre, resto archivos
 
 git init -q --bare -b main "$T/remoto.git"
 git init -q -b main "$T/semilla" && cd "$T/semilla"
-mkdir -p docs/collab scripts/collab .github/workflows scripts/ci && cp "$AQUI/paralelo.sh" "$AQUI/paralelo-deps.mjs" "$AQUI/handoff.sh" scripts/collab/
+mkdir -p docs/collab scripts/collab .github/workflows scripts/ci && cp "$AQUI/paralelo.sh" "$AQUI/paralelo-deps.mjs" "$AQUI/paralelo-reevaluar.sh" "$AQUI/handoff.sh" scripts/collab/
 printf '# HANDOFF\n\n**Pelota en:** Claude — inicio\n' > docs/collab/HANDOFF.md
 echo a > a.txt; echo b > b.txt; echo gates > .github/workflows/gates.yml; echo run > scripts/ci/run.sh
 git add -A && git commit -qm init && git remote add origin "$T/remoto.git" && git push -q origin main
@@ -207,7 +207,7 @@ S60=$(rama fase/deps packages/a/src/x.ts); pr_head 60 "$S60"
 handoff_main ChatGPT "#60 @ $S60"
 SD1=$(rama lateral/dep-api apps/api/src/y.ts)
 corre 61 "$SD1"; check "fase toca @t/a; lateral en apps/api (api→b→a, ninguna ruta en común) → exit 7" '[ "$RC" = 7 ]'
-check "el mensaje explica la dependencia" 'grep -q "@t/api ~ @t/a: el lateral depende" "$T/err"'
+check "el mensaje explica la dependencia" 'grep -q "@t/api (apps/api) ~ @t/a (packages/a): el lateral depende" "$T/err"'
 SD2=$(rama lateral/dep-c packages/c/src/z.ts)
 corre 62 "$SD2"; check "lateral en @t/c (independiente) → OK" '[ "$RC" = 0 ]'
 SD3=$(rama lateral/dep-mismo packages/a/src/otro.ts)
@@ -221,7 +221,52 @@ handoff_main ChatGPT "#65 @ $S65"
 SD5=$(rama lateral/dep-a packages/a/src/w.ts)
 corre 66 "$SD5"; check "fase en apps/api; lateral en @t/a (la fase depende del lateral) → exit 7" '[ "$RC" = 7 ] && grep -q "la fase depende" "$T/err"'
 corre 62 "$SD2"; check "y el lateral de @t/c sigue OK" '[ "$RC" = 0 ]'
+# auditor (AUDIT: CAMBIOS sobre 0f73e0c, P2): la fase toca @t/a; el lateral renombra @t/b → @t/bb
+# y le QUITA la dependencia a @t/a. La arista histórica b→a de main tiene que seguir conectada
+# a packages/b, aunque en el lateral esa carpeta se llame distinto.
+handoff_main ChatGPT "#60 @ $S60"
+SD6=$(cd "$T/semilla" && git checkout -q main && git pull -q origin main && git checkout -q -B lateral/dep-rename main \
+  && echo '{"name":"@t/bb"}' > packages/b/package.json && echo r >> packages/b/src/i.ts \
+  && git commit -qam "b pasa a llamarse bb y deja de depender de a" && git push -q -f origin lateral/dep-rename && git rev-parse HEAD)
+corre 67 "$SD6"; check "lateral que renombra @t/b→@t/bb y quita b→a mientras la fase toca @t/a → exit 7 (alias por revisión)" '[ "$RC" = 7 ]'
+check "el mensaje muestra los dos nombres de la carpeta y la arista histórica" 'grep -q "@t/b|@t/bb (packages/b)" "$T/err" && grep -q "@t/b → @t/a" "$T/err"'
 handoff_main Claude "ninguno"
+
+echo "5k) auditor (AUDIT: CAMBIOS sobre 0f73e0c, P1): la fase avanza S1→S2 y el lateral verde deja de serlo (re-evaluación)"
+S70=$(rama fase/toctou a.txt); pr_head 70 "$S70"
+handoff_main ChatGPT "#70 @ $S70"
+SL70=$(rama lateral/toctou b.txt)
+corre 71 "$SL70"; check "lateral que toca b.txt contra la fase S1 (solo a.txt) → OK" '[ "$RC" = 0 ]'
+# la fase avanza a S2 y ahora también toca b.txt; el lateral NO cambió (sin push → sin evento propio)
+S70b=$(cd "$T/semilla" && git checkout -q fase/toctou && echo s2 >> b.txt && git commit -qam "fase S2 toca b.txt" && git push -q -f origin fase/toctou && git rev-parse HEAD)
+pr_head 70 "$S70b"
+cat > "$T/listar.sh" <<LISTAR
+#!/usr/bin/env bash
+echo "71 $SL70"
+echo "70 $S70b"
+LISTAR
+cat > "$T/publicar.sh" <<'PUBLICAR'
+#!/usr/bin/env bash
+printf '%s %s %s | %s\n' "$1" "${2:0:7}" "$3" "$4" >> "$PUBLICADO"
+PUBLICAR
+chmod +x "$T/listar.sh" "$T/publicar.sh"
+: > "$T/publicado"
+set +e; (cd "$T/ci" && PARALELO_LISTAR="$T/listar.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" scripts/collab/paralelo-reevaluar.sh "fase a S2" >"$T/out" 2>"$T/err"); RC=$?; set -e
+check "re-evaluación corre sobre todos los PR abiertos → exit 0" '[ "$RC" = 0 ]'
+check "el lateral de b.txt pasa a failure (exit 7) sin haber cambiado" 'grep -q "^71 ${SL70:0:7} failure | paralelo: RECHAZADO exit 7" "$T/publicado"'
+check "la fase misma, con la pelota en ChatGPT y HEAD ≠ anotado, queda failure (exit 6)" 'grep -q "^70 ${S70b:0:7} failure | paralelo: RECHAZADO exit 6" "$T/publicado"'
+corre 71 "$SL70"; check "y el chequeo directo del lateral coincide (exit 7)" '[ "$RC" = 7 ]'
+# el HANDOFF cambia (fase mergeada → ninguno): la re-evaluación por push a main vuelve a aprobar
+handoff_main Claude "ninguno"
+: > "$T/publicado"
+(cd "$T/ci" && PARALELO_LISTAR="$T/listar.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" scripts/collab/paralelo-reevaluar.sh "handoff" >/dev/null 2>&1)
+check "tras el cambio de HANDOFF, ambos PR vuelven a success" '[ "$(grep -c " success | " "$T/publicado")" = 2 ]'
+# sin poder listar → exit 1 y nada publicado (no se inventa un veredicto)
+: > "$T/publicado"
+set +e; (cd "$T/ci" && PARALELO_LISTAR=/bin/false PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" scripts/collab/paralelo-reevaluar.sh >/dev/null 2>"$T/err"); RC=$?; set -e
+check "si no se pueden listar los PR → exit 1 y ningún check publicado" '[ "$RC" = 1 ] && [ ! -s "$T/publicado" ]'
+check "paralelo.yml re-evalúa en push a main y cuando el PR evaluado es la fase activa" 'grep -q "^  push:" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "paralelo-reevaluar.sh" "$AQUI/../../.github/workflows/paralelo.yml" && grep -qE "checks: write" "$AQUI/../../.github/workflows/paralelo.yml" && ! grep -qE "contents: write|pull-requests: write" "$AQUI/../../.github/workflows/paralelo.yml"'
+check "ningún git push en paralelo-reevaluar.sh (solo lee y publica checks)" '! grep -E "git push" "$AQUI/paralelo-reevaluar.sh" | grep -v "^\s*#" | grep -q .'
 
 echo "6) base distinta de main (audit/<tema> hacia la rama de la fase): solo la regla del HANDOFF"
 handoff_main ChatGPT "#7 @ $S7b"

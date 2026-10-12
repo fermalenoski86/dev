@@ -180,3 +180,11 @@ paralelo.test: 94 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
 --- grafo real del repo, ejemplo de Codex:
 @trust/platform-api ~ @trust/platform-campaigns: el lateral depende de un paquete que cambia la fase
+
+=== ronda 11 (AUDIT: CAMBIOS del auditor sobre 0f73e0c: P1 re-evaluación, P2 alias) — 2026-10-12T18:21:15Z
+--- script de 0f73e0c + pruebas nuevas (P2): paralelo.test: 93 ok, 3 fallos
+--- corregido
+paralelo.test: 105 ok, 0 fallos
+paralelo.test: 105 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+--- bash -n paralelo.sh paralelo-reevaluar.sh handoff.sh; node --check paralelo-deps.mjs; yaml de paralelo.yml parsea: OK
