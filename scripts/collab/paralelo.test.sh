@@ -22,6 +22,8 @@ handoff_main() {
     && { printf '# HANDOFF\n\n**Pelota en:** %s — test\n' "$1"; [ -n "${2:-}" ] && printf '**En auditoría:** %s\n' "$2"; true; } > docs/collab/HANDOFF.md \
     && git commit -qam "handoff: $1 ${2:-}" && git push -q origin main)
 }
+# simula GitHub: refs/pull/N/head apunta al HEAD actual del PR N
+pr_head() { git -C "$T/remoto.git" update-ref "refs/pull/$1/head" "$2"; }
 # crea una rama desde main que toca los archivos dados; imprime el sha
 rama() { # $1 nombre, resto archivos
   local n=$1; shift
@@ -39,13 +41,13 @@ git add -A && git commit -qm init && git remote add origin "$T/remoto.git" && gi
 git clone -q "$T/remoto.git" "$T/ci"
 
 echo "1) PR #7 (fase) toca a.txt; Claude lo entrega: pelota a ChatGPT con 'En auditoría: #7 @ sha'"
-S7=$(rama fase/x a.txt)
+S7=$(rama fase/x a.txt); pr_head 7 "$S7"
 handoff_main ChatGPT "#7 @ $S7"
 check "el HANDOFF escrito pasa validar (handoff.sh)" '(cd "$T/ci" && git fetch -q origin && git show origin/main:docs/collab/HANDOFF.md > "$T/h.md" && scripts/collab/handoff.sh validar "$T/h.md" >/dev/null)'
 corre 7 "$S7"; check "el PR en auditoría con su HEAD exacto → OK" '[ "$RC" = 0 ]'
 
 echo "2) la rama en auditoría se modifica mientras la pelota es de ChatGPT"
-S7b=$(rama fase/x a.txt)   # nuevo commit sobre la misma rama (otro sha)
+S7b=$(rama fase/x a.txt); pr_head 7 "$S7b"   # nuevo commit sobre la misma rama (otro sha)
 corre 7 "$S7b"; check "nuevo HEAD en el PR auditado → exit 6" '[ "$RC" = 6 ]'
 check "el mensaje nombra el sha auditado y el nuevo" 'grep -q "${S7:0:7}" "$T/err" && grep -q "${S7b:0:7}" "$T/err"'
 corre 7 "$S7"; check "el sha auditado sigue siendo válido (CI re-corrido sobre el mismo HEAD)" '[ "$RC" = 0 ]'
@@ -69,19 +71,47 @@ echo "4) concurrencia: dos laterales independientes abiertos a la vez, ambos OK;
 SL2=$(rama lateral/b2 c.txt)
 corre 8 "$SL"; R1=$RC; corre 14 "$SL2"; check "dos laterales sin archivos en común → ambos OK" '[ "$R1" = 0 ] && [ "$RC" = 0 ]'
 # el lateral tiene una copia VIEJA del HANDOFF en su rama (no lo modifica); main cambia de PR auditado
-S15=$(rama fase/y b.txt)
+S15=$(rama fase/y b.txt); pr_head 15 "$S15"
 handoff_main ChatGPT "#15 @ $S15"
 corre 8 "$SL"; check "ahora #15 (toca b.txt) está en auditoría: el lateral de b.txt pasa a exit 7 sin cambiar su rama" '[ "$RC" = 7 ]'
 corre 9 "$SA"; check "y el lateral de a.txt ya es válido (lee main, no la copia de la rama)" '[ "$RC" = 0 ]'
 
-echo "5) ausencia de merges fuera de orden: el lateral que comparte archivos queda rojo hasta que la fase se mergea"
+echo "5) ausencia de merges fuera de orden: el lateral que comparte archivos queda rojo hasta que la fase está en main"
 corre 8 "$SL"; check "antes del merge de #15: rojo" '[ "$RC" = 7 ]'
+echo "5b) Codex P1: la pelota vuelve a Claude (AUDIT: CAMBIOS) y #15 sigue SIN mergear: R3/R4 siguen activos"
+handoff_main Claude "#15 @ $S15"
+corre 8 "$SL"; check "pelota en Claude, #15 sin mergear, lateral toca b.txt → exit 7 (antes pasaba: era el bug)" '[ "$RC" = 7 ]'
+corre 11 "$SG"; check "pelota en Claude, #15 sin mergear, lateral toca un workflow → exit 8" '[ "$RC" = 8 ]'
+corre 9 "$SA"; check "lateral que toca a.txt (ajeno a #15) → OK" '[ "$RC" = 0 ]'
+S15b=$(rama fase/y b.txt c.txt); pr_head 15 "$S15b"   # Claude corrige hallazgos: la fase avanza y ahora toca c.txt
+corre 15 "$S15b"; check "la fase activa puede avanzar con la pelota en Claude (R2 apagado) → OK" '[ "$RC" = 0 ]'
+corre 14 "$SL2"; check "R3 compara contra el HEAD ACTUAL de #15 (refs/pull/15/head), no el sha anotado: c.txt ahora choca → exit 7" '[ "$RC" = 7 ]'
+check "el mensaje cita el HEAD actual de la fase" 'grep -q "${S15b:0:7}" "$T/err"'
 (cd "$T/semilla" && git checkout -q main && git pull -q origin main && git merge -q --squash "fase/y" >/dev/null && git commit -qm "fase y (#15)" && git push -q origin main)
 handoff_main Claude "ninguno"
-corre 8 "$SL"; check "después del merge y con la pelota en Claude: OK (nada en auditoría)" '[ "$RC" = 0 ]'
-corre 9 "$SA"; check "con la pelota en Claude, también el que toca a.txt: OK" '[ "$RC" = 0 ]'
-corre 7 "$S7b"; check "con la pelota en Claude, la rama de la fase puede cambiar (Claude corrige hallazgos)" '[ "$RC" = 0 ]'
+corre 8 "$SL"; check "después del merge y con 'ninguno': OK (nada activo)" '[ "$RC" = 0 ]'
+corre 14 "$SL2"; check "y el de c.txt también: OK" '[ "$RC" = 0 ]'
+corre 7 "$S7b"; check "sin fase activa, cualquier rama puede cambiar → OK" '[ "$RC" = 0 ]'
 corre 10 "$SH"; check "pero HANDOFF.md en un PR sigue rechazado con cualquier pelota → exit 5" '[ "$RC" = 5 ]'
+
+echo "5c) Codex P2: un rename no esquiva R3/R4"
+S20=$(rama fase/z a.txt); pr_head 20 "$S20"
+handoff_main ChatGPT "#20 @ $S20"
+(cd "$T/semilla" && git checkout -q main && git pull -q origin main && git checkout -q -B lateral/rename main && git mv a.txt renombrado.txt && git commit -qm "rename a→renombrado" && git push -q -f origin lateral/rename)
+SR=$(cd "$T/semilla" && git rev-parse HEAD)
+corre 21 "$SR"; check "lateral que renombra a.txt (archivo de la fase #20) → exit 7" '[ "$RC" = 7 ]'
+check "el mensaje lista el origen del rename (a.txt)" 'grep -q "^a.txt$" "$T/err"'
+(cd "$T/semilla" && git checkout -q -B lateral/mueve-workflow main && git mv .github/workflows/gates.yml gates-viejo.yml && git commit -qm "saca el workflow" && git push -q -f origin lateral/mueve-workflow)
+SW=$(cd "$T/semilla" && git rev-parse HEAD)
+corre 22 "$SW"; check "lateral que mueve un workflow fuera de .github/ → exit 8" '[ "$RC" = 8 ]'
+
+echo "5d) Codex P1: un PR que reescribe paralelo.sh para aprobarse no engaña al chequeo corrido desde main"
+(cd "$T/semilla" && git checkout -q -B lateral/sabotaje main && printf '#!/bin/sh\necho "paralelo: OK"\nexit 0\n' > scripts/collab/paralelo.sh && git commit -qam "paralelo.sh siempre OK" && git push -q -f origin lateral/sabotaje)
+SS=$(cd "$T/semilla" && git rev-parse HEAD)
+corre 23 "$SS"; check "el chequeo (versión de main) rechaza al PR que toca scripts/collab → exit 8" '[ "$RC" = 8 ]'
+check "el workflow de CI usa pull_request_target y hace checkout de la BASE, no del PR" 'grep -q "pull_request_target" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "pull_request.base.sha" "$AQUI/../../.github/workflows/paralelo.yml" && ! grep -q "pull_request.head.ref" "$AQUI/../../.github/workflows/paralelo.yml"'
+check "gates.yml ya no ejecuta paralelo.sh desde el checkout del PR" '! grep -E "run:.*paralelo\.sh " "$AQUI/../../.github/workflows/gates.yml" | grep -q .'
+handoff_main Claude "ninguno"
 
 echo "6) base distinta de main (audit/<tema> hacia la rama de la fase): solo la regla del HANDOFF"
 handoff_main ChatGPT "#7 @ $S7b"

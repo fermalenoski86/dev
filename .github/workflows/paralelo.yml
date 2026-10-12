@@ -1,0 +1,47 @@
+# P-05 · Trabajo paralelo controlado — ejecución desde una revisión CONFIABLE.
+#
+# Evento pull_request_target: GitHub usa el workflow y el checkout de la rama BASE
+# (main, o la rama de la fase para audit/*), no los del PR. Un PR que modifique
+# scripts/collab/paralelo.sh, scripts/ci/run.sh o este archivo no puede alterar el
+# chequeo que lo evalúa (Codex, PR #69, P1). El PR aporta solo su número, su sha y
+# su base como DATOS; nunca se ejecuta código del PR: no hay checkout de su ref ni
+# `run` de nada suyo. Sin secretos; permisos de solo lectura.
+#
+# Límite: el control entra en vigor cuando este archivo está en la base. En el PR
+# que lo introduce no corre (no hay fallback al script del PR, a propósito).
+name: paralelo
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+permissions:
+  contents: read
+concurrency:
+  group: paralelo-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  paralelo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      # checkout de la BASE del PR (comportamiento por defecto de pull_request_target)
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+      - name: La revisión ejecutada es la base, no el PR
+        run: |
+          echo "base=${{ github.event.pull_request.base.sha }} pr=#${{ github.event.pull_request.number }} head=${{ github.event.pull_request.head.sha }}"
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.base.sha }}"
+      - name: Trabajo paralelo controlado (P-05)
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          set +e
+          OUT=$(scripts/collab/paralelo.sh "$PR" "$HEAD_SHA" "$BASE_REF" 2>&1); RC=$?
+          set -e
+          echo "$OUT"
+          ENC=$(printf '%s' "$OUT" | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
+          if [ "$RC" = 0 ]; then echo "::notice title=paralelo (exit 0)::$ENC"; else echo "::error title=paralelo RECHAZADO (exit $RC)::$ENC"; fi
+          exit "$RC"

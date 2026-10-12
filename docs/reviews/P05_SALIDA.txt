@@ -98,3 +98,14 @@ paralelo: OK — pelota en Claude (055591a): no hay PR en auditoría.
  Test Files  53 passed | 1 skipped (54)
       Tests  828 passed | 1 skipped (829)
 == no ejecutado localmente: build, PostgreSQL, media, mutaciones, E2E, compose/S3 (P-05 no toca código de producto) → evidencia en los jobs de CI del PR
+
+## Ronda 1 (Codex) — 2026-10-12T15:35:03Z
+=== paralelo.test.sh (UTF-8)
+paralelo.test: 38 ok, 0 fallos
+=== paralelo.test.sh (LC_ALL=C)
+paralelo.test: 38 ok, 0 fallos
+=== handoff.test.sh
+handoff.test: 39 ok, 0 fallos
+=== corrida manual contra origin/main real (d8447a1)
+paralelo: OK — PR #69 está en auditoría y su HEAD sigue siendo 5fdc97b.
+exit=0

@@ -49,23 +49,8 @@ jobs:
       - name: PROGRESO.md al día (P-02)
         run: pnpm progress:check
 
-  # P-05: en cada PR, contra el HANDOFF de origin/main (no el de la rama): ningún PR
-  # toca HANDOFF.md; con la pelota en ChatGPT, el PR en auditoría no cambia de HEAD
-  # y un lateral no comparte archivos con él ni toca gates. Solo lee; no reemplaza
-  # la protección de rama (pendiente de Fer).
-  paralelo:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-      - name: Trabajo paralelo controlado (P-05)
-        run: scripts/ci/run.sh paralelo scripts/collab/paralelo.sh "$PR" "$HEAD_SHA" "$BASE_REF"
-        env:
-          PR: ${{ github.event.pull_request.number }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          BASE_REF: ${{ github.event.pull_request.base.ref }}
+  # P-05: el chequeo de trabajo paralelo corre en .github/workflows/paralelo.yml con
+  # pull_request_target, desde la revisión BASE: no desde el checkout del PR (Codex, P1).
 
   postgres:
     runs-on: ubuntu-24.04

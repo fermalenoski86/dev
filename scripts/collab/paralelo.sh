@@ -8,14 +8,23 @@
 #   R1  ningún PR modifica docs/collab/HANDOFF.md: la pelota se transfiere solo en
 #       main con handoff.sh (P-01). Vale para toda rama base.                → exit 5
 #   Si la base no es main (ej. audit/<fase>-<tema> hacia la rama de la fase), termina acá.
-#   Si la pelota es de Claude, no hay nada en auditoría: termina acá.
-#   Con **Pelota en:** ChatGPT y **En auditoría:** #N @ <sha>:
-#   R2  el PR #N no cambia mientras lo audita el otro: su HEAD tiene que ser <sha> → exit 6
-#   R3  un lateral no comparte archivos con el PR en auditoría (se pospone)     → exit 7
-#   R4  un lateral no toca gates ni scripts de proceso mientras hay auditoría
+#   **En auditoría:** #N @ <sha> es la FASE ACTIVA: queda escrita hasta que el PR #N
+#   está en main (el turno que mergea la pone en `ninguno`). Mientras exista:
+#   R2  solo con la pelota en ChatGPT: el PR #N no cambia; su HEAD tiene que ser <sha> → exit 6
+#       (con la pelota en Claude, Claude corrige hallazgos en esa rama: R2 apagado)
+#   R3  un lateral no comparte archivos con la fase activa, con CUALQUIER pelota.
+#       Se compara contra el HEAD ACTUAL del PR #N (refs/pull/N/head), no contra el
+#       sha anotado, porque con la pelota en Claude la rama puede haber avanzado  → exit 7
+#   R4  un lateral no toca gates ni scripts de proceso mientras hay fase activa
 #       (workflows, scripts/ci, scripts/collab, mutation-check, configs de vitest
 #       y playwright): son riesgo alto, no bajo/medio (P-03)                   → exit 8
+#   Renames: se listan origen y destino (--no-renames); mover a.txt→b.txt no esquiva R3/R4.
+#   Sin fase activa (`ninguno` o sin línea) y pelota en Claude: OK.
 #   Uso incorrecto, HANDOFF ilegible o SHA que no se puede traer                → exit 1
+#
+#   EJECUCIÓN CONFIABLE (Codex, PR #69, P1): CI corre este script desde el checkout
+#   de la rama BASE (workflow `paralelo.yml`, evento pull_request_target), nunca
+#   desde el checkout del PR. El PR solo aporta su número y su sha como datos.
 #
 # Variables: HANDOFF_REMOTE (origin), HANDOFF_BRANCH (main).
 # Límite declarado: es un chequeo de CI sobre el estado de main en ese momento. No
@@ -41,7 +50,12 @@ traer() { # $1 = sha o ref; lo deja disponible localmente e imprime el sha compl
   fi
   printf '%s' "$sha"
 }
-archivos() { git diff --name-only "$(git merge-base "$1" "$2")" "$2"; } # $1 = base, $2 = head
+# --no-renames: un rename aparece como origen (borrado) + destino (agregado); así
+# a.txt→b.txt sigue chocando con a.txt (R3) y sacar un workflow de .github/ sigue
+# siendo tocar gates (R4). (Codex, PR #69, P2)
+archivos() { git diff --name-only --no-renames "$(git merge-base "$1" "$2")" "$2"; } # $1 = base, $2 = head
+# HEAD actual de un PR del remoto (GitHub expone refs/pull/N/head); vacío si no existe
+head_del_pr() { git fetch -q "$REMOTE" "refs/pull/$1/head" 2>/dev/null && git rev-parse -q --verify FETCH_HEAD^{commit} 2>/dev/null || true; }
 
 git fetch -q "$REMOTE" "$BRANCH"
 MAIN=$(git rev-parse "$REMOTE/$BRANCH")
@@ -61,34 +75,42 @@ fi
 
 PELOTA=$(printf '%s\n' "$HANDOFF" | sed -nE 's/^\*\*Pelota en:\*\* (Claude|ChatGPT)\b.*/\1/p' | head -1)
 [ -n "$PELOTA" ] || fallo "$FILE de $REMOTE/$BRANCH sin línea '**Pelota en:** Claude|ChatGPT' (correr handoff.sh validar)"
-if [ "$PELOTA" = Claude ]; then
-  echo "paralelo: OK — pelota en Claude (${MAIN:0:7}): no hay PR en auditoría."; exit 0
-fi
-
 AUD=$(printf '%s\n' "$HANDOFF" | sed -nE 's/^\*\*En auditor(í|i)a:\*\* #([0-9]+) @ ([0-9a-f]{40})\b.*/\2 \3/p' | head -1)
-[ -n "$AUD" ] || fallo "pelota en ChatGPT pero $FILE no dice '**En auditoría:** #N @ <sha>' (handoff.sh validar lo exige)"
+
+if [ -z "$AUD" ]; then
+  [ "$PELOTA" = Claude ] || fallo "pelota en ChatGPT pero $FILE no dice '**En auditoría:** #N @ <sha>' (handoff.sh validar lo exige)"
+  echo "paralelo: OK — pelota en Claude (${MAIN:0:7}) y sin fase activa."; exit 0
+fi
 AUD_PR=${AUD%% *}; AUD_SHA_IN=${AUD##* }
 AUD_SHA=$(traer "$AUD_SHA_IN")
 
-# R2 · la rama en auditoría está congelada
+# R2 · con la pelota en ChatGPT, la rama de la fase está congelada en el sha anotado
 if [ "$PR" = "$AUD_PR" ]; then
+  if [ "$PELOTA" = Claude ]; then
+    echo "paralelo: OK — PR #$PR es la fase activa y la pelota es de Claude: puede avanzar (anotado ${AUD_SHA:0:7}, HEAD ${HEAD_SHA:0:7})."; exit 0
+  fi
   if [ "$HEAD_SHA" = "$AUD_SHA" ]; then
-    echo "paralelo: OK — PR #$PR es el que está en auditoría y su HEAD sigue siendo ${AUD_SHA:0:7}."; exit 0
+    echo "paralelo: OK — PR #$PR está en auditoría y su HEAD sigue siendo ${AUD_SHA:0:7}."; exit 0
   fi
   rechazo 6 "el PR #$PR está en auditoría sobre ${AUD_SHA:0:7} y su HEAD ahora es ${HEAD_SHA:0:7}. No se toca la rama mientras la pelota es del auditor; esperá AUDIT: CAMBIOS/APROBADO."
 fi
 
-# R3 · el lateral no comparte archivos con el PR en auditoría
-AUDITADOS=$(archivos "$MAIN" "$AUD_SHA")
+# Fase activa: se compara contra el HEAD ACTUAL del PR (refs/pull/N/head), que con la
+# pelota en Claude puede ir más allá del sha anotado. Si el remoto no expone esa ref,
+# el sha anotado es el mejor dato disponible.
+FASE_SHA=$(head_del_pr "$AUD_PR"); FASE_SHA=${FASE_SHA:-$AUD_SHA}
+
+# R3 · el lateral no comparte archivos con la fase activa (cualquier pelota)
+AUDITADOS=$(archivos "$MAIN" "$FASE_SHA")
 COMUNES=$(comm -12 <(printf '%s\n' "$MIOS" | sort -u) <(printf '%s\n' "$AUDITADOS" | sort -u) || true)
 if [ -n "$COMUNES" ]; then
-  rechazo 7 "el lateral #$PR toca archivos del PR #$AUD_PR en auditoría (${AUD_SHA:0:7}); posponelo hasta que ese PR se mergee:"$'\n'"$COMUNES"
+  rechazo 7 "el lateral #$PR toca archivos de la fase activa #$AUD_PR (${FASE_SHA:0:7}, pelota en $PELOTA); posponelo hasta que ese PR esté en $BRANCH:"$'\n'"$COMUNES"
 fi
 
-# R4 · el lateral no toca gates ni scripts de proceso mientras hay auditoría
+# R4 · el lateral no toca gates ni scripts de proceso mientras hay fase activa
 GATES=$(printf '%s\n' "$MIOS" | grep -E "$GATES_RE" || true)
 if [ -n "$GATES" ]; then
-  rechazo 8 "el lateral #$PR toca gates o scripts de proceso (riesgo alto, no lateral) mientras #$AUD_PR está en auditoría:"$'\n'"$GATES"
+  rechazo 8 "el lateral #$PR toca gates o scripts de proceso (riesgo alto, no lateral) mientras #$AUD_PR es la fase activa (pelota en $PELOTA):"$'\n'"$GATES"
 fi
 
-echo "paralelo: OK — lateral #$PR (${HEAD_SHA:0:7}) no comparte archivos con #$AUD_PR (${AUD_SHA:0:7}) ni toca gates."
+echo "paralelo: OK — lateral #$PR (${HEAD_SHA:0:7}) no comparte archivos con la fase activa #$AUD_PR (${FASE_SHA:0:7}) ni toca gates."
