@@ -1,7 +1,21 @@
 # Propuesta · integrar perfiles de `msitarzewski/agency-agents` en TRUST
 
-**Estado:** propuesta en rama de prueba `docs/agency-agents-propuesta`. **Nada de esto está activo.**
-Ningún archivo de esta rama lo lee Claude Code, Codex ni CI hasta que Fer apruebe la etapa E1 (§10).
+**Estado:** **E1 documental aprobada por Fer (2026-10-12, 18:50 ART).** E2 y E3 **no** autorizadas.
+Rama de prueba `docs/agency-agents-propuesta`, inerte: sin PR, sin merge, nada en `.claude/agents/`.
+Ningún archivo de esta rama lo lee Claude Code, Codex ni CI.
+
+### Condiciones de Fer para avanzar (2026-10-12)
+1. E1 aceptada para los seis perfiles.
+2. `PERMISOS.md` con restricciones de lectura efectivas (no basta un patrón `Bash(gh api:*)`), mínimo privilegio y aislamiento. → **Hecho en v2:** ningún perfil tiene `Bash` ni red; leen un snapshot que arma Claude.
+3. Evals ampliadas con concurrencia, prompt injection, permisos, SHA obsoleto y errores de seguridad. → **Hecho:** `evals/TRANSVERSALES.md` (40 casos).
+4. Rama inerte, sin PR ni merge por ahora.
+5. No se modifican `HANDOFF.md`, `AGENTS.md`, workflows, gates ni las protecciones de `main`.
+6. **Prioridad absoluta:** cerrar P-05 (#69) y cumplir #73. No se desvían recursos críticos a esto.
+7. Después de P-05: E2 como PR independiente, subagentes solo lectura, auditoría formal de ChatGPT/Codex.
+8. No instalar perfiles del implementador en el entorno del auditor.
+9. Medir en 10 PRs y conservar solo los agentes con mejora verificable.
+
+Fer conserva la aprobación final de cada etapa siguiente.
 **Autor:** Claude (implementador), 2026-10-12. **Decide:** Fer. **Audita antes de activar:** ChatGPT (AGENTS.md).
 **Fuente analizada:** `github.com/msitarzewski/agency-agents` @ `f99f6aa9` (2026-10-07), licencia MIT
 (copia en `docs/agents/LICENSE-agency-agents.txt`). 329 archivos `.md`, 20 divisiones, formato
@@ -39,7 +53,7 @@ Lo que la arquitectura **no tiene hoy** y los perfiles pueden cubrir: (a) una re
 | `engineering-multi-agent-systems-architect.md` (4.286 palabras) | `trust-arquitecto-multiagente.md` | Revisar el diseño de P-06 (topología, permisos, HITL, lock, 4 rondas, observabilidad) **antes** de escribir el workflow; checklist de arquitectura por PR de proceso | Rol de ChatGPT como diseñador/auditor de proceso (#54); ADR en `docs/architecture/DECISIONS.md` | **Adoptar, solo lectura.** Produce revisiones y propuestas de ADR; no implementa. |
 | `security-ai-generated-code-auditor.md` (2.647) | `trust-auditor-codigo-ia.md` | Pre-auditoría de seguridad del diff antes de pasar la pelota (parte de la autorrevisión A/B/C): secretos, autorización, inyección en cualquier sink de LLM futuro (Studio IA, P-06), `execFile` sin shell, nada de hardware desde el browser | Auditoría formal de ChatGPT; `docs/cybersecurity/PRINCIPLES.md`; reglas de `AGENTS.md` ("no exponer stderr, paths, SQL, secretos") | **Adoptar, solo lectura.** Reporta; nunca edita. No reemplaza `AUDIT:`. |
 | `engineering-finops-engineer.md` (1.928) | `trust-finops.md` | Costo por ronda de auditoría (tokens, minutos de Actions), costo por PR, y — cuando exista — costo de la nube de CONTROL por campaña/pantalla. Hoy casi todo el gasto es cuota de LLM y minutos de CI (gratis en repo público) | Nada hoy; en el futuro, `docs/ops/` | **Adoptar, solo lectura + docs.** Primer entregable: línea base de M-C1/M-C2 (§8). Sin "optimizar" gates (R4). |
-| `specialized-chief-of-staff.md` (2.932) | `trust-jefe-de-gabinete.md` | Filtro de lo que sube a Fer; cascada documental cuando cambia una decisión; brief de estado; cierre de sesión. Primer uso: #73 | `HANDOFF.md`/`DECISIONES.md`/`HISTORIAL.md` (ya son la memoria oficial), prompt de "mejora continua" (máx. 3 propuestas por entrega) | **Adoptar con recorte fuerte.** Prohibido tocar `HANDOFF.md` (R1) y cambiar alcance. Escribe solo bajo `docs/agents/briefs/` y propone diffs del resto. |
+| `specialized-chief-of-staff.md` (2.932) | `trust-jefe-de-gabinete.md` | Filtro de lo que sube a Fer; cascada documental cuando cambia una decisión; brief de estado; cierre de sesión. Primer uso: #73 | `HANDOFF.md`/`DECISIONES.md`/`HISTORIAL.md` (ya son la memoria oficial), prompt de "mejora continua" (máx. 3 propuestas por entrega) | **Adoptar con recorte fuerte.** Prohibido tocar `HANDOFF.md` (R1) y cambiar alcance. No escribe nada: entrega diffs que Claude decide si aplica. |
 
 ### 2.2 Complementarios (no pedidos; justificados por brechas concretas)
 
@@ -68,22 +82,22 @@ Fer ──decide──▶ DECISIONES.md
                      │
    ┌─────────────────┴──────────────────┐
    │ Claude (implementador, con pelota) │──PR──▶ ChatGPT/Codex (auditor) ──AUDIT:──▶ merge
-   │   invoca por tarea, en su turno:   │
+   │   arma snapshot → invoca por tarea │
    │   • arquitecto-multiagente (lee)   │
    │   • auditor-codigo-ia (lee)        │
-   │   • finops (lee, escribe docs/)    │
-   │   • jefe-de-gabinete (lee, docs/)  │
+   │   • finops (lee)                   │
+   │   • jefe-de-gabinete (lee)         │
    │   • recolector-evidencia (lee)     │
    │   • cambio-minimo (lee)            │
    └────────────────────────────────────┘
-        salida: comentario en el PR / archivo bajo docs/agents/briefs/
+        salida: texto que Claude pega en el PR/issue (si el sha sigue vigente)
         nunca: HANDOFF.md · AUDIT: · merge · .github/ · scripts/collab/
 ```
 
 - **Mecanismo:** subagentes de Claude Code. Cuando se active (E2), los archivos se copian de `docs/agents/perfiles/` a `.claude/agents/` **en una rama con PR y AUDIT propio**. Mientras viven en `docs/`, son inertes.
 - **Codex:** el conversor del repo origen genera `.toml` (`name`, `description`, `developer_instructions`). **No se propone instalarlos en Codex**: el auditor no debe heredar prompts escritos por el implementador. Si ChatGPT quiere alguno, lo pide en #54.
 - **Quién los invoca:** solo Claude, en su turno, para una tarea concreta, y lo deja registrado en el PR ("revisado con `trust-auditor-codigo-ia` sobre `<sha>`: N hallazgos"). Nunca corren solos, por cron ni por Action.
-- **Qué devuelven:** texto con formato fijo (cada perfil lo define) que Claude pega en el PR o guarda bajo `docs/agents/briefs/<fecha>-<perfil>-<tema>.md`. El auditor ve la salida como evidencia más, no como veredicto.
+- **Qué devuelven:** texto con formato fijo (cada perfil lo define) que Claude pega en el PR o el issue, solo si el sha leído sigue siendo el HEAD del PR. El auditor ve la salida como evidencia más, no como veredicto.
 
 ## 4. Solapamientos (detalle)
 
@@ -92,7 +106,7 @@ Fer ──decide──▶ DECISIONES.md
 | Veredicto sobre un PR | `AUDIT: APROBADO/CAMBIOS` de ChatGPT | `trust-auditor-codigo-ia` emite `PRE-AUDITORÍA:` con hallazgos | Prefijo distinto; el check de P-06 ignora cualquier cosa que no sea una PR review de Codex. Nunca `AUDIT:` en la salida. |
 | Alcance de fase | Brief + `DECISIONES.md` | `trust-cambio-minimo` lista líneas fuera del brief | Solo reporta; si algo parece necesario, issue `decisión-producto`. |
 | Memoria | `HANDOFF`/`DECISIONES`/`HISTORIAL` | `trust-jefe-de-gabinete` propone diffs a `DECISIONES.md`/briefs/ADR | No escribe esos archivos; entrega el diff y Claude decide si lo aplica en su PR. `HANDOFF.md`: prohibido (R1). |
-| Diseño de proceso | ChatGPT (P-05/P-06) + ADR | `trust-arquitecto-multiagente` revisa contra checklist | Salida = comentario en #54/#53 o `docs/agents/briefs/`. Un ADR solo lo escribe Claude con AUDIT. |
+| Diseño de proceso | ChatGPT (P-05/P-06) + ADR | `trust-arquitecto-multiagente` revisa contra checklist | Salida = texto que Claude pega en #54/#53. Un ADR solo lo escribe Claude con AUDIT. |
 | Evidencia | `docs/reviews/*_SALIDA.txt`, BL-29 | `trust-recolector-evidencia` arma el manifiesto | Mismo formato; no inventa. "No ejecutado" se escribe literal. |
 | Costos | Nadie | `trust-finops` mide | Solo mide y propone. Cambiar un gate o un timeout es R4 → PR con AUDIT. |
 
@@ -100,14 +114,11 @@ Fer ──decide──▶ DECISIONES.md
 
 Ver `docs/agents/PERMISOS.md` (matriz completa). Resumen:
 
-| Perfil | Lee repo | Bash | Escribe | Red | Rutas vedadas (además de R1–R4) |
+| Perfil | `tools:` | Bash | Red | Escribe | Entrada |
 |---|---|---|---|---|---|
-| arquitecto-multiagente | sí | no | no | no | — |
-| auditor-codigo-ia | sí | solo `git diff`, `grep` | no | no | nunca imprime un valor de secreto |
-| finops | sí | `gh api` solo lectura (runs, timings) | `docs/agents/briefs/finops-*.md` | GitHub API (lectura) | `.github/`, `scripts/` |
-| jefe-de-gabinete | sí | `gh api` solo lectura (issues, PRs) | `docs/agents/briefs/*` | GitHub API (lectura) | `docs/collab/HANDOFF.md`, `AGENTS.md` |
-| recolector-evidencia | sí | `gh api` solo lectura (runs/attempts) | no | GitHub API (lectura) | — |
-| cambio-minimo | sí | `git diff` | no | no | — |
+| los seis | `Read, Grep, Glob` | **no** | **no** | **no** | snapshot `$SNAP/<perfil>/<sha>/` con `MANIFIESTO.txt` (lo arma Claude con `gh api` GET y `git diff --no-ext-diff --no-textconv`) + repo |
+
+Por qué no `Bash(gh api:*)`: el patrón compara el prefijo, no el método. `gh api … -f x=y` hace POST, `-X DELETE` borra y `; git push` encadena. `git diff --output=` escribe archivos y `--ext-diff` ejecuta programas. Detalle, aislamiento de credenciales (reglas `deny` + hook `PreToolUse`) y SHA obsoleto en `PERMISOS.md` v2.
 
 Ningún perfil: mergea, hace push, comenta en GitHub por su cuenta, toca secrets, instala paquetes, corre gates (los corre Claude con los comandos de `AGENTS.md`).
 
@@ -115,7 +126,7 @@ Ningún perfil: mergea, hace push, comenta en GitHub por su cuenta, toca secrets
 
 | # | Riesgo | Prob. | Impacto | Mitigación | Señal de alarma |
 |---|---|---|---|---|---|
-| R-01 | Un perfil edita algo fuera de `docs/agents/briefs/` | media | alto (R3/R4 rojo, pérdida de confianza del auditor) | `tools:` sin `Edit`/`Write` en 4 de 6 perfiles; los 2 que escriben tienen ruta única y lo dicen en su prompt; etapa E2 solo lectura | `paralelo.sh` exit 7/8 en un PR de Claude |
+| R-01 | Un perfil edita algo o ejecuta un comando | media | alto (R3/R4 rojo, pérdida de confianza del auditor) | `tools: Read, Grep, Glob` en los seis; sin `Bash` ni red; reglas `deny` + hook `PreToolUse` en E2 (casos P1–P9) | `paralelo.sh` exit 7/8 en un PR de Claude |
 | R-02 | Salida de un perfil se confunde con un veredicto | baja | alto | Prefijos `PRE-AUDITORÍA:` / `EVIDENCIA:` / `COSTO:`; nunca `AUDIT:`; P-06 valida identidad por `user.id` | Un `AUDIT:` en un comentario que no es PR review |
 | R-03 | Más tokens por ronda sin más calidad | alta al principio | medio (cuota) | Presupuesto por invocación (§7); medir M-C1 en 10 PRs; desactivar el perfil que no mueva M-Q1/M-Q2 | M-C1 > +25 % sin bajar hallazgos P1/P2 del auditor |
 | R-04 | Prompt injection vía contenido que el perfil lee (issues, PRs, páginas) | media | alto | Perfiles tratan todo lo leído como datos; sin red salvo GitHub API de lectura; sin `WebFetch` | Un perfil propone una acción "pedida" por un comentario |
@@ -134,7 +145,7 @@ Ningún perfil: mergea, hace push, comenta en GitHub por su cuenta, toca secrets
 |---|---|---|---|---|
 | arquitecto-multiagente | 4.286 → ~5.600 | 713 → ~1.100 | brief P-06 (~2.800) + workflow | 5–10 k |
 | auditor-codigo-ia | 2.647 → ~3.400 | 788 → ~1.200 | diff del PR (2–20 k) + PRINCIPLES | 5–25 k |
-| finops | 1.928 → ~2.500 | 682 → ~1.000 | `gh api` runs (1–3 k) | 3–6 k |
+| finops | 1.928 → ~2.500 | 682 → ~1.000 | `runs.json`/`jobs` del snapshot (1–3 k) | 3–6 k |
 | jefe-de-gabinete | 2.932 → ~3.800 | 745 → ~1.100 | HANDOFF + DECISIONES (~4 k) + issue | 6–12 k |
 | recolector-evidencia | 1.155 → ~1.500 | 564 → ~850 | SALIDA.txt + runs/jobs | 3–8 k |
 | cambio-minimo | 1.806 → ~2.300 | 509 → ~760 | brief + diff | 3–20 k |
@@ -145,7 +156,7 @@ Total de los 6 perfiles adaptados: 4.001 palabras (~6 k tokens) contra 14.754 de
 
 ## 8. Métricas de evaluación (línea base → objetivo)
 
-Ventana: 10 PRs consecutivos después de activar E2, excluyendo PRs de riesgo alto (siguen 100 % con ChatGPT). Fuente: comentarios `AUDIT:` en los PRs y `HISTORIAL.md`. Las fija `trust-finops` en `docs/agents/briefs/finops-base-<fecha>.md`.
+Ventana: 10 PRs consecutivos después de activar E2, excluyendo PRs de riesgo alto (siguen 100 % con ChatGPT). Fuente: comentarios `AUDIT:` en los PRs y `HISTORIAL.md`. Las calcula `trust-finops` sobre el snapshot y Claude las publica en el issue de evaluación.
 
 | ID | Métrica | Cómo se mide | Línea base | Pasa si |
 |---|---|---|---|---|
@@ -164,31 +175,35 @@ Criterio de continuidad por perfil: si tras 10 PRs no mueve su métrica, se saca
 
 ## 9. Evaluaciones por perfil (antes de activar)
 
-`docs/agents/evals/` tiene, por perfil, casos de prueba con entrada, salida esperada y criterio. Regla tomada del propio Multi-Agent Systems Architect: **no se activa un perfil sin suite de evals y línea base.** Hoy hay 6–10 casos por perfil (objetivo: 20). Se corren a mano en E1 sobre PRs ya cerrados (histórico) para ver si el perfil hubiera encontrado lo que ChatGPT encontró.
+`docs/agents/evals/` tiene, por perfil, casos de prueba con entrada, salida esperada y criterio. Regla tomada del propio Multi-Agent Systems Architect: **no se activa un perfil sin suite de evals y línea base.** Hay 6–10 casos propios por perfil más 40 transversales (`evals/TRANSVERSALES.md`: inyección, permisos, SHA obsoleto, concurrencia, errores de seguridad), o sea 46–50 por perfil. Los casos de contención (K) solo se pueden correr con E2 instalado en una rama; en E1 quedan como criterio de aceptación. Se corren a mano en E1 sobre PRs ya cerrados (histórico) para ver si el perfil hubiera encontrado lo que ChatGPT encontró.
 
 ## 10. Plan por etapas (cada paso con aprobación explícita)
 
 | Etapa | Qué | Quién aprueba | Reversible |
 |---|---|---|---|
 | **E0 (esta rama)** | Propuesta + perfiles + evals bajo `docs/agents/`. Inerte. | — | borrar rama |
-| **E1** | Fer lee y decide qué perfiles siguen. ChatGPT opina en un issue nuevo (`decisión-producto`, enlaza esta rama). Se corren las evals sobre 5 PRs históricos y se anota el resultado. | Fer | borrar rama |
-| **E2** | PR "agents: subagentes en modo lectura" que copia los perfiles aprobados a `.claude/agents/`, **sin** `Edit`/`Write` en ninguno. Lateral: no toca nada de R3/R4. AUDIT propio. 10 PRs de ventana. | ChatGPT (`AUDIT: APROBADO`) + Fer | `git rm .claude/agents/*` |
-| **E3** | Si M-Q1/M-Q2/M-C1 pasan: habilitar escritura a `docs/agents/briefs/` para finops y jefe-de-gabinete. | ChatGPT + Fer | idem |
+| **E1 ✔ aprobada** | Documental: permisos v2 y evals ampliadas en esta rama. Las evals de comportamiento (C) se corren sobre PRs históricos **solo cuando haya capacidad libre**, sin quitarle tiempo a P-05 ni a #73. | Fer (2026-10-12) | borrar rama |
+| **E2 (no autorizada)** | Después de mergear P-05: PR independiente que copia los perfiles a `.claude/agents/` con `tools: Read, Grep, Glob` y agrega reglas `deny` + hook. Pasan los casos K al 100 %. AUDIT formal. Ventana de 10 PRs. | ChatGPT (`AUDIT: APROBADO`) + Fer | `git rm .claude/agents/trust-*` + revertir reglas (caso P9) |
+| **E3 (no autorizada)** | Con los resultados de los 10 PRs: se quedan solo los perfiles con mejora verificable. Cualquier capacidad nueva (por ejemplo, escritura) requiere un brief propio, no un cambio de `tools:`. | Fer + ChatGPT | idem |
 | **E4** | Resultado a #54 para que ChatGPT lo cruce con P-06 (el arquitecto-multiagente ya habrá revisado el brief). | ChatGPT | — |
 
-**Cuándo:** E1 puede empezar ya (solo lectura de Fer). E2 **después de mergear P-05** (toca `.claude/`, que no está en `GATES_RE`, pero es nuevo territorio y conviene que el auditor lo vea con la cola de P-05 cerrada). Nada de esto desplaza #73.
+**Cuándo:** E1 hecha. E2 **después de mergear P-05** y con aprobación explícita de Fer (toca `.claude/`, que no está en `GATES_RE`, pero es nuevo territorio y conviene que el auditor lo vea con la cola de P-05 cerrada). Nada de esto desplaza #73.
 
 ## 11. Lo que esta rama no toca (verificable)
 
 `git diff --stat origin/main..docs/agency-agents-propuesta` → solo archivos nuevos bajo `docs/agents/`. Cero cambios en `.github/`, `scripts/`, `AGENTS.md`, `docs/collab/`, `apps/`, `packages/`, `e2e*/`. Sin PR abierto hasta que Fer lo pida. Sin merge. Sin tags.
 
-## 12. Decisiones para Fer
+## 12. Decisiones (resueltas por Fer el 2026-10-12)
 
-1. ¿Siguen los 4 prioritarios tal cual, o se recorta alguno? (El FinOps hoy mide poco porque no hay nube; se puede dejar para cuando CONTROL tenga facturas.)
-2. ¿Se aceptan los 2 complementarios (evidencia, cambio mínimo)?
-3. ¿E2 después de P-05, o antes, como lateral de solo docs + `.claude/agents/`?
-4. ¿Se usan Jefe de Gabinete y Recolector de Evidencia para #73 ya (modo lectura, sin instalar: Claude los invoca pegando el perfil como instrucción)?
-5. ¿Se abre el issue `decisión-producto` para que ChatGPT opine ahora, o después del 22/10?
+| Pregunta | Respuesta |
+|---|---|
+| ¿Cuáles perfiles? | Los seis, en E1 |
+| ¿E2 antes o después de P-05? | Después, como PR independiente, en solo lectura y con auditoría formal |
+| ¿Se usan en #73? | No se desvían recursos: #73 y P-05 tienen prioridad absoluta |
+| ¿Codex? | No se instalan perfiles del implementador en el entorno del auditor |
+| ¿Criterio para quedarse con un agente? | 10 PRs medidos; se queda solo el que muestra mejora verificable |
+
+Pendiente para cuando se pida E2: issue `decisión-producto` con el enlace a esta rama, para que ChatGPT opine antes del PR.
 
 ---
 *Adaptado de `msitarzewski/agency-agents` (MIT). Los perfiles de `docs/agents/perfiles/` son reescrituras para TRUST; conservan la licencia y la atribución de origen.*

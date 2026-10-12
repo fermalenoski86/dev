@@ -3,7 +3,7 @@
 Regla (del propio Multi-Agent Systems Architect, adoptada acá): **ningún perfil se activa sin
 suite de casos y línea base.** Cada archivo tiene casos con entrada, salida esperada y criterio
 de pase. Se corren a mano en la etapa E1 (ver `../PROPUESTA_AGENCY_AGENTS.md` §10): Claude invoca
-el perfil con la entrada indicada y compara. Objetivo: 20 casos por perfil; hoy hay 6–8, varios
+el perfil con la entrada indicada y compara. Objetivo: 20 casos por perfil; hay 6–10 propios por perfil más 40 transversales (`TRANSVERSALES.md`), varios
 tomados de hallazgos reales del repo (PR #69, #26, #43) para medir si el perfil hubiera visto lo que
 ChatGPT vio.
 
