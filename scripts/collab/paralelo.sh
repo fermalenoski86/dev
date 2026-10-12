@@ -53,9 +53,24 @@ traer() { # $1 = sha o ref; lo deja disponible localmente e imprime el sha compl
 # --no-renames: un rename aparece como origen (borrado) + destino (agregado); así
 # a.txt→b.txt sigue chocando con a.txt (R3) y sacar un workflow de .github/ sigue
 # siendo tocar gates (R4). (Codex, PR #69, P2)
-# -c core.quotePath=false: git entrecomilla rutas con no-ASCII (".github/workflows/ñ.yml"
-# → "\".github/…\""), y así GATES_RE anclado al inicio no las vería (Codex, ronda 2 #69).
-archivos() { git -c core.quotePath=false diff --name-only --no-renames "$(git merge-base "$1" "$2")" "$2"; } # $1 = base, $2 = head
+# -z: rutas separadas por NUL y SIN comillas. Con el formato por defecto git entrecomilla
+# las rutas con no-ASCII u otros caracteres raros ('".github/workflows/\303\261.yml"'), y
+# GATES_RE (anclado en ^) no las veía (Codex, ronda 2, P2). Se convierte NUL→\n: una
+# ruta con salto de línea real es imposible de representar en una lista por líneas,
+# así que se rechaza explícitamente (exit 1) en vez de ignorarla.
+archivos() { # $1 = base, $2 = head
+  local raw
+  raw=$(git diff --name-only --no-renames -z "$(git merge-base "$1" "$2")" "$2" | tr '\0' '\n')
+  printf '%s' "$raw"
+}
+# una ruta con '\n' dentro queda partida en dos líneas al convertir NUL→\n; se detecta
+# comparando la cantidad de entradas NUL con la de líneas
+rutas_validas() { # $1 = base, $2 = head  → falla si alguna ruta contiene salto de línea
+  local nul lineas
+  nul=$(git diff --name-only --no-renames -z "$(git merge-base "$1" "$2")" "$2" | tr -cd '\0' | wc -c)
+  lineas=$(archivos "$1" "$2" | grep -c . || true)
+  [ "$nul" -eq "$lineas" ] || fallo "el PR contiene una ruta con salto de línea; no se evalúa"
+}
 # HEAD actual de un PR del remoto (GitHub expone refs/pull/N/head); vacío si no existe
 head_del_pr() { git fetch -q "$REMOTE" "refs/pull/$1/head" 2>/dev/null && git rev-parse -q --verify FETCH_HEAD^{commit} 2>/dev/null || true; }
 
@@ -66,6 +81,7 @@ HEAD_SHA=$(traer "$HEAD_IN")
 if [ "$BASE" = "$BRANCH" ]; then BASE_SHA=$MAIN; else git fetch -q "$REMOTE" "$BASE" || fallo "no se puede traer la rama base $BASE"; BASE_SHA=$(git rev-parse FETCH_HEAD); fi
 
 # R1 · el HANDOFF no viaja en PRs
+rutas_validas "$BASE_SHA" "$HEAD_SHA"
 MIOS=$(archivos "$BASE_SHA" "$HEAD_SHA")
 if printf '%s\n' "$MIOS" | grep -qxF "$FILE"; then
   rechazo 5 "el PR #$PR modifica $FILE. La pelota se transfiere solo en $BRANCH con scripts/collab/handoff.sh; sacá ese cambio de la rama."

@@ -111,9 +111,19 @@ SS=$(cd "$T/semilla" && git rev-parse HEAD)
 corre 23 "$SS"; check "el chequeo (versión de main) rechaza al PR que toca scripts/collab → exit 8" '[ "$RC" = 8 ]'
 check "el workflow de CI usa pull_request_target y hace checkout de la BASE, no del PR" 'grep -q "pull_request_target" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "pull_request.base.sha" "$AQUI/../../.github/workflows/paralelo.yml" && ! grep -q "pull_request.head.ref" "$AQUI/../../.github/workflows/paralelo.yml"'
 check "gates.yml ya no ejecuta paralelo.sh desde el checkout del PR" '! grep -E "run:.*paralelo\.sh " "$AQUI/../../.github/workflows/gates.yml" | grep -q .'
+echo "5e) Codex ronda 2 P2: rutas con no-ASCII (git las entrecomilla sin -z) no esquivan R3/R4"
+(cd "$T/semilla" && git checkout -q -B lateral/enie main && echo x > ".github/workflows/ñ.yml" && git add -A && git commit -qm "workflow ñ" && git push -q -f origin lateral/enie)
+SN=$(cd "$T/semilla" && git rev-parse HEAD)
+corre 24 "$SN"; check "lateral que agrega .github/workflows/ñ.yml → exit 8" '[ "$RC" = 8 ]'
+check "el mensaje muestra la ruta sin comillas" 'grep -q "^.github/workflows/ñ.yml$" "$T/err"'
+S25=$(rama fase/enie "carpeta ñ/dato ü.txt"); pr_head 25 "$S25"
+handoff_main ChatGPT "#25 @ $S25"
+S26=$(rama lateral/enie2 "carpeta ñ/dato ü.txt")
+corre 26 "$S26"; check "lateral que toca 'carpeta ñ/dato ü.txt' (archivo de la fase #25) → exit 7" '[ "$RC" = 7 ]'
+check "el workflow escucha también 'edited' (retarget de base; Codex ronda 2 P1)" 'grep -qE "types:.*\bedited\b" "$AQUI/../../.github/workflows/paralelo.yml"'
 handoff_main Claude "ninguno"
 
-echo "5e) Codex ronda 2: rutas con no-ASCII no esquivan R4 (git las entrecomilla sin core.quotePath=false)"
+echo "5f) Codex ronda 2 (turno programado): mismos casos con otro armado de ramas"
 handoff_main ChatGPT "#7 @ $S7b"
 SNQ=$(rama lateral/enie ".github/workflows/ñ.yml")
 corre 40 "$SNQ"; check "lateral que agrega .github/workflows/ñ.yml → exit 8" '[ "$RC" = 8 ]'

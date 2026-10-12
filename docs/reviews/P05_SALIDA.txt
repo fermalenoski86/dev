@@ -125,3 +125,8 @@ handoff.test: 39 ok, 0 fallos
 === corrida manual contra origin/main real
 paralelo: RECHAZADO — el PR #69 está en auditoría sobre 5fdc97b y su HEAD ahora es 10a4396. No se toca la rama mientras la pelota es del auditor; esperá AUDIT: CAMBIOS/APROBADO.
 exit=6
+
+=== ronda 2 integrada (rebase sobre 58c3d42)
+paralelo.test: 45 ok, 0 fallos
+paralelo.test: 45 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
