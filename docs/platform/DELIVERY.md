@@ -50,7 +50,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 - `0003_approval` (reversible)
 - `0004_active_version` (reversible)
 
-## Archivos de test (92)
+## Archivos de test (96)
 
 | Archivo | Suite |
 |---|---|
@@ -73,6 +73,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | `apps/platform-api/src/platform-web-bl31.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/platform-web-client.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/platform-web-e3b.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
+| `apps/platform-api/src/platform-web-f3a.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/restore-drill.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/submit.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/upload-limits.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
@@ -80,13 +81,16 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | `apps/platform-web/src/build-env.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/components/views-bl31.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/components/views-e3b.test.ts` | Unidad de app (vitest del paquete) |
+| `apps/platform-web/src/components/views-f3a.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/components/views.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/api-bl31.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/api-e3b.test.ts` | Unidad de app (vitest del paquete) |
+| `apps/platform-web/src/lib/api-f3a.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/api.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/draft-assets.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/session.test.ts` | Unidad de app (vitest del paquete) |
 | `e2e-platform/a11y.spec.ts` | E2E (Playwright, CI) |
+| `e2e-platform/active-version.spec.ts` | E2E (Playwright, CI) |
 | `e2e-platform/flow-41.spec.ts` | E2E (Playwright, CI) |
 | `e2e-platform/history.spec.ts` | E2E (Playwright, CI) |
 | `e2e-platform/session-multihost.spec.ts` | E2E (Playwright, CI) |

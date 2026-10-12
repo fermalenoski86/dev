@@ -84,9 +84,9 @@ export function checkResults({ tags, report, root }) {
 }
 
 const PW_TITULO = /\btest(?:\.(?:only|skip|fixme))?\(\s*(['"`])((?:\\.|(?!\1).)*)\1/g;
-const PW_TAG = /\[(E3-\d+)\]/g;
+const PW_TAG = /\[((?:E3|F3A-UI)-\d+)\]/g;
 
-/** Tests de Playwright con tags `[E3-N]` en el título. `files`: [{ path, source }]. */
+/** Tests de Playwright con tags `[E3-N]` o `[F3A-UI-N]` en el título. `files`: [{ path, source }]. */
 export function scanPlaywrightTags(files) {
   const out = [];
   for (const f of files) {
@@ -174,7 +174,7 @@ export function render({ points, tags, navegador, pwTags = [] }) {
   L.push('|---|---|---|---|');
   for (const x of navegador) {
     const con = pwTags.filter((t) => t.ids.includes(x.id));
-    const evid = con.length ? con.map((t) => `\`${t.file.split('/').pop()}\` › ${t.title.replace(/\s*\[E3-\d+\]/g, '').replace(/\|/g, '\\|').trim()}`).join('<br>') : '—';
+    const evid = con.length ? con.map((t) => `\`${t.file.split('/').pop()}\` › ${t.title.replace(/\s*\[(?:E3|F3A-UI)-\d+\]/g, '').replace(/\|/g, '\\|').trim()}`).join('<br>') : '—';
     const estado = x.estado === 'cubierto' ? `**cubierto (CI, job \`${x.job}\`)**` : `⏳ **pendiente**: ${x.motivo}`;
     const nota = x.nota ? `<br>_${x.nota}_` : '';
     L.push(`| ${x.id} | ${x.texto} | ${estado} | ${evid}${nota} |`);
