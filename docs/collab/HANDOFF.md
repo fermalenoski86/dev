@@ -3,23 +3,27 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador) — P-02 entregado en [PR #67](https://github.com/fermalenoski86/dev/pull/67) (`ca7b6df`), esperando CI [38238927771](https://github.com/fermalenoski86/dev/actions/runs/38238927771).
-**Trabajo en curso:** Claude (chequeo horario) desde 2026-10-12 10:27 UTC — P-02 en `proc/p02-progreso`; falta: CI verde → issue `AUDIT: P-02` → pelota a ChatGPT. Si esta línea tiene <90 min, no arrancar otro turno.
-**Fase:** P-02, `PROGRESO.md` generado desde un manifiesto determinista (orden de #53 y veredicto de #58).
-**Estado:** código, tests (16/16) y reporte `docs/reviews/P02.md` + `P02_SALIDA.txt` en el PR. `verificar-github` 29/29. Primer HEAD `fbe63e4` tuvo verify-build y postgres rojos (DELIVERY.md sin el test nuevo); corregido en `fb48535`. Falta CI 7/7 sobre `ca7b6df`.
+**Pelota en:** ChatGPT (auditor) — auditar **P-02** en [PR #67](https://github.com/fermalenoski86/dev/pull/67), HEAD `ca7b6df`, CI [38238927771](https://github.com/fermalenoski86/dev/actions/runs/38238927771) 7/7. Issue [#68](https://github.com/fermalenoski86/dev/issues/68).
+**Fase:** P-02, `PROGRESO.md` generado desde un manifiesto determinista (segundo de #53; después P-05 → P-04 → P-03).
+**Estado:** entregado con autorrevisión A/B/C (`docs/reviews/P02.md`) y salida real (`P02_SALIDA.txt`). [Pedido de auditoría](https://github.com/fermalenoski86/dev/pull/67#issuecomment-6123538080).
 
 ## P-02 en una línea
-`scripts/collab/entregables.mjs` (manifiesto) → `pnpm progress:generate` → `docs/collab/PROGRESO.md`; CI corre `pnpm progress:check`. Hoy: gestión 24 definidos, código 21/24, simulado 24/24, equipo real 0/24; las otras cuatro pistas `0/0 — todavía no definidos`.
+`scripts/collab/entregables.mjs` (manifiesto: PR + SHA merge + SHA auditado + URL del AUDIT) → `pnpm progress:generate` → `docs/collab/PROGRESO.md`; CI corre `pnpm progress:check` (sin red). `verificar-github` (fuera de CI) 29/29. Hoy: gestión 24 definidos, código 21/24 (3 pre-GitHub sin AUDIT enlazable), simulado 24/24, equipo real 0/24; NovaStar/DMX/reloj/hardware `0/0 — todavía no definidos`.
+
+## Evidencia P-02
+- HEAD `ca7b6df01e51c33db3df8b912b7d1100ad526e03`; CI 7/7 al primer intento. Primer HEAD `fbe63e4` rojo en verify-build/postgres (DELIVERY.md sin el test nuevo), corregido en `fb48535`.
+- Local: 16/16 tests nuevos; `pnpm verify` 827 passed + 1 skipped; `acceptance:check` OK; `diff --check` OK. No ejecutado localmente: build, PG, media, mutaciones, E2E, compose (sí en CI).
+- Límites: `check` no consulta GitHub (ajuste #53); "equipo real" lo carga una persona; el validador bloquea tests/CI rotulados como real y responsables agentes.
 
 ## Próximo paso
-- Claude: con CI 7/7 sobre `ca7b6df`, abrir issue `AUDIT: P-02`, pedir auditoría en #67 y pasar la pelota.
-- ChatGPT: auditar #67 contra P-02 ajustado (#53). Nada de P-05 hasta el veredicto.
-- Después: P-05 → P-04 → P-03. CS-0 (#59) sigue autorizado y separado.
+- ChatGPT: `AUDIT: APROBADO` o `AUDIT: CAMBIOS` en #67.
+- Claude: con APROBADO, squash a `main`, cerrar #68, agregar P-02 al manifiesto (`tipo: proceso`) y regenerar; luego P-05.
+- CS-0 (#59) sigue autorizado y separado.
 
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-02 progreso verificable | PR #67 | esperando CI |
+| P-02 progreso verificable | PR #67 / #68 | en auditoría |
 | P-05 → P-04 → P-03 | #53 | después de P-02 |
 | Agent Bridge (P-06) | #54 | chequeo horario activo; bridge sin implementar |
 | CS-0 Creative Studio | #59 | autorizado; brief aparte |
@@ -31,5 +35,5 @@
 - Protección de rama `main` con CI requerido (límite declarado de P-01).
 
 ## Referencias
-- `AGENTS.md` · `docs/collab/DECISIONES.md` · `docs/collab/BACKLOG.md` · `docs/collab/PROGRESO.md` (generado, desde P-02)
+- `AGENTS.md` · `docs/collab/DECISIONES.md` · `docs/collab/BACKLOG.md` · `docs/collab/PROGRESO.md` (generado, P-02)
 - Historial: `docs/collab/HISTORIAL.md` · Briefs: `docs/briefs/` · ADR: `docs/architecture/DECISIONS.md`
