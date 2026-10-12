@@ -28,12 +28,12 @@ historial): si una decisión cambia, se reemplaza la línea y el cambio va a
 | 2026-10-11 | [#61](https://github.com/fermalenoski86/dev/issues/61) | Las medidas de las pantallas son las que cargó Fer en `EL_TRUST` (Corrientes más chica, Pellegrini más grande). La proforma P5 es solo orientativa. `EL_TRUST` no cambia; el Studio usa formatos configurables igual. **Dos TB60**, uno por pantalla (una controladora independiente por cara). Marquesina: abierta con el proveedor, no bloquea. |
 | 2026-10-11 | [#59](https://github.com/fermalenoski86/dev/issues/59) | TRUST Creative Studio encargado: Claude diseña e implementa, ChatGPT audita; ahora solo brief CS-0; implementación después de F3(a). |
 | 2026-10-11 | [#52](https://github.com/fermalenoski86/dev/issues/52) | F3(a) rollback: Q0 = A, Q2 = A2.2 (ADR-064). |
+| 2026-10-12 | [#43](https://github.com/fermalenoski86/dev/issues/43) | Opción 1: el detalle de campaña pide `GET /assets` solo para OPERATOR/ADMIN; INTERNAL_APPROVER (y cualquier rol sin permiso) ve versión aprobada, draft, ranuras y enlaces en solo lectura, sin assets, envío ni Builder. Permisos del servidor sin cambios. |
 
 ## Congelado
 - **M2C.2 EXECUTIVE EXPERIENCE** (`apps/control`, experiencia ejecutiva): no se toca salvo bug demostrado con test o decisión de Fer registrada arriba.
 - **Storage B1/B1.1:** arquitectura aprobada; solo bug demostrado.
 
 ## Pendiente de Fer
-- [#43](https://github.com/fermalenoski86/dev/issues/43): detalle de campaña para INTERNAL_APPROVER (403 de assets) — opción 1 o 2.
 - Tags de versión (`bl31`, `bl07`, `bl08` y anteriores): el proxy no deja crearlos a los agentes; opcionales.
 - BL-05 (exigir `yuv420p` / 8 bits 4:2:0): necesita la ficha del procesador LED real.

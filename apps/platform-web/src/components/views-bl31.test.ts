@@ -59,7 +59,7 @@ describe('BL-31 · historial de versiones (vista)', () => {
     const nada = () => undefined;
     const det = html(createElement(CampaignDetailView, {
       campaign: { id: U(9), contractId: U(5), name: 'C', lifecycleStatus: 'ACTIVE', currentDraft: null, latestApprovedVersion: null, createdAt: 't', updatedAt: 't' },
-      draft: { campaignId: U(9), draftId: U(8), revision: 1, updatedAt: 't', takeoverDraft: {} }, assets: [], builderUrl: null, loadError: null,
+      draft: { campaignId: U(9), draftId: U(8), revision: 1, updatedAt: 't', takeoverDraft: {} }, assets: [], builderUrl: null, puedeEditar: true, loadError: null,
       upload: { surfaceType: 'horizontal', fileName: null, busy: false, error: null, last: null }, assign: { busy: false, error: null }, submit: { busy: false, error: null, version: null },
       onSurfaceType: nada, onFile: nada, onUpload: nada, onAssign: nada, onSubmit: nada,
     }));
