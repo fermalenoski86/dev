@@ -109,3 +109,19 @@ handoff.test: 39 ok, 0 fallos
 === corrida manual contra origin/main real (d8447a1)
 paralelo: OK — PR #69 está en auditoría y su HEAD sigue siendo 5fdc97b.
 exit=0
+
+## Ronda 2 (Codex) — 2026-10-12T15:42:48Z
+=== paralelo.test.sh con el script de 10a4396 y las pruebas nuevas (reproducción)
+  ✗ lateral que agrega .github/workflows/ñ.yml → exit 8
+  ✗ el mensaje muestra la ruta sin comillas
+  ✗ paralelo.yml se dispara también con 'edited' (cambio de base)
+paralelo.test: 38 ok, 3 fallos
+=== paralelo.test.sh corregido (UTF-8)
+paralelo.test: 41 ok, 0 fallos
+=== paralelo.test.sh corregido (LC_ALL=C)
+paralelo.test: 41 ok, 0 fallos
+=== handoff.test.sh
+handoff.test: 39 ok, 0 fallos
+=== corrida manual contra origin/main real
+paralelo: RECHAZADO — el PR #69 está en auditoría sobre 5fdc97b y su HEAD ahora es 10a4396. No se toca la rama mientras la pelota es del auditor; esperá AUDIT: CAMBIOS/APROBADO.
+exit=6

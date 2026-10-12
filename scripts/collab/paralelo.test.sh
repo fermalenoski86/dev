@@ -20,7 +20,7 @@ corre() { set +e; (cd "$T/ci" && git fetch -q origin && $P "$@" >"$T/out" 2>"$T/
 handoff_main() {
   (cd "$T/semilla" && git checkout -q main && git pull -q origin main \
     && { printf '# HANDOFF\n\n**Pelota en:** %s — test\n' "$1"; [ -n "${2:-}" ] && printf '**En auditoría:** %s\n' "$2"; true; } > docs/collab/HANDOFF.md \
-    && git commit -qam "handoff: $1 ${2:-}" && git push -q origin main)
+    && { git diff --quiet || git commit -qam "handoff: $1 ${2:-}"; } && git push -q origin main)
 }
 # simula GitHub: refs/pull/N/head apunta al HEAD actual del PR N
 pr_head() { git -C "$T/remoto.git" update-ref "refs/pull/$1/head" "$2"; }
@@ -112,6 +112,13 @@ corre 23 "$SS"; check "el chequeo (versión de main) rechaza al PR que toca scri
 check "el workflow de CI usa pull_request_target y hace checkout de la BASE, no del PR" 'grep -q "pull_request_target" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "pull_request.base.sha" "$AQUI/../../.github/workflows/paralelo.yml" && ! grep -q "pull_request.head.ref" "$AQUI/../../.github/workflows/paralelo.yml"'
 check "gates.yml ya no ejecuta paralelo.sh desde el checkout del PR" '! grep -E "run:.*paralelo\.sh " "$AQUI/../../.github/workflows/gates.yml" | grep -q .'
 handoff_main Claude "ninguno"
+
+echo "5e) Codex ronda 2: rutas con no-ASCII no esquivan R4 (git las entrecomilla sin core.quotePath=false)"
+handoff_main ChatGPT "#7 @ $S7b"
+SNQ=$(rama lateral/enie ".github/workflows/ñ.yml")
+corre 40 "$SNQ"; check "lateral que agrega .github/workflows/ñ.yml → exit 8" '[ "$RC" = 8 ]'
+check "el mensaje muestra la ruta sin comillas" 'grep -qF ".github/workflows/ñ.yml" "$T/err" && ! grep -qF "\".github" "$T/err"'
+check "paralelo.yml se dispara también con 'edited' (cambio de base)" 'grep -qE "types:.*\bedited\b" "$AQUI/../../.github/workflows/paralelo.yml"'
 
 echo "6) base distinta de main (audit/<tema> hacia la rama de la fase): solo la regla del HANDOFF"
 handoff_main ChatGPT "#7 @ $S7b"

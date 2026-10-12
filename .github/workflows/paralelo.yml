@@ -12,7 +12,8 @@
 name: paralelo
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened, ready_for_review]
+    # edited: cambiar la base del PR (fase → main) tiene que re-evaluar R2–R4 (Codex, ronda 2 #69)
+    types: [opened, synchronize, reopened, ready_for_review, edited]
 permissions:
   contents: read
 concurrency:

@@ -53,7 +53,9 @@ traer() { # $1 = sha o ref; lo deja disponible localmente e imprime el sha compl
 # --no-renames: un rename aparece como origen (borrado) + destino (agregado); así
 # a.txt→b.txt sigue chocando con a.txt (R3) y sacar un workflow de .github/ sigue
 # siendo tocar gates (R4). (Codex, PR #69, P2)
-archivos() { git diff --name-only --no-renames "$(git merge-base "$1" "$2")" "$2"; } # $1 = base, $2 = head
+# -c core.quotePath=false: git entrecomilla rutas con no-ASCII (".github/workflows/ñ.yml"
+# → "\".github/…\""), y así GATES_RE anclado al inicio no las vería (Codex, ronda 2 #69).
+archivos() { git -c core.quotePath=false diff --name-only --no-renames "$(git merge-base "$1" "$2")" "$2"; } # $1 = base, $2 = head
 # HEAD actual de un PR del remoto (GitHub expone refs/pull/N/head); vacío si no existe
 head_del_pr() { git fetch -q "$REMOTE" "refs/pull/$1/head" 2>/dev/null && git rev-parse -q --verify FETCH_HEAD^{commit} 2>/dev/null || true; }
 
