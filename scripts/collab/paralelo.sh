@@ -65,7 +65,7 @@ FILE=docs/collab/HANDOFF.md
 #                  apps/platform-api/src/server.ts
 #   congelado:     apps/control (M2C.2)
 # Hardware: sin rutas todavía (no existe). HANDOFF.md lo cubre R1 para todo PR.
-GATES_RE='^(\.github/workflows/|scripts/ci/|scripts/collab/|scripts/mutation-check\.py$|scripts/(dev|acceptance|e2e-platform)/|(apps|packages)/[^/]+/scripts/|(package|tsconfig\.base)\.json$|\.eslintrc[^/]*$|pnpm-(lock|workspace)\.yaml$|\.npmrc$|\.env\.example$|docker-compose[^/]*\.ya?ml$|docker/|packages/platform-db/src/(migrations/|migrator\.ts$|bootstrap\.sql$)|packages/platform-auth/|apps/platform-api/src/(auth|approval)|apps/platform-api/src/(actor|cors|server)\.ts$|packages/platform-approval/|packages/platform-storage/|packages/platform-media/src/process\.ts$|apps/control/)|(^|/)(vite|vitest|playwright)[^/]*\.config\.[cm]?[jt]s$|(^|/)vitest\.(workspace|projects)\.[^/]+$'
+GATES_RE='^(\.github/workflows/|scripts/ci/|scripts/collab/|scripts/mutation-check\.py$|scripts/(dev|acceptance|e2e-platform)/|__WS__/[^/]+/scripts/|(package|tsconfig\.base)\.json$|\.eslintrc[^/]*$|pnpm-(lock|workspace)\.yaml$|\.npmrc$|\.env\.example$|docker-compose[^/]*\.ya?ml$|docker/|packages/platform-db/src/(migrations/|migrator\.ts$|bootstrap\.sql$)|packages/platform-auth/|apps/platform-api/src/(auth|approval)|apps/platform-api/src/(actor|cors|server)\.ts$|packages/platform-approval/|packages/platform-storage/|packages/platform-media/src/process\.ts$|apps/control/)|(^|/)(vite|vitest|playwright)[^/]*\.config\.[cm]?[jt]s$|(^|/)vitest\.(workspace|projects)\.[^/]+$'
 
 fallo() { echo "paralelo: $*" >&2; exit "${2:-1}"; }
 rechazo() { local code=$1; shift; echo "paralelo: RECHAZADO — $*" >&2; exit "$code"; }
@@ -170,6 +170,14 @@ if [ -n "$DEPS" ]; then
   rechazo 7 "el lateral #$PR comparte dependencias del workspace con la fase activa #$AUD_PR (${FASE_SHA:0:7}, pelota en $PELOTA); posponelo hasta que ese PR esté en $BRANCH:"$'\n'"$DEPS"
 fi
 
+# Raíces del workspace según pnpm-workspace.yaml de MAIN (revisión confiable; el del PR
+# es gate por R4): apps/*, packages/*, edge/*… Un paquete bajo cualquier raíz entra en
+# pnpm -r (Codex sobre 3108da9, P2). Sin archivo o sin patrones → apps|packages.
+ws_raices() { { git show "$1:pnpm-workspace.yaml" 2>/dev/null || true; } | sed -nE "s/^[[:space:]]*-[[:space:]]*['\"]?([A-Za-z0-9_.@-]+)\/\*['\"]?[[:space:]]*$/\1/p" | sed 's/\./\\./g' | paste -sd'|'; }
+WS=$(ws_raices "$MAIN" || true); [ -n "$WS" ] || WS='apps|packages'
+WS_RE="($WS)"
+GATES_RE=${GATES_RE//__WS__/$WS_RE}
+
 # R4 · el lateral no toca gates ni scripts de proceso mientras hay fase activa
 GATES=$(printf '%s\n' "$MIOS" | grep -E "$GATES_RE" || true)
 if [ -n "$GATES" ]; then
@@ -184,7 +192,7 @@ scripts_de() { git show "$1:$2" 2>/dev/null | jq -cS '.scripts // {}' 2>/dev/nul
 PKG_GATES=""
 while IFS= read -r f; do
   [ -n "$f" ] || continue
-  [[ "$f" =~ ^(apps|packages)/[^/]+/package\.json$ ]] || continue
+  [[ "$f" =~ ^$WS_RE/[^/]+/package\.json$ ]] || continue
   if [ "$(scripts_de "$BASE_SHA" "$f")" != "$(scripts_de "$HEAD_SHA" "$f")" ]; then PKG_GATES+="$f (bloque scripts)"$'\n'; fi
 done <<< "$MIOS"
 if [ -n "$PKG_GATES" ]; then

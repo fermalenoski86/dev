@@ -101,16 +101,19 @@ jobs:
           git worktree add -q --detach "$RUNNER_TEMP/main" origin/main
           cd "$RUNNER_TEMP/main"
           echo "scripts de main=$(git rev-parse HEAD) · base del chequeo directo=$BASE_JOB · base ahora=$BASE_AHORA"
-          set +e
+          # Si la base avanzó entre el chequeo directo y acá, ese veredicto directo quedó
+          # viejo (BASE_MOVIDA=1: no se publica success). Pero la re-evaluación global corre
+          # IGUAL (Codex sobre 3108da9, P2): este run pudo desplazar al único run pendiente
+          # del carril y un push a una base distinta de main no garantiza otra corrida.
+          BASE_MOVIDA=0
           if [ "$BASE_JOB" != "$BASE_AHORA" ]; then
-            # la base avanzó entre el chequeo directo y acá: ese veredicto se calculó con
-            # política vieja; no se publica success (la corrida del push nuevo decide)
-            echo "paralelo.yml: la base $BASE_REF avanzó de ${BASE_JOB:0:7} a ${BASE_AHORA:0:7} durante el job; el veredicto directo quedó viejo" | tee "$RUNNER_TEMP/reevaluar.out"
-            RC2=1
-          else
-            scripts/collab/paralelo-reevaluar.sh "evento en #$PR (${{ github.event.action }}, base $BASE_REF) @ ${{ github.event.pull_request.head.sha }}" 2>&1 | tee "$RUNNER_TEMP/reevaluar.out"
-            RC2=${PIPESTATUS[0]}
+            echo "paralelo.yml: la base $BASE_REF avanzó de ${BASE_JOB:0:7} a ${BASE_AHORA:0:7} durante el job; el veredicto directo quedó viejo"
+            BASE_MOVIDA=1
           fi
+          echo "BASE_MOVIDA=$BASE_MOVIDA" >> "$GITHUB_ENV"
+          set +e
+          scripts/collab/paralelo-reevaluar.sh "evento en #$PR (${{ github.event.action }}, base $BASE_REF) @ ${{ github.event.pull_request.head.sha }}" 2>&1 | tee "$RUNNER_TEMP/reevaluar.out"
+          RC2=${PIPESTATUS[0]}
           set -e
           echo "RC2=$RC2" >> "$GITHUB_ENV"
           [ "$RC2" = 0 ] || echo "::error title=re-evaluación global sin veredicto (exit $RC2)::$(tail -c 3000 "$RUNNER_TEMP/reevaluar.out" | tr '\n' ' ')"
@@ -148,12 +151,13 @@ jobs:
             publicar failure "paralelo: SIN VEREDICTO (la re-evaluación global no incluyó #$PR @ ${HEAD_SHA:0:7})" "$(head -c 60000 "$RUNNER_TEMP/reevaluar.out")"; exit 0
           fi
           git fetch -q origin "$BASE_REF"; BASE_PUB=$(git rev-parse FETCH_HEAD)
-          if [ "$BASE_PUB" != "$BASE_JOB" ]; then publicar failure "paralelo: SIN VEREDICTO (la base $BASE_REF avanzó de ${BASE_JOB:0:7} a ${BASE_PUB:0:7} durante el job)" "El chequeo directo se calculó con $BASE_REF@${BASE_JOB:0:7}; re-run del job para evaluar con la base actual."; exit 0; fi
+          if [ "${BASE_MOVIDA:-1}" != 0 ] || [ "$BASE_PUB" != "$BASE_JOB" ]; then publicar failure "paralelo: SIN VEREDICTO (la base $BASE_REF avanzó de ${BASE_JOB:0:7} a ${BASE_PUB:0:7} durante el job)" "El chequeo directo se calculó con $BASE_REF@${BASE_JOB:0:7}; re-run del job para evaluar con la base actual."; exit 0; fi
           publicar success "paralelo: OK" "$(head -c 60000 "$RUNNER_TEMP/paralelo.out")"
       - name: Veredicto de este PR
         run: |
           [ "$RC" = 0 ] || exit "$RC"
-          exit "$RC2"
+          [ "$RC2" = 0 ] || exit "$RC2"
+          [ "${BASE_MOVIDA:-1}" = 0 ] || { echo "la base avanzó durante el job: veredicto directo viejo"; exit 1; }
 
   reevaluar:
     if: github.event_name == 'push'

@@ -247,3 +247,10 @@ handoff.test: 39 ok, 0 fallos
 paralelo.test: 126 ok, 0 fallos
 paralelo.test: 126 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
+
+=== ronda 21 (Codex sobre 3108da9: raíces del workspace desde pnpm-workspace.yaml; re-evaluación global siempre) — 2026-10-12T21:15:01Z
+--- código de 3108da9 + pruebas nuevas: paralelo.test: 126 ok, 3 fallos
+--- corregido
+paralelo.test: 129 ok, 0 fallos
+paralelo.test: 129 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
