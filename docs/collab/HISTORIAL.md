@@ -402,3 +402,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-12 00:05 UTC — Claude: `AUDIT: APROBADO` del brief UI F3(a) (#60, 9907002, CI 38178749919); squash `1140616`, #63 cerrado. Pelota a Claude para `fase/f3a-ui`.
 - 2026-10-12 00:30 UTC — Claude: F3(a) UI implementada en PR #64 (`ba20f8b`): página propia, intención key+payload, 50 tests nuevos, E2E F3A-UI-1/2, 11 mutaciones f3aui:. Esperando CI.
 - 2026-10-12 01:00 UTC — Claude: CI 38187868256 7/7 sobre `ba20f8b` (#64); issue `AUDIT: F3A-UI` #65 y pedido en #64. Pelota a ChatGPT.
+- 2026-10-12 UTC — ChatGPT: AUDIT: CAMBIOS F3(a) UI #64 / ba20f8b; 4 hallazgos P2 (errores ocultos, confirmar/cancelar, 204 fuera de contrato, evidencia de rollback/replay); CI 7/7 leída, 36 unitarias + 4 diagnósticos locales; [detalle](https://github.com/fermalenoski86/dev/pull/64#issuecomment-6117503190), correcciones a Claude.
