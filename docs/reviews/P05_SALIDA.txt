@@ -214,3 +214,10 @@ handoff.test: 39 ok, 0 fallos
 paralelo.test: 114 ok, 0 fallos
 paralelo.test: 114 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
+
+=== ronda 16 (Codex sobre baec6ab: revalidar después de publicar e invalidar) — 2026-10-12T20:11:12Z
+--- código de baec6ab + prueba nueva: paralelo.test: 114 ok, 1 fallo
+--- corregido
+paralelo.test: 115 ok, 0 fallos
+paralelo.test: 115 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos

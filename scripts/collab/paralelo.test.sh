@@ -306,6 +306,20 @@ chmod +x "$T/listar-mueve-fase.sh"
 set +e; (cd "$T/ci" && PARALELO_LISTAR="$T/listar-mueve-fase.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" scripts/collab/paralelo-reevaluar.sh "carrera fase" >/dev/null 2>"$T/err"); RC=$?; set -e
 check "la fase activa avanza durante la re-evaluación → exit 1, nada publicado y el motivo lo dice" '[ "$RC" = 1 ] && [ ! -s "$T/publicado" ] && grep -q "fase activa #70 avanzó" "$T/err"'
 (cd "$T/semilla" && git checkout -q -f main)
+# Codex sobre baec6ab, P1: main avanza DURANTE el bucle de publicación → lo publicado se invalida (failure CADUCADO)
+: > "$T/publicado"
+cat > "$T/publicar-mueve-main.sh" <<'PUBLICAR'
+#!/usr/bin/env bash
+printf '%s %s %s | %s\n' "$1" "${2:0:7}" "$3" "$4" >> "$PUBLICADO"
+if [ ! -e "$PUBLICADO.movido" ]; then
+  touch "$PUBLICADO.movido"
+  (cd "$SEMILLA" && git checkout -q -f main && git pull -q origin main && echo tock >> docs/collab/HISTORIAL.md && git add -A && git commit -qm "historial 2" && git push -q origin main) >/dev/null 2>&1
+fi
+exit 0
+PUBLICAR
+chmod +x "$T/publicar-mueve-main.sh"; rm -f "$T/publicado.movido"
+set +e; (cd "$T/ci" && PARALELO_LISTAR="$T/listar.sh" PARALELO_PUBLICAR="$T/publicar-mueve-main.sh" PUBLICADO="$T/publicado" SEMILLA="$T/semilla" scripts/collab/paralelo-reevaluar.sh "carrera en publicación" >/dev/null 2>"$T/err"); RC=$?; set -e
+check "main avanza durante la publicación → exit 1 y todos los HEAD reciben failure CADUCADO después de lo publicado" '[ "$RC" = 1 ] && [ "$(grep -c " failure | paralelo: CADUCADO" "$T/publicado")" = 2 ] && grep -q "durante la publicación" "$T/err"'
 check "paralelo.yml re-evalúa TODOS los PR en cada evento hacia main (no solo cuando el PR es la fase: GitHub descarta runs pendientes)" '! grep -q "FASE=\$(git show origin/main" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "name: Re-evaluar todos los PR abiertos hacia main" "$AQUI/../../.github/workflows/paralelo.yml"'
 check "paralelo.yml re-evalúa en push a main y cuando el PR evaluado es la fase activa" 'grep -q "^  push:" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "paralelo-reevaluar.sh" "$AQUI/../../.github/workflows/paralelo.yml" && grep -qE "checks: write" "$AQUI/../../.github/workflows/paralelo.yml" && ! grep -qE "contents: write|pull-requests: write" "$AQUI/../../.github/workflows/paralelo.yml"'
 check "ningún git push en paralelo-reevaluar.sh (solo lee y publica checks)" '! grep -E "git push" "$AQUI/paralelo-reevaluar.sh" | grep -v "^\s*#" | grep -q .'

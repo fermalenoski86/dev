@@ -76,5 +76,19 @@ for r in "${RES[@]}"; do
   total=$((total+1))
   publicar "$n" "$sha" "$con" "$tit" "$(printf '%s' "$det" | tr '\r' '\n')" || { echo "paralelo-reevaluar: no se pudo publicar el check de #$n" >&2; fallos=$((fallos+1)); }
 done
+# 3) … y revalidar DESPUÉS de publicar (Codex sobre baec6ab, P1): si main o la fase
+#    avanzaron mientras corría el bucle de publicación, lo publicado puede ser un verde
+#    calculado con estado viejo. Se invalida de inmediato publicando failure
+#    "caducado" sobre todos los HEAD evaluados; la corrida encolada vuelve a evaluar.
+git fetch -q "$REMOTE" "$BRANCH"
+MAIN2=$(git rev-parse "$REMOTE/$BRANCH"); FASE2=$(fase_head "$FASE_PR")
+if [ "$MAIN2" != "$MAIN0" ] || [ "$FASE2" != "$FASE0" ]; then
+  echo "paralelo-reevaluar: $BRANCH (${MAIN0:0:7}→${MAIN2:0:7}) o la fase #$FASE_PR (${FASE0:0:7}→${FASE2:0:7}) avanzaron durante la publicación; se invalida lo publicado" >&2
+  for r in "${RES[@]}"; do
+    IFS=$'\t' read -r n sha con tit det <<< "$r"
+    publicar "$n" "$sha" failure "paralelo: CADUCADO (main o la fase avanzaron durante la publicación; re-evaluación pendiente)" "El veredicto anterior se calculó con $BRANCH@${MAIN0:0:7} y fase@${FASE0:0:7}; ahora $BRANCH@${MAIN2:0:7} y fase@${FASE2:0:7}. La corrida siguiente lo recalcula." || true
+  done
+  exit 1
+fi
 [ "$fallos" -eq 0 ] || exit 1
 echo "paralelo-reevaluar: $total PR re-evaluados con $BRANCH@${MAIN0:0:7} ($MOTIVO)"
