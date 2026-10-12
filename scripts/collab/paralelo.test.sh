@@ -155,6 +155,11 @@ SVI=$(rama lateral/vite-anidado packages/foo/vite.config.ts)
 corre 44 "$SVI"; check "lateral que toca packages/foo/vite.config.ts (vitest lo lee) → exit 8" '[ "$RC" = 8 ]'
 SVM=$(rama lateral/vite-mts apps/bar/vite.config.mts)
 corre 47 "$SVM"; check "apps/bar/vite.config.mts → exit 8" '[ "$RC" = 8 ]'
+SVW=$(rama lateral/vitest-workspace vitest.workspace.ts)
+corre 50 "$SVW"; check "Codex ronda 12: vitest.workspace.ts (Vitest lo lee solo) → exit 8" '[ "$RC" = 8 ]'
+SVP=$(rama lateral/vitest-projects packages/foo/vitest.projects.json)
+corre 51 "$SVP"; check "packages/foo/vitest.projects.json → exit 8" '[ "$RC" = 8 ]'
+check "paralelo.yml corre con la revisión ACTUAL de la base, no con base.sha del evento (re-runs)" 'grep -q "git checkout -q --detach FETCH_HEAD" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "git checkout -q --detach origin/main" "$AQUI/../../.github/workflows/paralelo.yml"'
 SX=$(rama lateral/no-config packages/foo/vitest-helpers.ts)
 corre 43 "$SX"; check "un archivo que solo empieza con 'vitest' pero no es config → OK" '[ "$RC" = 0 ]'
 handoff_main Claude "ninguno"

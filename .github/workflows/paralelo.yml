@@ -45,10 +45,18 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.base.sha }}
           fetch-depth: 0
-      - name: La revisión ejecutada es la base, no el PR
+      # Un re-run de un job viejo vuelve a usar el base.sha del evento (GITHUB_SHA es
+      # inmutable): si main endureció la política después, el re-run aplicaría reglas
+      # viejas (Codex, ronda 12, P1). Por eso el chequeo corre siempre con la revisión
+      # ACTUAL de la rama base (origin/<base>), no con la del evento.
+      - name: Usar la revisión actual de la rama base (no la del evento)
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
-          echo "base=${{ github.event.pull_request.base.sha }} pr=#${{ github.event.pull_request.number }} head=${{ github.event.pull_request.head.sha }}"
-          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.base.sha }}"
+          git fetch -q origin "$BASE_REF"
+          git checkout -q --detach FETCH_HEAD
+          echo "base del evento=${{ github.event.pull_request.base.sha }} · base actual=$(git rev-parse HEAD) · pr=#${{ github.event.pull_request.number }} head=${{ github.event.pull_request.head.sha }}"
+          test "$(git rev-parse HEAD)" = "$(git rev-parse "origin/$BASE_REF")"
       - name: Trabajo paralelo controlado (P-05)
         env:
           PR: ${{ github.event.pull_request.number }}
@@ -88,6 +96,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
+      # mismo motivo: un re-run usa el sha del evento; la política es la de main AHORA
+      - name: Usar la revisión actual de main
+        run: git fetch -q origin main && git checkout -q --detach origin/main && echo "main actual=$(git rev-parse HEAD)"
       # push a main = cambió el HANDOFF (pelota, fase activa) o entró un merge: todos los
       # PR abiertos se vuelven a comparar contra el estado nuevo.
       - name: Re-evaluar todos los PR abiertos hacia main

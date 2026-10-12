@@ -188,3 +188,10 @@ paralelo.test: 105 ok, 0 fallos
 paralelo.test: 105 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
 --- bash -n paralelo.sh paralelo-reevaluar.sh handoff.sh; node --check paralelo-deps.mjs; yaml de paralelo.yml parsea: OK
+
+=== ronda 12 (Codex sobre c0b2daa: re-run con base del evento; vitest.workspace/projects) — 2026-10-12T18:31:44Z
+--- código de c0b2daa + pruebas nuevas: paralelo.test: 105 ok, 3 fallos
+--- corregido
+paralelo.test: 108 ok, 0 fallos
+paralelo.test: 108 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos

@@ -42,7 +42,8 @@ FILE=docs/collab/HANDOFF.md
 # de CI/collab, gates, auth, transferencia de pelota), en UN solo lugar para que P-03
 # lo reutilice. Mapeo a rutas del repo, sin inventar familias nuevas:
 #   gates/proceso: workflows, scripts/ci, scripts/collab, mutation-check, configs de
-#                  vite/vitest/playwright a cualquier profundidad y extensión
+#                  vite/vitest/playwright a cualquier profundidad y extensión, más
+#                  vitest.workspace.* / vitest.projects.* (Vitest 2 los lee solo; Codex ronda 12)
 #                  + lo que gates.yml ejecuta o lo que define un gate (ronda 9, autorrevisión):
 #                  scripts/{dev,acceptance,e2e-platform}/, packages/platform-db/scripts/
 #                  (pg-up, acceptance:check, manifiesto e2e, bootstrap-smoke) y en la RAÍZ
@@ -60,7 +61,7 @@ FILE=docs/collab/HANDOFF.md
 #                  apps/platform-api/src/server.ts
 #   congelado:     apps/control (M2C.2)
 # Hardware: sin rutas todavía (no existe). HANDOFF.md lo cubre R1 para todo PR.
-GATES_RE='^(\.github/workflows/|scripts/ci/|scripts/collab/|scripts/mutation-check\.py$|scripts/(dev|acceptance|e2e-platform)/|packages/platform-db/scripts/|(package|tsconfig\.base)\.json$|\.eslintrc[^/]*$|pnpm-(lock|workspace)\.yaml$|\.npmrc$|\.env\.example$|docker-compose[^/]*\.ya?ml$|docker/|packages/platform-db/src/(migrations/|migrator\.ts$|bootstrap\.sql$)|packages/platform-auth/|apps/platform-api/src/(auth|approval)|apps/platform-api/src/(actor|cors|server)\.ts$|packages/platform-approval/|packages/platform-storage/|packages/platform-media/src/process\.ts$|apps/control/)|(^|/)(vite|vitest|playwright)[^/]*\.config\.[cm]?[jt]s$'
+GATES_RE='^(\.github/workflows/|scripts/ci/|scripts/collab/|scripts/mutation-check\.py$|scripts/(dev|acceptance|e2e-platform)/|packages/platform-db/scripts/|(package|tsconfig\.base)\.json$|\.eslintrc[^/]*$|pnpm-(lock|workspace)\.yaml$|\.npmrc$|\.env\.example$|docker-compose[^/]*\.ya?ml$|docker/|packages/platform-db/src/(migrations/|migrator\.ts$|bootstrap\.sql$)|packages/platform-auth/|apps/platform-api/src/(auth|approval)|apps/platform-api/src/(actor|cors|server)\.ts$|packages/platform-approval/|packages/platform-storage/|packages/platform-media/src/process\.ts$|apps/control/)|(^|/)(vite|vitest|playwright)[^/]*\.config\.[cm]?[jt]s$|(^|/)vitest\.(workspace|projects)\.[^/]+$'
 
 fallo() { echo "paralelo: $*" >&2; exit "${2:-1}"; }
 rechazo() { local code=$1; shift; echo "paralelo: RECHAZADO — $*" >&2; exit "$code"; }
