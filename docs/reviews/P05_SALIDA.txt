@@ -311,3 +311,10 @@ paralelo.test: 133 ok, 0 fallos
 handoff.test: 48 ok, 0 fallos
 handoff.test: 48 ok, 0 fallos
 paralelo.test: 133 ok, 0 fallos
+
+=== ronda 30 (AUDIT: CAMBIOS del auditor sobre 7cb661a: todo el código desde main, nunca desde la base; sin credenciales persistidas) — 2026-10-12T23:06:03Z
+--- código de 7cb661a + pruebas nuevas: paralelo.test: 133 ok, 4 fallos (el caso 6b dinámico ya pasaba: paralelo.sh de main se ejecutaba en la prueba, pero el workflow ejecutaba el de la base)
+--- corregido
+paralelo.test: 137 ok, 0 fallos
+paralelo.test: 137 ok, 0 fallos
+handoff.test: 48 ok, 0 fallos

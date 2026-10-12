@@ -1,11 +1,15 @@
 # P-05 · Trabajo paralelo controlado — ejecución desde una revisión CONFIABLE.
 #
-# Evento pull_request_target: GitHub usa el workflow y el checkout de la rama BASE
-# (main, o la rama de la fase para audit/*), no los del PR. Un PR que modifique
+# Evento pull_request_target: GitHub carga el YAML desde la rama BASE del PR (main, o
+# la rama de la fase para audit/*), pero TODO lo que se ejecuta acá sale de un checkout
+# de la revisión actual de origin/main: ni del PR ni de su base, porque la rama de una
+# fase no está auditada ni mergeada y podría traer un paralelo.sh debilitado con el
+# YAML intacto (auditor, AUDIT: CAMBIOS sobre 7cb661a, P1). Un PR que modifique
 # scripts/collab/paralelo.sh, scripts/ci/run.sh o este archivo no puede alterar el
 # chequeo que lo evalúa (Codex, PR #69, P1). El PR aporta solo su número, su sha y
 # su base como DATOS; nunca se ejecuta código del PR: no hay checkout de su ref ni
-# `run` de nada suyo. Sin secretos.
+# `run` de nada suyo. Sin secretos; sin credenciales persistidas en git; GH_TOKEN solo
+# en los pasos que publican checks o consultan la API.
 #
 # Re-evaluación (auditor, AUDIT: CAMBIOS sobre 0f73e0c, P1): un lateral verde contra
 # la fase S1 no puede seguir verde cuando la fase avanza a S2. Por eso, además del
@@ -44,50 +48,59 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      # checkout de la BASE del PR (comportamiento por defecto de pull_request_target)
+      # Checkout de MAIN, no de la base del PR (auditor, AUDIT: CAMBIOS sobre 7cb661a, P1):
+      # con pull_request_target el YAML viene de la base, pero la rama de una fase
+      # (audit/<tema> → fase) no está auditada ni mergeada: podría traer un paralelo.sh
+      # debilitado sin tocar el YAML. Todo el código que se ejecuta es el de la revisión
+      # ACTUAL de origin/main; base, HEAD y número del PR entran solo como datos.
+      # Sin credenciales persistidas (repo público; los fetch no las necesitan): GH_TOKEN
+      # solo en los pasos que publican checks o consultan la API.
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          ref: main
           fetch-depth: 0
-      # Un re-run de un job viejo vuelve a usar el base.sha del evento (GITHUB_SHA es
-      # inmutable): si main endureció la política después, el re-run aplicaría reglas
-      # viejas (Codex, ronda 12, P1). Por eso el chequeo corre siempre con la revisión
-      # ACTUAL de la rama base (origin/<base>), no con la del evento.
-      - name: Usar la revisión actual de la rama base (no la del evento)
+          persist-credentials: false
+      # Un re-run de un job viejo vuelve a usar el sha del evento (GITHUB_SHA es inmutable):
+      # si main endureció la política después, el re-run aplicaría reglas viejas (Codex,
+      # ronda 12, P1). Por eso el chequeo corre siempre con la revisión ACTUAL de origin/main.
+      - name: Usar la revisión actual de main (no la del evento) y traer la base como dato
         env:
           BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
+          git fetch -q origin main
+          git checkout -q --detach origin/main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
           git fetch -q origin "$BASE_REF"
-          git checkout -q --detach FETCH_HEAD
-          echo "base del evento=${{ github.event.pull_request.base.sha }} · base actual=$(git rev-parse HEAD) · pr=#${{ github.event.pull_request.number }} head=${{ github.event.pull_request.head.sha }}"
-          test "$(git rev-parse HEAD)" = "$(git rev-parse "origin/$BASE_REF")"
+          echo "BASE_JOB=$(git rev-parse "origin/$BASE_REF")" >> "$GITHUB_ENV"
+          echo "scripts de main=$(git rev-parse HEAD) · base $BASE_REF actual=$(git rev-parse "origin/$BASE_REF") · pr=#${{ github.event.pull_request.number }} head=${{ github.event.pull_request.head.sha }}"
       # Un re-run de un run viejo carga el YAML del workflow de la revisión del evento (GitHub
       # reutiliza GITHUB_SHA/workflow_sha), aunque el checkout traiga scripts actuales: la
       # orquestación de este archivo podría estar superada (Codex sobre 9307391, P1). Se
-      # compara el workflow cargado (workflow_sha) con el de la revisión ACTUAL de la rama
-      # base (main, o la rama de la fase para audit/*: de ahí lo toma GitHub); si difieren,
-      # se falla cerrado: hace falta un evento nuevo, no un re-run.
-      - name: El workflow cargado tiene que ser el de la base actual (un re-run viejo no vale)
+      # compara el workflow cargado (workflow_sha) con el de la revisión ACTUAL de MAIN —no
+      # de la base, que puede no estar auditada (auditor sobre 7cb661a)—; si difieren, se
+      # anula el veredicto directo: hace falta un evento nuevo (o traer main a la rama de
+      # la fase), no un re-run.
+      - name: El workflow cargado tiene que ser el de main actual (un re-run viejo o una base no auditada no valen)
         env:
           WF_SHA: ${{ github.workflow_sha }}
           BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
           git fetch -q origin "$WF_SHA" 2>/dev/null || true
           CARGADO=$(git show "$WF_SHA:.github/workflows/paralelo.yml" 2>/dev/null || echo "__no-disponible__")
-          ACTUAL=$(git show "origin/$BASE_REF:.github/workflows/paralelo.yml")
+          ACTUAL=$(git show "origin/main:.github/workflows/paralelo.yml")
           if [ "$CARGADO" != "$ACTUAL" ]; then
             # No se corta acá (Codex sobre 5e6322e, P2): este run pudo desplazar al único
-            # pendiente del carril, así que la re-evaluación global (scripts de main en un
-            # worktree aparte) tiene que correr igual. Solo el veredicto directo queda
-            # anulado: RC=1 con título explícito, y el chequeo directo se saltea.
-            echo "::error title=workflow desactualizado::el workflow cargado ($WF_SHA) no es el de $BASE_REF actual ($(git rev-parse "origin/$BASE_REF")); un re-run de un run viejo no da veredicto directo, hace falta un evento nuevo"
+            # pendiente del carril, así que la re-evaluación global (scripts de main) tiene
+            # que correr igual. Solo el veredicto directo queda anulado: RC=1 con título
+            # explícito, y el chequeo directo se saltea.
+            echo "::error title=workflow desactualizado::el workflow cargado ($WF_SHA, base $BASE_REF) no es el de main actual ($(git rev-parse origin/main)); no hay veredicto directo: hace falta un evento nuevo o traer main a la base"
             echo "WF_VIEJO=1" >> "$GITHUB_ENV"
             echo "RC=1" >> "$GITHUB_ENV"
-            echo "RC_TIT=paralelo: SIN VEREDICTO (workflow cargado ${WF_SHA:0:7} ≠ $BASE_REF actual; re-run de un run viejo, hace falta un evento nuevo)" >> "$GITHUB_ENV"
+            echo "RC_TIT=paralelo: SIN VEREDICTO (workflow cargado ${WF_SHA:0:7} ≠ main actual; re-run viejo o base $BASE_REF sin el workflow de main)" >> "$GITHUB_ENV"
             exit 0
           fi
           echo "WF_VIEJO=0" >> "$GITHUB_ENV"
-          echo "workflow cargado = $BASE_REF actual ($WF_SHA)"
+          echo "workflow cargado = main actual ($WF_SHA)"
       - name: Trabajo paralelo controlado (P-05)
         if: env.WF_VIEJO != '1'
         env:
@@ -111,8 +124,8 @@ jobs:
       # Sin condición por rama base (auditor, AUDIT: CAMBIOS sobre 7700da3, P1): un evento
       # de un PR hacia la rama de la fase (audit/<tema>) comparte el carril y también puede
       # desplazar al run pendiente; si no re-evaluara, el TOCTOU S1→S2 reaparecería. Corre
-      # SIEMPRE y con los scripts de la revisión actual de main (worktree aparte), nunca
-      # con los del checkout de una base distinta de main. Corre ANTES de publicar el
+      # SIEMPRE y con los scripts de la revisión actual de main (el checkout del job es
+      # main; paralelo-reevaluar.sh exige HEAD == origin/main). Corre ANTES de publicar el
       # veredicto de este PR y su resultado (RC2) lo condiciona (Codex sobre e511687, P1):
       # si la re-evaluación global no completó, el HEAD de este PR no recibe success.
       - name: Re-evaluar todos los PR abiertos hacia main (cualquier evento, scripts de main)
@@ -122,12 +135,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          BASE_JOB=$(git rev-parse HEAD); echo "BASE_JOB=$BASE_JOB" >> "$GITHUB_ENV"
           git fetch -q origin "$BASE_REF"
           BASE_AHORA=$(git rev-parse FETCH_HEAD)
-          git fetch -q origin main
-          git worktree add -q --detach "$RUNNER_TEMP/main" origin/main
-          cd "$RUNNER_TEMP/main"
           echo "scripts de main=$(git rev-parse HEAD) · base del chequeo directo=$BASE_JOB · base ahora=$BASE_AHORA"
           # Si la base avanzó entre el chequeo directo y acá, ese veredicto directo quedó
           # viejo (BASE_MOVIDA=1: no se publica success). Pero la re-evaluación global corre
@@ -220,7 +229,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with: { fetch-depth: 0, persist-credentials: false }
       # mismo motivo: un re-run usa el sha del evento; la política es la de main AHORA
       - name: Usar la revisión actual de main
         run: git fetch -q origin main && git checkout -q --detach origin/main && echo "main actual=$(git rev-parse HEAD)"

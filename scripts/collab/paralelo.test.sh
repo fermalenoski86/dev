@@ -112,7 +112,7 @@ echo "5d) Codex P1: un PR que reescribe paralelo.sh para aprobarse no engaña al
 (cd "$T/semilla" && git checkout -q -B lateral/sabotaje main && printf '#!/bin/sh\necho "paralelo: OK"\nexit 0\n' > scripts/collab/paralelo.sh && git commit -qam "paralelo.sh siempre OK" && git push -q -f origin lateral/sabotaje)
 SS=$(cd "$T/semilla" && git rev-parse HEAD)
 corre 23 "$SS"; check "el chequeo (versión de main) rechaza al PR que toca scripts/collab → exit 8" '[ "$RC" = 8 ]'
-check "el workflow de CI usa pull_request_target y hace checkout de la BASE, no del PR" 'grep -q "pull_request_target" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "pull_request.base.sha" "$AQUI/../../.github/workflows/paralelo.yml" && ! grep -q "pull_request.head.ref" "$AQUI/../../.github/workflows/paralelo.yml"'
+check "el workflow de CI usa pull_request_target y hace checkout de MAIN, no del PR ni de su base" 'W="$AQUI/../../.github/workflows/paralelo.yml"; grep -q "pull_request_target" "$W" && grep -q "^          ref: main$" "$W" && ! grep -q "pull_request.head.ref" "$W" && ! grep -q "ref: \${{ github.event.pull_request.base.sha }}" "$W"'
 check "gates.yml ya no ejecuta paralelo.sh desde el checkout del PR" '! grep -E "run:.*paralelo\.sh " "$AQUI/../../.github/workflows/gates.yml" | grep -q .'
 echo "5e) Codex ronda 2 P2: rutas con no-ASCII (git las entrecomilla sin -z) no esquivan R3/R4"
 (cd "$T/semilla" && git checkout -q -B lateral/enie main && echo x > ".github/workflows/ñ.yml" && git add -A && git commit -qm "workflow ñ" && git push -q -f origin lateral/enie)
@@ -162,7 +162,7 @@ SVW=$(rama lateral/vitest-workspace vitest.workspace.ts)
 corre 50 "$SVW"; check "Codex ronda 12: vitest.workspace.ts (Vitest lo lee solo) → exit 8" '[ "$RC" = 8 ]'
 SVP=$(rama lateral/vitest-projects packages/foo/vitest.projects.json)
 corre 51 "$SVP"; check "packages/foo/vitest.projects.json → exit 8" '[ "$RC" = 8 ]'
-check "paralelo.yml corre con la revisión ACTUAL de la base, no con base.sha del evento (re-runs)" 'grep -q "git checkout -q --detach FETCH_HEAD" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "git checkout -q --detach origin/main" "$AQUI/../../.github/workflows/paralelo.yml"'
+check "paralelo.yml corre con la revisión ACTUAL de main, no con el sha del evento (re-runs)" '[ "$(grep -c "git checkout -q --detach origin/main" "$AQUI/../../.github/workflows/paralelo.yml")" = 2 ] && ! grep -q "git checkout -q --detach FETCH_HEAD" "$AQUI/../../.github/workflows/paralelo.yml"'
 SX=$(rama lateral/no-config packages/foo/vitest-helpers.ts)
 corre 43 "$SX"; check "un archivo que solo empieza con 'vitest' pero no es config → OK" '[ "$RC" = 0 ]'
 handoff_main Claude "ninguno"
@@ -295,7 +295,7 @@ check "main avanza durante la re-evaluación → exit 1, solo 'pendiente' public
 check "paralelo.yml publica el veredicto del PR como check sobre HEAD_SHA por API y usa un solo carril serial" 'grep -q "head_sha=\"\$HEAD_SHA\"" "$AQUI/../../.github/workflows/paralelo.yml" && grep -qE "^  group: paralelo$" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "cancel-in-progress: false" "$AQUI/../../.github/workflows/paralelo.yml"'
 # auditor (AUDIT: CAMBIOS sobre 7700da3, P1): un evento con base ≠ main también desplaza al run
 # pendiente; por eso la re-evaluación corre en TODO evento y con los scripts de main.
-check "paralelo.yml re-evalúa en TODO evento pull_request_target, sin condición por rama base, con un worktree de origin/main" '! grep -qE "if: github.event.pull_request.base.ref == .main." "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "git worktree add -q --detach \"\$RUNNER_TEMP/main\" origin/main" "$AQUI/../../.github/workflows/paralelo.yml"'
+check "paralelo.yml re-evalúa en TODO evento pull_request_target, sin condición por rama base, con un worktree de origin/main" '! grep -qE "if: github.event.pull_request.base.ref == .main." "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "name: Re-evaluar todos los PR abiertos hacia main (cualquier evento, scripts de main)" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "^          ref: main$" "$AQUI/../../.github/workflows/paralelo.yml"'
 # Codex sobre 7700da3, P1: la fase avanza entre la evaluación y la publicación → no se publica
 handoff_main ChatGPT "#70 @ $S70b"
 cat > "$T/listar-mueve-fase.sh" <<LISTAR
@@ -399,6 +399,17 @@ corre 16 "$SAU" fase/x; check "PR del auditor hacia fase/x tocando a.txt → OK"
 (cd "$T/semilla" && echo x >> docs/collab/HANDOFF.md && git commit -qam "audit toca handoff" && git push -q -f origin audit/x-tema)
 SAU2=$(cd "$T/semilla" && git rev-parse HEAD)
 corre 16 "$SAU2" fase/x; check "PR hacia fase/x que toca HANDOFF.md → exit 5" '[ "$RC" = 5 ]'
+
+echo "6b) auditor (AUDIT: CAMBIOS sobre 7cb661a, P1): la rama de la fase trae un paralelo.sh debilitado con el YAML idéntico; el chequeo corre la copia de MAIN"
+(cd "$T/semilla" && git checkout -q fase/x && git checkout -q -B fase/sabotaje && printf '#!/bin/sh\necho "paralelo: OK"\nexit 0\n' > scripts/collab/paralelo.sh && git commit -qam "fase: paralelo.sh siempre OK (YAML intacto)" && git push -q -f origin fase/sabotaje)
+check "el YAML del workflow en fase/sabotaje es idéntico al de main (solo cambió el script)" '(cd "$T/ci" && git fetch -q origin && [ "$(git show origin/fase/sabotaje:.github/workflows/gates.yml)" = "$(git show origin/main:.github/workflows/gates.yml)" ] && [ "$(git show origin/fase/sabotaje:scripts/collab/paralelo.sh)" != "$(git show origin/main:scripts/collab/paralelo.sh)" ])'
+(cd "$T/semilla" && git checkout -q -B audit/sabotaje-handoff fase/sabotaje && echo x >> docs/collab/HANDOFF.md && git commit -qam "audit toca handoff" && git push -q -f origin audit/sabotaje-handoff)
+SAB=$(cd "$T/semilla" && git rev-parse HEAD)
+corre 17 "$SAB" fase/sabotaje; check "PR audit/* hacia fase/sabotaje que toca HANDOFF.md, evaluado con el paralelo.sh de MAIN → exit 5 (R1)" '[ "$RC" = 5 ]'
+set +e; (cd "$T/ci" && git fetch -q origin && git show origin/fase/sabotaje:scripts/collab/paralelo.sh > "$T/sabotaje.sh" && chmod +x "$T/sabotaje.sh" && "$T/sabotaje.sh" 17 "$SAB" fase/sabotaje >/dev/null 2>&1); RCS=$?; set -e
+check "(contraste) la copia debilitada de la fase habría dicho OK → por eso el workflow nunca la ejecuta" '[ "$RCS" = 0 ]'
+check "paralelo.yml: ningún paso ejecuta scripts del checkout de la base; el guard compara con origin/main y el chequeo directo no tiene GH_TOKEN" 'W="$AQUI/../../.github/workflows/paralelo.yml"; grep -q "ACTUAL=\$(git show \"origin/main:.github/workflows/paralelo.yml\")" "$W" && ! grep -q "origin/\$BASE_REF:.github" "$W" && [ "$(grep -c "persist-credentials: false" "$W")" = 2 ] && ! grep -q "git worktree add" "$W" && ! awk "/name: Trabajo paralelo controlado/,/run: \|/" "$W" | grep -q GH_TOKEN'
+(cd "$T/semilla" && git checkout -q -f main)
 
 echo "7) errores de uso y HANDOFF inconsistente"
 corre x "$SL"; check "nro de PR inválido → exit 1" '[ "$RC" = 1 ]'
