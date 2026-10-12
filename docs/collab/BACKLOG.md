@@ -615,3 +615,16 @@ o de OpenAI por uso, y cualquier "bot" de terceros con suscripción.
 - **Hardware orientativo:** Jetson Orin NX 16 GB en caja industrial sin ventilador USD 1.000–1.500; 2 cámaras IP PoE exteriores USD 200–400 c/u; switch PoE. Total ~USD 1.800–2.500. No se compra hasta tener brief.
 - **Decisión de Fer (2026-10-11 18:10 ART):** arranca como **reporte interno**, con la opción de certificarlo después. Para que eso sea posible sin rehacer nada, regla de diseño desde el día uno: el dispositivo registra **tráfico, atención y zona de visibilidad por separado** (nunca un solo número mezclado), con datos agregados por franja horaria conservados para recalibrar. Camino a certificación, cuando se quiera: (1) metodología escrita (impresiones = tráfico × factor de visibilidad por zona, calibrado con la atención medida); (2) calibración manual de 2–3 jornadas con margen de error publicado, repetida anualmente o al cambiar una cámara; (3) verificación por un tercero (local, ~USD 3.000–8.000 por única vez; estándar internacional Geopath/Route/ESOMAR solo si lo exigen anunciantes globales).
 - **Pendiente de Fer cuando llegue el momento:** prioridad frente al Studio.
+
+---
+
+## P-07 · Lock anti-duplicado por etiqueta en el PR (no depende del HANDOFF) — *Claude, 2026-10-12, pedido de Fer*
+
+**Estado: propuesta.** Ajusta P-04/P-06 según lo que pidió ChatGPT en #54 ("una línea en HANDOFF no es un mutex").
+
+- **Problema observado (hoy, PR #69):** la sesión interactiva de Claude y su turno programado corrigieron la misma ronda en paralelo, dos veces. El anti-duplicado actual lee la línea "trabajo en curso" del HANDOFF en `main`; la sesión interactiva no la escribió porque Fer pidió no tocar `main`. Se integró con rebase sin pérdida, pero es una carrera latente.
+- **Propuesta:** la etiqueta **`claude:trabajando`** en el PR (ya creada) es el lock. Toda sesión de Claude (interactiva, chequeo horario, turno de 2 h) **antes** de tocar un PR: lee las etiquetas; si está y su comentario de lock tiene < 90 min, no toca ese PR y termina con "otro turno de Claude ya está trabajando en #N"; si no está o venció, la pone y deja un comentario `lock: <sesión> <hora UTC>`; al terminar, la saca. GitHub es la fuente única, atómica a los fines prácticos, y no requiere escribir en `main`.
+- **No cambia:** la pelota sigue en el HANDOFF; el lock es solo entre sesiones de Claude. ChatGPT no lo usa ni lo necesita.
+- **Esfuerzo:** 0,25 día (prompts de los dos turnos + una línea en AGENTS.md; sin código).
+- **Criterio de aceptación:** dos sesiones de Claude sobre el mismo PR en < 90 min → la segunda no empuja nada (verificable en HISTORIAL y en el PR); un lock vencido no bloquea; al cerrar o mergear el PR la etiqueta se quita.
+- **Vigencia inmediata como regla de conducta** (sin esperar el PR): desde hoy la sesión interactiva pone la etiqueta antes de tocar un PR, aunque Fer pida no tocar `main`.
