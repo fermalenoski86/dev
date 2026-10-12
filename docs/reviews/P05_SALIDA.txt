@@ -202,3 +202,8 @@ handoff.test: 39 ok, 0 fallos
 paralelo.test: 111 ok, 0 fallos
 paralelo.test: 111 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
+
+=== ronda 14 (Codex manual sobre 1b91080: runs pendientes descartados → re-evaluar todos en cada evento) — 2026-10-12T19:41:20Z
+paralelo.test: 112 ok, 0 fallos
+paralelo.test: 112 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos

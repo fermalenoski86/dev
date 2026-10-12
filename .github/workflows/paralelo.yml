@@ -90,22 +90,18 @@ jobs:
             -f name=paralelo -f head_sha="$HEAD_SHA" -f status=completed -f conclusion="$CON" \
             -f "output[title]=$TIT" -f "output[summary]=$(head -c 60000 "$RUNNER_TEMP/paralelo.out")" >/dev/null
           echo "check paralelo=$CON publicado sobre $HEAD_SHA (#$PR)"
-      # Si este PR es la fase activa del HANDOFF de main, su avance invalida a los laterales:
-      # se re-evalúan todos los PR abiertos hacia main con el estado actual.
-      - name: Re-evaluar laterales abiertos (este PR es la fase activa)
+      # Cualquier evento re-evalúa TODOS los PR abiertos hacia main, no solo cuando el PR
+      # evaluado es la fase activa: en un grupo de concurrencia GitHub conserva un solo
+      # run pendiente (el último) y descarta los anteriores aunque cancel-in-progress sea
+      # false (Codex ronda 14, P1). Así, el run que sobreviva siempre deja a todos los
+      # laterales comparados con el estado actual, haya habido o no un run descartado.
+      - name: Re-evaluar todos los PR abiertos hacia main
         if: github.event.pull_request.base.ref == 'main'
         env:
           PR: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: |
-          git fetch -q origin main
-          FASE=$(git show origin/main:docs/collab/HANDOFF.md | sed -nE 's/^\*\*En auditor(í|i)a:\*\* #([0-9]+) @ [0-9a-f]{40}\b.*/\2/p' | head -1)
-          if [ "$FASE" = "$PR" ]; then
-            scripts/collab/paralelo-reevaluar.sh "la fase activa #$PR avanzó a ${{ github.event.pull_request.head.sha }}"
-          else
-            echo "PR #$PR no es la fase activa (${FASE:-ninguna}): sin re-evaluación"
-          fi
+        run: scripts/collab/paralelo-reevaluar.sh "evento en #$PR (${{ github.event.action }}) @ ${{ github.event.pull_request.head.sha }}"
       - name: Veredicto de este PR
         run: exit "$RC"
 
