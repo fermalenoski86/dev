@@ -70,9 +70,18 @@ jobs:
           git fetch -q origin main
           git checkout -q --detach origin/main
           test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
-          git fetch -q origin "$BASE_REF"
-          echo "BASE_JOB=$(git rev-parse "origin/$BASE_REF")" >> "$GITHUB_ENV"
-          echo "scripts de main=$(git rev-parse HEAD) · base $BASE_REF actual=$(git rev-parse "origin/$BASE_REF") · pr=#${{ github.event.pull_request.number }} head=${{ github.event.pull_request.head.sha }}"
+          # La base puede no estar (borrada, retarget en curso): no se corta el job (Codex
+          # sobre cfc5752, P2), la re-evaluación global tiene que correr igual; el veredicto
+          # directo queda sin base → SIN VEREDICTO.
+          if git fetch -q origin "$BASE_REF" 2>/dev/null; then
+            echo "BASE_JOB=$(git rev-parse "origin/$BASE_REF")" >> "$GITHUB_ENV"; echo "BASE_SIN=0" >> "$GITHUB_ENV"
+            echo "scripts de main=$(git rev-parse HEAD) · base $BASE_REF actual=$(git rev-parse "origin/$BASE_REF") · pr=#${{ github.event.pull_request.number }} head=${{ github.event.pull_request.head.sha }}"
+          else
+            echo "::error title=base no disponible::no se pudo traer origin/$BASE_REF; sin veredicto directo (la re-evaluación global corre igual)"
+            echo "BASE_JOB=" >> "$GITHUB_ENV"; echo "BASE_SIN=1" >> "$GITHUB_ENV"
+            echo "RC=1" >> "$GITHUB_ENV"
+            echo "RC_TIT=paralelo: SIN VEREDICTO (no se pudo traer la base $BASE_REF del PR)" >> "$GITHUB_ENV"
+          fi
       # Un re-run de un run viejo carga el YAML del workflow de la revisión del evento (GitHub
       # reutiliza GITHUB_SHA/workflow_sha), aunque el checkout traiga scripts actuales: la
       # orquestación de este archivo podría estar superada (Codex sobre 9307391, P1). Se
@@ -102,7 +111,7 @@ jobs:
           echo "WF_VIEJO=0" >> "$GITHUB_ENV"
           echo "workflow cargado = main actual ($WF_SHA)"
       - name: Trabajo paralelo controlado (P-05)
-        if: env.WF_VIEJO != '1'
+        if: env.WF_VIEJO != '1' && env.BASE_SIN != '1'
         env:
           PR: ${{ github.event.pull_request.number }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -135,15 +144,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          git fetch -q origin "$BASE_REF"
-          BASE_AHORA=$(git rev-parse FETCH_HEAD)
-          echo "scripts de main=$(git rev-parse HEAD) · base del chequeo directo=$BASE_JOB · base ahora=$BASE_AHORA"
+          # la base puede no estar: BASE_AHORA vacío → BASE_MOVIDA=1 (sin success directo),
+          # pero la re-evaluación global corre igual (Codex sobre cfc5752, P2)
+          if git fetch -q origin "$BASE_REF" 2>/dev/null; then BASE_AHORA=$(git rev-parse FETCH_HEAD); else BASE_AHORA=""; fi
+          echo "scripts de main=$(git rev-parse HEAD) · base del chequeo directo=${BASE_JOB:-sin-base} · base ahora=${BASE_AHORA:-sin-base}"
           # Si la base avanzó entre el chequeo directo y acá, ese veredicto directo quedó
           # viejo (BASE_MOVIDA=1: no se publica success). Pero la re-evaluación global corre
           # IGUAL (Codex sobre 3108da9, P2): este run pudo desplazar al único run pendiente
           # del carril y un push a una base distinta de main no garantiza otra corrida.
           BASE_MOVIDA=0
-          if [ "$BASE_JOB" != "$BASE_AHORA" ]; then
+          if [ -z "$BASE_JOB" ] || [ -z "$BASE_AHORA" ] || [ "$BASE_JOB" != "$BASE_AHORA" ]; then
             echo "paralelo.yml: la base $BASE_REF avanzó de ${BASE_JOB:0:7} a ${BASE_AHORA:0:7} durante el job; el veredicto directo quedó viejo"
             BASE_MOVIDA=1
           fi
@@ -202,8 +212,8 @@ jobs:
             publicar failure "paralelo: SIN VEREDICTO (la re-evaluación global no incluyó #$PR @ ${HEAD_SHA:0:7})" "$(head -c 60000 "$RUNNER_TEMP/reevaluar.out")"; exit 0
           fi
           if [ "$BASE_NOW" != "$BASE_REF" ]; then publicar failure "paralelo: SIN VEREDICTO (#$PR cambió de base durante el job: evento $BASE_REF, ahora $BASE_NOW)" "La corrida del edited decide."; exit 0; fi
-          git fetch -q origin "$BASE_REF"; BASE_PUB=$(git rev-parse FETCH_HEAD)
-          if [ "${BASE_MOVIDA:-1}" != 0 ] || [ "$BASE_PUB" != "$BASE_JOB" ]; then publicar failure "paralelo: SIN VEREDICTO (la base $BASE_REF avanzó de ${BASE_JOB:0:7} a ${BASE_PUB:0:7} durante el job)" "El chequeo directo se calculó con $BASE_REF@${BASE_JOB:0:7}; re-run del job para evaluar con la base actual."; exit 0; fi
+          if git fetch -q origin "$BASE_REF" 2>/dev/null; then BASE_PUB=$(git rev-parse FETCH_HEAD); else BASE_PUB=""; fi
+          if [ "${BASE_MOVIDA:-1}" != 0 ] || [ -z "$BASE_PUB" ] || [ -z "$BASE_JOB" ] || [ "$BASE_PUB" != "$BASE_JOB" ]; then publicar failure "paralelo: SIN VEREDICTO (la base $BASE_REF avanzó de ${BASE_JOB:0:7} a ${BASE_PUB:0:7} durante el job)" "El chequeo directo se calculó con $BASE_REF@${BASE_JOB:0:7}; re-run del job para evaluar con la base actual."; exit 0; fi
           publicar success "paralelo: OK" "$(head -c 60000 "$RUNNER_TEMP/paralelo.out")"
           # Revalidar DESPUÉS de publicar (Codex sobre 1ed5fb6, P1), como paralelo-reevaluar.sh:
           # un retarget a main entre la consulta y la publicación dejaría el success R1 sobre
@@ -212,7 +222,7 @@ jobs:
           # … y también el SHA de la base (Codex sobre 8516d31, P2): un push a una base ≠ main
           # no dispara otra corrida (push: solo main), así que el verde se invalida acá.
           git fetch -q origin "$BASE_REF" 2>/dev/null && BASE_FIN=$(git rev-parse FETCH_HEAD) || BASE_FIN=""
-          if [ "$DESPUES" != "$BASE_REF $HEAD_SHA" ] || [ "$BASE_FIN" != "$BASE_JOB" ]; then
+          if [ "$DESPUES" != "$BASE_REF $HEAD_SHA" ] || [ -z "$BASE_FIN" ] || [ "$BASE_FIN" != "$BASE_JOB" ]; then
             publicar failure "paralelo: CADUCADO (#$PR cambió de base/HEAD o la base $BASE_REF avanzó mientras se publicaba: ahora ${DESPUES:-desconocido}, base @ ${BASE_FIN:0:7})" "El success recién publicado se calculó para base $BASE_REF@${BASE_JOB:0:7} y HEAD ${HEAD_SHA:0:7}; re-run del job para evaluar con la base actual."
             exit 1
           fi

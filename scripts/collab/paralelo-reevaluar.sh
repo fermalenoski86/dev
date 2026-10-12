@@ -120,5 +120,21 @@ if [ "$MAIN2" != "$MAIN0" ] || [ "$FASE2" != "$FASE0" ]; then
   done
   exit 1
 fi
+# 4) … y volver a listar (Codex sobre cfc5752, P1): un PR retargeteado a main (o abierto)
+#    después de la foto inicial no recibió "pendiente" ni veredicto, y su check viejo
+#    (solo R1, de cuando apuntaba a la fase) podría seguir verde mientras su edited espera
+#    detrás en el carril. Todo HEAD que aparezca ahora y no estuviera en la foto recibe
+#    failure "SIN VEREDICTO"; la corrida encolada lo evalúa de verdad.
+PRS2=$(listar) || { echo "paralelo-reevaluar: no se pudo volver a listar los PR para conciliar; exit 1" >&2; exit 1; }
+nuevos=0
+while read -r n sha; do
+  [ -n "$n" ] || continue
+  visto=0; for r in "${RES[@]}"; do case "$r" in "$n"$'\t'"$sha"$'\t'*) visto=1; break;; esac; done
+  [ "$visto" = 1 ] && continue
+  nuevos=$((nuevos+1))
+  echo "paralelo-reevaluar: #$n @ ${sha:0:7} apareció hacia $BRANCH durante la re-evaluación; sin veredicto hasta la corrida siguiente" >&2
+  publicar_firme "$n" "$sha" failure "paralelo: SIN VEREDICTO (#$n entró hacia $BRANCH durante la re-evaluación; la corrida siguiente lo evalúa)" "Este HEAD no estaba en la lista evaluada con $BRANCH@${MAIN0:0:7}; su check anterior ya no vale." || true
+done <<< "$PRS2"
+[ "$nuevos" -eq 0 ] || exit 1
 [ "$fallos" -eq 0 ] || exit 1
 echo "paralelo-reevaluar: $total PR re-evaluados con $BRANCH@${MAIN0:0:7} ($MOTIVO)"
