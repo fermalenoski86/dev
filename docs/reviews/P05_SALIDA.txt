@@ -171,3 +171,12 @@ handoff.test: 39 ok, 0 fallos
 paralelo.test: 81 ok, 0 fallos
 paralelo.test: 81 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
+
+=== ronda 10 (Codex sobre b4aeebb: entradas de gates + R3b dependencias del workspace) — 2026-10-12T17:44:21Z
+--- script de b4aeebb + pruebas nuevas: paralelo.test: 83 ok, 11 fallos
+--- corregido
+paralelo.test: 94 ok, 0 fallos
+paralelo.test: 94 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+--- grafo real del repo, ejemplo de Codex:
+@trust/platform-api ~ @trust/platform-campaigns: el lateral depende de un paquete que cambia la fase

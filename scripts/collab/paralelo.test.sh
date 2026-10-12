@@ -34,7 +34,7 @@ rama() { # $1 nombre, resto archivos
 
 git init -q --bare -b main "$T/remoto.git"
 git init -q -b main "$T/semilla" && cd "$T/semilla"
-mkdir -p docs/collab scripts/collab .github/workflows scripts/ci && cp "$AQUI/paralelo.sh" "$AQUI/handoff.sh" scripts/collab/
+mkdir -p docs/collab scripts/collab .github/workflows scripts/ci && cp "$AQUI/paralelo.sh" "$AQUI/paralelo-deps.mjs" "$AQUI/handoff.sh" scripts/collab/
 printf '# HANDOFF\n\n**Pelota en:** Claude — inicio\n' > docs/collab/HANDOFF.md
 echo a > a.txt; echo b > b.txt; echo gates > .github/workflows/gates.yml; echo run > scripts/ci/run.sh
 git add -A && git commit -qm init && git remote add origin "$T/remoto.git" && git push -q origin main
@@ -179,7 +179,8 @@ for par in "migr:packages/platform-db/src/migrations/0009_x.sql" "migrator:packa
 done
 # Ronda 9 (autorrevisión de Claude): lo que gates.yml ejecuta o lo que define un gate
 for par in "pgup:scripts/dev/pg-up.sh" "accept:scripts/acceptance/cli.mjs" "e2eman:scripts/e2e-platform/manifest.mjs" \
-           "bsmoke:packages/platform-db/scripts/bootstrap-smoke.sh" "pkg:package.json" "eslint:.eslintrc.json" "tsbase:tsconfig.base.json"; do
+           "bsmoke:packages/platform-db/scripts/bootstrap-smoke.sh" "pkg:package.json" "eslint:.eslintrc.json" "tsbase:tsconfig.base.json" \
+           "lock:pnpm-lock.yaml" "wsy:pnpm-workspace.yaml" "npmrc:.npmrc" "envex:.env.example" "compose:docker-compose.yml" "dockerdir:docker/seaweedfs/s3.json"; do
   SF=$(rama "lateral/gate-${par%%:*}" "${par#*:}")
   corre 50 "$SF"; check "script/config de gate: ${par#*:} → exit 8" '[ "$RC" = 8 ]'
 done
@@ -189,6 +190,37 @@ SRM=$(rama lateral/media-ok packages/platform-media/src/validator.ts packages/pl
 corre 49 "$SRM"; check "media (sin process.ts) y platform-db fuera de migraciones → OK" '[ "$RC" = 0 ]'
 SRAU=$(rama lateral/authoring packages/show-authoring/src/x.ts)
 corre 44 "$SRAU"; check "'show-authoring' no es auth: → OK (sin falsos positivos por prefijo)" '[ "$RC" = 0 ]'
+handoff_main Claude "ninguno"
+
+echo "5j) R3b · dependencias del workspace (Codex sobre b4aeebb): no basta con no compartir rutas"
+# workspace de prueba: b → a, api → b (api depende de a transitivamente); c independiente
+(cd "$T/semilla" && git checkout -q main && git pull -q origin main \
+  && printf "packages:\n  - 'apps/*'\n  - 'packages/*'\n" > pnpm-workspace.yaml \
+  && mkdir -p packages/a/src packages/b/src packages/c/src apps/api/src \
+  && echo '{"name":"@t/a"}' > packages/a/package.json \
+  && echo '{"name":"@t/b","dependencies":{"@t/a":"workspace:*"}}' > packages/b/package.json \
+  && echo '{"name":"@t/c"}' > packages/c/package.json \
+  && echo '{"name":"@t/api","dependencies":{"@t/b":"workspace:*"}}' > apps/api/package.json \
+  && for d in packages/a packages/b packages/c apps/api; do echo x > $d/src/i.ts; done \
+  && git add -A && git commit -qm "workspace de prueba" && git push -q origin main)
+S60=$(rama fase/deps packages/a/src/x.ts); pr_head 60 "$S60"
+handoff_main ChatGPT "#60 @ $S60"
+SD1=$(rama lateral/dep-api apps/api/src/y.ts)
+corre 61 "$SD1"; check "fase toca @t/a; lateral en apps/api (api→b→a, ninguna ruta en común) → exit 7" '[ "$RC" = 7 ]'
+check "el mensaje explica la dependencia" 'grep -q "@t/api ~ @t/a: el lateral depende" "$T/err"'
+SD2=$(rama lateral/dep-c packages/c/src/z.ts)
+corre 62 "$SD2"; check "lateral en @t/c (independiente) → OK" '[ "$RC" = 0 ]'
+SD3=$(rama lateral/dep-mismo packages/a/src/otro.ts)
+corre 63 "$SD3"; check "lateral en otro archivo del mismo paquete @t/a → exit 7" '[ "$RC" = 7 ] && grep -q "mismo paquete" "$T/err"'
+SD4=$(cd "$T/semilla" && git checkout -q main && git checkout -q -B lateral/dep-nueva main \
+  && echo '{"name":"@t/c","dependencies":{"@t/a":"workspace:*"}}' > packages/c/package.json && echo y >> packages/c/src/i.ts \
+  && git commit -qam "c pasa a depender de a" && git push -q -f origin lateral/dep-nueva && git rev-parse HEAD)
+corre 64 "$SD4"; check "lateral que AGREGA una dependencia hacia @t/a (grafo del lateral) → exit 7" '[ "$RC" = 7 ]'
+S65=$(rama fase/deps-api apps/api/src/z.ts); pr_head 65 "$S65"
+handoff_main ChatGPT "#65 @ $S65"
+SD5=$(rama lateral/dep-a packages/a/src/w.ts)
+corre 66 "$SD5"; check "fase en apps/api; lateral en @t/a (la fase depende del lateral) → exit 7" '[ "$RC" = 7 ] && grep -q "la fase depende" "$T/err"'
+corre 62 "$SD2"; check "y el lateral de @t/c sigue OK" '[ "$RC" = 0 ]'
 handoff_main Claude "ninguno"
 
 echo "6) base distinta de main (audit/<tema> hacia la rama de la fase): solo la regla del HANDOFF"

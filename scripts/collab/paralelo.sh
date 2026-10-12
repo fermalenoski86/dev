@@ -12,7 +12,8 @@
 #   está en main (el turno que mergea la pone en `ninguno`). Mientras exista:
 #   R2  solo con la pelota en ChatGPT: el PR #N no cambia; su HEAD tiene que ser <sha> → exit 6
 #       (con la pelota en Claude, Claude corrige hallazgos en esa rama: R2 apagado)
-#   R3  un lateral no comparte archivos con la fase activa, con CUALQUIER pelota.
+#   R3  un lateral no comparte archivos con la fase activa, con CUALQUIER pelota;
+#       R3b: tampoco dependencias del workspace (mismo paquete o uno depende del otro)
 #       Se compara contra el HEAD ACTUAL del PR #N (refs/pull/N/head), no contra el
 #       sha anotado, porque con la pelota en Claude la rama puede haber avanzado  → exit 7
 #   R4  un lateral no toca las familias de riesgo ALTO acordadas en #53 (P-03) mientras
@@ -48,6 +49,9 @@ FILE=docs/collab/HANDOFF.md
 #                  package.json (define verify/acceptance:check/progress:check),
 #                  .eslintrc* (lint) y tsconfig.base.json (typecheck). Solo raíz: el
 #                  package.json de un paquete es producto; si lo comparte con la fase, R3.
+#                  + entradas que los gates consumen (Codex sobre b4aeebb): pnpm-lock.yaml,
+#                  pnpm-workspace.yaml, .npmrc (install), .env.example, docker-compose*.yml
+#                  y docker/ (compose-smoke).
 #   migraciones:   packages/platform-db/src/{migrations,migrator.ts,bootstrap.sql}
 #   auth/CSRF/CORS: packages/platform-auth, apps/platform-api/src/{auth*,actor.ts,cors.ts}
 #   aprobación:    packages/platform-approval, apps/platform-api/src/approval*
@@ -56,7 +60,7 @@ FILE=docs/collab/HANDOFF.md
 #                  apps/platform-api/src/server.ts
 #   congelado:     apps/control (M2C.2)
 # Hardware: sin rutas todavía (no existe). HANDOFF.md lo cubre R1 para todo PR.
-GATES_RE='^(\.github/workflows/|scripts/ci/|scripts/collab/|scripts/mutation-check\.py$|scripts/(dev|acceptance|e2e-platform)/|packages/platform-db/scripts/|(package|tsconfig\.base)\.json$|\.eslintrc[^/]*$|packages/platform-db/src/(migrations/|migrator\.ts$|bootstrap\.sql$)|packages/platform-auth/|apps/platform-api/src/(auth|approval)|apps/platform-api/src/(actor|cors|server)\.ts$|packages/platform-approval/|packages/platform-storage/|packages/platform-media/src/process\.ts$|apps/control/)|(^|/)(vite|vitest|playwright)[^/]*\.config\.[cm]?[jt]s$'
+GATES_RE='^(\.github/workflows/|scripts/ci/|scripts/collab/|scripts/mutation-check\.py$|scripts/(dev|acceptance|e2e-platform)/|packages/platform-db/scripts/|(package|tsconfig\.base)\.json$|\.eslintrc[^/]*$|pnpm-(lock|workspace)\.yaml$|\.npmrc$|\.env\.example$|docker-compose[^/]*\.ya?ml$|docker/|packages/platform-db/src/(migrations/|migrator\.ts$|bootstrap\.sql$)|packages/platform-auth/|apps/platform-api/src/(auth|approval)|apps/platform-api/src/(actor|cors|server)\.ts$|packages/platform-approval/|packages/platform-storage/|packages/platform-media/src/process\.ts$|apps/control/)|(^|/)(vite|vitest|playwright)[^/]*\.config\.[cm]?[jt]s$'
 
 fallo() { echo "paralelo: $*" >&2; exit "${2:-1}"; }
 rechazo() { local code=$1; shift; echo "paralelo: RECHAZADO — $*" >&2; exit "$code"; }
@@ -148,6 +152,17 @@ AUDITADOS=$(archivos "$MAIN" "$FASE_SHA")
 COMUNES=$(comm -12 <(printf '%s\n' "$MIOS" | sort -u) <(printf '%s\n' "$AUDITADOS" | sort -u) || true)
 if [ -n "$COMUNES" ]; then
   rechazo 7 "el lateral #$PR toca archivos de la fase activa #$AUD_PR (${FASE_SHA:0:7}, pelota en $PELOTA); posponelo hasta que ese PR esté en $BRANCH:"$'\n'"$COMUNES"
+fi
+
+# R3b · ni dependencias: un paquete del workspace tocado por el lateral no puede ser
+# el mismo, depender de, ni ser dependencia (transitiva) de uno que toca la fase
+# (Codex sobre b4aeebb, P2: "comparta archivos o dependencias" de AGENTS.md).
+# Grafo = unión de los package.json de main, la fase y el lateral. Sin node → exit 1.
+command -v node >/dev/null || fallo "falta node para evaluar dependencias del workspace (R3b); no se aprueba"
+DEPS=$(FASE_FILES="$AUDITADOS" LAT_FILES="$MIOS" node "$(dirname "$0")/paralelo-deps.mjs" "$MAIN" "$FASE_SHA" "$HEAD_SHA") \
+  || fallo "no se pudo evaluar el grafo de dependencias del workspace (R3b); no se aprueba"
+if [ -n "$DEPS" ]; then
+  rechazo 7 "el lateral #$PR comparte dependencias del workspace con la fase activa #$AUD_PR (${FASE_SHA:0:7}, pelota en $PELOTA); posponelo hasta que ese PR esté en $BRANCH:"$'\n'"$DEPS"
 fi
 
 # R4 · el lateral no toca gates ni scripts de proceso mientras hay fase activa
