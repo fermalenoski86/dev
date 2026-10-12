@@ -254,3 +254,10 @@ handoff.test: 39 ok, 0 fallos
 paralelo.test: 129 ok, 0 fallos
 paralelo.test: 129 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
+
+=== ronda 22 (Codex sobre 2093df6: pendiente→final también en el publicador directo; e2e/ y e2e-platform/ son gate) — 2026-10-12T21:24:18Z
+--- código de 2093df6 + pruebas nuevas: paralelo.test: 129 ok, 3 fallos
+--- corregido
+paralelo.test: 132 ok, 0 fallos
+paralelo.test: 132 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos

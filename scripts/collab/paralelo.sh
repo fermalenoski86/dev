@@ -45,7 +45,9 @@ FILE=docs/collab/HANDOFF.md
 #                  vite/vitest/playwright a cualquier profundidad y extensión, más
 #                  vitest.workspace.* / vitest.projects.* (Vitest 2 los lee solo; Codex ronda 12)
 #                  + lo que gates.yml ejecuta o lo que define un gate (ronda 9, autorrevisión):
-#                  scripts/{dev,acceptance,e2e-platform}/ y los scripts/ de CADA paquete
+#                  scripts/{dev,acceptance,e2e-platform}/, las pruebas E2E que gates.yml
+#                  ejecuta directamente (e2e/: M2C congelado; e2e-platform/: Codex sobre
+#                  2093df6, P2), y los scripts/ de CADA paquete
 #                  del workspace (docs-contract.ts, db-migrate, e2e-stack, bootstrap-smoke,
 #                  make-fixtures…: lo que gates.yml ejecuta vía pnpm --filter o por ruta;
 #                  Codex sobre fe2f6c3, P2) y en la RAÍZ package.json (define
@@ -65,7 +67,7 @@ FILE=docs/collab/HANDOFF.md
 #                  apps/platform-api/src/server.ts
 #   congelado:     apps/control (M2C.2)
 # Hardware: sin rutas todavía (no existe). HANDOFF.md lo cubre R1 para todo PR.
-GATES_RE='^(\.github/workflows/|scripts/ci/|scripts/collab/|scripts/mutation-check\.py$|scripts/(dev|acceptance|e2e-platform)/|__WS__/[^/]+/scripts/|(package|tsconfig\.base)\.json$|\.eslintrc[^/]*$|pnpm-(lock|workspace)\.yaml$|\.npmrc$|\.env\.example$|docker-compose[^/]*\.ya?ml$|docker/|packages/platform-db/src/(migrations/|migrator\.ts$|bootstrap\.sql$)|packages/platform-auth/|apps/platform-api/src/(auth|approval)|apps/platform-api/src/(actor|cors|server)\.ts$|packages/platform-approval/|packages/platform-storage/|packages/platform-media/src/process\.ts$|apps/control/)|(^|/)(vite|vitest|playwright)[^/]*\.config\.[cm]?[jt]s$|(^|/)vitest\.(workspace|projects)\.[^/]+$'
+GATES_RE='^(\.github/workflows/|scripts/ci/|scripts/collab/|scripts/mutation-check\.py$|scripts/(dev|acceptance|e2e-platform)/|e2e(-platform)?/|__WS__/[^/]+/scripts/|(package|tsconfig\.base)\.json$|\.eslintrc[^/]*$|pnpm-(lock|workspace)\.yaml$|\.npmrc$|\.env\.example$|docker-compose[^/]*\.ya?ml$|docker/|packages/platform-db/src/(migrations/|migrator\.ts$|bootstrap\.sql$)|packages/platform-auth/|apps/platform-api/src/(auth|approval)|apps/platform-api/src/(actor|cors|server)\.ts$|packages/platform-approval/|packages/platform-storage/|packages/platform-media/src/process\.ts$|apps/control/)|(^|/)(vite|vitest|playwright)[^/]*\.config\.[cm]?[jt]s$|(^|/)vitest\.(workspace|projects)\.[^/]+$'
 
 fallo() { echo "paralelo: $*" >&2; exit "${2:-1}"; }
 rechazo() { local code=$1; shift; echo "paralelo: RECHAZADO — $*" >&2; exit "$code"; }
