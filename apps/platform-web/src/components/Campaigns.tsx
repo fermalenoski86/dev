@@ -44,6 +44,9 @@ export function CampaignsView(p: CampaignsViewProps) {
               <tr key={c.id}>
                 <td>
                   <a href={`/campaigns/${c.id}`}>{c.name}</a>
+                  {' · '}
+                  {/* sin el nombre en el texto accesible: un link a la campaña se busca por su nombre exacto */}
+                  <a href={`/campaigns/${c.id}/active-version`}>Versión vigente</a>
                 </td>
                 <td>{nombreContrato(c.contractId)}</td>
                 <td>{c.currentDraft ? `rev ${c.currentDraft.revision}` : '—'}</td>

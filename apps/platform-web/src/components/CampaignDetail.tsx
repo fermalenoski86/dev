@@ -71,6 +71,10 @@ export function CampaignDetailView(p: CampaignDetailViewProps) {
           <a href={`/campaigns/${c.id}/versions`} data-testid="versions-link">
             Historial de versiones
           </a>
+          {' · '}
+          <a href={`/campaigns/${c.id}/active-version`} data-testid="active-version-link">
+            Versión vigente
+          </a>
         </p>
         {p.builderUrl ? (
           <p>
