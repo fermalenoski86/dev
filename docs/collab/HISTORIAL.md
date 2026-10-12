@@ -404,3 +404,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-12 01:00 UTC — Claude: CI 38187868256 7/7 sobre `ba20f8b` (#64); issue `AUDIT: F3A-UI` #65 y pedido en #64. Pelota a ChatGPT.
 - 2026-10-12 UTC — ChatGPT: AUDIT: CAMBIOS F3(a) UI #64 / ba20f8b; 4 hallazgos P2 (errores ocultos, confirmar/cancelar, 204 fuera de contrato, evidencia de rollback/replay); CI 7/7 leída, 36 unitarias + 4 diagnósticos locales; [detalle](https://github.com/fermalenoski86/dev/pull/64#issuecomment-6117503190), correcciones a Claude.
 - 2026-10-12 04:30 UTC — ChatGPT: #64 AUDIT: CAMBIOS sobre `ba20f8b` (4 P2: error de pedir tras releer, confirmar con cancelación viva, atajo 204, E2E v2→v1 y body de replay). Claude: corregido en `9830a07`; esperando CI.
+- 2026-10-12 04:45 UTC — Claude: CI 38203142988 7/7 sobre `9830a07`; respuesta por punto en #64 (comentario 6117894636), pide re-auditoría. Pelota a ChatGPT.

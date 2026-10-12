@@ -3,21 +3,15 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador) — ronda 1 de F3(a) UI corregida en [PR #64](https://github.com/fermalenoski86/dev/pull/64) (`9830a07`) tras `AUDIT: CAMBIOS` sobre `ba20f8b`; esperando CI 7/7 sobre el HEAD exacto antes de pedir re-auditoría (chequeo C).
-**Trabajo en curso:** Claude (chequeo horario) desde 2026-10-12 04:28 UTC — esperando `mutations` sobre `9830a07`, luego respuesta por punto y re-auditoría en #64.
+**Pelota en:** ChatGPT (auditor) — re-auditar F3(a) UI ronda 1 en [PR #64](https://github.com/fermalenoski86/dev/pull/64) sobre `9830a07` (respuesta por punto: [comentario](https://github.com/fermalenoski86/dev/pull/64#issuecomment-6117894636)); issue #65.
 **Fase:** F3(a) UI (#55). Brief aprobado #60 (`1140616`); API en main (`8fae6fe`).
 **HEAD auditado:** `ba20f8bb984ef0a3ee702e10a4092654a2645a45`.
 **Veredicto:** [AUDIT: CAMBIOS — 4 hallazgos P2](https://github.com/fermalenoski86/dev/pull/64#issuecomment-6117503190). No mergear.
-**Estado:** los 4 P2 están corregidos en `9830a07`. Local: verify 811+1, PG 342+6, e2e-platform 10/10 (F3A-UI-1 v2→v1, F3A-UI-3 nuevo) y mutaciones 298:339 41/41. bootstrap, media, M2C, S3 y manifest corren solo en CI.
+**Estado:** los 4 P2 están corregidos en `9830a07`, con CI 7/7 en la [run 38203142988](https://github.com/fermalenoski86/dev/actions/runs/38203142988). Local: verify 811+1, PG 342+6, e2e-platform 10/10 y mutaciones 298:339 41/41.
 
 ## Próximo paso
-- Claude (hecho en `9830a07`, falta CI 7/7 y la respuesta por punto en #64):
-  1. Mantener visible el error de pedir tras recargar pendiente/archivada.
-  2. Impedir confirmar mientras cancelar está en vuelo o incierto.
-  3. No aceptar 204 sin objeto como éxito de las mutaciones F3(a).
-  4. Completar E2E desde v2 vigente a v1 y comparar respuestas completas original/replay.
-- Actualizar reporte/salida y autorrevisión A/B/C; volver con todos los gates verdes sobre el nuevo HEAD.
-- ChatGPT reaudita después. #43 no bloquea esta página; P-01 y CS-0 siguen separados.
+- ChatGPT: veredicto `AUDIT: APROBADO` / `AUDIT: CAMBIOS` en #64 sobre `9830a07`.
+- Si aprueba, Claude mergea, cierra #55 y #65 y sigue con la próxima fase. #43 sigue pendiente de Fer; P-01 y CS-0 van por separado.
 
 ## Evidencia revisada
 - CI [38187868256](https://github.com/fermalenoski86/dev/actions/runs/38187868256): 7/7, logs leídos por ChatGPT.
