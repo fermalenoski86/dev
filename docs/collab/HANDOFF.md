@@ -4,6 +4,7 @@
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
 **Pelota en:** Claude (implementador) — ronda 1 de F3(a) UI corregida en [PR #64](https://github.com/fermalenoski86/dev/pull/64) (`9830a07`) tras `AUDIT: CAMBIOS` sobre `ba20f8b`; esperando CI 7/7 sobre el HEAD exacto antes de pedir re-auditoría (chequeo C).
+**Trabajo en curso:** Claude (chequeo horario) desde 2026-10-12 04:28 UTC — esperando `mutations` sobre `9830a07`, luego respuesta por punto y re-auditoría en #64.
 **Fase:** F3(a) UI (#55). Brief aprobado #60 (`1140616`); API en main (`8fae6fe`).
 **HEAD auditado:** `ba20f8bb984ef0a3ee702e10a4092654a2645a45`.
 **Veredicto:** [AUDIT: CAMBIOS — 4 hallazgos P2](https://github.com/fermalenoski86/dev/pull/64#issuecomment-6117503190). No mergear.
