@@ -31,7 +31,8 @@ for (const sha of shas) {
   try { ws = git('show', `${sha}:pnpm-workspace.yaml`); } catch { continue; }
   const patrones = [...ws.matchAll(/^\s*-\s*['"]?([^'"*\s]+)\/\*['"]?\s*$/gm)].map((m) => m[1]);
   if (patrones.length === 0) continue;
-  const archivos = lista(git('ls-tree', '-r', '--name-only', sha, '--', ...patrones));
+  // -z: rutas sin entrecomillar (packages/ñ/package.json; Codex ronda 13, P2)
+  const archivos = git('ls-tree', '-r', '-z', '--name-only', sha, '--', ...patrones).split('\0').filter(Boolean);
   for (const f of archivos) {
     const m = f.match(/^(.+?\/[^/]+)\/package\.json$/);
     if (!m || !patrones.includes(m[1].slice(0, m[1].lastIndexOf('/')))) continue;

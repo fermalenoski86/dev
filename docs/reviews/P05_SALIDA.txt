@@ -195,3 +195,10 @@ handoff.test: 39 ok, 0 fallos
 paralelo.test: 108 ok, 0 fallos
 paralelo.test: 108 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
+
+=== ronda 13 (Codex sobre 3357cd0: check sobre HEAD por API; carril único + no publicar si main avanzó; ls-tree -z) — 2026-10-12T18:47:45Z
+--- código de 3357cd0 + pruebas nuevas: paralelo.test: 108 ok, 3 fallos
+--- corregido
+paralelo.test: 111 ok, 0 fallos
+paralelo.test: 111 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos

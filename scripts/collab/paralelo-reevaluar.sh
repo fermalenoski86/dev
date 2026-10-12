@@ -38,16 +38,32 @@ publicar() { # <nro> <sha> <conclusion> <titulo> <detalle>
 }
 
 git fetch -q "$REMOTE" "$BRANCH"
+MAIN0=$(git rev-parse "$REMOTE/$BRANCH")
 PRS=$(listar) || { echo "paralelo-reevaluar: no se pudo listar los PR abiertos; sin veredicto nuevo" >&2; exit 1; }
 [ -n "$PRS" ] || { echo "paralelo-reevaluar: sin PR abiertos hacia $BRANCH"; exit 0; }
-fallos=0; total=0
+# 1) evaluar todo con la política de MAIN0 …
+RES=()
 while read -r n sha; do
   [ -n "$n" ] || continue
-  total=$((total+1))
   set +e; OUT=$("$AQUI/paralelo.sh" "$n" "$sha" "$BRANCH" 2>&1); RC=$?; set -e
   if [ "$RC" = 0 ]; then CON=success; TIT="paralelo: OK (re-evaluado: $MOTIVO)"; else CON=failure; TIT="paralelo: RECHAZADO exit $RC (re-evaluado: $MOTIVO)"; fi
   echo "#$n @ ${sha:0:7} → $CON (exit $RC)"
-  publicar "$n" "$sha" "$CON" "$TIT" "$OUT" || { echo "paralelo-reevaluar: no se pudo publicar el check de #$n" >&2; fallos=$((fallos+1)); }
+  RES+=("$n"$'\t'"$sha"$'\t'"$CON"$'\t'"$TIT"$'\t'"$(printf '%s' "$OUT" | tr '\n' '\r')")
 done <<< "$PRS"
+# 2) … y recién publicar si main (la política y el HANDOFF) sigue siendo el mismo que
+#    al empezar. Si avanzó, otra corrida (la del push a main) ya tiene la última
+#    palabra: no se publica nada con una política superada (Codex ronda 13, P2).
+git fetch -q "$REMOTE" "$BRANCH"
+MAIN1=$(git rev-parse "$REMOTE/$BRANCH")
+if [ "$MAIN1" != "$MAIN0" ]; then
+  echo "paralelo-reevaluar: $BRANCH avanzó de ${MAIN0:0:7} a ${MAIN1:0:7} durante la evaluación; no se publica (la corrida del push nuevo decide)" >&2
+  exit 1
+fi
+fallos=0; total=0
+for r in "${RES[@]}"; do
+  IFS=$'\t' read -r n sha con tit det <<< "$r"
+  total=$((total+1))
+  publicar "$n" "$sha" "$con" "$tit" "$(printf '%s' "$det" | tr '\r' '\n')" || { echo "paralelo-reevaluar: no se pudo publicar el check de #$n" >&2; fallos=$((fallos+1)); }
+done
 [ "$fallos" -eq 0 ] || exit 1
-echo "paralelo-reevaluar: $total PR re-evaluados ($MOTIVO)"
+echo "paralelo-reevaluar: $total PR re-evaluados con $BRANCH@${MAIN0:0:7} ($MOTIVO)"

@@ -235,6 +235,12 @@ SD6=$(cd "$T/semilla" && git checkout -q main && git pull -q origin main && git 
   && git commit -qam "b pasa a llamarse bb y deja de depender de a" && git push -q -f origin lateral/dep-rename && git rev-parse HEAD)
 corre 67 "$SD6"; check "lateral que renombra @t/b→@t/bb y quita b→a mientras la fase toca @t/a → exit 7 (alias por revisión)" '[ "$RC" = 7 ]'
 check "el mensaje muestra los dos nombres de la carpeta y la arista histórica" 'grep -q "@t/b|@t/bb (packages/b)" "$T/err" && grep -q "@t/b → @t/a" "$T/err"'
+# Codex ronda 13 P2: workspace bajo ruta no-ASCII (git lo entrecomilla sin -z)
+(cd "$T/semilla" && git checkout -q main && git pull -q origin main && mkdir -p "packages/ñ/src" \
+  && echo '{"name":"@t/enie","dependencies":{"@t/a":"workspace:*"}}' > "packages/ñ/package.json" && echo x > "packages/ñ/src/i.ts" \
+  && git add -A && git commit -qm "workspace ñ" && git push -q origin main)
+SD7=$(rama lateral/dep-enie "packages/ñ/src/y.ts")
+corre 68 "$SD7"; check "lateral en packages/ñ (depende de @t/a, que toca la fase) → exit 7 (ls-tree -z)" '[ "$RC" = 7 ] && grep -q "@t/enie" "$T/err"'
 handoff_main Claude "ninguno"
 
 echo "5k) auditor (AUDIT: CAMBIOS sobre 0f73e0c, P1): la fase avanza S1→S2 y el lateral verde deja de serlo (re-evaluación)"
@@ -270,6 +276,20 @@ check "tras el cambio de HANDOFF, ambos PR vuelven a success" '[ "$(grep -c " su
 : > "$T/publicado"
 set +e; (cd "$T/ci" && PARALELO_LISTAR=/bin/false PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" scripts/collab/paralelo-reevaluar.sh >/dev/null 2>"$T/err"); RC=$?; set -e
 check "si no se pueden listar los PR → exit 1 y ningún check publicado" '[ "$RC" = 1 ] && [ ! -s "$T/publicado" ]'
+# Codex ronda 13 P2: si main avanza mientras se evalúa, NO se publica (la corrida nueva decide)
+handoff_main ChatGPT "#70 @ $S70b"
+cat > "$T/listar-mueve-main.sh" <<LISTAR
+#!/usr/bin/env bash
+# lista los PR y, de paso, mueve main (simula un push concurrente de HANDOFF)
+echo "71 $SL70"
+(cd "$T/semilla" && git checkout -q -f main && git pull -q origin main && echo tick >> docs/collab/HISTORIAL.md && git add -A && git commit -qm "historial" && git push -q origin main) >/dev/null 2>&1
+exit 0
+LISTAR
+chmod +x "$T/listar-mueve-main.sh"
+: > "$T/publicado"
+set +e; (cd "$T/ci" && PARALELO_LISTAR="$T/listar-mueve-main.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" scripts/collab/paralelo-reevaluar.sh "carrera" >/dev/null 2>"$T/err"); RC=$?; set -e
+check "main avanza durante la re-evaluación → exit 1, nada publicado y el motivo lo dice" '[ "$RC" = 1 ] && [ ! -s "$T/publicado" ] && grep -q "avanzó" "$T/err"'
+check "paralelo.yml publica el veredicto del PR como check sobre HEAD_SHA por API y usa un solo carril serial" 'grep -q "head_sha=\"\$HEAD_SHA\"" "$AQUI/../../.github/workflows/paralelo.yml" && grep -qE "^  group: paralelo$" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "cancel-in-progress: false" "$AQUI/../../.github/workflows/paralelo.yml"'
 check "paralelo.yml re-evalúa en push a main y cuando el PR evaluado es la fase activa" 'grep -q "^  push:" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "paralelo-reevaluar.sh" "$AQUI/../../.github/workflows/paralelo.yml" && grep -qE "checks: write" "$AQUI/../../.github/workflows/paralelo.yml" && ! grep -qE "contents: write|pull-requests: write" "$AQUI/../../.github/workflows/paralelo.yml"'
 check "ningún git push en paralelo-reevaluar.sh (solo lee y publica checks)" '! grep -E "git push" "$AQUI/paralelo-reevaluar.sh" | grep -v "^\s*#" | grep -q .'
 

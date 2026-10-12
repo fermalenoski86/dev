@@ -31,9 +31,13 @@ permissions:
   contents: read
   checks: write
   pull-requests: read
+# Un solo carril para TODO lo que publica checks "paralelo" (evaluación del PR y
+# re-evaluaciones): en serie, sin cancelar. Así una corrida vieja con política
+# superada no pisa el resultado de una más nueva (Codex ronda 13, P2); además
+# paralelo-reevaluar.sh no publica si main avanzó mientras evaluaba.
 concurrency:
-  group: paralelo-${{ github.event.pull_request.number || 'main' }}
-  cancel-in-progress: true
+  group: paralelo
+  cancel-in-progress: false
 jobs:
   paralelo:
     if: github.event_name == 'pull_request_target'
@@ -70,6 +74,22 @@ jobs:
           ENC=$(printf '%s' "$OUT" | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
           if [ "$RC" = 0 ]; then echo "::notice title=paralelo (exit 0)::$ENC"; else echo "::error title=paralelo RECHAZADO (exit $RC)::$ENC"; fi
           echo "RC=$RC" >> "$GITHUB_ENV"
+          printf '%s' "$OUT" > "$RUNNER_TEMP/paralelo.out"
+      # En pull_request_target el check del job cuelga del sha de la BASE, no del HEAD
+      # del PR (Codex ronda 13, P1): un required check "paralelo" no se vería sobre el
+      # último commit del PR. Por eso el veredicto se publica además por la API de
+      # Checks sobre HEAD_SHA, igual que hace paralelo-reevaluar.sh.
+      - name: Publicar el veredicto como check sobre el HEAD del PR
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$RC" = 0 ]; then CON=success; TIT="paralelo: OK"; else CON=failure; TIT="paralelo: RECHAZADO exit $RC"; fi
+          gh api -X POST "repos/${{ github.repository }}/check-runs" \
+            -f name=paralelo -f head_sha="$HEAD_SHA" -f status=completed -f conclusion="$CON" \
+            -f "output[title]=$TIT" -f "output[summary]=$(head -c 60000 "$RUNNER_TEMP/paralelo.out")" >/dev/null
+          echo "check paralelo=$CON publicado sobre $HEAD_SHA (#$PR)"
       # Si este PR es la fase activa del HANDOFF de main, su avance invalida a los laterales:
       # se re-evalúan todos los PR abiertos hacia main con el estado actual.
       - name: Re-evaluar laterales abiertos (este PR es la fase activa)
