@@ -289,3 +289,10 @@ handoff.test: 39 ok, 0 fallos
 paralelo.test: 133 ok, 0 fallos
 paralelo.test: 133 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
+
+=== ronda 27 (Codex sobre 5e6322e: workflow viejo no corta la re-evaluación global) — 2026-10-12T22:11:48Z
+--- código de 5e6322e + chequeo nuevo: paralelo.test: 132 ok, 1 fallo (chequeo estático del workflow)
+--- corregido
+paralelo.test: 133 ok, 0 fallos
+paralelo.test: 133 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos

@@ -76,13 +76,20 @@ jobs:
           CARGADO=$(git show "$WF_SHA:.github/workflows/paralelo.yml" 2>/dev/null || echo "__no-disponible__")
           ACTUAL=$(git show "origin/$BASE_REF:.github/workflows/paralelo.yml")
           if [ "$CARGADO" != "$ACTUAL" ]; then
-            echo "::error title=workflow desactualizado::el workflow cargado ($WF_SHA) no es el de $BASE_REF actual ($(git rev-parse "origin/$BASE_REF")); un re-run de un run viejo no vale, hace falta un evento nuevo"
+            # No se corta acá (Codex sobre 5e6322e, P2): este run pudo desplazar al único
+            # pendiente del carril, así que la re-evaluación global (scripts de main en un
+            # worktree aparte) tiene que correr igual. Solo el veredicto directo queda
+            # anulado: RC=1 con título explícito, y el chequeo directo se saltea.
+            echo "::error title=workflow desactualizado::el workflow cargado ($WF_SHA) no es el de $BASE_REF actual ($(git rev-parse "origin/$BASE_REF")); un re-run de un run viejo no da veredicto directo, hace falta un evento nuevo"
+            echo "WF_VIEJO=1" >> "$GITHUB_ENV"
             echo "RC=1" >> "$GITHUB_ENV"
             echo "RC_TIT=paralelo: SIN VEREDICTO (workflow cargado ${WF_SHA:0:7} ≠ $BASE_REF actual; re-run de un run viejo, hace falta un evento nuevo)" >> "$GITHUB_ENV"
-            exit 1
+            exit 0
           fi
+          echo "WF_VIEJO=0" >> "$GITHUB_ENV"
           echo "workflow cargado = $BASE_REF actual ($WF_SHA)"
       - name: Trabajo paralelo controlado (P-05)
+        if: env.WF_VIEJO != '1'
         env:
           PR: ${{ github.event.pull_request.number }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -205,6 +212,7 @@ jobs:
           [ "$RC" = 0 ] || exit "$RC"
           [ "$RC2" = 0 ] || exit "$RC2"
           [ "${BASE_MOVIDA:-1}" = 0 ] || { echo "la base avanzó durante el job: veredicto directo viejo"; exit 1; }
+          [ "${WF_VIEJO:-1}" = 0 ] || { echo "workflow cargado viejo: sin veredicto directo"; exit 1; }
 
   reevaluar:
     if: github.event_name == 'push'
@@ -223,7 +231,9 @@ jobs:
         run: |
           git fetch -q origin "$WF_SHA" 2>/dev/null || true
           CARGADO=$(git show "$WF_SHA:.github/workflows/paralelo.yml" 2>/dev/null || echo "__no-disponible__")
-          [ "$CARGADO" = "$(git show origin/main:.github/workflows/paralelo.yml)" ] || { echo "::error::el workflow cargado ($WF_SHA) no es el de main; re-run de un run viejo, hace falta un evento nuevo"; exit 1; }
+          # acá el YAML solo hace checkout de main y corre el script actual: se avisa y se sigue
+          # (Codex sobre 5e6322e, P2: la re-evaluación tiene que correr igual)
+          [ "$CARGADO" = "$(git show origin/main:.github/workflows/paralelo.yml)" ] || echo "::warning::el workflow cargado ($WF_SHA) no es el de main (re-run de un run viejo); la re-evaluación corre igual con los scripts de main actual"
       # push a main = cambió el HANDOFF (pelota, fase activa) o entró un merge: todos los
       # PR abiertos se vuelven a comparar contra el estado nuevo.
       - name: Re-evaluar todos los PR abiertos hacia main
