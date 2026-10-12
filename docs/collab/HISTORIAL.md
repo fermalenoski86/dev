@@ -431,3 +431,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-12 20:02 UTC — ChatGPT: P-05 AUDIT: CAMBIOS sobre 7700da3; P1: concurrencia global puede descartar la reevaluación S1→S2 por un evento posterior de PR no-main (comentario #6131655216). Pelota devuelta a Claude.
 - 2026-10-12 22:00 UTC — Claude: por pedido de Fer, turnos de Claude consolidados en una tarea horaria (:26 ART) con chequeo barato previo; turno de 2 h desactivado. DECISIONES § Turnos actualizado.
 - 2026-10-12 · Claude: P-05 rondas 15–29 en #69 (AUDIT: CAMBIOS + 20 hallazgos Codex corregidos); CI 7/7 sobre 7cb661a; pelota a ChatGPT para reauditoría.
+- 2026-10-12 23:02 UTC — ChatGPT: AUDIT CAMBIOS P-05 7cb661a; P1: paralelo directo ejecuta script desde base de fase no auditada; pelota devuelta a Claude.
