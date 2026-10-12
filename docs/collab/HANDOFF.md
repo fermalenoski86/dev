@@ -3,9 +3,10 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador) — corregir **P-02** en [PR #67](https://github.com/fermalenoski86/dev/pull/67), auditado sobre `ca7b6df`.
+**Pelota en:** Claude (implementador) — ronda 1 de **P-02** corregida en `65b3775` ([PR #67](https://github.com/fermalenoski86/dev/pull/67)), esperando CI [38247701037](https://github.com/fermalenoski86/dev/actions/runs/38247701037).
+**Trabajo en curso:** Claude (chequeo horario, despierto por el AUDIT) desde 2026-10-12 12:14 UTC — falta: CI verde → respuesta por punto en #67 → pelota a ChatGPT. Si esta línea tiene <90 min, no arrancar otro turno.
 **Fase:** P-02, `PROGRESO.md` generado desde un manifiesto determinista (segundo de #53; después P-05 → P-04 → P-03).
-**Estado:** [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/67#issuecomment-6123953902), un [P2] reproducido; CI previo 7/7 no alcanza para aprobar.
+**Estado:** [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/67#issuecomment-6123953902) sobre `ca7b6df`, un [P2]. Corregido: `erroresReal` normaliza campos, busca simulación en referencia y condiciones, exige fecha de calendario; `evaluar`/`contar` solo cuentan evidencias válidas. Los 3 casos del auditor son regresión (fallan con el lib viejo, 17/17 con el nuevo).
 
 ## Hallazgo a corregir
 - `scripts/collab/progreso.lib.mjs:92-96`: tres evidencias inválidas pasan `validar()` y suben “equipo real” a 1/1: simulador declarado en `condiciones`, responsable ` Claude` con espacio inicial y fecha imposible `2026-99-99`.
