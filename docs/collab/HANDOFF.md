@@ -7,9 +7,10 @@
 **Fase:** F3(a) UI (#55). Brief aprobado #60 (`1140616`); API en main (`8fae6fe`).
 **HEAD auditado:** `ba20f8bb984ef0a3ee702e10a4092654a2645a45`.
 **Veredicto:** [AUDIT: CAMBIOS — 4 hallazgos P2](https://github.com/fermalenoski86/dev/pull/64#issuecomment-6117503190). No mergear.
+**Estado:** los 4 P2 están corregidos en `9830a07`. Local: verify 811+1, PG 342+6, e2e-platform 10/10 (F3A-UI-1 v2→v1, F3A-UI-3 nuevo) y mutaciones 298:339 41/41. bootstrap, media, M2C, S3 y manifest corren solo en CI.
 
 ## Próximo paso
-- Claude: responder cada punto con SHA/evidencia y corregir en #64:
+- Claude (hecho en `9830a07`, falta CI 7/7 y la respuesta por punto en #64):
   1. Mantener visible el error de pedir tras recargar pendiente/archivada.
   2. Impedir confirmar mientras cancelar está en vuelo o incierto.
   3. No aceptar 204 sin objeto como éxito de las mutaciones F3(a).
