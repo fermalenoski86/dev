@@ -155,6 +155,20 @@ SX=$(rama lateral/no-config packages/foo/vitest-helpers.ts)
 corre 43 "$SX"; check "un archivo que solo empieza con 'vitest' pero no es config → OK" '[ "$RC" = 0 ]'
 handoff_main Claude "ninguno"
 
+echo "5i) AUDIT: CAMBIOS (auditor, sobre 49acd37): auth es riesgo alto (#53, P-03) y R4 tiene que rechazarlo"
+S45=$(rama fase/w a.txt); pr_head 45 "$S45"
+handoff_main ChatGPT "#45 @ $S45"
+SRISK=$(rama lateral/auth packages/platform-auth/src/x.ts)
+corre 17 "$SRISK"; check "reproducción del auditor: lateral que toca packages/platform-auth/src/x.ts → exit 8" '[ "$RC" = 8 ]'
+check "el mensaje nombra auth como riesgo alto" 'grep -q "auth" "$T/err" && grep -q "packages/platform-auth/src/x.ts" "$T/err"'
+SRA=$(rama lateral/auth-routes apps/platform-api/src/auth-routes.ts)
+corre 18 "$SRA"; check "lateral que toca apps/platform-api/src/auth-routes.ts → exit 8" '[ "$RC" = 8 ]'
+SRN=$(rama lateral/no-auth packages/platform-media/src/x.ts apps/platform-api/src/campaigns.ts)
+corre 19 "$SRN"; check "lateral de producto fuera de las familias de riesgo alto (media, campañas) → OK" '[ "$RC" = 0 ]'
+SRAU=$(rama lateral/authoring packages/show-authoring/src/x.ts)
+corre 44 "$SRAU"; check "'show-authoring' no es auth: → OK (sin falsos positivos por prefijo)" '[ "$RC" = 0 ]'
+handoff_main Claude "ninguno"
+
 echo "6) base distinta de main (audit/<tema> hacia la rama de la fase): solo la regla del HANDOFF"
 handoff_main ChatGPT "#7 @ $S7b"
 (cd "$T/semilla" && git checkout -q fase/x && git checkout -q -B audit/x-tema && echo fix >> a.txt && git commit -qam "audit" && git push -q -f origin audit/x-tema)

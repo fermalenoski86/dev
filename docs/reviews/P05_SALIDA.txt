@@ -142,3 +142,14 @@ paralelo.test: 51 ok, 0 fallos
 === ronda 5
 paralelo.test: 54 ok, 0 fallos
 paralelo.test: 54 ok, 0 fallos
+
+=== ronda 6 (AUDIT: CAMBIOS del auditor sobre 49acd37) — 2026-10-12T16:18:43Z
+--- script de 36baa19 + pruebas 5i (reproducción del auditor)
+  ✗ reproducción del auditor: lateral que toca packages/platform-auth/src/x.ts → exit 8
+  ✗ el mensaje nombra auth como riesgo alto
+  ✗ lateral que toca apps/platform-api/src/auth-routes.ts → exit 8
+paralelo.test: 56 ok, 3 fallos
+--- corregido
+paralelo.test: 59 ok, 0 fallos
+paralelo.test: 59 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
