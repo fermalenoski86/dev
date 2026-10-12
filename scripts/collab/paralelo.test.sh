@@ -350,6 +350,29 @@ check "paralelo.yml re-evalúa TODOS los PR en cada evento hacia main (no solo c
 check "paralelo.yml re-evalúa en push a main y cuando el PR evaluado es la fase activa" 'grep -q "^  push:" "$AQUI/../../.github/workflows/paralelo.yml" && grep -q "paralelo-reevaluar.sh" "$AQUI/../../.github/workflows/paralelo.yml" && grep -qE "checks: write" "$AQUI/../../.github/workflows/paralelo.yml" && ! grep -qE "contents: write|pull-requests: write" "$AQUI/../../.github/workflows/paralelo.yml"'
 check "ningún git push en paralelo-reevaluar.sh (solo lee y publica checks)" '! grep -E "git push" "$AQUI/paralelo-reevaluar.sh" | grep -v "^\s*#" | grep -q .'
 
+echo "5l) Codex sobre fe2f6c3 P2: ejecutables de gates dentro de paquetes y el bloque scripts de su package.json"
+handoff_main Claude "ninguno"
+(cd "$T/semilla" && git checkout -q main && git pull -q origin main && mkdir -p apps/api/scripts packages/c/scripts \
+  && echo 'export {}' > apps/api/scripts/docs-contract.ts && echo 'true' > packages/c/scripts/make-fixtures.sh \
+  && printf '{"name":"@t/c","scripts":{"typecheck":"tsc --noEmit"}}\n' > packages/c/package.json \
+  && git add -A && git commit -qm "scripts de paquetes" && git push -q origin main)
+S80=$(rama fase/otra a.txt); pr_head 80 "$S80"
+handoff_main ChatGPT "#80 @ $S80"
+SG1=$(rama lateral/docs-contract apps/api/scripts/docs-contract.ts)
+corre 81 "$SG1"; check "lateral que toca apps/api/scripts/docs-contract.ts (lo ejecuta pnpm docs:contract) → exit 8" '[ "$RC" = 8 ]'
+SG2=$(rama lateral/fixtures packages/c/scripts/make-fixtures.sh)
+corre 82 "$SG2"; check "lateral que toca packages/c/scripts/make-fixtures.sh → exit 8" '[ "$RC" = 8 ]'
+SG3=$(cd "$T/semilla" && git checkout -q main && git pull -q origin main && git checkout -q -B lateral/pkg-scripts main \
+  && printf '{"name":"@t/c","scripts":{"typecheck":"true"}}\n' > packages/c/package.json && git commit -qam "typecheck a true" && git push -q -f origin lateral/pkg-scripts && git rev-parse HEAD)
+corre 83 "$SG3"; check "lateral que cambia el bloque scripts de packages/c/package.json (typecheck→true) → exit 8 y lo nombra" '[ "$RC" = 8 ] && grep -q "packages/c/package.json (bloque scripts)" "$T/err"'
+SG4=$(cd "$T/semilla" && git checkout -q -B lateral/pkg-deps main \
+  && printf '{"name":"@t/c","scripts":{"typecheck":"tsc --noEmit"},"dependencies":{"left-pad":"1.0.0"}}\n' > packages/c/package.json && git commit -qam "agrega dep externa" && git push -q -f origin lateral/pkg-deps && git rev-parse HEAD)
+corre 84 "$SG4"; check "lateral que solo agrega una dependencia externa en packages/c/package.json (mismo bloque scripts) → OK" '[ "$RC" = 0 ]'
+SG5=$(cd "$T/semilla" && git checkout -q -B lateral/pkg-nuevo main && mkdir -p packages/nuevo \
+  && printf '{"name":"@t/nuevo","scripts":{"test":"true"}}\n' > packages/nuevo/package.json && git add -A && git commit -qm "paquete nuevo" && git push -q -f origin lateral/pkg-nuevo && git rev-parse HEAD)
+corre 85 "$SG5"; check "lateral que agrega un package.json nuevo con scripts → exit 8 (aparece en pnpm -r)" '[ "$RC" = 8 ]'
+(cd "$T/semilla" && git checkout -q -f main)
+
 echo "6) base distinta de main (audit/<tema> hacia la rama de la fase): solo la regla del HANDOFF"
 handoff_main ChatGPT "#7 @ $S7b"
 (cd "$T/semilla" && git checkout -q fase/x && git checkout -q -B audit/x-tema && echo fix >> a.txt && git commit -qam "audit" && git push -q -f origin audit/x-tema)

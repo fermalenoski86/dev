@@ -45,11 +45,15 @@ FILE=docs/collab/HANDOFF.md
 #                  vite/vitest/playwright a cualquier profundidad y extensión, más
 #                  vitest.workspace.* / vitest.projects.* (Vitest 2 los lee solo; Codex ronda 12)
 #                  + lo que gates.yml ejecuta o lo que define un gate (ronda 9, autorrevisión):
-#                  scripts/{dev,acceptance,e2e-platform}/, packages/platform-db/scripts/
-#                  (pg-up, acceptance:check, manifiesto e2e, bootstrap-smoke) y en la RAÍZ
-#                  package.json (define verify/acceptance:check/progress:check),
-#                  .eslintrc* (lint) y tsconfig.base.json (typecheck). Solo raíz: el
-#                  package.json de un paquete es producto; si lo comparte con la fase, R3.
+#                  scripts/{dev,acceptance,e2e-platform}/ y los scripts/ de CADA paquete
+#                  del workspace (docs-contract.ts, db-migrate, e2e-stack, bootstrap-smoke,
+#                  make-fixtures…: lo que gates.yml ejecuta vía pnpm --filter o por ruta;
+#                  Codex sobre fe2f6c3, P2) y en la RAÍZ package.json (define
+#                  verify/acceptance:check/progress:check), .eslintrc* (lint) y
+#                  tsconfig.base.json (typecheck). El package.json de un paquete es
+#                  producto (deps: R3/R3b), SALVO su bloque "scripts": lo que pnpm -r
+#                  build/typecheck/test y pnpm --filter docs:contract ejecutan; si cambia,
+#                  es gate (R4b, misma ronda).
 #                  + entradas que los gates consumen (Codex sobre b4aeebb): pnpm-lock.yaml,
 #                  pnpm-workspace.yaml, .npmrc (install), .env.example, docker-compose*.yml
 #                  y docker/ (compose-smoke).
@@ -61,7 +65,7 @@ FILE=docs/collab/HANDOFF.md
 #                  apps/platform-api/src/server.ts
 #   congelado:     apps/control (M2C.2)
 # Hardware: sin rutas todavía (no existe). HANDOFF.md lo cubre R1 para todo PR.
-GATES_RE='^(\.github/workflows/|scripts/ci/|scripts/collab/|scripts/mutation-check\.py$|scripts/(dev|acceptance|e2e-platform)/|packages/platform-db/scripts/|(package|tsconfig\.base)\.json$|\.eslintrc[^/]*$|pnpm-(lock|workspace)\.yaml$|\.npmrc$|\.env\.example$|docker-compose[^/]*\.ya?ml$|docker/|packages/platform-db/src/(migrations/|migrator\.ts$|bootstrap\.sql$)|packages/platform-auth/|apps/platform-api/src/(auth|approval)|apps/platform-api/src/(actor|cors|server)\.ts$|packages/platform-approval/|packages/platform-storage/|packages/platform-media/src/process\.ts$|apps/control/)|(^|/)(vite|vitest|playwright)[^/]*\.config\.[cm]?[jt]s$|(^|/)vitest\.(workspace|projects)\.[^/]+$'
+GATES_RE='^(\.github/workflows/|scripts/ci/|scripts/collab/|scripts/mutation-check\.py$|scripts/(dev|acceptance|e2e-platform)/|(apps|packages)/[^/]+/scripts/|(package|tsconfig\.base)\.json$|\.eslintrc[^/]*$|pnpm-(lock|workspace)\.yaml$|\.npmrc$|\.env\.example$|docker-compose[^/]*\.ya?ml$|docker/|packages/platform-db/src/(migrations/|migrator\.ts$|bootstrap\.sql$)|packages/platform-auth/|apps/platform-api/src/(auth|approval)|apps/platform-api/src/(actor|cors|server)\.ts$|packages/platform-approval/|packages/platform-storage/|packages/platform-media/src/process\.ts$|apps/control/)|(^|/)(vite|vitest|playwright)[^/]*\.config\.[cm]?[jt]s$|(^|/)vitest\.(workspace|projects)\.[^/]+$'
 
 fallo() { echo "paralelo: $*" >&2; exit "${2:-1}"; }
 rechazo() { local code=$1; shift; echo "paralelo: RECHAZADO — $*" >&2; exit "$code"; }
@@ -170,6 +174,21 @@ fi
 GATES=$(printf '%s\n' "$MIOS" | grep -E "$GATES_RE" || true)
 if [ -n "$GATES" ]; then
   rechazo 8 "el lateral #$PR toca una familia de riesgo alto según #53/P-03 (gates, proceso, migraciones, auth/CSRF/CORS, aprobación, storage, procesos externos, apps/control): no es lateral mientras #$AUD_PR es la fase activa (pelota en $PELOTA):"$'\n'"$GATES"
+fi
+
+# R4b · el bloque "scripts" de un package.json del workspace define lo que los gates
+# ejecutan (pnpm -r build/typecheck/test, pnpm --filter … docs:contract): si cambia,
+# o el package.json aparece/desaparece, es gate. Las deps son producto (R3/R3b).
+command -v jq >/dev/null || fallo "falta jq para evaluar los scripts de package.json (R4b); no se aprueba"
+scripts_de() { git show "$1:$2" 2>/dev/null | jq -cS '.scripts // {}' 2>/dev/null || echo "__sin-package-json__"; }
+PKG_GATES=""
+while IFS= read -r f; do
+  [ -n "$f" ] || continue
+  [[ "$f" =~ ^(apps|packages)/[^/]+/package\.json$ ]] || continue
+  if [ "$(scripts_de "$BASE_SHA" "$f")" != "$(scripts_de "$HEAD_SHA" "$f")" ]; then PKG_GATES+="$f (bloque scripts)"$'\n'; fi
+done <<< "$MIOS"
+if [ -n "$PKG_GATES" ]; then
+  rechazo 8 "el lateral #$PR cambia el bloque \"scripts\" de un package.json del workspace (lo que pnpm -r / pnpm --filter ejecutan en los gates): no es lateral mientras #$AUD_PR es la fase activa (pelota en $PELOTA):"$'\n'"$PKG_GATES"
 fi
 
 echo "paralelo: OK — lateral #$PR (${HEAD_SHA:0:7}) no comparte archivos con la fase activa #$AUD_PR (${FASE_SHA:0:7}) ni toca gates."

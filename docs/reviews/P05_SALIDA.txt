@@ -240,3 +240,10 @@ handoff.test: 39 ok, 0 fallos
 paralelo.test: 121 ok, 0 fallos
 paralelo.test: 121 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
+
+=== ronda 20 (Codex sobre fe2f6c3: scripts/ de paquetes y bloque scripts de package.json son gate) — 2026-10-12T21:01:10Z
+--- código de fe2f6c3 + pruebas nuevas: paralelo.test: 122 ok, 4 fallos
+--- corregido
+paralelo.test: 126 ok, 0 fallos
+paralelo.test: 126 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
