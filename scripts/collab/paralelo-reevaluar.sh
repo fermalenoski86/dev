@@ -29,13 +29,23 @@ listar() {
   [ -n "$REPO" ] || { echo "paralelo-reevaluar: falta GITHUB_REPOSITORY" >&2; return 1; }
   gh api --paginate "repos/$REPO/pulls?state=open&base=$BRANCH&per_page=100" --jq '.[] | "\(.number) \(.head.sha)"'
 }
-publicar() { # <nro> <sha> <conclusion> <titulo> <detalle>
+publicar() { # <nro> <sha> <conclusion|pendiente> <titulo> <detalle>
   if [ -n "${PARALELO_PUBLICAR:-}" ]; then "${PARALELO_PUBLICAR}" "$@"; return; fi
   local n=$1 sha=$2 con=$3 tit=$4 det=$5
+  if [ "$con" = pendiente ]; then
+    gh api -X POST "repos/$REPO/check-runs" -f name=paralelo -f head_sha="$sha" -f status=in_progress \
+      -f "output[title]=$tit" -f "output[summary]=$det" >/dev/null; return
+  fi
   gh api -X POST "repos/$REPO/check-runs" \
     -f name=paralelo -f head_sha="$sha" -f status=completed -f conclusion="$con" \
     -f "output[title]=$tit" -f "output[summary]=$(printf '%s' "$det" | head -c 60000)" >/dev/null
 }
+# Publicar con reintentos: un fallo transitorio de la API no puede dejar vivo un check
+# viejo (Codex sobre 4d6746b, P1). Antes del veredicto final se publica "pendiente"
+# sobre cada HEAD, así un success anterior deja de ser el último aunque la publicación
+# final falle; y la final se reintenta.
+REINTENTOS=${PARALELO_REINTENTOS:-3}
+publicar_firme() { local i; for ((i=1; i<=REINTENTOS; i++)); do publicar "$@" && return 0; [ "$i" -lt "$REINTENTOS" ] && sleep "${PARALELO_ESPERA:-2}"; done; return 1; }
 
 # HEAD de la fase activa (refs/pull/N/head) según el HANDOFF de main: se captura al
 # empezar y se revalida antes de publicar, igual que main (Codex sobre 7700da3, P1).
@@ -80,11 +90,19 @@ if [ "$FASE1" != "$FASE0" ]; then
   echo "paralelo-reevaluar: la fase activa #$FASE_PR avanzó de ${FASE0:0:7} a ${FASE1:0:7} durante la evaluación; no se publica (la corrida de su synchronize decide)" >&2
   exit 1
 fi
+# 2a) primero "pendiente" sobre TODOS los HEAD evaluados: desde acá ningún success viejo
+#     es el último check, pase lo que pase con la publicación final.
 fallos=0; total=0
 for r in "${RES[@]}"; do
   IFS=$'\t' read -r n sha con tit det <<< "$r"
+  publicar_firme "$n" "$sha" pendiente "paralelo: re-evaluando ($MOTIVO)" "Veredicto nuevo en curso con $BRANCH@${MAIN0:0:7}; el anterior ya no vale." \
+    || { echo "paralelo-reevaluar: no se pudo marcar pendiente el check de #$n" >&2; fallos=$((fallos+1)); }
+done
+# 2b) veredicto final, con reintentos; si aun así falla, queda el "pendiente" (nunca un verde viejo)
+for r in "${RES[@]}"; do
+  IFS=$'\t' read -r n sha con tit det <<< "$r"
   total=$((total+1))
-  publicar "$n" "$sha" "$con" "$tit" "$(printf '%s' "$det" | tr '\r' '\n')" || { echo "paralelo-reevaluar: no se pudo publicar el check de #$n" >&2; fallos=$((fallos+1)); }
+  publicar_firme "$n" "$sha" "$con" "$tit" "$(printf '%s' "$det" | tr '\r' '\n')" || { echo "paralelo-reevaluar: no se pudo publicar el check de #$n tras $REINTENTOS intentos; queda pendiente (no success)" >&2; fallos=$((fallos+1)); }
 done
 # 3) … y revalidar DESPUÉS de publicar (Codex sobre baec6ab, P1): si main o la fase
 #    avanzaron mientras corría el bucle de publicación, lo publicado puede ser un verde
@@ -96,7 +114,7 @@ if [ "$MAIN2" != "$MAIN0" ] || [ "$FASE2" != "$FASE0" ]; then
   echo "paralelo-reevaluar: $BRANCH (${MAIN0:0:7}→${MAIN2:0:7}) o la fase #$FASE_PR (${FASE0:0:7}→${FASE2:0:7}) avanzaron durante la publicación; se invalida lo publicado" >&2
   for r in "${RES[@]}"; do
     IFS=$'\t' read -r n sha con tit det <<< "$r"
-    publicar "$n" "$sha" failure "paralelo: CADUCADO (main o la fase avanzaron durante la publicación; re-evaluación pendiente)" "El veredicto anterior se calculó con $BRANCH@${MAIN0:0:7} y fase@${FASE0:0:7}; ahora $BRANCH@${MAIN2:0:7} y fase@${FASE2:0:7}. La corrida siguiente lo recalcula." || true
+    publicar_firme "$n" "$sha" failure "paralelo: CADUCADO (main o la fase avanzaron durante la publicación; re-evaluación pendiente)" "El veredicto anterior se calculó con $BRANCH@${MAIN0:0:7} y fase@${FASE0:0:7}; ahora $BRANCH@${MAIN2:0:7} y fase@${FASE2:0:7}. La corrida siguiente lo recalcula." || true
   done
   exit 1
 fi

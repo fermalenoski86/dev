@@ -136,9 +136,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           RC=${RC:-1}; RC2=${RC2:-1}
-          publicar() { gh api -X POST "repos/${{ github.repository }}/check-runs" \
+          publicar() { local i; for i in 1 2 3; do gh api -X POST "repos/${{ github.repository }}/check-runs" \
             -f name=paralelo -f head_sha="$HEAD_SHA" -f status=completed -f conclusion="$1" \
-            -f "output[title]=$2" -f "output[summary]=$3" >/dev/null; echo "check paralelo=$1 publicado sobre $HEAD_SHA (#$PR): $2"; }
+            -f "output[title]=$2" -f "output[summary]=$3" >/dev/null && { echo "check paralelo=$1 publicado sobre $HEAD_SHA (#$PR): $2"; return 0; }; sleep 2; done
+            echo "::error::no se pudo publicar el check paralelo=$1 sobre $HEAD_SHA tras 3 intentos"; return 1; }
           if [ "$RC" != 0 ]; then publicar failure "paralelo: RECHAZADO exit $RC" "$(head -c 60000 "$RUNNER_TEMP/paralelo.out" 2>/dev/null || echo "sin salida del chequeo")"; exit 0; fi
           if [ "$RC2" != 0 ]; then publicar failure "paralelo: SIN VEREDICTO (la re-evaluación global no completó, exit $RC2)" "$(head -c 60000 "$RUNNER_TEMP/reevaluar.out" 2>/dev/null || echo "sin salida de la re-evaluación")"; exit 0; fi
           if [ "$BASE_REF" = main ]; then

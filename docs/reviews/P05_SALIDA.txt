@@ -233,3 +233,10 @@ handoff.test: 39 ok, 0 fallos
 paralelo.test: 118 ok, 0 fallos
 paralelo.test: 118 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
+
+=== ronda 19 (Codex sobre 4d6746b: "pendiente" antes del veredicto y publicación con reintentos) — 2026-10-12T20:51:25Z
+--- código de 4d6746b + pruebas nuevas: paralelo.test: 119 ok, 2 fallos (sin "pendiente", sin reintentos)
+--- corregido
+paralelo.test: 121 ok, 0 fallos
+paralelo.test: 121 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos

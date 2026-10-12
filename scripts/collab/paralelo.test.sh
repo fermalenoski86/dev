@@ -323,6 +323,21 @@ PUBLICAR
 chmod +x "$T/publicar-mueve-main.sh"; rm -f "$T/publicado.movido"
 set +e; PARALELO_LISTAR="$T/listar.sh" PARALELO_PUBLICAR="$T/publicar-mueve-main.sh" PUBLICADO="$T/publicado" SEMILLA="$T/semilla" reeval "carrera en publicación" >/dev/null 2>"$T/err"; RC=$?; set -e
 check "main avanza durante la publicación → exit 1 y todos los HEAD reciben failure CADUCADO después de lo publicado" '[ "$RC" = 1 ] && [ "$(grep -c " failure | paralelo: CADUCADO" "$T/publicado")" = 2 ] && grep -q "durante la publicación" "$T/err"'
+# Codex sobre 4d6746b, P1: si la publicación final de un lateral falla, su success viejo no puede
+# sobrevivir: antes se publica "pendiente" sobre cada HEAD y la final se reintenta.
+check "cada HEAD recibe 'pendiente' ANTES de su veredicto final (ambos en orden)" 'P71=$(grep -n "^71 ${SL70:0:7} pendiente |" "$T/publicado" | head -1 | cut -d: -f1); F71=$(grep -n "^71 ${SL70:0:7} failure |" "$T/publicado" | head -1 | cut -d: -f1); [ -n "$P71" ] && [ -n "$F71" ] && [ "$P71" -lt "$F71" ]'
+cat > "$T/publicar-falla-final.sh" <<'PUBLICAR'
+#!/usr/bin/env bash
+printf '%s %s %s | %s\n' "$1" "${2:0:7}" "$3" "$4" >> "$PUBLICADO"
+# la publicación FINAL de #71 falla siempre (API caída); las demás y los "pendiente" andan
+[ "$1" = 71 ] && [ "$3" != pendiente ] && exit 1
+exit 0
+PUBLICAR
+chmod +x "$T/publicar-falla-final.sh"
+: > "$T/publicado"
+set +e; PARALELO_LISTAR="$T/listar.sh" PARALELO_PUBLICAR="$T/publicar-falla-final.sh" PUBLICADO="$T/publicado" PARALELO_ESPERA=0 reeval "api caída" >/dev/null 2>"$T/err"; RC=$?; set -e
+check "falla la publicación final de un lateral → exit 1, se reintentó 3 veces, queda 'pendiente' (sin success nuevo) y se avisa" '[ "$RC" = 1 ] && [ "$(grep -c "^71 ${SL70:0:7} failure |" "$T/publicado")" = 3 ] && grep -q "^71 ${SL70:0:7} pendiente |" "$T/publicado" && ! grep -q "^71 .* success |" "$T/publicado" && grep -q "queda pendiente" "$T/err"'
+check "y el otro PR sí recibió su veredicto final" 'grep -qE "^70 ${S70b:0:7} (success|failure) \| paralelo: (OK|RECHAZADO)" "$T/publicado"'
 # Codex sobre e511687, P1: los scripts en ejecución tienen que SER la revisión de main que se
 # compara. Si el checkout quedó atrás (main avanzó entre el worktree y el fetch), no se evalúa.
 (cd "$T/semilla" && git checkout -q -f main && git pull -q origin main && echo tack >> docs/collab/HISTORIAL.md && git add -A && git commit -qm "historial 3" && git push -q origin main) >/dev/null 2>&1
