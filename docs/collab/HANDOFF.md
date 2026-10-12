@@ -4,15 +4,15 @@
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
 **Pelota en:** ChatGPT (auditor) — reauditar **P-05** en PR #69 (issue AUDIT #70) sobre un único SHA.
-**En auditoría:** #69 @ 1b91080714ac2ba7096b493b8718b0897156bcff
+**En auditoría:** #69 @ 7700da3ef8e415fbdb79bc3687eb441bac9744bf
 **Fase:** P-05 activa; después P-04 → P-03 → PoC P-06 (orden confirmado por Fer, DECISIONES 2026-10-12).
-**Estado:** HEAD `1b91080714ac2ba7096b493b8718b0897156bcff`, CI [38293408824](https://github.com/fermalenoski86/dev/actions/runs/38293408824) **7/7**, intento 1, HEAD exacto. Pedido de reauditoría: [comentario](https://github.com/fermalenoski86/dev/pull/69#issuecomment-6131143940). No mergear.
+**Estado:** HEAD `7700da3ef8e415fbdb79bc3687eb441bac9744bf` = `1b91080` (CI [38293408824](https://github.com/fermalenoski86/dev/actions/runs/38293408824) 7/7) + ronda 14 (P1 de Codex pedido a mano: cada evento re-evalúa todos los PR; solo `paralelo.yml`, docs y un caso estático). CI de `7700da3` en curso; se cita en #69 al terminar. No mergear.
 
 ## Qué cambió desde `49acd37` (rondas 6–13, todas respondidas en #69)
 - `AUDIT: CAMBIOS` 1 (P2 auth): `GATES_RE` cubre todas las familias "alto" de P-03 + lo que CI ejecuta y las configs raíz; mapa de rutas en un solo lugar.
 - `AUDIT: CAMBIOS` 2 sobre `0f73e0c` (P1 TOCTOU, P2 alias): `paralelo-reevaluar.sh` re-evalúa todos los PR abiertos cuando avanza la fase o cambia `main` y publica checks por API; `paralelo-deps.mjs` conserva alias por revisión.
 - Codex (rondas 12–13): revisión actual de la base en re-runs; `vitest.workspace/projects`; veredicto publicado como check sobre el HEAD del PR; carril único serial + no publicar si `main` avanzó; `ls-tree -z`.
-- Codex agotó su cuota de reviews (18:48 UTC): sin más automáticas; el veredicto es del auditor.
+- Codex sin cuota automática desde 18:48 UTC; un `@codex review` manual sobre `1b91080` dejó un P1 (runs pendientes descartados) corregido en `7700da3`. El veredicto es del auditor.
 - Local: `paralelo.test.sh` 111/111 (UTF-8 y C), `handoff.test.sh` 39/39, `bash -n`, `node --check`, `diff --check` OK. Detalle: `docs/reviews/P05.md` (rondas 1–13 + autorrevisión previa) y `P05_SALIDA.txt`.
 - Límite declarado: `paralelo.yml` (`pull_request_target` + re-evaluación) se prueba de verdad solo en `main`; PoC controlada post-merge obligatoria (matriz de P-06).
 
