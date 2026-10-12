@@ -3,26 +3,26 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador) — P-01 ronda 1 (2 P2) corregida en [PR #58](https://github.com/fermalenoski86/dev/pull/58) (`fb77a49`) tras `AUDIT: CAMBIOS` sobre `2182f05`; esperando CI 7/7 antes de pedir re-auditoría.
-**Trabajo en curso:** Claude (chequeo horario P-06) desde 2026-10-12 08:28 UTC — espera `mutations` sobre `fb77a49`, responde por punto en #58 y pasa la pelota a ChatGPT. Si esta línea tiene menos de 90 min, no arrancar otro turno de Claude.
-**Fase:** P-01, protección CAS y fast-forward del HANDOFF. Es la siguiente unidad que acordó el auditor en #64.
-**Estado:** (1) `validar` cuenta líneas lógicas con `awk`. (2) Un push fallido solo es "carrera" (exit 3) si main avanzó; si no, muestra el error real de git y sale con exit 4. Probado con carrera real, `pushurl` inválido y hook. handoff.test 31/31; con el script viejo, 5 fallos.
+**Pelota en:** ChatGPT (auditor) — reauditar P-01 ronda 1 en [PR #58](https://github.com/fermalenoski86/dev/pull/58), HEAD `fb77a49`, CI 7/7 [38222115237](https://github.com/fermalenoski86/dev/actions/runs/38222115237). Respuesta por punto: [6120970314](https://github.com/fermalenoski86/dev/pull/58#issuecomment-6120970314).
+**Fase:** P-01, protección CAS y fast-forward del HANDOFF (issue AUDIT #66).
+**Estado:** los 2 P2 de `AUDIT: CAMBIOS` (sobre `2182f05`) corregidos: (1) `validar` cuenta líneas lógicas con `awk`; (2) un push fallido solo es "carrera" (exit 3) si main avanzó; si no, error real de git y exit 4. handoff.test 31/31; CI verde al primer intento.
 
 ## Cerrado en este turno
-- F3(a) UI: [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/64#issuecomment-6118661022) sobre `9830a07`, CI 38203142988 7/7. Squash `main@2ee3551`. #55 y #65 cerrados.
+- Nada mergeado. F3(a) UI ya está en `main@2ee3551` (#64 aprobado, #55/#65 cerrados).
 
 ## Próximo paso
-- Claude: con CI 7/7 sobre `fb77a49` → "Corregido en fb77a49" por punto en #58 y pelota a ChatGPT.
-- Después: P-02 → P-05 → P-04 → P-03. CS-0 (#59) sigue autorizado y separado; no se mezcla con P-01.
+- ChatGPT: veredicto sobre `fb77a49` en #58.
+- Claude (con `AUDIT: APROBADO`): squash de #58, cerrar #66, luego P-02 → P-05 → P-04 → P-03. Con `AUDIT: CAMBIOS`: corregir en la misma rama.
+- CS-0 (#59) sigue autorizado y separado; no se mezcla con P-01.
 
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-01 handoff CAS | PR #58 / #66 | ronda 1 corregida; CI corriendo |
+| P-01 handoff CAS | PR #58 / #66 | ronda 1 corregida; en reauditoría |
 | Proceso P-02…P-05 | #53 | después de P-01 |
-| Agent Bridge (P-06) | #54 | propuesta; sin implementar |
+| Agent Bridge (P-06) | #54 | chequeo horario activo (alternativa 2a); bridge sin implementar |
 | CS-0 Creative Studio | #59 | autorizado; brief aparte |
-| E2E intermitente :17 | #26 | observabilidad #40/#41; sin reproducción |
+| E2E intermitente :17 | #26 | observabilidad #40/#41; sin reproducción (hoy pasó a la primera) |
 
 ## Pendiente de Fer
 - #43: detalle de campaña para INTERNAL_APPROVER.
