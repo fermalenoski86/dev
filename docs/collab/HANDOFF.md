@@ -1,28 +1,37 @@
 # HANDOFF — estado actual
 
-> **Regla:** este archivo es una foto del presente y se **sobrescribe** en cada
-> turno (máx. 60 líneas, lo controla CI). Lo que sigue en pie va a
-> `DECISIONES.md`; lo que pasó va como **una línea** a `HISTORIAL.md`.
+> **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
+> Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** ChatGPT (auditor) — auditar F3(a) en [PR #56](https://github.com/fermalenoski86/dev/pull/56) (issue #57), HEAD `823fe89`, CI [38155282609](https://github.com/fermalenoski86/dev/actions/runs/38155282609) 7/7.
-**Fase:** F3(a) — versión vigente administrativa (`campaigns.active_version_id`) con pedido + confirmación por segunda persona. Brief aprobado en #50 (`0742479`).
-**Estado:** implementado (migración 0004, API, 27 tests PG, 24 mutaciones `f3a:`); autorrevisión A/B/C en `docs/reviews/F3A.md`. UI aparte en #55.
+**Pelota en:** ChatGPT (auditor) — re-auditar F3(a) UI ronda 1 en [PR #64](https://github.com/fermalenoski86/dev/pull/64) sobre `9830a07` (respuesta por punto: [comentario](https://github.com/fermalenoski86/dev/pull/64#issuecomment-6117894636)); issue #65.
+**Fase:** F3(a) UI (#55). Brief aprobado #60 (`1140616`); API en main (`8fae6fe`).
+**HEAD auditado:** `ba20f8bb984ef0a3ee702e10a4092654a2645a45`.
+**Veredicto:** [AUDIT: CAMBIOS — 4 hallazgos P2](https://github.com/fermalenoski86/dev/pull/64#issuecomment-6117503190). No mergear.
+**Estado:** los 4 P2 están corregidos en `9830a07`, con CI 7/7 en la [run 38203142988](https://github.com/fermalenoski86/dev/actions/runs/38203142988). Local: verify 811+1, PG 342+6, e2e-platform 10/10 y mutaciones 298:339 41/41.
 
 ## Próximo paso
-- ChatGPT: auditar #56 sobre `823fe89` → `AUDIT: APROBADO` o `AUDIT: CAMBIOS` en el PR, y devolver la pelota acá.
+- ChatGPT: veredicto `AUDIT: APROBADO` / `AUDIT: CAMBIOS` en #64 sobre `9830a07`.
+- Si aprueba, Claude mergea, cierra #55 y #65 y sigue con la próxima fase. #43 sigue pendiente de Fer; P-01 y CS-0 van por separado.
+
+## Evidencia revisada
+- CI [38187868256](https://github.com/fermalenoski86/dev/actions/runs/38187868256): 7/7, logs leídos por ChatGPT.
+- Checkout CI `e82de401`: merge de ba20f8b sobre `dd49424`.
+- verify 800+1; PG 342+6; bootstrap 6/6; media 63/63; mutaciones 336/336; M2C 14/14; platform 9/9; S3 16/16.
+- Manifest validado por CI: 11 screenshots, 23 videos. No inspección visual local del auditor.
+- Local auditor: 36 unitarias nuevas pasan + 4 diagnósticos reproducen los defectos; diff check OK.
+- Gates completos no ejecutados localmente: install falla engines (Node 24/pnpm 11); sin PG/Chromium. Límites completos en el comentario.
 
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| F3(a) implementación | PR #56 / #57 | en auditoría |
-| UI de versión vigente (Q6) | #55 | después de F3(a) |
-| Propuesta de proceso P-01…P-05 | `BACKLOG.md` | para acordar con ChatGPT; no frena F3(a) |
-| E2E intermitente :17 (LOADING) | #26 | sin reproducir en 40 corridas; queda observabilidad (#40/#41 mergeados) |
-| Issue AUDIT BL-07 duplicado | #46 | cerrar (el válido es #47, ya cerrado) |
+| F3(a) UI | #55 / #64 / #65 | correcciones de Claude; no aprobada |
+| P-01 handoff CAS | #58 | lateral, no auditado en esta vuelta |
+| E2E intermitente :17 | #26 | observabilidad #40/#41; estado previo sin reproducción |
+| AUDIT BL-07 duplicado | #46 | cierre pendiente; válido #47 ya cerrado |
 
 ## Pendiente de Fer
-- #43 (detalle de campaña para INTERNAL_APPROVER), tags (opcional). Detalle en `DECISIONES.md`.
+- #43: detalle de campaña para INTERNAL_APPROVER; tags opcionales. Ver `DECISIONES.md`.
 
-## Dónde está cada cosa
-- Reglas y gates: `AGENTS.md` · Decisiones vigentes: `docs/collab/DECISIONES.md` · Backlog y debate: `docs/collab/BACKLOG.md`
-- Historial: `docs/collab/HISTORIAL.md` (solo agregar) · Briefs: `docs/briefs/` · ADR: `docs/architecture/DECISIONS.md`
+## Referencias
+- `AGENTS.md` · `docs/collab/DECISIONES.md` · `docs/collab/BACKLOG.md`
+- `docs/collab/HISTORIAL.md` · `docs/briefs/F3A_UI.md` · `docs/reviews/F3A_UI.md`

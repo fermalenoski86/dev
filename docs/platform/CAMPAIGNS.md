@@ -15,7 +15,7 @@ tablas son de Fase A.
 | GET | `/contracts?advertiserId&limit&cursor` · `/contracts/:id` | internos | 200 · 404 |
 | PATCH | `/contracts/:id` | ADMIN | 200 · 400 (p. ej. `advertiserId`) · 403 · 404 · 422 |
 | POST | `/campaigns` `{contractId, name, takeoverDraft?}` | OPERATOR · ADMIN | 201 · 403 · 404 · 422 `DRAFT_INVALID` / `SURFACE_NOT_CONTRACTED` |
-| GET | `/campaigns?contractId&limit&cursor` · `/campaigns/:id` | internos | 200 · 404 |
+| GET | `/campaigns?contractId&limit&cursor` · `/campaigns/:id` | internos | 200 · 404. Incluye `activeVersion` y `pendingActiveVersionChange` (F3(a), ver `ACTIVE_VERSION.md`) |
 | GET | `/campaigns/:id/draft` | internos | 200 `{campaignId, draftId, revision, updatedAt, takeoverDraft}` |
 | PUT | `/campaigns/:id/draft` `{takeoverDraft, expectedRevision}` | OPERATOR · ADMIN | 200 · 400 · 403 · 404 · 409 `DRAFT_CONFLICT` / `INVALID_STATE_TRANSITION` · 422 |
 

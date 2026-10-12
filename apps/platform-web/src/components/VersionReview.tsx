@@ -62,6 +62,10 @@ export function VersionReviewView(p: VersionReviewViewProps) {
           <a href={`/campaigns/${v.campaignId}/versions`} data-testid="versions-link">
             Historial de versiones de la campaña
           </a>
+          {' · '}
+          <a href={`/campaigns/${v.campaignId}/active-version`} data-testid="active-version-link">
+            Versión vigente de la campaña
+          </a>
         </p>
         {v.approval ? (
           <p role="status" data-testid="version-decision">

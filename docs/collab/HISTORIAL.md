@@ -387,3 +387,22 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-11 16:30 UTC — Claude: F3(a) implementado en PR #56 (`823fe89`): migración 0004, API con cuatro ojos, 27 tests PG, 24 mutaciones f3a:. Issue #55 (UI). Esperando CI.
 - 2026-10-11 17:00 UTC — Claude: CI 38155282609 7/7 sobre `823fe89` (#56); issue AUDIT #57; pelota a ChatGPT.
 - 2026-10-11 17:10 UTC — Claude: acuerdos de #53 (P-01…P-05) y #54 (P-06, solo diseño + PoC) registrados en BACKLOG como aceptada con ajustes. Arranca P-01 en rama propia (lateral; pelota sigue en ChatGPT por F3(a) #56).
+- 2026-10-11 18:05 UTC — ChatGPT: `AUDIT: CAMBIOS` en PR #56 sobre `823fe897`; P1 actor no autorizado aceptado por la función SECURITY DEFINER y P2 cancel acepta JSON null. CI 38155282609 verificada 7/7; pelota a Claude. Comentario 6112044188.
+- 2026-10-11 19:00 UTC — Claude: ronda 1 de F3(a) corregida en `20d6620` (#56), CI 38162990619 7/7; re-auditoría pedida; pelota a ChatGPT.
+- 2026-10-11 20:10 UTC — Claude: `AUDIT: APROBADO` de F3(a) (#56, 20d6620, CI 38162990619); squash `8fae6fe`, #57 cerrado. Brief de UI (#55) en PR #60 (`e44b917`), esperando CI.
+- 2026-10-11 20:20 UTC — Claude: TRUST Creative Studio (#59) registrado en BACKLOG y DECISIONES; issue #61 (decisión-producto: P5 1728×768 ×2 vs EL_TRUST, marquesina, TB60). Brief CS-0 a preparar como lateral. Pelota sigue en ChatGPT (F3(a) #56).
+- 2026-10-11 20:25 UTC — Claude: Fer decide #61: se mantienen las medidas de EL_TRUST; la proforma P5 es orientativa. Issue cerrado; DECISIONES actualizado.
+- 2026-10-11 20:28 UTC — Claude: Fer aclara #61: dos TB60, uno por pantalla.
+- 2026-10-11 20:45 UTC — Claude (chequeo horario): CI 38170523578 7/7 sobre `e44b917` (#60, brief F3(a) UI); autorrevisión A/B/C repasada; issue AUDIT #63; pelota a ChatGPT.
+- 2026-10-11 20:50 UTC — Claude: brief de UI F3(a) (#60, `e44b917`) con CI 38170523578 7/7; issue AUDIT #62; pelota a ChatGPT.
+- 2026-10-11 21:00 UTC — Claude: TRUST AUDIENCE (cámaras, conteo en dispositivo, solo agregados) anotado en BACKLOG como definición del módulo ya previsto en el brief maestro; sin brief ni fecha.
+- 2026-10-11 21:15 UTC — Claude: AUDIENCE — Fer decide reporte interno primero; regla de diseño para poder certificar después (tráfico/atención/zona separados).
+- 2026-10-11 22:00 UTC — ChatGPT: brief UI #60 AUDIT: CAMBIOS sobre e44b917; Q1/Q3/Q4 acordadas, P2 Q2 exige conservar key/payload ante resultado incierto (cuerpo cortado/5xx); CI 38170523578 7/7 inspeccionada y reproducción focal del cliente. Comentario 6114285205; pelota a Claude para corregir docs.
+- 2026-10-11 22:30 UTC — Claude: ronda 1 del brief UI corregida en `9907002` (#60), CI 38178749919 7/7; #62 cerrado como duplicado de #63; pelota a ChatGPT.
+- 2026-10-12 00:05 UTC — Claude: `AUDIT: APROBADO` del brief UI F3(a) (#60, 9907002, CI 38178749919); squash `1140616`, #63 cerrado. Pelota a Claude para `fase/f3a-ui`.
+- 2026-10-12 00:30 UTC — Claude: F3(a) UI implementada en PR #64 (`ba20f8b`): página propia, intención key+payload, 50 tests nuevos, E2E F3A-UI-1/2, 11 mutaciones f3aui:. Esperando CI.
+- 2026-10-12 01:00 UTC — Claude: CI 38187868256 7/7 sobre `ba20f8b` (#64); issue `AUDIT: F3A-UI` #65 y pedido en #64. Pelota a ChatGPT.
+- 2026-10-12 UTC — ChatGPT: AUDIT: CAMBIOS F3(a) UI #64 / ba20f8b; 4 hallazgos P2 (errores ocultos, confirmar/cancelar, 204 fuera de contrato, evidencia de rollback/replay); CI 7/7 leída, 36 unitarias + 4 diagnósticos locales; [detalle](https://github.com/fermalenoski86/dev/pull/64#issuecomment-6117503190), correcciones a Claude.
+- 2026-10-12 04:30 UTC — ChatGPT: #64 AUDIT: CAMBIOS sobre `ba20f8b` (4 P2: error de pedir tras releer, confirmar con cancelación viva, atajo 204, E2E v2→v1 y body de replay). Claude: corregido en `9830a07`; esperando CI.
+- 2026-10-12 04:45 UTC — Claude: CI 38203142988 7/7 sobre `9830a07`; respuesta por punto en #64 (comentario 6117894636), pide re-auditoría. Pelota a ChatGPT.
+- 2026-10-12 04:50 UTC — Claude (chequeo horario P-06): CI 7/7 confirmada sobre `9830a07`; el turno completo ya había pedido la re-auditoría (6117894636) 4 min antes, así que el pedido duplicado (6117933316) quedó recortado. Lección: el turno completo debe escribir la línea "trabajo en curso" en HANDOFF al arrancar. Pelota sigue en ChatGPT.

@@ -12,6 +12,8 @@ erDiagram
   campaigns ||--o{ campaign_drafts : "edita"
   campaigns ||--o| campaign_drafts : "current_draft_id"
   campaigns ||--o| show_versions : "latest_approved_version_id"
+  campaigns ||--o| show_versions : "active_version_id (0004, vigente)"
+  campaigns ||--o{ active_version_changes : "pedidos de cambio (0004)"
   campaigns ||--o{ show_versions : "versiona"
   campaign_drafts ||--o{ show_versions : "source_draft_id"
   show_versions ||--o{ show_version_assets : "referencia"
@@ -34,6 +36,8 @@ erDiagram
 | Manifiesto resuelve el blob físico | `show_version_assets.stored_object_id` = objeto del asset (`ASSET_OBJECT_MISMATCH`) |
 | Propiedad relacional | FKs compuestas: `current_draft` y `latest_approved` de la MISMA campaña; versión desde un draft de su campaña |
 | "Última aprobada" realmente aprobada | trigger `LATEST_NOT_APPROVED` |
+| Versión vigente (0004, F3(a)) | FK compuesta `campaigns_active_version_fk` (misma campaña) + trigger `ACTIVE_NOT_APPROVED`; `trust_app` sin UPDATE de la columna: la única escritura es `trust_confirm_active_version_change()` (SECURITY DEFINER, `search_path = public, pg_temp`, sin EXECUTE para PUBLIC). Ver `ACTIVE_VERSION.md` |
+| Pedidos de cambio de vigente (0004) | nacen PENDING con el reloj de la base; un PENDING por campaña (índice único parcial); una sola transición a CONFIRMED/CANCELLED/EXPIRED; CONFIRMED solo desde la función y nunca por quien pidió (`FOUR_EYES_VIOLATION` + CHECK); sin DELETE/TRUNCATE |
 | Snapshot de revisión | `source_draft_revision` = revisión actual del draft al crear (`VERSION_DRAFT_REVISION_MISMATCH`) |
 | Transiciones de Asset | nace UPLOADING; UPLOADING→VALIDATING→READY; UPLOADING/VALIDATING→REJECTED; READY/REJECTED terminales (`ASSET_TERMINAL`) |
 | `version_hash` | índice NO único: mismo contenido en dos campañas = dos versiones con el mismo hash |

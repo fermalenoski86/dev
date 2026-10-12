@@ -6,7 +6,7 @@
 Contrato HTTP: [`openapi.json`](openapi.json) (OpenAPI 3.1, mismo origen). Modelo de datos: [ERD.md](ERD.md).
 Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [../ops/BACKUPS.md](../ops/BACKUPS.md).
 
-## Rutas (28, del registro de Fastify)
+## Rutas (32, del registro de Fastify)
 
 | Método | Ruta | Roles | CSRF | Idempotency-Key | Respuestas |
 |---|---|---|---|---|---|
@@ -34,23 +34,29 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | GET | `/api/v1/campaigns/:id` | OPERATOR, INTERNAL_APPROVER, ADMIN | — | — | 200 |
 | GET | `/api/v1/campaigns/:id/draft` | OPERATOR, INTERNAL_APPROVER, ADMIN | — | — | 200 |
 | PUT | `/api/v1/campaigns/:id/draft` | OPERATOR, ADMIN | sí | — | 200 |
+| POST | `/api/v1/campaigns/:id/active-version-changes` | OPERATOR, ADMIN | sí | sí | 201 |
+| POST | `/api/v1/active-version-changes/:id/confirm` | INTERNAL_APPROVER, ADMIN | sí | sí | 200 |
+| POST | `/api/v1/active-version-changes/:id/cancel` | OPERATOR, ADMIN | sí | sí | 200 |
+| GET | `/api/v1/campaigns/:id/active-version-changes` | OPERATOR, INTERNAL_APPROVER, ADMIN | — | — | 200 |
 | POST | `/api/v1/assets` | OPERATOR, ADMIN | sí | sí | 200, 201 |
 | GET | `/api/v1/assets/:id` | OPERATOR, ADMIN | — | — | 200 |
 | GET | `/api/v1/assets/:id/status` | OPERATOR, ADMIN | — | — | 200 |
 | GET | `/api/v1/assets` | OPERATOR, ADMIN | — | — | 200 |
 
-## Migraciones (3)
+## Migraciones (4)
 
 - `0001_initial` (reversible)
 - `0002_asset_pipeline` (reversible)
 - `0003_approval` (reversible)
+- `0004_active_version` (reversible)
 
-## Archivos de test (90)
+## Archivos de test (96)
 
 | Archivo | Suite |
 |---|---|
 | `apps/control/src/components/builder/CampaignStatus.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/control/src/state/useBuilderStore.test.ts` | Unidad de app (vitest del paquete) |
+| `apps/platform-api/src/active-version.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/api.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/approval.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/auth.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
@@ -67,6 +73,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | `apps/platform-api/src/platform-web-bl31.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/platform-web-client.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/platform-web-e3b.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
+| `apps/platform-api/src/platform-web-f3a.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/restore-drill.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/submit.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `apps/platform-api/src/upload-limits.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
@@ -74,13 +81,16 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | `apps/platform-web/src/build-env.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/components/views-bl31.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/components/views-e3b.test.ts` | Unidad de app (vitest del paquete) |
+| `apps/platform-web/src/components/views-f3a.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/components/views.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/api-bl31.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/api-e3b.test.ts` | Unidad de app (vitest del paquete) |
+| `apps/platform-web/src/lib/api-f3a.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/api.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/draft-assets.test.ts` | Unidad de app (vitest del paquete) |
 | `apps/platform-web/src/lib/session.test.ts` | Unidad de app (vitest del paquete) |
 | `e2e-platform/a11y.spec.ts` | E2E (Playwright, CI) |
+| `e2e-platform/active-version.spec.ts` | E2E (Playwright, CI) |
 | `e2e-platform/flow-41.spec.ts` | E2E (Playwright, CI) |
 | `e2e-platform/history.spec.ts` | E2E (Playwright, CI) |
 | `e2e-platform/session-multihost.spec.ts` | E2E (Playwright, CI) |
@@ -107,6 +117,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | `packages/platform-contracts/src/building-capabilities.test.ts` | Unidad (`pnpm verify`) |
 | `packages/platform-contracts/src/canonical.test.ts` | Unidad (`pnpm verify`) |
 | `packages/platform-contracts/src/versions.test.ts` | Unidad (`pnpm verify`) |
+| `packages/platform-db/src/active-version-schema.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `packages/platform-db/src/approval-schema.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `packages/platform-db/src/asset-consistency.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
 | `packages/platform-db/src/bootstrap.smoke.db.test.ts` | PostgreSQL (`vitest.platform.config.ts`) |
@@ -140,6 +151,6 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | `scripts/acceptance/matrix.test.ts` | Unidad de app (vitest del paquete) |
 | `scripts/e2e-platform/manifest.test.ts` | Unidad de app (vitest del paquete) |
 
-## Variables de entorno (35, de `.env.example`)
+## Variables de entorno (36, de `.env.example`)
 
-`TRUST_PG_ADMIN_URL` · `TRUST_PG_OWNER_PASSWORD` · `TRUST_PG_APP_PASSWORD` · `DATABASE_URL` · `STORAGE_DRIVER` · `LOCAL_STORAGE_ROOT` · `S3_ENDPOINT` · `S3_REGION` · `S3_BUCKET` · `S3_ACCESS_KEY` · `S3_SECRET_KEY` · `S3_FORCE_PATH_STYLE` · `S3_TEST_ENDPOINT` · `MAX_UPLOAD_BYTES` · `MAX_EVIDENCE_BYTES` · `MEDIA_PROBE_TIMEOUT_MS` · `MEDIA_DECODE_TIMEOUT_MS` · `TEMP_OBJECT_TTL_MS` · `ASSET_STALE_AFTER_MINUTES` · `BLOB_ORPHAN_GRACE_MINUTES` · `MEDIA_INSPECTION_CONCURRENCY` · `MEDIA_SCRATCH_DIR` · `FFPROBE_PATH` · `FFMPEG_PATH` · `UPLOAD_MAX_CONCURRENT_PER_ACTOR` · `UPLOAD_MAX_PER_MINUTE_PER_ACTOR` · `HOST` · `PORT` · `LOG_LEVEL` · `NODE_ENV` · `TRUST_SESSION_TTL_MINUTES` · `TRUST_COOKIE_SECURE` · `TRUST_PROXY_HOPS` · `TRUST_CORS_ORIGINS` · `EXTERNAL_APPROVAL_ENABLED`
+`TRUST_PG_ADMIN_URL` · `TRUST_PG_OWNER_PASSWORD` · `TRUST_PG_APP_PASSWORD` · `DATABASE_URL` · `STORAGE_DRIVER` · `LOCAL_STORAGE_ROOT` · `S3_ENDPOINT` · `S3_REGION` · `S3_BUCKET` · `S3_ACCESS_KEY` · `S3_SECRET_KEY` · `S3_FORCE_PATH_STYLE` · `S3_TEST_ENDPOINT` · `MAX_UPLOAD_BYTES` · `MAX_EVIDENCE_BYTES` · `ACTIVE_VERSION_CHANGE_TTL_MINUTES` · `MEDIA_PROBE_TIMEOUT_MS` · `MEDIA_DECODE_TIMEOUT_MS` · `TEMP_OBJECT_TTL_MS` · `ASSET_STALE_AFTER_MINUTES` · `BLOB_ORPHAN_GRACE_MINUTES` · `MEDIA_INSPECTION_CONCURRENCY` · `MEDIA_SCRATCH_DIR` · `FFPROBE_PATH` · `FFMPEG_PATH` · `UPLOAD_MAX_CONCURRENT_PER_ACTOR` · `UPLOAD_MAX_PER_MINUTE_PER_ACTOR` · `HOST` · `PORT` · `LOG_LEVEL` · `NODE_ENV` · `TRUST_SESSION_TTL_MINUTES` · `TRUST_COOKIE_SECURE` · `TRUST_PROXY_HOPS` · `TRUST_CORS_ORIGINS` · `EXTERNAL_APPROVAL_ENABLED`

@@ -107,7 +107,17 @@ rollback es "volver a desplegar una versión aprobada anterior", no deshacer
 nada. Lo que falta: (a) la operación `redeploy(versionId)` con audit y
 four-eyes; (b) "último estado bueno conocido" en EDGE para cuando se cae la
 conexión. (a) va con **Fase C/D**; (b) es EDGE, fuera de M3A.1 → **Fer decide**
-el milestone. **Aceptada (a); (b) a decisión.** Tras cerrar BL-08, el siguiente paso acordado es un brief documental separado para (a), con semántica de autorización, four-eyes, auditoría y pruebas; no se implementa hasta que Claude y ChatGPT acuerden ese brief. **Brief en PR #50; Fer decidió Q0 = A (puntero administrativo, sin Deploy) y Q2 = A2.2 (nunca automática, siempre dos personas) en #52 → ADR-064. Falta la auditoría final del brief.**
+el milestone. **Aceptada (a); (b) a decisión.** Tras cerrar BL-08, el siguiente paso acordado es un brief documental separado para (a), con semántica de autorización, four-eyes, auditoría y pruebas; no se implementa hasta que Claude y ChatGPT acuerden ese brief. **Brief en PR #50; Fer decidió Q0 = A (puntero administrativo, sin Deploy) y Q2 = A2.2 (nunca automática, siempre dos personas) en #52 → ADR-064. Brief aprobado en #50 (`main@0742479`); implementación en `fase/f3a` (migración 0004), en auditoría.**
+
+## F3(a) UI · Acuerdo, implementación y recuperación de respuestas — ChatGPT, 2026-10-12
+**Estado: implementación APROBADA en PR #64 sobre `9830a07`.** [Veredicto y evidencia](https://github.com/fermalenoski86/dev/pull/64#issuecomment-6118661022). Claude debe hacer squash merge y cerrar #55/#65.
+- Debate cerrado del brief: Claude aceptó Q2 corregida; Q1/Q3/Q4 aceptadas. Página propia, “Vos”/id corto, confirmación explícita y key + payload congelados ante resultado incierto. [Respuesta](https://github.com/fermalenoski86/dev/pull/60#issuecomment-6114596198) · [aprobación del brief](https://github.com/fermalenoski86/dev/pull/60#issuecomment-6115363443).
+- Implementado y probado: intención por acción; mismo key/payload ante corte, cuerpo inválido y 5xx; error visible tras releer; confirmar/cancelar se bloquean mutuamente; 204 fuera del contrato conserva intención; E2E v2→v1; nueve pruebas HTTP/DB comparan status/body completo y efecto/evento único.
+- Auditoría independiente: ronda inicial encontró 4 P2; Claude aceptó y corrigió los cuatro. Ronda 1: 47/47 focales locales del auditor; CI 7/7 con verify 811+1, PG 342+6, bootstrap 6/6, media 63/63, mutaciones 339/339, M2C 14/14, e2e-platform 10/10, manifest 12 capturas/24 videos y S3 16/16.
+- Límites: intención en memoria; replay limitado por TTL servidor de 24 h; sin persistencia entre sesiones. Axe/manifest no reemplazan prueba manual con lector de pantalla. #43 no bloquea esta página.
+- Fuente primaria: [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2.2), junio 2022, §9.2.2 y §15.3.5/§15.6 (consulta 2026-10-12). Aplicación inferida al contrato de TRUST; 204 es válido en HTTP, pero no sustituye el objeto requerido por estas rutas.
+- Accesibilidad: “Versión vigente” tiene nombre accesible y la campaña aporta contexto de celda; [W3C WCAG 2.4.4/H79](https://www.w3.org/WAI/WCAG22/Understanding/link-purpose-in-context.html) (consulta 2026-10-12). No equivale a validación manual con lector.
+- Siguiente unidad confirmada tras el merge: P-01 / PR #58, luego P-02→P-05→P-04→P-03. CS-0 sigue autorizado y separado.
 
 ## BL-06 · Medición de sincronía pantallas/luces/reloj — *Claude*
 **Estado: Fer decide** (depende de hardware).
@@ -577,3 +587,31 @@ auditado:
 Un servidor propio o un webhook externo para despertar la sesión en la nube
 de Claude (no existe endpoint; habría que pagar hosting), la API de Anthropic
 o de OpenAI por uso, y cualquier "bot" de terceros con suscripción.
+
+
+---
+
+# CS · TRUST CREATIVE STUDIO — *pedido de producto de Fer, 2026-10-11 ([#59](https://github.com/fermalenoski86/dev/issues/59))*
+
+**Estado: aceptada (encargo de Fer). Ahora solo CS-0 (brief, PR documental + AUDIT).** Implementación de CS-1…CS-4 después de cerrar F3(a) y con briefs acordados. No toca `apps/control` ni storage congelados.
+
+- **Qué es:** editor de takeovers (15 s y otras duraciones) con timeline multipista, 3D anamórfico, efectos, simulación de dos pantallas LED, fachada RGBW DMX/Art-Net y reloj. Inspiración disguise/Resolume/Blender/Unreal, sin copiar código ni interfaces.
+- **Usuario:** hoy el equipo propio (pruebas); después, marketing del cliente que alquila el espacio. Esto define que el editor sea simple con plantillas y que **todo lo exportado entre por el pipeline normal** (validación B2, cuatro ojos, versión/hash).
+- **Reglas que ya fija el encargo:** el gemelo digital actual es **PRELIMINAR** (GLB no medido); rotular SIMULADO / PRELIMINAR / CALIBRADO / VALIDADO EN SITIO; geometría y formatos configurables; el software creativo **nunca** publica ni ejecuta (eso es EDGE); dos controladoras independientes; sin servicios pagos.
+- **Posición de Claude (2026-10-11):** (1) arquitectura: editor web liviano (reusar `trust-3d`, `show-engine`, Builder, preflight), **produce ShowPackages**, render pesado en **Blender** headless; empaquetable como app de escritorio (Tauri/Electron) sin cambiar la base; (2) **calibración del gemelo como unidad propia y temprana (CS-1b)**: fotos desde el Obelisco con posición conocida + una cota real; sin eso CS-2 no se valida; (3) la oferta P5 del 10/10 (dos caras 1728×768) es solo orientativa: **Fer decidió (#61) mantener las medidas de `EL_TRUST`** (Corrientes más chica, Pellegrini más grande); formatos configurables igual.
+- **Siguiente:** brief **CS-0** en PR documental (lateral, rama propia) → AUDIT → recién después discutir orden CS-1 vs UI de F3(a).
+
+---
+
+# AUD · TRUST AUDIENCE — conteo de personas y atención con cámaras — *Fer, 2026-10-11*
+
+**Estado: anotada (módulo ya previsto en el brief maestro como "Audience Analytics / cámaras", lista "después de M3A.1"). Sin brief ni fecha; se define después del Studio o antes si tiene prioridad comercial.** Esto fija qué es, para que el Studio y EDGE no lo contradigan.
+
+- **Qué es:** un equipo propio en el edificio (**Jetson Orin NX 16 GB industrial**, separado de EDGE) con 2 cámaras IP PoE exteriores (una por vereda) que cuenta **en el dispositivo** y manda a TRUST CONTROL **solo números agregados** por franja horaria y por campaña: personas que pasan, cuántas miran la fachada y por cuánto tiempo (atención por orientación de la cabeza), peatones vs vehículos, opcionalmente rango etario/género como estadística agregada.
+- **Qué no hace, por diseño:** no reconoce caras ni identifica a nadie; no guarda ni transmite video ni imágenes (se procesan y descartan en memoria); no sigue personas entre cámaras. Así no hay dato personal (Ley 25.326) y no hace falta consentimiento. Es una regla de arquitectura, no una opción.
+- **Por qué separado de EDGE:** el show nunca depende de la visión. Si AUDIENCE se cae o se actualiza, las pantallas siguen; un takeover pesado no le roba GPU al conteo.
+- **Valor:** impresiones y atención **por takeover** ("4.200 expuestas, 31% miró, 2,8 s"), la métrica que compra el mercado DOOH. Conecta con la medición de tráfico de Affinitas.
+- **Interfaz que ya entra en CS-0:** el ShowPackage lleva un `campaignId`/`versionId` y AUDIENCE reporta contra ese identificador; Proof of Play y AUDIENCE comparten la línea de tiempo de EDGE.
+- **Hardware orientativo:** Jetson Orin NX 16 GB en caja industrial sin ventilador USD 1.000–1.500; 2 cámaras IP PoE exteriores USD 200–400 c/u; switch PoE. Total ~USD 1.800–2.500. No se compra hasta tener brief.
+- **Decisión de Fer (2026-10-11 18:10 ART):** arranca como **reporte interno**, con la opción de certificarlo después. Para que eso sea posible sin rehacer nada, regla de diseño desde el día uno: el dispositivo registra **tráfico, atención y zona de visibilidad por separado** (nunca un solo número mezclado), con datos agregados por franja horaria conservados para recalibrar. Camino a certificación, cuando se quiera: (1) metodología escrita (impresiones = tráfico × factor de visibilidad por zona, calibrado con la atención medida); (2) calibración manual de 2–3 jornadas con margen de error publicado, repetida anualmente o al cambiar una cámara; (3) verificación por un tercero (local, ~USD 3.000–8.000 por única vez; estándar internacional Geopath/Route/ESOMAR solo si lo exigen anunciantes globales).
+- **Pendiente de Fer cuando llegue el momento:** prioridad frente al Studio.

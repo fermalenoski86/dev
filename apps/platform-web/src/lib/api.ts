@@ -38,9 +38,33 @@ export const CampaignSchema = z.object({
   id: Uuid, contractId: Uuid, name: z.string(), lifecycleStatus: z.enum(['ACTIVE', 'ARCHIVED']),
   currentDraft: z.object({ id: Uuid, revision: z.number().int().positive(), updatedAt: z.string() }).nullable(),
   latestApprovedVersion: z.object({ id: Uuid, versionNumber: z.number().int().positive(), versionHash: Sha }).nullable(),
+  /** F3(a): versión vigente ADMINISTRATIVA (no despliega nada). Opcional para tolerar respuestas previas a F3(a). */
+  activeVersion: z.object({ id: Uuid, versionNumber: z.number().int().positive(), versionHash: Sha }).nullable().optional(),
+  /** F3(a): pedido PENDING no vencido según el reloj de la base, o null. */
+  pendingActiveVersionChange: z.object({ id: Uuid, toVersionId: Uuid, toVersionHash: Sha, requestedBy: Uuid, requestedAt: z.string(), expiresAt: z.string() }).nullable().optional(),
   createdAt: z.string(), updatedAt: z.string(),
 });
 export type Campaign = z.infer<typeof CampaignSchema>;
+
+/** F3(a): pedido de cambio de versión vigente (docs/platform/ACTIVE_VERSION.md). */
+export const ActiveVersionChangeSchema = z.object({
+  id: Uuid, campaignId: Uuid, fromVersionId: Uuid.nullable(), toVersionId: Uuid, toVersionHash: Sha, reason: z.string(),
+  requestedBy: Uuid, requestedAt: z.string(), expiresAt: z.string(), status: z.enum(['PENDING', 'CONFIRMED', 'CANCELLED', 'EXPIRED']),
+  decidedBy: Uuid.nullable(), decidedAt: z.string().nullable(),
+});
+export type ActiveVersionChange = z.infer<typeof ActiveVersionChangeSchema>;
+export interface ActiveVersionChangePage { items: ActiveVersionChange[]; nextCursor: string | null }
+
+/** F3(a): cuerpo exacto de un pedido; la intención lo congela (§5 del brief F3A_UI). */
+export interface ActiveVersionRequestPayload { versionId: string; versionHash: string; reason: string; expectedActiveVersionId: string | null }
+
+/**
+ * Payload de "Pedir": `expectedActiveVersionId` es la vigente que MUESTRA la
+ * página (o null), nunca otra fuente (la última aprobada, un GET nuevo…).
+ */
+export function payloadPedido(campaign: Pick<Campaign, 'activeVersion'>, version: Pick<VersionSummary, 'id' | 'versionHash'>, reason: string): ActiveVersionRequestPayload {
+  return { versionId: version.id, versionHash: version.versionHash, reason, expectedActiveVersionId: campaign.activeVersion?.id ?? null };
+}
 
 export const DraftSchema = z.object({
   campaignId: Uuid, draftId: Uuid, revision: z.number().int().positive(), updatedAt: z.string(),
@@ -193,7 +217,10 @@ export class PlatformClient {
     } catch {
       throw new PlatformApiError(0, 'NETWORK_ERROR', 'No se pudo conectar con la API.');
     }
-    if (res.status === 204) return undefined as z.infer<S>;
+    // 204 solo vale para las llamadas que NO esperan cuerpo (schema null: logout).
+    // Si la ruta promete un recurso (p. ej. las mutaciones de F3(a), 201/200), un
+    // 204 es una respuesta fuera de contrato: cae al schema y da UNEXPECTED_RESPONSE.
+    if (res.status === 204 && !schema) return undefined as z.infer<S>;
     const json: unknown = await res.json().catch(() => null);
     if (!res.ok) {
       if (res.status === 401) this.csrf = null;
@@ -322,5 +349,36 @@ export class PlatformClient {
 
   async reject(versionId: string, input: { reason: string; versionHash: string }): Promise<ShowVersion> {
     return this.request('POST', `/api/v1/show-versions/${encodeURIComponent(versionId)}/reject`, ShowVersionSchema, { json: { reason: input.reason, versionHash: input.versionHash } }, { 'idempotency-key': this.newKey() });
+  }
+
+  /* ── F3(a): versión vigente administrativa (brief docs/briefs/F3A_UI.md) ── */
+
+  /**
+   * Historial de pedidos de cambio, más nuevo primero. `cursor` = `nextCursor`
+   * de la página anterior.
+   */
+  async listActiveVersionChanges(campaignId: string, o: { cursor?: string | null; limit?: number } = {}): Promise<ActiveVersionChangePage> {
+    const q = new URLSearchParams({ limit: String(o.limit ?? 20) });
+    if (o.cursor) q.set('cursor', o.cursor);
+    return this.request('GET', `/api/v1/campaigns/${encodeURIComponent(campaignId)}/active-version-changes?${q.toString()}`, pagina(ActiveVersionChangeSchema));
+  }
+
+  /**
+   * Las tres mutaciones reciben la Idempotency-Key DE LA INTENCIÓN (no generan
+   * una): un reintento por resultado incierto manda la misma key y el mismo
+   * payload, y la API devuelve el status y el body originales (§5).
+   */
+  async requestActiveVersionChange(campaignId: string, payload: ActiveVersionRequestPayload, key: string): Promise<ActiveVersionChange> {
+    return this.request('POST', `/api/v1/campaigns/${encodeURIComponent(campaignId)}/active-version-changes`, ActiveVersionChangeSchema, {
+      json: { versionId: payload.versionId, versionHash: payload.versionHash, reason: payload.reason, expectedActiveVersionId: payload.expectedActiveVersionId },
+    }, { 'idempotency-key': key });
+  }
+
+  async confirmActiveVersionChange(changeId: string, payload: { versionHash: string }, key: string): Promise<ActiveVersionChange> {
+    return this.request('POST', `/api/v1/active-version-changes/${encodeURIComponent(changeId)}/confirm`, ActiveVersionChangeSchema, { json: { versionHash: payload.versionHash } }, { 'idempotency-key': key });
+  }
+
+  async cancelActiveVersionChange(changeId: string, key: string): Promise<ActiveVersionChange> {
+    return this.request('POST', `/api/v1/active-version-changes/${encodeURIComponent(changeId)}/cancel`, ActiveVersionChangeSchema, undefined, { 'idempotency-key': key });
   }
 }

@@ -62,7 +62,7 @@ if (cmd === 'generate') {
     errores.push(...checkPlaywrightResults({ pwTags, report }));
   }
   if (errores.length) fallar(errores);
-  console.log(`GATE acceptance: 19 puntos, ${tags.length} tests etiquetados${i >= 0 ? ', todos passed en el reporte' : ''}; navegador ${pwTags.length} tests [E3-N]${j >= 0 ? ', todos passed en Playwright' : ''}; ${DOC} al día`);
+  console.log(`GATE acceptance: 19 puntos, ${tags.length} tests etiquetados${i >= 0 ? ', todos passed en el reporte' : ''}; navegador ${pwTags.length} tests [E3-N]/[F3A-UI-N]${j >= 0 ? ', todos passed en Playwright' : ''}; ${DOC} al día`);
 } else {
   console.error('uso: cli.mjs generate | check [--results reporte.json] [--playwright-results pw.json]');
   process.exit(2);

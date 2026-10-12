@@ -3,6 +3,7 @@ import cookie from '@fastify/cookie';
 import multipart from '@fastify/multipart';
 import { DEFAULT_MAX_EVIDENCE_BYTES } from '@trust/platform-approval';
 import { AssetUploadService, type AssetView, displayFilename, toView } from '@trust/platform-assets';
+import { DEFAULT_ACTIVE_VERSION_CHANGE_TTL_MINUTES } from '@trust/platform-campaigns';
 import { deriveSurfaceFormats } from '@trust/platform-contracts';
 import type { Database } from '@trust/platform-db';
 import { type SurfaceFormats, remediationFor } from '@trust/platform-media';
@@ -15,6 +16,7 @@ import type { z } from 'zod';
 import { type ActorProvider, CSRF_HEADER, DEV_ACTOR_HEADER, requireActor } from './actor';
 import { registerApprovalRoutes } from './approval-routes';
 import { registerCampaignRoutes } from './campaign-routes';
+import { registerActiveVersionRoutes } from './active-version-routes';
 import { type AuthConfig, registerAuthRoutes } from './auth-routes';
 import { registerCors } from './cors';
 import {
@@ -51,6 +53,8 @@ export interface AppDeps {
   maxUploadBytes: number;
   /** MAX_EVIDENCE_BYTES (C2). Default 25 MiB. */
   maxEvidenceBytes?: number;
+  /** F3(a) · ACTIVE_VERSION_CHANGE_TTL_MINUTES. Default 1440 (24 h). */
+  activeVersionChangeTtlMinutes?: number;
   /**
    * Saltos de proxy confiables para `req.ip` (Fastify `trustProxy`). 0 = la IP
    * del socket. Detrás de un reverse proxy hay que declararlo, o el rate limit
@@ -179,6 +183,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   if (deps.auth) registerAuthRoutes(app, { db: deps.db, actors: deps.actors, auth: deps.auth });
   registerApprovalRoutes(app, { db: deps.db, storage: deps.storage, actors: deps.actors, maxEvidenceBytes: deps.maxEvidenceBytes ?? DEFAULT_MAX_EVIDENCE_BYTES });
   registerCampaignRoutes(app, { db: deps.db, actors: deps.actors });
+  registerActiveVersionRoutes(app, { db: deps.db, actors: deps.actors, ttlMinutes: deps.activeVersionChangeTtlMinutes ?? DEFAULT_ACTIVE_VERSION_CHANGE_TTL_MINUTES });
 
   /* ── assets (§18) ─────────────────────────────────────────────────── */
   app.post('/api/v1/assets', async (req, reply) => {

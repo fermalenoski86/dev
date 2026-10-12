@@ -1062,7 +1062,7 @@ Alternativas descartadas:
 
 ## ADR-064 — Versión vigente por campaña: puntero administrativo, siempre con cuatro ojos
 
-**Estado:** decisión de producto de Fer ([#52](https://github.com/fermalenoski86/dev/issues/52#issuecomment-6109129274), 2026-10-11); diseño en `docs/briefs/F3A_REDEPLOY.md` (PR #50), pendiente de auditoría final antes de implementar.
+**Estado:** decisión de producto de Fer ([#52](https://github.com/fermalenoski86/dev/issues/52#issuecomment-6109129274), 2026-10-11); diseño en `docs/briefs/F3A_REDEPLOY.md` (brief aprobado en [#50](https://github.com/fermalenoski86/dev/pull/50#issuecomment-6110866495)); implementación en `fase/f3a` (migración 0004, `docs/platform/ACTIVE_VERSION.md`), en auditoría.
 
 **Contexto.** F3(a) del BACKLOG pide "volver a desplegar una versión aprobada
 anterior" con audit y cuatro ojos, pero M3A.1 no tiene Deploy (master: "No

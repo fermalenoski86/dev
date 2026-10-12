@@ -36,7 +36,17 @@ export type CampaignErrorCode =
   | 'DRAFT_INVALID'
   | 'DRAFT_CONFLICT'
   | 'SURFACE_NOT_CONTRACTED'
-  | 'INVALID_STATE_TRANSITION';
+  | 'INVALID_STATE_TRANSITION'
+  // F3(a): versión vigente
+  | 'SHOW_VERSION_NOT_FOUND'
+  | 'VERSION_HASH_MISMATCH'
+  | 'FOUR_EYES_VIOLATION'
+  | 'INVALID_CURSOR'
+  | 'ACTIVE_VERSION_CONFLICT'
+  | 'ACTIVE_VERSION_UNCHANGED'
+  | 'ACTIVE_VERSION_CHANGE_PENDING'
+  | 'ACTIVE_VERSION_CHANGE_NOT_FOUND'
+  | 'ACTIVE_VERSION_CHANGE_EXPIRED';
 
 export class CampaignError extends Error {
   constructor(
@@ -72,6 +82,10 @@ export interface CampaignView {
   id: string; contractId: string; name: string; lifecycleStatus: 'ACTIVE' | 'ARCHIVED';
   currentDraft: { id: string; revision: number; updatedAt: string } | null;
   latestApprovedVersion: { id: string; versionNumber: number; versionHash: string } | null;
+  /** F3(a): versión vigente administrativa (null = sin vigente). Aprobar no la mueve (A2.2). */
+  activeVersion: { id: string; versionNumber: number; versionHash: string } | null;
+  /** F3(a): pedido PENDING no vencido según el reloj de la base, o null. */
+  pendingActiveVersionChange: { id: string; toVersionId: string; toVersionHash: string; requestedBy: string; requestedAt: string; expiresAt: string } | null;
   createdAt: string; updatedAt: string;
 }
 export interface DraftView { campaignId: string; draftId: string; revision: number; updatedAt: string; takeoverDraft: TakeoverDraft }
@@ -280,18 +294,31 @@ export class CampaignService {
       .selectFrom('campaigns as c')
       .leftJoin('campaign_drafts as d', 'd.id', 'c.current_draft_id')
       .leftJoin('show_versions as v', 'v.id', 'c.latest_approved_version_id')
+      .leftJoin('show_versions as av', 'av.id', 'c.active_version_id')
       .select([
         'c.id', 'c.contract_id', 'c.name', 'c.lifecycle_status', 'c.created_at', 'c.updated_at',
         'd.id as draft_id', 'd.revision as draft_revision', 'd.updated_at as draft_updated_at',
         'v.id as version_id', 'v.version_number', 'v.version_hash',
+        'av.id as active_id', 'av.version_number as active_number', 'av.version_hash as active_hash',
       ])
       .where('c.id', '=', campaignId)
       .executeTakeFirst();
     if (!r) throw new CampaignError(404, 'CAMPAIGN_NOT_FOUND', 'La campaña no existe.');
+    const p = await db
+      .selectFrom('active_version_changes')
+      .select(['id', 'to_version_id', 'to_version_hash', 'requested_by', 'requested_at', 'expires_at'])
+      .where('campaign_id', '=', campaignId)
+      .where('status', '=', 'PENDING')
+      .where(sql<boolean>`expires_at > now()`)
+      .executeTakeFirst();
     return {
       id: r.id, contractId: r.contract_id, name: r.name, lifecycleStatus: r.lifecycle_status,
       currentDraft: r.draft_id && r.draft_revision !== null && r.draft_updated_at ? { id: r.draft_id, revision: r.draft_revision, updatedAt: iso(r.draft_updated_at) } : null,
       latestApprovedVersion: r.version_id && r.version_number !== null && r.version_hash ? { id: r.version_id, versionNumber: r.version_number, versionHash: r.version_hash } : null,
+      activeVersion: r.active_id && r.active_number !== null && r.active_hash ? { id: r.active_id, versionNumber: r.active_number, versionHash: r.active_hash } : null,
+      pendingActiveVersionChange: p
+        ? { id: p.id, toVersionId: p.to_version_id, toVersionHash: p.to_version_hash, requestedBy: p.requested_by, requestedAt: iso(p.requested_at), expiresAt: iso(p.expires_at) }
+        : null,
       createdAt: iso(r.created_at), updatedAt: iso(r.updated_at),
     };
   }

@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 // @ts-expect-error módulo .mjs sin tipos (script de CI, sin build)
 import { checkPlaywrightResults, checkResults, countPlaywrightTests, render, scanPlaywrightTags, scanTags, validate, validateNavegador } from './matrix.mjs';
 // @ts-expect-error módulo .mjs sin tipos
-import { NAVEGADOR, POINTS, SUITE_VERIFICADA } from './points.mjs';
+import { NAVEGADOR as NAV, POINTS, SUITE_VERIFICADA } from './points.mjs';
+const NAVEGADOR = NAV;
 
 /**
  * BL-23 · negativos controlados de la matriz ejecutable: cada forma de que la
@@ -84,7 +85,16 @@ describe('BL-23 · matriz de aceptación ejecutable', () => {
     ]);
   });
 
+  it('F3(a) UI · scanPlaywrightTags también lee `[F3A-UI-N]`, y un F3A-UI cubierto sin test falla', () => {
+    const pw = scanPlaywrightTags([{ path: 'e2e-platform/v.spec.ts', source: "test('vigente [F3A-UI-1]', async () => {});" }]);
+    expect(pw).toEqual([{ file: 'e2e-platform/v.spec.ts', title: 'vigente [F3A-UI-1]', ids: ['F3A-UI-1'] }]);
+    const errores = validateNavegador({ navegador: NAV.filter((x: { id: string }) => x.id.startsWith('F3A-UI-')), pwTags: pw });
+    expect(errores).toEqual([expect.stringContaining('F3A-UI-2'), expect.stringContaining('F3A-UI-3')]);
+  });
+
   it('E3c · NEGATIVO: navegador cubierto sin test de Playwright, tag a un ítem inexistente o pendiente sin motivo fallan', () => {
+    // solo los ítems E3 (los F3A-UI tienen su propio caso abajo)
+    const NAVEGADOR = NAV.filter((x: { id: string }) => x.id.startsWith('E3-'));
     const pwTags = [{ file: 'e2e-platform/a.spec.ts', title: 'x [E3-41]', ids: ['E3-41'] }];
     expect(validateNavegador({ navegador: NAVEGADOR, pwTags })).toEqual([expect.stringContaining('E3-47 («§47 screenshots y video del flujo»): marcado cubierto pero ningún test de Playwright tiene [E3-47]')]);
     expect(validateNavegador({ navegador: NAVEGADOR, pwTags: [...pwTags, { file: 'e2e-platform/a.spec.ts', title: 'y [E3-47] [E3-99]', ids: ['E3-47', 'E3-99'] }] })).toEqual([expect.stringContaining('[E3-99] no es un ítem de navegador')]);
