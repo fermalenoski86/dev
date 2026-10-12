@@ -1,0 +1,133 @@
+== P-01 · salida real · 2026-10-12 · HEAD de la rama tras merge de main
+== bash scripts/collab/handoff.sh validar docs/collab/HANDOFF.md
+handoff: OK (docs/collab/HANDOFF.md)
+== bash scripts/collab/handoff.test.sh
+1) ambos leen el mismo SHA
+  ✓ misma base
+2) A escribe primero: fast-forward OK
+  ✓ A escribe
+  ✓ remoto avanzó
+  ✓ historial recibió la línea
+3) B escribe con base vieja: debe ABORTAR y no tocar el remoto
+  ✓ B aborta con exit 3
+  ✓ mensaje explica el avance
+  ✓ remoto intacto
+  ✓ remoto conserva la versión de A
+4) B relee y entonces sí puede escribir, sobre la versión de A
+  ✓ B leyó la nueva base
+  ✓ B escribe tras releer
+  ✓ historia lineal: A es padre de B
+5) carrera entre fetch y push: el push no fast-forward se rechaza
+  ✓ push non-fast-forward rechazado por git
+  ✓ remoto conserva 'A otra vez'
+6) validaciones de formato
+  ✓ dos pelotas → rechazo
+  ✓ pelota inválida → rechazo
+  ✓ marcador ======= → rechazo
+  ✓ 61+ líneas → rechazo
+  ✓ sin HANDOFF_BASE_SHA → rechazo
+  ✓ ningún git push lleva --force / --force-with-lease / -f
+
+handoff.test: 19 ok, 0 fallos
+== pnpm verify
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  52 passed | 1 skipped (53)
+      Tests  811 passed | 1 skipped (812)
+== no ejecutado localmente: PostgreSQL, media, mutaciones, E2E, S3 (P-01 no toca código de producto) → evidencia en los 7 jobs de CI del PR
+
+======== Ronda 1 (AUDIT: CAMBIOS sobre 2182f05) — 2026-10-12, este entorno
+== reproducción del auditor con el script corregido
+$ bash scripts/collab/handoff.sh validar <61 líneas, última sin \n>
+handoff: 61 líneas (máx. 60). Mové decisiones a DECISIONES.md e historial a HISTORIAL.md.
+exit 1
+== handoff.test.sh con el script VIEJO (2182f05): la prueba nueva falla
+  ✗ 61 líneas con la última sin newline → rechazo
+handoff.test: 20 ok, 1 fallos
+== bash scripts/collab/handoff.test.sh (corregido)
+1) ambos leen el mismo SHA
+  ✓ misma base
+2) A escribe primero: fast-forward OK
+  ✓ A escribe
+  ✓ remoto avanzó
+  ✓ historial recibió la línea
+3) B escribe con base vieja: debe ABORTAR y no tocar el remoto
+  ✓ B aborta con exit 3
+  ✓ mensaje explica el avance
+  ✓ remoto intacto
+  ✓ remoto conserva la versión de A
+4) B relee y entonces sí puede escribir, sobre la versión de A
+  ✓ B leyó la nueva base
+  ✓ B escribe tras releer
+  ✓ historia lineal: A es padre de B
+5) carrera entre fetch y push: el push no fast-forward se rechaza
+  ✓ push non-fast-forward rechazado por git
+  ✓ remoto conserva 'A otra vez'
+6) validaciones de formato
+  ✓ dos pelotas → rechazo
+  ✓ pelota inválida → rechazo
+  ✓ marcador ======= → rechazo
+  ✓ 61+ líneas → rechazo
+  ✓ 61 líneas con la última sin newline → rechazo
+  ✓ exactamente 60 con la última sin newline → OK (borde)
+  ✓ sin HANDOFF_BASE_SHA → rechazo
+  ✓ ningún git push lleva --force / --force-with-lease / -f
+
+handoff.test: 21 ok, 0 fallos
+== bash scripts/collab/handoff.sh validar docs/collab/HANDOFF.md
+handoff: OK (docs/collab/HANDOFF.md)
+== bash -n scripts/collab/handoff.sh scripts/collab/handoff.test.sh → OK
+
+======== Ronda 1, segundo P2 (fallo de push ≠ carrera) — 2026-10-12, este entorno
+== handoff.test.sh con el script de c7996d8 (sin la corrección): las pruebas nuevas fallan
+  ✗ carrera: el mensaje dice que main avanzó
+  ✗ pushurl inválido → exit 4 (no 3)
+  ✗ pushurl inválido: NO dice carrera
+  ✗ hook del servidor rechaza → exit 4
+  ✗ hook: NO dice carrera
+handoff.test: 26 ok, 5 fallos
+== bash scripts/collab/handoff.test.sh (corregido)
+1) ambos leen el mismo SHA
+  ✓ misma base
+2) A escribe primero: fast-forward OK
+  ✓ A escribe
+  ✓ remoto avanzó
+  ✓ historial recibió la línea
+3) B escribe con base vieja: debe ABORTAR y no tocar el remoto
+  ✓ B aborta con exit 3
+  ✓ mensaje explica el avance
+  ✓ remoto intacto
+  ✓ remoto conserva la versión de A
+4) B relee y entonces sí puede escribir, sobre la versión de A
+  ✓ B leyó la nueva base
+  ✓ B escribe tras releer
+  ✓ historia lineal: A es padre de B
+5) carrera entre fetch y push: el push no fast-forward se rechaza
+  ✓ push non-fast-forward rechazado por git
+  ✓ remoto conserva 'A otra vez'
+5b) el script clasifica el fallo del push (#58, AUDIT: CAMBIOS)
+  ✓ carrera real entre CAS y push → exit 3
+  ✓ carrera: el mensaje dice que main avanzó
+  ✓ carrera: el remoto conserva la versión de A
+  ✓ pushurl inválido → exit 4 (no 3)
+  ✓ pushurl inválido: muestra el error real de git
+  ✓ pushurl inválido: NO dice carrera
+  ✓ pushurl inválido: remoto sin cambios
+  ✓ hook del servidor rechaza → exit 4
+  ✓ hook: se ve el motivo del servidor
+  ✓ hook: NO dice carrera
+6) validaciones de formato
+  ✓ dos pelotas → rechazo
+  ✓ pelota inválida → rechazo
+  ✓ marcador ======= → rechazo
+  ✓ 61+ líneas → rechazo
+  ✓ 61 líneas con la última sin newline → rechazo
+  ✓ exactamente 60 con la última sin newline → OK (borde)
+  ✓ sin HANDOFF_BASE_SHA → rechazo
+  ✓ ningún git push lleva --force / --force-with-lease / -f
+
+handoff.test: 31 ok, 0 fallos
+== bash scripts/collab/handoff.sh validar docs/collab/HANDOFF.md
+handoff: OK (docs/collab/HANDOFF.md)
+== pnpm verify
+✖ 12 problems (0 errors, 12 warnings)
+      Tests  811 passed | 1 skipped (812)

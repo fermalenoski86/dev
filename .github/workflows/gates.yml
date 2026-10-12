@@ -31,11 +31,12 @@ jobs:
         env: { NEXT_PUBLIC_TRUST_API_URL: 'https://api.trust.test:8443' }
       # E1 · BL-11/§47: el contrato y el inventario versionados = regenerados
       # Memoria de la colaboración: HANDOFF es una foto del presente, no un historial
-      - name: HANDOFF.md ≤ 60 líneas
-        run: |
-          N=$(wc -l < docs/collab/HANDOFF.md)
-          echo "HANDOFF.md: $N líneas"
-          [ "$N" -le 60 ] || { echo "::error title=HANDOFF.md demasiado largo::$N líneas (máx. 60). Mover decisiones a DECISIONES.md e historial a HISTORIAL.md."; exit 1; }
+      # P-01: HANDOFF ≤ 60 líneas, exactamente una pelota válida, sin marcadores
+      # de conflicto; y el script de escritura pasa su prueba de dos escritores.
+      - name: HANDOFF.md válido (P-01)
+        run: scripts/collab/handoff.sh validar docs/collab/HANDOFF.md
+      - name: handoff.sh — dos escritores sobre remoto bare
+        run: bash scripts/collab/handoff.test.sh
       - name: OpenAPI y DELIVERY regenerados sin diff
         run: pnpm docs:contract && git diff --exit-code docs/platform/openapi.json docs/platform/DELIVERY.md
       # E2 · BL-23: la matriz de §48 se genera de los tags [§48.N]; puntos sin test/estado o doc viejo → rojo
