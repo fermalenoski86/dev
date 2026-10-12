@@ -1,28 +1,41 @@
 # HANDOFF — estado actual
 
-> **Regla:** este archivo es una foto del presente y se **sobrescribe** en cada
-> turno (máx. 60 líneas, lo controla CI). Lo que sigue en pie va a
-> `DECISIONES.md`; lo que pasó va como **una línea** a `HISTORIAL.md`.
+> **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
+> Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** ChatGPT (auditor) — auditar F3(a) UI en [PR #64](https://github.com/fermalenoski86/dev/pull/64) (`fase/f3a-ui`, HEAD `ba20f8b`), issue [#65](https://github.com/fermalenoski86/dev/issues/65).
-**Fase:** F3(a) UI (#55). Brief aprobado en #60 (`1140616`). F3(a) API en `main@8fae6fe`.
-**Estado:** gates locales verdes: verify 800+1, PG 342+6, bootstrap 6/6, media 63/63, e2e-platform 9/9 local, 38/38 mutaciones f3a/f3aui. M2C/S3/manifest solo en CI. CI 7/7 verde sobre `ba20f8b`: [run 38187868256](https://github.com/fermalenoski86/dev/actions/runs/38187868256).
+**Pelota en:** Claude (implementador) — corregir F3(a) UI en [PR #64](https://github.com/fermalenoski86/dev/pull/64), rama `fase/f3a-ui`; auditoría [#65](https://github.com/fermalenoski86/dev/issues/65).
+**Fase:** F3(a) UI (#55). Brief aprobado #60 (`1140616`); API en main (`8fae6fe`).
+**HEAD auditado:** `ba20f8bb984ef0a3ee702e10a4092654a2645a45`.
+**Veredicto:** [AUDIT: CAMBIOS — 4 hallazgos P2](https://github.com/fermalenoski86/dev/pull/64#issuecomment-6117503190). No mergear.
 
 ## Próximo paso
-- ChatGPT: veredicto `AUDIT: APROBADO` / `AUDIT: CAMBIOS` en #64 sobre `ba20f8b` (puntos sugeridos en #65: `lib/intent.ts`, respuesta perdida tras COMMIT, enlace sin nombre accesible).
+- Claude: responder cada punto con SHA/evidencia y corregir en #64:
+  1. Mantener visible el error de pedir tras recargar pendiente/archivada.
+  2. Impedir confirmar mientras cancelar está en vuelo o incierto.
+  3. No aceptar 204 sin objeto como éxito de las mutaciones F3(a).
+  4. Completar E2E desde v2 vigente a v1 y comparar respuestas completas original/replay.
+- Actualizar reporte/salida y autorrevisión A/B/C; volver con todos los gates verdes sobre el nuevo HEAD.
+- ChatGPT reaudita después. #43 no bloquea esta página; P-01 y CS-0 siguen separados.
+
+## Evidencia revisada
+- CI [38187868256](https://github.com/fermalenoski86/dev/actions/runs/38187868256): 7/7, logs leídos por ChatGPT.
+- Checkout CI `e82de401`: merge de ba20f8b sobre `dd49424`.
+- verify 800+1; PG 342+6; bootstrap 6/6; media 63/63; mutaciones 336/336; M2C 14/14; platform 9/9; S3 16/16.
+- Manifest validado por CI: 11 screenshots, 23 videos. No inspección visual local del auditor.
+- Local auditor: 36 unitarias nuevas pasan + 4 diagnósticos reproducen los defectos; diff check OK.
+- Gates completos no ejecutados localmente: install falla engines (Node 24/pnpm 11); sin PG/Chromium. Límites completos en el comentario.
 
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| F3(a) API | #56 | mergeada `8fae6fe` |
-| UI de versión vigente (Q6) | #55 / PR #64 | implementada; CI 7/7; en auditoría (#65) |
-| P-01 handoff CAS | PR #58 | lateral; fuera de la auditoría F3(a) |
-| E2E intermitente :17 (LOADING) | #26 | sin reproducir en 40 corridas; observabilidad #40/#41 mergeada |
-| Issue AUDIT BL-07 duplicado | #46 | cerrar (válido #47, ya cerrado) |
+| F3(a) UI | #55 / #64 / #65 | correcciones de Claude; no aprobada |
+| P-01 handoff CAS | #58 | lateral, no auditado en esta vuelta |
+| E2E intermitente :17 | #26 | observabilidad #40/#41; estado previo sin reproducción |
+| AUDIT BL-07 duplicado | #46 | cierre pendiente; válido #47 ya cerrado |
 
 ## Pendiente de Fer
-- #43 (detalle de campaña para INTERNAL_APPROVER), tags (opcional). Detalle en `DECISIONES.md`.
+- #43: detalle de campaña para INTERNAL_APPROVER; tags opcionales. Ver `DECISIONES.md`.
 
-## Dónde está cada cosa
-- Reglas y gates: `AGENTS.md` · Decisiones vigentes: `docs/collab/DECISIONES.md` · Backlog y debate: `docs/collab/BACKLOG.md`
-- Historial: `docs/collab/HISTORIAL.md` (solo agregar) · Briefs: `docs/briefs/` · ADR: `docs/architecture/DECISIONS.md`
+## Referencias
+- `AGENTS.md` · `docs/collab/DECISIONES.md` · `docs/collab/BACKLOG.md`
+- `docs/collab/HISTORIAL.md` · `docs/briefs/F3A_UI.md` · `docs/reviews/F3A_UI.md`
