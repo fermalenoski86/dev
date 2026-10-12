@@ -111,7 +111,10 @@ done
 #    (solo R1, de cuando apuntaba a la fase) podría seguir verde mientras su edited espera
 #    detrás en el carril. Todo HEAD que aparezca ahora y no estuviera en la foto recibe
 #    failure "SIN VEREDICTO"; la corrida encolada lo evalúa de verdad.
-PRS2=$(listar) || { echo "paralelo-reevaluar: no se pudo volver a listar los PR para conciliar; exit 1" >&2; exit 1; }
+#    Si no se puede volver a listar, NO se corta acá (Codex sobre 168d4eb, P1): la
+#    revalidación final de main/fase tiene que correr igual; se sale 1 al final.
+concilia_fallo=0
+PRS2=$(listar) || { echo "paralelo-reevaluar: no se pudo volver a listar los PR para conciliar; sin conciliación (exit 1 al final)" >&2; concilia_fallo=1; PRS2=""; }
 nuevos=0
 while read -r n sha; do
   [ -n "$n" ] || continue
@@ -136,6 +139,7 @@ if [ "$MAIN2" != "$MAIN0" ] || [ "$FASE2" != "$FASE0" ]; then
   done
   exit 1
 fi
+[ "$concilia_fallo" -eq 0 ] || exit 1
 [ "$nuevos" -eq 0 ] || exit 1
 [ "$fallos" -eq 0 ] || exit 1
 echo "paralelo-reevaluar: $total PR re-evaluados con $BRANCH@${MAIN0:0:7} ($MOTIVO)"

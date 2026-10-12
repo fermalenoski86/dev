@@ -373,6 +373,30 @@ chmod +x "$T/listar-mueve-en-conciliacion.sh"; rm -f "$T/listado.2"; : > "$T/pub
 set +e; PARALELO_LISTAR="$T/listar-mueve-en-conciliacion.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" reeval "carrera en conciliación" >/dev/null 2>"$T/err"; RC=$?; set -e
 check "main avanza durante la conciliación (segundo listado) → exit 1 y todos los HEAD reciben failure CADUCADO después de lo publicado" '[ "$RC" = 1 ] && [ "$(grep -c " failure | paralelo: CADUCADO" "$T/publicado")" = 2 ] && grep -q "durante la publicación" "$T/err"'
 check "en paralelo-reevaluar.sh la conciliación (3) precede a la revalidación final (4), que es lo último" 'L3=$(grep -n "^# 3) … volver a listar" "$AQUI/paralelo-reevaluar.sh" | cut -d: -f1); L4=$(grep -n "^# 4) … y revalidar DESPUÉS" "$AQUI/paralelo-reevaluar.sh" | cut -d: -f1); [ -n "$L3" ] && [ -n "$L4" ] && [ "$L3" -lt "$L4" ]'
+# Codex sobre 168d4eb, P1: si el segundo listado falla, la revalidación final corre igual: con main
+# movida → CADUCADO sobre lo publicado; sin deriva → exit 1 sin tocar lo publicado.
+cat > "$T/listar-falla-2-mueve.sh" <<LISTAR
+#!/usr/bin/env bash
+if [ -e "$T/listado.3" ]; then
+  (cd "$T/semilla" && git checkout -q -f main && git pull -q origin main && echo tick2 >> docs/collab/HISTORIAL.md && git add -A && git commit -qm "historial 5" && git push -q origin main) >/dev/null 2>&1
+  exit 1
+fi
+touch "$T/listado.3"
+echo "71 $SL70"
+echo "70 $S70b"
+exit 0
+LISTAR
+chmod +x "$T/listar-falla-2-mueve.sh"; rm -f "$T/listado.3"; : > "$T/publicado"
+set +e; PARALELO_LISTAR="$T/listar-falla-2-mueve.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" reeval "listado falla y main se mueve" >/dev/null 2>"$T/err"; RC=$?; set -e
+check "el segundo listado falla y main avanzó → exit 1 y los HEAD reciben CADUCADO igual (la guarda final corre)" '[ "$RC" = 1 ] && [ "$(grep -c " failure | paralelo: CADUCADO" "$T/publicado")" = 2 ] && grep -q "sin conciliación" "$T/err"'
+cat > "$T/listar-falla-2.sh" <<LISTAR
+#!/usr/bin/env bash
+if [ -e "$T/listado.4" ]; then exit 1; fi
+touch "$T/listado.4"; echo "71 $SL70"; echo "70 $S70b"; exit 0
+LISTAR
+chmod +x "$T/listar-falla-2.sh"; rm -f "$T/listado.4"; : > "$T/publicado"
+set +e; PARALELO_LISTAR="$T/listar-falla-2.sh" PARALELO_PUBLICAR="$T/publicar.sh" PUBLICADO="$T/publicado" reeval "listado falla" >/dev/null 2>"$T/err"; RC=$?; set -e
+check "el segundo listado falla sin deriva → exit 1, veredictos publicados y ningún CADUCADO" '[ "$RC" = 1 ] && ! grep -q "CADUCADO" "$T/publicado" && grep -qE "^71 ${SL70:0:7} (success|failure) \| paralelo: (OK|RECHAZADO)" "$T/publicado"'
 # Codex sobre e511687, P1: los scripts en ejecución tienen que SER la revisión de main que se
 # compara. Si el checkout quedó atrás (main avanzó entre el worktree y el fetch), no se evalúa.
 (cd "$T/semilla" && git checkout -q -f main && git pull -q origin main && echo tack >> docs/collab/HISTORIAL.md && git add -A && git commit -qm "historial 3" && git push -q origin main) >/dev/null 2>&1

@@ -332,3 +332,10 @@ handoff.test: 48 ok, 0 fallos
 paralelo.test: 141 ok, 0 fallos
 paralelo.test: 141 ok, 0 fallos
 handoff.test: 48 ok, 0 fallos
+
+=== ronda 33 (Codex sobre 168d4eb: el fallo del segundo listado pasa por la guarda final) — 2026-10-12T23:34:25Z
+--- código de 168d4eb + pruebas nuevas: paralelo.test: 142 ok, 1 fallos
+--- corregido
+paralelo.test: 143 ok, 0 fallos
+paralelo.test: 143 ok, 0 fallos
+handoff.test: 48 ok, 0 fallos
