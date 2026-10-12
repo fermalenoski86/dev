@@ -61,6 +61,27 @@ jobs:
           git checkout -q --detach FETCH_HEAD
           echo "base del evento=${{ github.event.pull_request.base.sha }} · base actual=$(git rev-parse HEAD) · pr=#${{ github.event.pull_request.number }} head=${{ github.event.pull_request.head.sha }}"
           test "$(git rev-parse HEAD)" = "$(git rev-parse "origin/$BASE_REF")"
+      # Un re-run de un run viejo carga el YAML del workflow de la revisión del evento (GitHub
+      # reutiliza GITHUB_SHA/workflow_sha), aunque el checkout traiga scripts actuales: la
+      # orquestación de este archivo podría estar superada (Codex sobre 9307391, P1). Se
+      # compara el workflow cargado (workflow_sha) con el de la revisión ACTUAL de la rama
+      # base (main, o la rama de la fase para audit/*: de ahí lo toma GitHub); si difieren,
+      # se falla cerrado: hace falta un evento nuevo, no un re-run.
+      - name: El workflow cargado tiene que ser el de la base actual (un re-run viejo no vale)
+        env:
+          WF_SHA: ${{ github.workflow_sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          git fetch -q origin "$WF_SHA" 2>/dev/null || true
+          CARGADO=$(git show "$WF_SHA:.github/workflows/paralelo.yml" 2>/dev/null || echo "__no-disponible__")
+          ACTUAL=$(git show "origin/$BASE_REF:.github/workflows/paralelo.yml")
+          if [ "$CARGADO" != "$ACTUAL" ]; then
+            echo "::error title=workflow desactualizado::el workflow cargado ($WF_SHA) no es el de $BASE_REF actual ($(git rev-parse "origin/$BASE_REF")); un re-run de un run viejo no vale, hace falta un evento nuevo"
+            echo "RC=1" >> "$GITHUB_ENV"
+            echo "RC_TIT=paralelo: SIN VEREDICTO (workflow cargado ${WF_SHA:0:7} ≠ $BASE_REF actual; re-run de un run viejo, hace falta un evento nuevo)" >> "$GITHUB_ENV"
+            exit 1
+          fi
+          echo "workflow cargado = $BASE_REF actual ($WF_SHA)"
       - name: Trabajo paralelo controlado (P-05)
         env:
           PR: ${{ github.event.pull_request.number }}
@@ -149,7 +170,7 @@ jobs:
             api -f name=paralelo -f head_sha="$HEAD_SHA" -f status=completed -f conclusion="$1" -f "output[title]=$2" -f "output[summary]=$3" \
               && { echo "check paralelo=$1 publicado sobre $HEAD_SHA (#$PR): $2"; return 0; }
             echo "::error::no se pudo publicar el check paralelo=$1 sobre $HEAD_SHA tras 3 intentos; queda pendiente"; return 1; }
-          if [ "$RC" != 0 ]; then publicar failure "paralelo: RECHAZADO exit $RC" "$(head -c 60000 "$RUNNER_TEMP/paralelo.out" 2>/dev/null || echo "sin salida del chequeo")"; exit 0; fi
+          if [ "$RC" != 0 ]; then publicar failure "${RC_TIT:-paralelo: RECHAZADO exit $RC}" "$(head -c 60000 "$RUNNER_TEMP/paralelo.out" 2>/dev/null || echo "sin salida del chequeo")"; exit 0; fi
           if [ "$RC2" != 0 ]; then publicar failure "paralelo: SIN VEREDICTO (la re-evaluación global no completó, exit $RC2)" "$(head -c 60000 "$RUNNER_TEMP/reevaluar.out" 2>/dev/null || echo "sin salida de la re-evaluación")"; exit 0; fi
           # El evento puede estar viejo (Codex sobre 7bff98d, P1): un retarget de la rama de
           # fase a main, o un push, mientras este run corre. Se consulta el PR AHORA por la
@@ -195,6 +216,14 @@ jobs:
       # mismo motivo: un re-run usa el sha del evento; la política es la de main AHORA
       - name: Usar la revisión actual de main
         run: git fetch -q origin main && git checkout -q --detach origin/main && echo "main actual=$(git rev-parse HEAD)"
+      # mismo motivo que en el job paralelo: el YAML cargado tiene que ser el de main
+      - name: El workflow cargado tiene que ser el de main actual (un re-run viejo no vale)
+        env:
+          WF_SHA: ${{ github.workflow_sha }}
+        run: |
+          git fetch -q origin "$WF_SHA" 2>/dev/null || true
+          CARGADO=$(git show "$WF_SHA:.github/workflows/paralelo.yml" 2>/dev/null || echo "__no-disponible__")
+          [ "$CARGADO" = "$(git show origin/main:.github/workflows/paralelo.yml)" ] || { echo "::error::el workflow cargado ($WF_SHA) no es el de main; re-run de un run viejo, hace falta un evento nuevo"; exit 1; }
       # push a main = cambió el HANDOFF (pelota, fase activa) o entró un merge: todos los
       # PR abiertos se vuelven a comparar contra el estado nuevo.
       - name: Re-evaluar todos los PR abiertos hacia main

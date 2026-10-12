@@ -67,6 +67,16 @@ fi
 FASE_PR=$(fase_pr); FASE0=$(fase_head "$FASE_PR")
 PRS=$(listar) || { echo "paralelo-reevaluar: no se pudo listar los PR abiertos; sin veredicto nuevo" >&2; exit 1; }
 [ -n "$PRS" ] || { echo "paralelo-reevaluar: sin PR abiertos hacia $BRANCH"; exit 0; }
+# 0) "pendiente" sobre TODOS los HEAD listados ANTES de evaluar (Codex sobre 9307391, P1):
+#    desde acá ningún success viejo es el último check, ni siquiera durante la ventana
+#    de evaluación (varios PR, fetches lentos). Si después no se publica final (main o la
+#    fase avanzan, API caída), queda el pendiente: nunca un verde viejo.
+fallos=0; total=0
+while read -r n sha; do
+  [ -n "$n" ] || continue
+  publicar_firme "$n" "$sha" pendiente "paralelo: re-evaluando ($MOTIVO)" "Veredicto nuevo en curso con $BRANCH@${MAIN0:0:7}; el anterior ya no vale." \
+    || { echo "paralelo-reevaluar: no se pudo marcar pendiente el check de #$n" >&2; fallos=$((fallos+1)); }
+done <<< "$PRS"
 # 1) evaluar todo con la política de MAIN0 …
 RES=()
 while read -r n sha; do
@@ -82,22 +92,14 @@ done <<< "$PRS"
 git fetch -q "$REMOTE" "$BRANCH"
 MAIN1=$(git rev-parse "$REMOTE/$BRANCH")
 if [ "$MAIN1" != "$MAIN0" ]; then
-  echo "paralelo-reevaluar: $BRANCH avanzó de ${MAIN0:0:7} a ${MAIN1:0:7} durante la evaluación; no se publica (la corrida del push nuevo decide)" >&2
+  echo "paralelo-reevaluar: $BRANCH avanzó de ${MAIN0:0:7} a ${MAIN1:0:7} durante la evaluación; no se publica veredicto (quedan los 'pendiente'; la corrida del push nuevo decide)" >&2
   exit 1
 fi
 FASE1=$(fase_head "$FASE_PR")
 if [ "$FASE1" != "$FASE0" ]; then
-  echo "paralelo-reevaluar: la fase activa #$FASE_PR avanzó de ${FASE0:0:7} a ${FASE1:0:7} durante la evaluación; no se publica (la corrida de su synchronize decide)" >&2
+  echo "paralelo-reevaluar: la fase activa #$FASE_PR avanzó de ${FASE0:0:7} a ${FASE1:0:7} durante la evaluación; no se publica veredicto (quedan los 'pendiente'; la corrida de su synchronize decide)" >&2
   exit 1
 fi
-# 2a) primero "pendiente" sobre TODOS los HEAD evaluados: desde acá ningún success viejo
-#     es el último check, pase lo que pase con la publicación final.
-fallos=0; total=0
-for r in "${RES[@]}"; do
-  IFS=$'\t' read -r n sha con tit det <<< "$r"
-  publicar_firme "$n" "$sha" pendiente "paralelo: re-evaluando ($MOTIVO)" "Veredicto nuevo en curso con $BRANCH@${MAIN0:0:7}; el anterior ya no vale." \
-    || { echo "paralelo-reevaluar: no se pudo marcar pendiente el check de #$n" >&2; fallos=$((fallos+1)); }
-done
 # 2b) veredicto final, con reintentos; si aun así falla, queda el "pendiente" (nunca un verde viejo)
 for r in "${RES[@]}"; do
   IFS=$'\t' read -r n sha con tit det <<< "$r"

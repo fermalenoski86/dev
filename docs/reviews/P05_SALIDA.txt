@@ -282,3 +282,10 @@ handoff.test: 39 ok, 0 fallos
 paralelo.test: 132 ok, 0 fallos
 paralelo.test: 132 ok, 0 fallos
 handoff.test: 39 ok, 0 fallos
+
+=== ronda 26 (Codex sobre 9307391: workflow cargado == base actual; pendiente antes de evaluar) — 2026-10-12T22:00:20Z
+--- código de 9307391 + pruebas nuevas: paralelo.test: 130 ok, 3 fallos
+--- corregido
+paralelo.test: 133 ok, 0 fallos
+paralelo.test: 133 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
