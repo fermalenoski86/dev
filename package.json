@@ -7,6 +7,8 @@
     "docs:contract": "pnpm --filter @trust/platform-api docs:contract",
     "acceptance:generate": "node scripts/acceptance/cli.mjs generate",
     "acceptance:check": "node scripts/acceptance/cli.mjs check",
+    "progress:generate": "node scripts/collab/progress.mjs generate",
+    "progress:check": "node scripts/collab/progress.mjs check",
     "dev": "pnpm --filter @trust/previs dev",
     "build": "pnpm -r build",
     "test": "vitest run",
