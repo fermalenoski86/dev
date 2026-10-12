@@ -3,33 +3,38 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** ChatGPT (auditor) — reauditar P-01 ronda 1 en [PR #58](https://github.com/fermalenoski86/dev/pull/58), HEAD `fb77a49`, CI 7/7 [38222115237](https://github.com/fermalenoski86/dev/actions/runs/38222115237). Respuesta por punto: [6120970314](https://github.com/fermalenoski86/dev/pull/58#issuecomment-6120970314).
-**Fase:** P-01, protección CAS y fast-forward del HANDOFF (issue AUDIT #66).
-**Estado:** los 2 P2 de `AUDIT: CAMBIOS` (sobre `2182f05`) corregidos: (1) `validar` cuenta líneas lógicas con `awk`; (2) un push fallido solo es "carrera" (exit 3) si main avanzó; si no, error real de git y exit 4. handoff.test 31/31; CI verde al primer intento.
+**Pelota en:** Claude (implementador) — mergear P-01 [PR #58](https://github.com/fermalenoski86/dev/pull/58), aprobado sobre `fb77a49`, y cerrar [#66](https://github.com/fermalenoski86/dev/issues/66).
+**Fase:** P-01 aprobado; siguiente unidad autorizada: P-02, progreso verificable.
+**Estado:** [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/58#issuecomment-6121930565). Los dos P2 de la ronda 0 están corregidos; no quedan hallazgos.
 
-## Cerrado en este turno
-- Nada mergeado. F3(a) UI ya está en `main@2ee3551` (#64 aprobado, #55/#65 cerrados).
+## Evidencia P-01
+- HEAD auditado: `fb77a49d664604fd4e39ac8ebc2163ff93bc9b90`.
+- Auditor local: handoff.test 31/31; 61 líneas sin newline rechazadas; borde 60 OK; HANDOFF válido, `bash -n` y `diff --check` OK.
+- CI [38222115237](https://github.com/fermalenoski86/dev/actions/runs/38222115237): 7/7 al primer intento, HEAD exacto.
+- Verify 811+1; PG 342+6; media 63; mutaciones 339/339; M2C 14/14; navegador 10/10; compose/S3 16/16.
+- PostgreSQL/media/mutaciones/E2E/compose-S3 no se ejecutaron localmente por el auditor; sí en CI.
+- Límite: el script no reemplaza branch protection; sigue pendiente de Fer.
 
 ## Próximo paso
-- ChatGPT: veredicto sobre `fb77a49` en #58.
-- Claude (con `AUDIT: APROBADO`): squash de #58, cerrar #66, luego P-02 → P-05 → P-04 → P-03. Con `AUDIT: CAMBIOS`: corregir en la misma rama.
-- CS-0 (#59) sigue autorizado y separado; no se mezcla con P-01.
+- Claude: squash merge de #58, cerrar #66 y confirmar `main` verde.
+- Luego abrir P-02 en PR separado conforme a #53: fuente determinista, sin API variable; distinguir 0/0 de 0/N, brief de función y evidencia física verificable.
+- Orden después de P-02: P-05 → P-04 → P-03. CS-0 (#59) sigue autorizado y separado.
 
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-01 handoff CAS | PR #58 / #66 | ronda 1 corregida; en reauditoría |
-| Proceso P-02…P-05 | #53 | después de P-01 |
-| Agent Bridge (P-06) | #54 | chequeo horario activo (alternativa 2a); bridge sin implementar |
+| P-01 handoff CAS | PR #58 / #66 | aprobado; merge pendiente |
+| P-02 progreso verificable | #53 | siguiente unidad |
+| P-05 → P-04 → P-03 | #53 | después de P-02 |
+| Agent Bridge (P-06) | #54 | chequeo horario activo; bridge sin implementar |
 | CS-0 Creative Studio | #59 | autorizado; brief aparte |
-| E2E intermitente :17 | #26 | observabilidad #40/#41; sin reproducción (hoy pasó a la primera) |
+| E2E intermitente :17 | #26 | observabilidad #40/#41; sin reproducción estable |
 
 ## Pendiente de Fer
 - #43: detalle de campaña para INTERNAL_APPROVER.
-- Tags opcionales (el proxy los bloquea): bl31, bl07, bl08, f3a, f3a-ui.
-- Protección de rama `main` con CI requerido (P-01, límite declarado).
-- Ver `DECISIONES.md`.
+- Tags opcionales bloqueados por proxy: bl31, bl07, bl08, f3a, f3a-ui.
+- Protección de rama `main` con CI requerido (límite declarado de P-01).
 
 ## Referencias
 - `AGENTS.md` · `docs/collab/DECISIONES.md` · `docs/collab/BACKLOG.md`
-- Historial: `docs/collab/HISTORIAL.md` (solo agregar) · Briefs: `docs/briefs/` · ADR: `docs/architecture/DECISIONS.md`
+- Historial: `docs/collab/HISTORIAL.md` · Briefs: `docs/briefs/` · ADR: `docs/architecture/DECISIONS.md`

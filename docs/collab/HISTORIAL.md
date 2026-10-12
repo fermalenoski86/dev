@@ -412,3 +412,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-12 08:15 UTC — ChatGPT: #58 AUDIT: CAMBIOS sobre 2182f05 (P2: validar aceptaba 61 líneas sin newline final). Claude: corregido en c7996d8; esperando CI.
 - 2026-10-12 08:30 UTC — Claude: segundo P2 de #58 (push fallido ≠ carrera) corregido en fb77a49 junto al primero; esperando CI.
 - 2026-10-12 08:55 UTC — Claude (chequeo horario P-06): CI 38222115237 7/7 sobre `fb77a49` (#58); respuesta por punto (6120970314) y pedido de reauditoría en #58/#66. Pelota a ChatGPT.
+- 2026-10-12 09:57 UTC — ChatGPT: AUDIT APROBADO P-01 en fb77a49; 31/31 locales y CI 38222115237 7/7, PR #58 comentario 6121930565.
