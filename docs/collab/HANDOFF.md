@@ -3,32 +3,42 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** ChatGPT (auditor) — auditar **P-04** (PR #75, issue #76).
-**En auditoría:** #75 @ 48489cca0b4124705ae187009aab4a8231b6af47
-**Fase:** P-04 en auditoría; después P-03 → PoC P-06 (orden confirmado por Fer). #73 (kit McDonald's) lo lleva la sesión de Claude con Fer bajo lock: los turnos horarios no lo tocan.
-**Estado:** P-04 entregada: PR #75 HEAD `48489cc`, CI [38332749947](https://github.com/fermalenoski86/dev/actions/runs/38332749947) verde (7/7 + paralelo). Falla provocada en los 7 jobs: runs 38331632397 y 38332414187 (7/7 rojos con entorno + cola sanitizada, 7/7 artifacts). Codex: 5 hallazgos de la revisión inicial corregidos en `f9f4ee7`; revisión final pedida sobre `48489cc`. Pedido de auditoría en #76.
+**Pelota en:** Claude (implementador) — corregir **P-04** (PR #75, issue #76).
+**En auditoría:** #75 @ fc22fd454dace51cc0011129266508fe64823755
+**Fase:** P-04 con `AUDIT: CAMBIOS`; después P-03 → PoC P-06 (orden confirmado por Fer). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
+**Estado:** ChatGPT auditó el HEAD actual `fc22fd4` y publicó [AUDIT: CAMBIOS](https://github.com/fermalenoski86/dev/pull/75#issuecomment-6137222056). El push durante la congelación fue un error de proceso; `paralelo` lo rechazó correctamente. `fc22fd4` queda adoptado como base de esta ronda para evitar un rewind.
 
-## P-04 · qué auditar
-- Alcance y criterio en `docs/reviews/P04.md` (autorrevisión A/B/C, hallazgos de Codex, contabilidad); salida real en `P04_SALIDA.txt`.
-- Rama congelada hasta `AUDIT: APROBADO`/`CAMBIOS`. Si la revisión final de Codex trae hallazgos, Claude los corrige juntos con los del auditor.
+## Hallazgos a corregir juntos
+- **P1 sanitización:** una comilla escapada deja visible el resto del secreto (`{"password":"abc\\"DEF-SECRET"}` → expone `DEF-SECRET`). Redacción escape-aware/conservadora + regresiones.
+- **P1 timeout:** al cancelar el job, GitHub interrumpe `run.sh` antes de crear cola/log sanitizado; el fallback deja sólo entorno. Reservar cleanup o mecanismo equivalente y demostrar timeout real con cola + artifact.
+- **P2 umbrales:** `{ timeout: 40_000 * 10 }` no cambia la foto y `politica-fallas.sh check` pasa. Fotografiar la expresión completa o aceptar sólo literal + regresión.
+
+## Verificación independiente
+- Local general: lint 0 errores (12 warnings preexistentes), typecheck verde, 828 tests aprobados (1 contrato S3 omitido por entorno), build verde.
+- Focal: 82/83 locales; el único caso no ejecutó por falta de `bc` en este entorno. `politica-fallas`, sintaxis y diff verdes; las tres reproducciones adversarias confirman los hallazgos.
+- CI exacta [38337390602](https://github.com/fermalenoski86/dev/actions/runs/38337390602) sobre `fc22fd4`: 6/7 verdes; mutations seguía en curso al dictamen. No aprobar con gates o hallazgos pendientes.
+
+## Próximo paso
+- Claude: una sola ronda consolidada, sin ampliar alcance; responder cada hallazgo con SHA, agregar regresiones y prueba temporizada real; entregar HEAD congelado con CI 7/7 y `paralelo` verde.
+- ChatGPT: reauditar el SHA final; si pasa, habilitar merge y luego P-03 → PoC P-06.
 
 ## Reglas
-- Para P-04: Claude implementa en su rama/PR y ChatGPT audita el HEAD congelado antes del merge; `En auditoría` se anota al entregar.
-- Codex: no por commit; agrupar correcciones y pedir con el PR consolidado; cada pedido de auditoría informa revisiones de Codex y rondas. Hoy Codex agotó cuota dos veces (dato para PoC P-06).
+- La rama vuelve a Claude por este dictamen. Al pedir reauditoría, actualizar `En auditoría` al SHA final y congelarla otra vez.
+- Codex: agrupar correcciones y no pedir revisiones por commit; registrar cantidad de revisiones/rondas.
 
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-04 diagnóstico de fallas | PR #75 / #76 | en auditoría @ 48489cc |
+| P-04 diagnóstico de fallas | PR #75 / #76 | cambios pedidos sobre `fc22fd4` |
 | P-03 → PoC P-06 | #53 / #54 | siguientes, en serie |
-| Kit McDonald's | #73 | lock sesión Claude+Fer (00:51 UTC); entrega vie 16/10 |
-| CS-0 Creative Studio | #59 / PR #74 | brief en PR; paralelo OK |
+| Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
+| CS-0 Creative Studio | #59 / PR #74 | brief en PR; paralelo condicionado al HANDOFF vigente |
 | E2E intermitente :17 | #26 | observabilidad #40/#41; sin reproducción estable |
 
 ## Pendiente de Fer
 - #43: detalle de campaña para INTERNAL_APPROVER (PR #72 abierto).
 - Tags opcionales bloqueados por proxy: bl31, bl07, bl08, f3a, f3a-ui.
-- `main`: ruleset activo sin borrado/force-push; required checks (`paralelo` ya publica sobre el HEAD) + rama al día después de adaptar escritores directos.
+- `main`: required checks + rama al día después de adaptar escritores directos.
 - PoC P-06: entorno Codex y `CLAUDE_CODE_OAUTH_TOKEN` (ver brief).
 
 ## Referencias
