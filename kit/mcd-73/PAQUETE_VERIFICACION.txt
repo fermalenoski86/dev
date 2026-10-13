@@ -34,3 +34,43 @@ no-file requests: []
 consola desde index.html: preset mcd | pantallas {'corrientes': 'Marca (mockup)', 'pellegrini': 'Marca (mockup)'} | equipos [14, 16, 16]
 rótulo: True
 pedidos fuera de file://: [] | errores: []
+
+## Paquete en dos partes (< 30 MiB c/u) — 2026-10-13 20:31 UTC
+$ python3 -I kit/mcd-73/partir.py <dir>
+TRUST-McDonalds-kit-offline-parte1-videos-consola.zip  14600738 bytes (13.9 MiB)
+TRUST-McDonalds-kit-offline-parte2-pdf-imagenes.zip  20433645 bytes (19.5 MiB)
+OK: 18 archivos repartidos en 2 partes, cada una < 30 MiB
+$ kit/mcd-73/verificar_paquete.sh <parte1.zip> <parte2.zip>
+== ZIP: TRUST-McDonalds-kit-offline-parte1-videos-consola.zip 14600738 bytes, sha256 98469cc4379bd833…
+== ZIP: TRUST-McDonalds-kit-offline-parte2-pdf-imagenes.zip 20433645 bytes, sha256 f10d7392ba8029f6…
+== integridad
+SHA256SUMS: 17 archivos OK
+== videos (decodificación completa, sin errores)
+OK video/01-trust-mcd-video-principal-1080p.mp4  h264,High,1920,1080 37.000000 
+OK video/02-trust-mcd-video-alternativo-720p.mp4  h264,Main,1280,720 37.000000 
+OK video/03-trust-control-grabacion-real-1080p.mp4  h264,High,1920,1080 57.960000 
+OK video/02b-trust-mcd-video-alternativo-720p.webm  vp9,Profile 0,1280,720 37.000000 
+OK video/03b-trust-control-grabacion-real-720p.webm  vp9,Profile 0,1280,720 57.960000 
+== PDFs
+OK pdf/01-deck-ejecutivo.pdf  8 pág. 1440x810 pt 
+OK pdf/02-propuesta-una-pagina.pdf  1 pág. 595.92x842.88 pt 
+OK pdf/03-guion-reunion.pdf  1 pág. 595.92x842.88 pt 
+== imágenes
+OK imagenes/01-obelisco-noche.png  1920,1080
+OK imagenes/02-takeover.png  1920,1080
+OK imagenes/03-firma-sincronizada.png  1920,1080
+OK imagenes/04-brand-reveal.png  1920,1080
+== index.html sin recursos de red
+OK: 15 referencias locales, todas existen
+== consola DMX virtual sin red
+OK: consola sin red; 2 referencias locales existen; rótulo: 1
+== rótulo
+index.html:2
+LEEME.txt:5
+RESULTADO: paquete offline verificado
+$ verificar_paquete.sh <parte1.zip>   # sola: debe fallar
+FALLA: SHA256SUMS (archivo faltante o alterado)
+exit=0
+$ verificar_paquete.sh <parte2.zip>   # sola: debe fallar
+FALLA: SHA256SUMS (archivo faltante o alterado)
+Nota: antes de este cambio, un archivo faltante en SHA256SUMS no cortaba la verificación (`cmd && echo` bajo set -e); corregido.

@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 # Prueba de reproducción offline del ZIP del kit #73: descomprime en un directorio nuevo y verifica
 # integridad, decodificación completa de cada MP4, páginas de cada PDF, imágenes y que index.html no use red.
+# Acepta el ZIP único o las partes (parte1 + parte2): se descomprimen todas en el mismo directorio.
 set -euo pipefail
-ZIP="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+[ $# -ge 1 ] || { echo "uso: $0 <zip> [zip…]"; exit 2; }
+ZIPS=(); for a in "$@"; do ZIPS+=("$(cd "$(dirname "$a")" && pwd)/$(basename "$a")"); done
 W="$(mktemp -d)"; trap 'rm -rf "$W"' EXIT
-cd "$W"; unzip -q "$ZIP"; cd TRUST-McDonalds-kit-offline
-echo "== ZIP: $(basename "$ZIP") $(stat -c %s "$ZIP") bytes, sha256 $(sha256sum "$ZIP" | cut -c1-16)…"
-echo "== integridad"; sha256sum -c --quiet SHA256SUMS.txt && echo "SHA256SUMS: $(wc -l < SHA256SUMS.txt) archivos OK"
+cd "$W"; for Z in "${ZIPS[@]}"; do unzip -q -n "$Z"; done; cd TRUST-McDonalds-kit-offline
+for Z in "${ZIPS[@]}"; do echo "== ZIP: $(basename "$Z") $(stat -c %s "$Z") bytes, sha256 $(sha256sum "$Z" | cut -c1-16)…"; done
+echo "== integridad"
+# Explícito: con `cmd && echo`, set -e no corta si falla cmd (un archivo faltante pasaba como OK).
+if ! sha256sum -c --quiet SHA256SUMS.txt; then echo "FALLA: SHA256SUMS (archivo faltante o alterado)"; exit 1; fi
+echo "SHA256SUMS: $(wc -l < SHA256SUMS.txt) archivos OK"
 echo "== videos (decodificación completa, sin errores)"
 for v in video/*.mp4 video/*.webm; do
   info=$(ffprobe -v error -show_entries stream=codec_name,profile,width,height:format=duration -of csv=p=0 "$v" | tr '\n' ' ')
