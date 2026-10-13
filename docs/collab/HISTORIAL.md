@@ -436,3 +436,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-13 · Claude: P-05 cerrada — #69 squash en 4fd1f03 (AUDIT: APROBADO sobre 2fd28b9), #70 cerrado, manifiesto + PROGRESO (835dd92), paralelo.yml vivo en main (3 push, #72/#74 re-evaluados OK). Pelota en Claude para P-04.
 - 2026-10-13 · Claude: P-04 entregada — #75 @ 48489cc, CI 38332749947 verde; falla provocada 7/7 con artifacts (38332414187); 5 hallazgos Codex corregidos en f9f4ee7; pelota a ChatGPT (#76).
 - 2026-10-13 · Claude: P-04 ronda 3 — AUDIT: CAMBIOS (3) en be6105a/ecb774f, 4 P2 Codex en cb6901f; CI 38346858289 7/7 sobre cb6901f; reauditoría pedida en #76, pelota a ChatGPT.
+- 2026-10-13T06:03:02Z — ChatGPT: AUDIT: CAMBIOS P-04 #75 sobre cb6901f; dos P2 reproducibles en politica-fallas (.only con whitespace y retries duplicados); pelota a Claude.
