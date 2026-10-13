@@ -23,6 +23,9 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+      # P-04: los gates cortan antes del timeout-minutes y dejan cola + log (AUDIT #75)
+      - name: Plazo de los gates (P-04)
+        run: scripts/ci/plazo.sh
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
@@ -76,6 +79,9 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      # P-04: los gates cortan antes del timeout-minutes y dejan cola + log (AUDIT #75)
+      - name: Plazo de los gates (P-04)
+        run: scripts/ci/plazo.sh
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       # B3: el pipeline de Asset corre con PostgreSQL + ffprobe/ffmpeg reales
@@ -107,6 +113,9 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+      # P-04: los gates cortan antes del timeout-minutes y dejan cola + log (AUDIT #75)
+      - name: Plazo de los gates (P-04)
+        run: scripts/ci/plazo.sh
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
@@ -132,6 +141,9 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      # P-04: los gates cortan antes del timeout-minutes y dejan cola + log (AUDIT #75)
+      - name: Plazo de los gates (P-04)
+        run: scripts/ci/plazo.sh
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: sudo apt-get update -q && sudo apt-get install -yq ffmpeg && ffmpeg -version | head -1
@@ -154,6 +166,9 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+      # P-04: los gates cortan antes del timeout-minutes y dejan cola + log (AUDIT #75)
+      - name: Plazo de los gates (P-04)
+        run: scripts/ci/plazo.sh
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
@@ -198,6 +213,9 @@ jobs:
       E2E_CONTROL_URL: https://control.trust.test:8443
     steps:
       - uses: actions/checkout@v4
+      # P-04: los gates cortan antes del timeout-minutes y dejan cola + log (AUDIT #75)
+      - name: Plazo de los gates (P-04)
+        run: scripts/ci/plazo.sh
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - name: ffmpeg + PostgreSQL 16
@@ -266,6 +284,9 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+      # P-04: los gates cortan antes del timeout-minutes y dejan cola + log (AUDIT #75)
+      - name: Plazo de los gates (P-04)
+        run: scripts/ci/plazo.sh
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       # las mutaciones de B3 necesitan PostgreSQL real además de ffmpeg

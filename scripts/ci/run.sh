@@ -13,10 +13,24 @@ LOG=$(mktemp)
 # un `::error::PASSWORD=…` del comando no se vuelve anotación (solo publican las nuestras,
 # ya sanitizadas). Token impredecible: el comando no puede reactivarlos.
 FRENO=p04-$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')
+# Plazo del job (plazo.sh, AUDIT #75): el gate se corta antes del timeout-minutes para que este
+# script llegue a publicar entorno + cola y dejar el log (si GitHub cancela el job, no llega).
+# `timeout` manda la señal a todo el grupo de procesos del gate (hijos incluidos).
+PLAZO=
+if [ -n "${P04_PLAZO_FIN:-}" ]; then
+  PLAZO=$(( P04_PLAZO_FIN - $(date +%s) ))
+  if [ "$PLAZO" -le 0 ]; then set -- bash -c 'echo "run.sh: el job ya agotó su plazo (P04_PLAZO_FIN) antes de este gate: no se corre"; exit 124'
+  else set -- timeout --kill-after=10 "$PLAZO" "$@"; fi
+fi
 echo "::stop-commands::$FRENO"
 "$@" 2>&1 | tee "$LOG"
 RC=${PIPESTATUS[0]}
 echo "::$FRENO::"
+POR_PLAZO=
+if [ -n "$PLAZO" ] && { [ "$RC" = 124 ] || [ "$RC" = 137 ]; }; then
+  POR_PLAZO=", plazo del job"
+  echo "run.sh: TIMEOUT — el gate superó el plazo del job (${PLAZO}s; timeout-minutes menos el margen de plazo.sh) y se cortó (exit $RC)" >> "$LOG"
+fi
 limpio() { sed 's/\x1b\[[0-9;]*[A-Za-z]//g' "$LOG" | "$AQUI/sanitizar.sh"; }
 codifica() { printf '%s' "$1" | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g'; }
 ENT=$("$AQUI/entorno.sh")
@@ -29,7 +43,7 @@ echo "::notice title=$TITULO (exit $RC)::$(codifica "entorno: $ENT
 $RES")"
 if [ "$RC" != 0 ]; then
   COLA=$(limpio | grep -av '^\s*$' | tail -60 | cut -c1-300)
-  echo "::error title=$TITULO falló (exit $RC)::$(codifica "entorno: $ENT
+  echo "::error title=$TITULO falló (exit $RC$POR_PLAZO)::$(codifica "entorno: $ENT
 $COLA")"
   # marca para el paso final del job: la falla ya quedó anotada con entorno y cola
   touch "${RUNNER_TEMP:-/tmp}/p04-anotado" 2>/dev/null || true

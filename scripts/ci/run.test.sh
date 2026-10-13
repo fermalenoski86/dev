@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # P-04 · Prueba de scripts/ci: run.sh (anotación con entorno + cola, log sanitizado en
-# test-results/ci/, marca para el paso final), entorno.sh, sanitizar.sh y politica-fallas.sh,
+# test-results/ci/, marca para el paso final, corte por plazo), plazo.sh, entorno.sh, sanitizar.sh y politica-fallas.sh,
 # más chequeos estáticos de gates.yml (todo job anota entorno al fallar y sube test-results/).
 set -uo pipefail
 AQUI=$(cd "$(dirname "$0")" && pwd)
@@ -9,7 +9,7 @@ T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
 ok=0; fallos=0
 check() { if eval "$2"; then echo "  ✓ $1"; ok=$((ok+1)); else echo "  ✗ $1"; fallos=$((fallos+1)); fi; }
 export RUNNER_TEMP=$T/runner P04_LOGS=$T/logs; mkdir -p "$RUNNER_TEMP"
-unset GITHUB_RUN_ID GITHUB_RUN_ATTEMPT GITHUB_JOB ImageOS ImageVersion P04_HEAD_SHA
+unset GITHUB_RUN_ID GITHUB_RUN_ATTEMPT GITHUB_JOB GITHUB_ENV ImageOS ImageVersion P04_HEAD_SHA P04_PLAZO_FIN P04_MARGEN
 
 echo "1. entorno.sh"
 L=$("$AQUI/entorno.sh"); RC=$?
@@ -42,6 +42,9 @@ check "2.8 sin secretos no cambia nada" '[ "$(printf "a=1\nhola mundo\nclave=val
 K=$(printf '%s\n' 'ENCRYPTION_KEY="abc def"' 'SIGNING_KEY=supersecretvalue' 'SSH_KEY=AAAAB3Nza' 'key=valor' | "$AQUI/sanitizar.sh")
 check "2.10 cualquier nombre con key (ENCRYPTION_KEY, SIGNING_KEY, SSH_KEY, key) se tapa" 'printf "%s" "$K" | grep -q "^ENCRYPTION_KEY=\"\[oculto\]\"$" && printf "%s" "$K" | grep -q "^SIGNING_KEY=\[oculto\]$" && printf "%s" "$K" | grep -q "^SSH_KEY=\[oculto\]$" && printf "%s" "$K" | grep -q "^key=\[oculto\]$" && ! printf "%s" "$K" | grep -q "abc\|supersecret\|AAAAB3\|valor"'
 
+E=$(printf '%s\n' '{"password":"abc\\\"DEF-SECRET","x":1}' "{'secret':'abc\\'DEF-SECRET','x':1}" '{\"password\":\"DEF-SECRET\",\"x\":1}' 'password=abc\"DEF-SECRET' 'token="abc\\\\" x=1' 'API_KEY="abc\"DEF-SECRET sin cierre' 'password="abc\' | "$AQUI/sanitizar.sh")
+check "2.11 comillas escapadas (dobles y simples) no cortan el valor: nada de DEF-SECRET (AUDIT #75)" '! printf "%s" "$E" | grep -q "DEF-SECRET\|abc" && printf "%s\n" "$E" | sed -n 1p | grep -qx "{\"password\":\"\[oculto\]\",\"x\":1}" && printf "%s\n" "$E" | sed -n 2p | grep -qx "{.secret.:.\[oculto\].,.x.:1}" && printf "%s\n" "$E" | sed -n 5p | grep -qx "token=\"\[oculto\]\" x=1"'
+
 echo "3. run.sh"
 O=$("$AQUI/run.sh" "verde" bash -c 'echo "Tests  3 passed"; echo "Authorization: Bearer xyz"; exit 0'); RC=$?
 check "3.1 verde: exit 0, ::notice con entorno y resumen, sin ::error" '[ "$RC" = 0 ] && printf "%s" "$O" | grep -q "^::notice title=verde (exit 0)::entorno: sha=.*%0ATests  3 passed$" && ! printf "%s" "$O" | grep -q "^::error"'
@@ -61,6 +64,23 @@ check "3.12 comandos de workflow frenados alrededor de la salida cruda (token al
 O2=$("$AQUI/run.sh" "otro" true 2>&1)
 check "3.13 el token del freno cambia en cada corrida" '[ "$(printf "%s\n" "$O" | head -1)" != "$(printf "%s\n" "$O2" | head -1)" ]'
 check "3.11 comando inexistente: rojo con exit ≠ 0 y anotación" 'O=$("$AQUI/run.sh" "nada" /no/existe 2>&1); [ $? != 0 ] && printf "%s" "$O" | grep -q "^::error title=nada falló (exit 127)::entorno:"'
+
+cat > "$T/lento.sh" <<'LENTO'
+echo '{"password":"abc\\\"DEF-SECRET"}'
+sleep 300 &
+for i in $(seq 1 100); do echo "línea $i"; sleep 0.05; done
+sleep 300
+LENTO
+rm -f "$RUNNER_TEMP/p04-anotado"; INI=$(date +%s)
+O=$(P04_PLAZO_FIN=$(( $(date +%s) + 3 )) "$AQUI/run.sh" "lento" bash "$T/lento.sh" 2>&1); RC=$?; DUR=$(( $(date +%s) - INI ))
+check "3.14 plazo: el gate se corta al plazo (exit 124, < 20 s, hijos incluidos) y no espera al timeout del job" '[ "$RC" = 124 ] && [ "$DUR" -lt 20 ] && ! ps -eo args | grep -q "^sleep 300$"'
+check "3.15 plazo: ::error con entorno, cola sanitizada y motivo; marca p04-anotado" 'printf "%s" "$O" | grep "^::error title=lento falló (exit 124, plazo del job)::entorno: sha=" | grep -q "%0Alínea [0-9]*%0Arun.sh: TIMEOUT — el gate superó el plazo del job" && ! printf "%s" "$O" | grep "^::error" | grep -q DEF-SECRET && [ -e "$RUNNER_TEMP/p04-anotado" ]'
+check "3.16 plazo: log sanitizado completo en \$P04_LOGS (artifact) con la cola y el motivo" 'head -1 "$P04_LOGS/lento.log" | grep -q "^entorno: sha=" && grep -q "^línea 1$" "$P04_LOGS/lento.log" && tail -1 "$P04_LOGS/lento.log" | grep -q "^run.sh: TIMEOUT" && ! grep -q DEF-SECRET "$P04_LOGS/lento.log"'
+check "3.17 plazo vencido antes de empezar: no corre el comando, exit 124 y anotación" 'O=$(P04_PLAZO_FIN=$(( $(date +%s) - 1 )) "$AQUI/run.sh" "tarde" touch "$T/no-debe" 2>&1); [ $? = 124 ] && [ ! -e "$T/no-debe" ] && printf "%s" "$O" | grep "^::error title=tarde falló (exit 124, plazo del job)" | grep -q "agotó su plazo"'
+check "3.18 con plazo amplio el gate verde no cambia (exit 0, sin marca de plazo)" 'rm -f "$RUNNER_TEMP/p04-anotado"; O=$(P04_PLAZO_FIN=$(( $(date +%s) + 600 )) "$AQUI/run.sh" "rapido" echo "Tests  1 passed" 2>&1); [ $? = 0 ] && ! printf "%s" "$O" | grep -q "^::error\|TIMEOUT" && [ ! -e "$RUNNER_TEMP/p04-anotado" ]'
+check "3.19 plazo.sh: timeout-minutes del job − 180 s en GITHUB_ENV" 'GE=$T/genv; : > "$GE"; A=$(date +%s); GITHUB_JOB=media GITHUB_ENV=$GE "$AQUI/plazo.sh" >/dev/null && F=$(sed -n "s/^P04_PLAZO_FIN=//p" "$GE") && M=$(sed -nE "/^  media:$/,/timeout-minutes/s/.*timeout-minutes: ([0-9]+).*/\1/p" "$RAIZ/.github/workflows/gates.yml") && D=$(( F - A - M * 60 + 180 )) && [ "$D" -ge 0 ] && [ "$D" -le 2 ]'
+printf 'jobs:\n  corto:\n    timeout-minutes: 3\n' > "$T/wf.yml"
+check "3.20 plazo.sh: margen = un cuarto del timeout si es menor que 180 s; job sin timeout → error" 'GE=$T/genv; : > "$GE"; A=$(date +%s); P04_WORKFLOW=$T/wf.yml GITHUB_JOB=corto GITHUB_ENV=$GE "$AQUI/plazo.sh" >/dev/null && F=$(sed -n "s/^P04_PLAZO_FIN=//p" "$GE") && D=$(( F - A - 135 )) && [ "$D" -ge 0 ] && [ "$D" -le 2 ] && ! P04_WORKFLOW=$T/wf.yml GITHUB_JOB=otro GITHUB_ENV=$GE "$AQUI/plazo.sh" >/dev/null'
 
 echo "4. politica-fallas.sh"
 R=$T/repo; mkdir -p "$R/scripts/ci" "$R/.github/workflows" "$R/e2e" "$R/e2e-platform" "$R/packages/x/src"
@@ -110,6 +130,18 @@ rm "$R/e2e/c.spec.ts"; sed -i 's#playwright test -c playwright.config.ts#playwri
 check "4.20 --retries=2 en el workflow → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "retries fuera de las configs — .github/workflows/gates.yml:"'
 sed -i 's#--retries=2 ##' "$R/.github/workflows/gates.yml"
 check "4.21 limpio otra vez → OK" 'PF check | grep -q "^politica-fallas: OK"'
+sed -i '0,/{ timeout: 40_000 }/s//{ timeout: 40_000 * 10 }/' "$R/e2e/experience.spec.ts"
+check "4.22 timeout como expresión ({ timeout: 40_000 * 10 }) → rojo aunque la foto no cambie (AUDIT #75)" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "timeout no literal — e2e/experience.spec.ts:" && ! printf "%s" "$O" | grep -q "^[+-]e2e"'
+cp "$RAIZ/e2e/experience.spec.ts" "$R/e2e/"; sed -i '0,/setTimeout(120_000)/s//setTimeout(120 * 1000)/' "$R/e2e/experience.spec.ts"
+check "4.23 test.setTimeout(expresión) → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "timeout no literal — e2e/experience.spec.ts:.*setTimeout(120 \* 1000)"'
+cp "$RAIZ/e2e/experience.spec.ts" "$R/e2e/"; sed -i 's/^  timeout: 30_000,/  timeout:\n    90_000,/' "$R/playwright.config.ts"
+check "4.24 valor en la línea siguiente (config) → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "timeout no literal — playwright.config.ts:"'
+cp "$RAIZ/playwright.config.ts" "$R/"; echo "const T = 99_000; test.use({ actionTimeout: T });" > "$R/e2e-platform/d.spec.ts"
+check "4.25 actionTimeout con constante en una E2E → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "timeout no literal — e2e-platform/d.spec.ts:"'
+rm "$R/e2e-platform/d.spec.ts"; sed -i 's/^  timeout: 30_000,/  timeout: 30_000,\n  use: { actionTimeout: 99_000 },/' "$R/playwright.config.ts"
+check "4.26 actionTimeout literal nuevo en una config → cambia la foto → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "^+playwright.config.ts actionTimeout: 99_000"'
+cp "$RAIZ/playwright.config.ts" "$R/"
+check "4.27 limpio otra vez → OK" 'PF check | grep -q "^politica-fallas: OK"'
 check "4.13 el repo real cumple la política (retries 0, foto al día, sin .only)" 'bash "$AQUI/politica-fallas.sh" check | grep -q "^politica-fallas: OK"'
 
 echo "5. gates.yml (estático)"
@@ -121,6 +153,7 @@ for j in $JOBS; do
   B=$(bloque "$j")
   check "5.2 $j: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado" 'printf "%s" "$B" | grep -A2 "name: Entorno (falla fuera de un gate)" | grep -q "if: failure() || cancelled()$" && printf "%s" "$B" | grep -q "p04-anotado.*entorno.sh --error \"$j: falló fuera de un gate"'
   check "5.3 $j: upload-artifact if: failure() || cancelled() con test-results/ y retención" 'printf "%s" "$B" | grep -B1 -A6 "uses: actions/upload-artifact@v4" | grep -q "if: failure() || cancelled()$" && printf "%s" "$B" | grep -A8 "if: failure() || cancelled()" | grep -qE "^\s+(- )?(path: test-results/|test-results/ci/)$" && printf "%s" "$B" | grep -q "retention-days:"'
+  check "5.11 $j: primer paso después del checkout = plazo.sh (AUDIT #75)" 'printf "%s" "$B" | grep -A4 "uses: actions/checkout@v4" | grep -m1 "run:" | grep -q "run: scripts/ci/plazo.sh$"'
   check "5.4 $j: al menos un gate pasa por scripts/ci/run.sh" 'printf "%s" "$B" | grep -q "scripts/ci/run.sh "'
 done
 check "5.5 P04_HEAD_SHA en el env del workflow (HEAD auditado, no el merge sintético)" 'grep -q "^  P04_HEAD_SHA: \${{ github.event.pull_request.head.sha || github.sha }}$" "$G"'
