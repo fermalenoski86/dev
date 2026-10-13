@@ -1,4 +1,4 @@
-# Renderiza deck.html (1920x1080, 8 págs) y propuesta.html (A4, 1 pág) a PDF con Chromium local.
+# Renderiza deck.html (1920x1080, 8 págs), propuesta.html y guion.html (A4) a PDF con Chromium local.
 # Uso (desde la raíz del repo): python3 -I kit/mcd-73/deck/render.py <dir_salida>
 import os, sys
 from playwright.sync_api import sync_playwright
@@ -11,4 +11,7 @@ with sync_playwright() as p:
     pg.goto('file://' + os.path.join(D, 'propuesta.html')); pg.wait_for_load_state('networkidle')
     pg.pdf(path=os.path.join(O, 'trust-mcd-propuesta-v0.pdf'), format='A4', print_background=True,
            margin={'top': '14mm', 'bottom': '14mm', 'left': '15mm', 'right': '15mm'})
+    pg.goto('file://' + os.path.join(D, 'guion.html')); pg.wait_for_load_state('networkidle')
+    pg.pdf(path=os.path.join(O, 'trust-mcd-guion-v0.pdf'), format='A4', print_background=True,
+           margin={'top': '12mm', 'bottom': '12mm', 'left': '14mm', 'right': '14mm'})
     b.close()

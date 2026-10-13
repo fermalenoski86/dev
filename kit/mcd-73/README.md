@@ -8,6 +8,9 @@ Rama `kit/73-mcd`. Todo rotulado **SIMULACIÓN CONCEPTUAL — gemelo preliminar 
 | `visuales/01..04-*.png` | 4 visuales 1920×1080 con rótulo | v1 (mar 13) |
 | `trust-mcd-deck-v0.pdf` | (c) Deck ejecutivo v0, 8 diapositivas 1920×1080: portada · oportunidad · takeover 15 s · un show, tres sistemas · experiencia McDonald's · HOY FUNCIONA / SE IMPLEMENTARÁ · opciones comerciales (sin precios) · próximos pasos | estructura + v0 (mar 13) |
 | `trust-mcd-propuesta-v0.pdf` | (d) Propuesta de una página (A4): narrativa, contenido, activos de la marca, beneficios, entregables, hoy/roadmap, esquemas, condiciones a definir | v0 (mar 13) |
+| `trust-control-demo.mp4` | (e) Grabación REAL de TRUST CONTROL, 58 s, 1920×1080 H.264, sin sonido: operador sube y envía → otra persona aprueba el hash exacto → la versión aprobada no cambia. Es `e2e-platform/flow-41.spec.ts` corrido contra el stack local (PostgreSQL 16 + API + platform-web + Builder), con slowMo; rótulo fijo "entorno de prueba local · datos de prueba · sin pantallas ni equipos conectados" | v1 (mar 13) |
+| `trust-mcd-guion-v0.pdf` | Guion de reunión (A4, 1 página): agenda de 30 min, preguntas probables con respuesta honesta, qué no decir, material offline | v0 (mar 13) |
+| `demo/` | `playwright.demo.config.ts` (importa la config de plataforma, solo agrega slowMo) + `armar.py` (placas y montaje con ffmpeg). Regenerar: builds de platform-web/control como en el job `e2e-platform`, luego `playwright test -c kit/mcd-73/demo/playwright.demo.config.ts` y `python3 -I kit/mcd-73/demo/armar.py test-results/kit73-demo kit/mcd-73/trust-control-demo.mp4` | — |
 | `deck/` | Fuentes HTML del deck y la propuesta + `render.py` (Chromium local): `python3 -I kit/mcd-73/deck/render.py kit/mcd-73` | — |
 | `build.py` | Regenera todo con ffmpeg local: `python3 -I kit/mcd-73/build.py <dir_salida>` (desde la raíz del repo) | — |
 
@@ -17,4 +20,4 @@ Claims: HOY FUNCIONA sale de `docs/collab/PROGRESO.md` (software 21/24 con PR+AU
 
 Pendiente: simulación de las 46 luminarias (14 roja / 16 amarilla / 16 verde) **bloqueada hasta tener la imagen anotada de Fer**; no se inventan coordenadas. Fotos: falta confirmar que son propias o de uso autorizado.
 
-Pendiente de Fer para el deck: confirmar los dos esquemas comerciales (exclusivo / compartido). Guion de reunión: pendiente (mié 14).
+Pendiente de Fer para el deck: confirmar los dos esquemas comerciales (exclusivo / compartido). Guion de reunión: v0 (mar 13).
