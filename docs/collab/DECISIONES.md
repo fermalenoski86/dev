@@ -18,6 +18,8 @@ historial): si una decisión cambia, se reemplaza la línea y el cambio va a
 - Antes de pasar la pelota a ChatGPT, Claude hace la autorrevisión A/B/C (diff vs brief, revisión adversaria, CI verde sobre el HEAD exacto) — pedido de Fer, 2026-10-08.
 - Un fallo de CI que pasa al re-correr se registra como posible flaky en el PR; si se repite, se investiga.
 
+- **Eficiencia de tokens, revisiones y costos (2026-10-12 21:48, Fer):** aplica a P-05, P-04, P-03, P-06, Creative Studio y siguientes. (1) Codex no se pide por commit: se agrupan correcciones, pruebas locales y A/B/C, y se pide con el PR consolidado; (2) presupuesto: una revisión inicial + una final por ronda de entrega, extra solo por P0/P1 crítico justificado — nunca habilita mergear con defectos; (3) se corrigen defectos reproducibles y riesgos concretos del alcance; mejoras no bloqueantes → BACKLOG; (4) pruebas progresivas (focalizadas + lint + typecheck) y CI completa obligatoria sobre el SHA final; (5) turnos programados: chequeo liviano primero y salir si no hay acción; (6) una sola sesión de Claude por PR (lock P-07); (7) cada pedido de auditoría informa revisiones de Codex, rondas y qué problema real justificó cada una; sin créditos ni servicios extra sin necesidad; (8) prioridad comercial: kit McDonald's #73, entrega completa viernes 16/10. Gates, seguridad, congelados y `AUDIT: APROBADO` antes del merge no cambian.
+
 ## Decisiones de producto
 | Fecha | Issue | Decisión |
 |---|---|---|
