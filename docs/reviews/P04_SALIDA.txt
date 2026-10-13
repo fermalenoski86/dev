@@ -122,3 +122,85 @@ exit=0
 $ node scripts/acceptance/cli.mjs check
 GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día
 exit=0
+
+######## Ronda 3 — AUDIT: CAMBIOS sobre fc22fd4 (salida real, 2026-10-13T03:40:36Z, árbol de be6105a + título codificado)
+== bash scripts/ci/run.test.sh
+  ✓ 4.5 timeout subido sin regenerar la foto → rojo con diff y aviso de decisión
+  ✓ 4.6 timeout bajado también es un cambio de foto → rojo
+  ✓ 4.6b espacios/orden no cambian la foto; una línea nueva arriba tampoco
+  ✓ 4.7 timeout-minutes de gates.yml subido → rojo
+  ✓ 4.8 regenerar la foto en el mismo PR → OK (queda a la vista del auditor)
+  ✓ 4.9 .only( en un spec → rojo
+  ✓ 4.10 test.skip( en e2e/ (gate directo) → rojo
+  ✓ 4.11 test.fixme( en e2e-platform/ → rojo
+  ✓ 4.12 limpio otra vez → OK
+  ✓ 4.14 timeout por test (test.setTimeout) subido en un spec → rojo
+  ✓ 4.15 timeout de aserción ({ timeout: N }) subido en un spec → rojo
+  ✓ 4.16 .only( en un test de scripts/ (lo corre vitest) → rojo
+  ✓ 4.17 limpio otra vez → OK
+  ✓ 4.18 retries por suite (describe.configure) en una E2E de gate → rojo
+  ✓ 4.19 retries: 0 por suite se permite
+  ✓ 4.20 --retries=2 en el workflow → rojo
+  ✓ 4.21 limpio otra vez → OK
+  ✓ 4.22 timeout como expresión ({ timeout: 40_000 * 10 }) → rojo aunque la foto no cambie (AUDIT #75)
+  ✓ 4.23 test.setTimeout(expresión) → rojo
+  ✓ 4.24 valor en la línea siguiente (config) → rojo
+  ✓ 4.25 actionTimeout con constante en una E2E → rojo
+  ✓ 4.26 actionTimeout literal nuevo en una config → cambia la foto → rojo
+  ✓ 4.27 limpio otra vez → OK
+  ✓ 4.13 el repo real cumple la política (retries 0, foto al día, sin .only)
+5. gates.yml (estático)
+  ✓ 5.1 siete jobs
+  ✓ 5.2 verify-build: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 verify-build: upload-artifact if: failure() || cancelled() con test-results/ y retención
+  ✓ 5.11 verify-build: primer paso después del checkout = plazo.sh (AUDIT #75)
+  ✓ 5.4 verify-build: al menos un gate pasa por scripts/ci/run.sh
+  ✓ 5.2 postgres: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 postgres: upload-artifact if: failure() || cancelled() con test-results/ y retención
+  ✓ 5.11 postgres: primer paso después del checkout = plazo.sh (AUDIT #75)
+  ✓ 5.4 postgres: al menos un gate pasa por scripts/ci/run.sh
+  ✓ 5.2 compose-smoke: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 compose-smoke: upload-artifact if: failure() || cancelled() con test-results/ y retención
+  ✓ 5.11 compose-smoke: primer paso después del checkout = plazo.sh (AUDIT #75)
+  ✓ 5.4 compose-smoke: al menos un gate pasa por scripts/ci/run.sh
+  ✓ 5.2 media: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 media: upload-artifact if: failure() || cancelled() con test-results/ y retención
+  ✓ 5.11 media: primer paso después del checkout = plazo.sh (AUDIT #75)
+  ✓ 5.4 media: al menos un gate pasa por scripts/ci/run.sh
+  ✓ 5.2 e2e-m2c: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 e2e-m2c: upload-artifact if: failure() || cancelled() con test-results/ y retención
+  ✓ 5.11 e2e-m2c: primer paso después del checkout = plazo.sh (AUDIT #75)
+  ✓ 5.4 e2e-m2c: al menos un gate pasa por scripts/ci/run.sh
+  ✓ 5.2 e2e-platform: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 e2e-platform: upload-artifact if: failure() || cancelled() con test-results/ y retención
+  ✓ 5.11 e2e-platform: primer paso después del checkout = plazo.sh (AUDIT #75)
+  ✓ 5.4 e2e-platform: al menos un gate pasa por scripts/ci/run.sh
+  ✓ 5.2 mutations: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 mutations: upload-artifact if: failure() || cancelled() con test-results/ y retención
+  ✓ 5.11 mutations: primer paso después del checkout = plazo.sh (AUDIT #75)
+  ✓ 5.4 mutations: al menos un gate pasa por scripts/ci/run.sh
+  ✓ 5.5 P04_HEAD_SHA en el env del workflow (HEAD auditado, no el merge sintético)
+  ✓ 5.6 gates.yml no usa secrets.* (los artifacts no pueden contener secretos reales)
+  ✓ 5.7 verify-build corre run.test.sh y politica-fallas.sh check
+  ✓ 5.8 e2e-m2c publica el entorno antes del gate (entorno.sh)
+  ✓ 5.10 e2e-platform sube test-results/ entero (incluye e2e-platform-results.json)
+  ✓ 5.9 retries: 0 en los dos playwright configs (acceptación P-04)
+
+run.test: 104 OK, 0 fallos
+exit=0
+== scripts/ci/politica-fallas.sh check
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+exit=0
+== reproducción del auditor #1 (comilla escapada)
+{"password":"[oculto]","x":1}
+== reproducción del auditor #3 ({ timeout: 40_000 * 10 }) en una copia
+politica-fallas: timeout no literal — e2e/experience.spec.ts:17:     await expect(page.getByTestId('ready-state')).toHaveText('READY TO PRESENT', { timeout: 40_000 * 10 }); — tiene que ser un número literal (la foto no ve expresiones)
+exit=1
+== bash -n scripts/ci/*.sh y git diff --check
+ok
+== node scripts/collab/progress.mjs check   (lo que corre `pnpm progress:check`; el pnpm local no es 12.5.1)
+GATE progreso (P-02): manifiesto válido (33 entradas), docs/collab/PROGRESO.md al día
+exit=0
+== node scripts/acceptance/cli.mjs check   (lo que corre `pnpm acceptance:check`)
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día
+exit=0

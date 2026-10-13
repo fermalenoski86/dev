@@ -33,17 +33,19 @@ if [ -n "$PLAZO" ] && { [ "$RC" = 124 ] || [ "$RC" = 137 ]; }; then
 fi
 limpio() { sed 's/\x1b\[[0-9;]*[A-Za-z]//g' "$LOG" | "$AQUI/sanitizar.sh"; }
 codifica() { printf '%s' "$1" | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g'; }
+# propiedades (title=…): además `:` y `,` (GitHub corta el título en la primera coma: run 38342453191)
+prop() { codifica "$1" | sed 's/:/%3A/g;s/,/%2C/g'; }
 ENT=$("$AQUI/entorno.sh")
 # copia sanitizada de la salida completa (artifact al fallar, P-04)
 DIR=${P04_LOGS:-test-results/ci}
 mkdir -p "$DIR" && { echo "entorno: $ENT"; limpio; } > "$DIR/$(printf '%s' "$TITULO" | tr -c 'A-Za-z0-9._-' '_').log"
 # resumen siempre (también en verde): líneas de conteo de tests
 RES=$(limpio | grep -aE 'Tests  |Test Files|[0-9]+ (passed|failed)|ATRAPADA|SOBREVIVE|SIN SALIDA|TIMEOUT|TODAS|GATE|atrapadas|paralelo:' | grep -avE '^\s*ATRAPADA' | tail -15)
-echo "::notice title=$TITULO (exit $RC)::$(codifica "entorno: $ENT
+echo "::notice title=$(prop "$TITULO (exit $RC)")::$(codifica "entorno: $ENT
 $RES")"
 if [ "$RC" != 0 ]; then
   COLA=$(limpio | grep -av '^\s*$' | tail -60 | cut -c1-300)
-  echo "::error title=$TITULO falló (exit $RC$POR_PLAZO)::$(codifica "entorno: $ENT
+  echo "::error title=$(prop "$TITULO falló (exit $RC$POR_PLAZO)")::$(codifica "entorno: $ENT
 $COLA")"
   # marca para el paso final del job: la falla ya quedó anotada con entorno y cola
   touch "${RUNNER_TEMP:-/tmp}/p04-anotado" 2>/dev/null || true
