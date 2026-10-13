@@ -1,0 +1,341 @@
+== P-05 · salida real · 2026-10-12 · rama proc/p05-paralelo (este entorno: Node v22.22.0, pnpm 12.5.1, git 2.43.0)
+== bash scripts/collab/handoff.sh validar docs/collab/HANDOFF.md   (HANDOFF real de main, pelota en Claude, sin línea 'En auditoría')
+handoff: OK (docs/collab/HANDOFF.md)
+== bash scripts/collab/handoff.test.sh
+1) ambos leen el mismo SHA
+  ✓ misma base
+2) A escribe primero: fast-forward OK
+  ✓ A escribe
+  ✓ remoto avanzó
+  ✓ historial recibió la línea
+3) B escribe con base vieja: debe ABORTAR y no tocar el remoto
+  ✓ B aborta con exit 3
+  ✓ mensaje explica el avance
+  ✓ remoto intacto
+  ✓ remoto conserva la versión de A
+4) B relee y entonces sí puede escribir, sobre la versión de A
+  ✓ B leyó la nueva base
+  ✓ B escribe tras releer
+  ✓ historia lineal: A es padre de B
+5) carrera entre fetch y push: el push no fast-forward se rechaza
+  ✓ push non-fast-forward rechazado por git
+  ✓ remoto conserva 'A otra vez'
+5b) el script clasifica el fallo del push (#58, AUDIT: CAMBIOS)
+  ✓ carrera real entre CAS y push → exit 3
+  ✓ carrera: el mensaje dice que main avanzó
+  ✓ carrera: el remoto conserva la versión de A
+  ✓ pushurl inválido → exit 4 (no 3)
+  ✓ pushurl inválido: muestra el error real de git
+  ✓ pushurl inválido: NO dice carrera
+  ✓ pushurl inválido: remoto sin cambios
+  ✓ hook del servidor rechaza → exit 4
+  ✓ hook: se ve el motivo del servidor
+  ✓ hook: NO dice carrera
+6) validaciones de formato
+  ✓ dos pelotas → rechazo
+  ✓ pelota inválida → rechazo
+  ✓ marcador ======= → rechazo
+  ✓ 61+ líneas → rechazo
+  ✓ 61 líneas con la última sin newline → rechazo
+  ✓ exactamente 60 con la última sin newline → OK (borde)
+  ✓ pelota en ChatGPT sin 'En auditoría' → rechazo (P-05)
+  ✓ 'En auditoría' con sha corto → rechazo
+  ✓ pelota en ChatGPT con 'En auditoría: ninguno' → rechazo
+  ✓ dos líneas 'En auditoría' → rechazo
+  ✓ pelota en Claude con 'En auditoría: #7 @ sha' → OK
+  ✓ pelota en Claude con 'En auditoría: ninguno' → OK
+  ✓ pelota en Claude sin la línea → OK (compatible con HANDOFFs anteriores)
+  ✓ 'En auditoría' sin sha → rechazo
+  ✓ sin HANDOFF_BASE_SHA → rechazo
+  ✓ ningún git push lleva --force / --force-with-lease / -f
+
+handoff.test: 39 ok, 0 fallos
+== bash scripts/collab/paralelo.test.sh
+1) PR #7 (fase) toca a.txt; Claude lo entrega: pelota a ChatGPT con 'En auditoría: #7 @ sha'
+  ✓ el HANDOFF escrito pasa validar (handoff.sh)
+  ✓ el PR en auditoría con su HEAD exacto → OK
+2) la rama en auditoría se modifica mientras la pelota es de ChatGPT
+  ✓ nuevo HEAD en el PR auditado → exit 6
+  ✓ el mensaje nombra el sha auditado y el nuevo
+  ✓ el sha auditado sigue siendo válido (CI re-corrido sobre el mismo HEAD)
+3) laterales mientras #7 está en auditoría
+  ✓ lateral que toca b.txt (ajeno a #7) → OK
+  ✓ lateral que toca a.txt (archivo de #7) → exit 7 (posponer)
+  ✓ el mensaje lista el archivo compartido
+  ✓ lateral que modifica HANDOFF.md → exit 5
+  ✓ lateral que toca un workflow → exit 8 (gate, riesgo alto)
+  ✓ lateral que toca scripts/collab → exit 8
+  ✓ lateral mixto (b.txt + a.txt) → exit 7: un archivo compartido alcanza
+4) concurrencia: dos laterales independientes abiertos a la vez, ambos OK; el HANDOFF cambia en main y el chequeo lo sigue
+  ✓ dos laterales sin archivos en común → ambos OK
+  ✓ ahora #15 (toca b.txt) está en auditoría: el lateral de b.txt pasa a exit 7 sin cambiar su rama
+  ✓ y el lateral de a.txt ya es válido (lee main, no la copia de la rama)
+5) ausencia de merges fuera de orden: el lateral que comparte archivos queda rojo hasta que la fase se mergea
+  ✓ antes del merge de #15: rojo
+Automatic merge went well; stopped before committing as requested
+  ✓ después del merge y con la pelota en Claude: OK (nada en auditoría)
+  ✓ con la pelota en Claude, también el que toca a.txt: OK
+  ✓ con la pelota en Claude, la rama de la fase puede cambiar (Claude corrige hallazgos)
+  ✓ pero HANDOFF.md en un PR sigue rechazado con cualquier pelota → exit 5
+6) base distinta de main (audit/<tema> hacia la rama de la fase): solo la regla del HANDOFF
+  ✓ PR del auditor hacia fase/x tocando a.txt → OK
+  ✓ PR hacia fase/x que toca HANDOFF.md → exit 5
+7) errores de uso y HANDOFF inconsistente
+  ✓ nro de PR inválido → exit 1
+  ✓ sha inexistente → exit 1
+  ✓ pelota en ChatGPT sin 'En auditoría' → exit 1 (no se asume nada)
+  ✓ ningún git push en paralelo.sh (solo lee)
+
+paralelo.test: 26 ok, 0 fallos
+== LC_ALL=C bash scripts/collab/paralelo.test.sh (locale C: mismo resultado)
+paralelo.test: 26 ok, 0 fallos
+== scripts/ci/run.sh paralelo scripts/collab/paralelo.sh 69 HEAD main   (contra origin/main real)
+paralelo: OK — pelota en Claude (055591a): no hay PR en auditoría.
+::notice title=paralelo (exit 0)::paralelo: OK — pelota en Claude (055591a): no hay PR en auditoría.
+== bash -n scripts/collab/paralelo.sh scripts/collab/handoff.sh: OK; shellcheck: no instalado
+== pnpm verify
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  53 passed | 1 skipped (54)
+      Tests  828 passed | 1 skipped (829)
+== no ejecutado localmente: build, PostgreSQL, media, mutaciones, E2E, compose/S3 (P-05 no toca código de producto) → evidencia en los jobs de CI del PR
+
+## Ronda 1 (Codex) — 2026-10-12T15:35:03Z
+=== paralelo.test.sh (UTF-8)
+paralelo.test: 38 ok, 0 fallos
+=== paralelo.test.sh (LC_ALL=C)
+paralelo.test: 38 ok, 0 fallos
+=== handoff.test.sh
+handoff.test: 39 ok, 0 fallos
+=== corrida manual contra origin/main real (d8447a1)
+paralelo: OK — PR #69 está en auditoría y su HEAD sigue siendo 5fdc97b.
+exit=0
+
+## Ronda 2 (Codex) — 2026-10-12T15:42:48Z
+=== paralelo.test.sh con el script de 10a4396 y las pruebas nuevas (reproducción)
+  ✗ lateral que agrega .github/workflows/ñ.yml → exit 8
+  ✗ el mensaje muestra la ruta sin comillas
+  ✗ paralelo.yml se dispara también con 'edited' (cambio de base)
+paralelo.test: 38 ok, 3 fallos
+=== paralelo.test.sh corregido (UTF-8)
+paralelo.test: 41 ok, 0 fallos
+=== paralelo.test.sh corregido (LC_ALL=C)
+paralelo.test: 41 ok, 0 fallos
+=== handoff.test.sh
+handoff.test: 39 ok, 0 fallos
+=== corrida manual contra origin/main real
+paralelo: RECHAZADO — el PR #69 está en auditoría sobre 5fdc97b y su HEAD ahora es 10a4396. No se toca la rama mientras la pelota es del auditor; esperá AUDIT: CAMBIOS/APROBADO.
+exit=6
+
+=== ronda 2 integrada (rebase sobre 58c3d42)
+paralelo.test: 45 ok, 0 fallos
+paralelo.test: 45 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 3
+paralelo.test: 49 ok, 0 fallos
+paralelo.test: 49 ok, 0 fallos
+
+=== ronda 4
+paralelo.test: 51 ok, 0 fallos
+paralelo.test: 51 ok, 0 fallos
+
+=== ronda 5
+paralelo.test: 54 ok, 0 fallos
+paralelo.test: 54 ok, 0 fallos
+
+=== ronda 6 (AUDIT: CAMBIOS del auditor sobre 49acd37) — 2026-10-12T16:18:43Z
+--- script de 36baa19 + pruebas 5i (reproducción del auditor)
+  ✗ reproducción del auditor: lateral que toca packages/platform-auth/src/x.ts → exit 8
+  ✗ el mensaje nombra auth como riesgo alto
+  ✗ lateral que toca apps/platform-api/src/auth-routes.ts → exit 8
+paralelo.test: 56 ok, 3 fallos
+--- corregido
+paralelo.test: 59 ok, 0 fallos
+paralelo.test: 59 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 7 (vite.config)
+paralelo.test: 60 ok, 0 fallos
+paralelo.test: 60 ok, 0 fallos
+
+=== ronda 8 (Codex sobre 66cfc64: todas las familias alto de P-03)
+--- script de 310653d + pruebas nuevas: paralelo.test: 62 ok, 11 fallos
+--- corregido
+paralelo.test: 73 ok, 0 fallos
+paralelo.test: 73 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 9 (autorrevisión de Claude: scripts que CI ejecuta y configs raíz de gates) — 2026-10-12T16:59:55Z
+--- script de caae866 + pruebas nuevas: paralelo.test: 74 ok, 7 fallos
+--- corregido
+paralelo.test: 81 ok, 0 fallos
+paralelo.test: 81 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 10 (Codex sobre b4aeebb: entradas de gates + R3b dependencias del workspace) — 2026-10-12T17:44:21Z
+--- script de b4aeebb + pruebas nuevas: paralelo.test: 83 ok, 11 fallos
+--- corregido
+paralelo.test: 94 ok, 0 fallos
+paralelo.test: 94 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+--- grafo real del repo, ejemplo de Codex:
+@trust/platform-api ~ @trust/platform-campaigns: el lateral depende de un paquete que cambia la fase
+
+=== ronda 11 (AUDIT: CAMBIOS del auditor sobre 0f73e0c: P1 re-evaluación, P2 alias) — 2026-10-12T18:21:15Z
+--- script de 0f73e0c + pruebas nuevas (P2): paralelo.test: 93 ok, 3 fallos
+--- corregido
+paralelo.test: 105 ok, 0 fallos
+paralelo.test: 105 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+--- bash -n paralelo.sh paralelo-reevaluar.sh handoff.sh; node --check paralelo-deps.mjs; yaml de paralelo.yml parsea: OK
+
+=== ronda 12 (Codex sobre c0b2daa: re-run con base del evento; vitest.workspace/projects) — 2026-10-12T18:31:44Z
+--- código de c0b2daa + pruebas nuevas: paralelo.test: 105 ok, 3 fallos
+--- corregido
+paralelo.test: 108 ok, 0 fallos
+paralelo.test: 108 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 13 (Codex sobre 3357cd0: check sobre HEAD por API; carril único + no publicar si main avanzó; ls-tree -z) — 2026-10-12T18:47:45Z
+--- código de 3357cd0 + pruebas nuevas: paralelo.test: 108 ok, 3 fallos
+--- corregido
+paralelo.test: 111 ok, 0 fallos
+paralelo.test: 111 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 14 (Codex manual sobre 1b91080: runs pendientes descartados → re-evaluar todos en cada evento) — 2026-10-12T19:41:20Z
+paralelo.test: 112 ok, 0 fallos
+paralelo.test: 112 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 15 (AUDIT: CAMBIOS sobre 7700da3: re-evaluar en todo evento desde main; + Codex: revalidar HEAD de la fase) — 2026-10-12T20:03:15Z
+--- código de 7700da3 + pruebas nuevas: paralelo.test: 112 ok, 2 fallos
+--- corregido
+paralelo.test: 114 ok, 0 fallos
+paralelo.test: 114 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 16 (Codex sobre baec6ab: revalidar después de publicar e invalidar) — 2026-10-12T20:11:12Z
+--- código de baec6ab + prueba nueva: paralelo.test: 114 ok, 1 fallo
+--- corregido
+paralelo.test: 115 ok, 0 fallos
+paralelo.test: 115 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 17 (Codex sobre e511687: checkout == main que se compara; publicar el HEAD después de la re-evaluación y condicionado) — 2026-10-12T20:31:18Z
+--- código de e511687 + pruebas nuevas: paralelo.test: 116 ok, 2 fallos
+--- corregido
+paralelo.test: 118 ok, 0 fallos
+paralelo.test: 118 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 18 (Codex sobre 8b6c7d0: el verde directo nunca pisa el veredicto de la re-evaluación global) — 2026-10-12T20:41:52Z
+paralelo.test: 118 ok, 0 fallos
+paralelo.test: 118 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 19 (Codex sobre 4d6746b: "pendiente" antes del veredicto y publicación con reintentos) — 2026-10-12T20:51:25Z
+--- código de 4d6746b + pruebas nuevas: paralelo.test: 119 ok, 2 fallos (sin "pendiente", sin reintentos)
+--- corregido
+paralelo.test: 121 ok, 0 fallos
+paralelo.test: 121 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 20 (Codex sobre fe2f6c3: scripts/ de paquetes y bloque scripts de package.json son gate) — 2026-10-12T21:01:10Z
+--- código de fe2f6c3 + pruebas nuevas: paralelo.test: 122 ok, 4 fallos
+--- corregido
+paralelo.test: 126 ok, 0 fallos
+paralelo.test: 126 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 21 (Codex sobre 3108da9: raíces del workspace desde pnpm-workspace.yaml; re-evaluación global siempre) — 2026-10-12T21:15:01Z
+--- código de 3108da9 + pruebas nuevas: paralelo.test: 126 ok, 3 fallos
+--- corregido
+paralelo.test: 129 ok, 0 fallos
+paralelo.test: 129 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 22 (Codex sobre 2093df6: pendiente→final también en el publicador directo; e2e/ y e2e-platform/ son gate) — 2026-10-12T21:24:18Z
+--- código de 2093df6 + pruebas nuevas: paralelo.test: 129 ok, 3 fallos
+--- corregido
+paralelo.test: 132 ok, 0 fallos
+paralelo.test: 132 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 23 (Codex sobre 7bff98d: consultar base/HEAD actuales del PR antes de publicar) — 2026-10-12T21:33:19Z
+--- código de 7bff98d + chequeo nuevo: paralelo.test: 131 ok, 1 fallo (chequeo estático del workflow)
+--- corregido
+paralelo.test: 132 ok, 0 fallos
+paralelo.test: 132 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 24 (Codex sobre 1ed5fb6: revalidar el PR después de publicar el directo) — 2026-10-12T21:40:32Z
+--- código de 1ed5fb6 + chequeo nuevo: paralelo.test: 131 ok, 1 fallo (chequeo estático del workflow)
+--- corregido
+paralelo.test: 132 ok, 0 fallos
+paralelo.test: 132 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 25 (Codex sobre 8516d31: revalidar también el SHA de la base tras publicar) — 2026-10-12T21:47:11Z
+--- código de 8516d31 + chequeo nuevo: paralelo.test: 131 ok, 1 fallo (chequeo estático del workflow)
+--- corregido
+paralelo.test: 132 ok, 0 fallos
+paralelo.test: 132 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 26 (Codex sobre 9307391: workflow cargado == base actual; pendiente antes de evaluar) — 2026-10-12T22:00:20Z
+--- código de 9307391 + pruebas nuevas: paralelo.test: 130 ok, 3 fallos
+--- corregido
+paralelo.test: 133 ok, 0 fallos
+paralelo.test: 133 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 27 (Codex sobre 5e6322e: workflow viejo no corta la re-evaluación global) — 2026-10-12T22:11:48Z
+--- código de 5e6322e + chequeo nuevo: paralelo.test: 132 ok, 1 fallo (chequeo estático del workflow)
+--- corregido
+paralelo.test: 133 ok, 0 fallos
+paralelo.test: 133 ok, 0 fallos
+handoff.test: 39 ok, 0 fallos
+
+=== ronda 28 (Codex sobre 89bd718: handoff.sh no deja quitar/cambiar la fase activa sin merge) — 2026-10-12T22:20:22Z
+--- código de 89bd718 + pruebas nuevas: handoff.test: 42 ok, 5 fallos
+--- corregido
+handoff.test: 47 ok, 0 fallos
+handoff.test: 47 ok, 0 fallos
+paralelo.test: 133 ok, 0 fallos
+paralelo.test: 133 ok, 0 fallos
+
+=== ronda 29 (Codex sobre 8fe9a9f: mergeado EN main, no solo .merged) — 2026-10-12T22:26:43Z
+--- código de 8fe9a9f + pruebas nuevas: handoff.test: 34 ok, 14 fallos
+--- corregido
+handoff.test: 48 ok, 0 fallos
+handoff.test: 48 ok, 0 fallos
+paralelo.test: 133 ok, 0 fallos
+
+=== ronda 30 (AUDIT: CAMBIOS del auditor sobre 7cb661a: todo el código desde main, nunca desde la base; sin credenciales persistidas) — 2026-10-12T23:06:03Z
+--- código de 7cb661a + pruebas nuevas: paralelo.test: 133 ok, 4 fallos (el caso 6b dinámico ya pasaba: paralelo.sh de main se ejecutaba en la prueba, pero el workflow ejecutaba el de la base)
+--- corregido
+paralelo.test: 137 ok, 0 fallos
+paralelo.test: 137 ok, 0 fallos
+handoff.test: 48 ok, 0 fallos
+
+=== ronda 31 (Codex sobre cfc5752: conciliar PR que entran a main durante la re-evaluación; base no disponible no corta el job) — 2026-10-12T23:17:42Z
+--- código de cfc5752 + pruebas nuevas: paralelo.test: 137 ok, 2 fallos
+--- corregido
+paralelo.test: 139 ok, 0 fallos
+paralelo.test: 139 ok, 0 fallos
+handoff.test: 48 ok, 0 fallos
+
+=== ronda 32 (Codex sobre 545512c: la revalidación de main/fase es lo último, después de conciliar) — 2026-10-12T23:26:44Z
+--- código de 545512c + pruebas nuevas: paralelo.test: 139 ok, 2 fallos
+--- corregido
+paralelo.test: 141 ok, 0 fallos
+paralelo.test: 141 ok, 0 fallos
+handoff.test: 48 ok, 0 fallos
+
+=== ronda 33 (Codex sobre 168d4eb: el fallo del segundo listado pasa por la guarda final) — 2026-10-12T23:34:25Z
+--- código de 168d4eb + pruebas nuevas: paralelo.test: 142 ok, 1 fallos
+--- corregido
+paralelo.test: 143 ok, 0 fallos
+paralelo.test: 143 ok, 0 fallos
+handoff.test: 48 ok, 0 fallos

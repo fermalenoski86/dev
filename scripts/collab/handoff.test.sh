@@ -10,7 +10,9 @@ export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 export GIT_AUTHOR_NAME=test GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=test GIT_COMMITTER_EMAIL=t@t
 ok=0; fallos=0
 check() { if eval "$2"; then echo "  ✓ $1"; ok=$((ok+1)); else echo "  ✗ $1"; fallos=$((fallos+1)); fi; }
-handoff_valido() { printf '# HANDOFF\n\n**Pelota en:** %s — %s\n' "$1" "$2"; }
+SHA40=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+# P-05: con la pelota en ChatGPT el HANDOFF tiene que decir qué PR está en auditoría
+handoff_valido() { printf '# HANDOFF\n\n**Pelota en:** %s — %s\n' "$1" "$2"; [ "$1" = ChatGPT ] && printf '**En auditoría:** #1 @ %s\n' "$SHA40"; true; }
 
 # remoto bare + estado inicial
 git init -q --bare -b main "$T/remoto.git"
@@ -21,6 +23,16 @@ git add -A && git commit -qm init && git remote add origin "$T/remoto.git" && gi
 # dos clones = dos agentes
 git clone -q "$T/remoto.git" "$T/A"; git clone -q "$T/remoto.git" "$T/B"
 H=scripts/collab/handoff.sh
+# P-05 (Codex sobre 89bd718): quitar/cambiar la fase activa exige que el PR esté mergeado.
+# En la prueba no hay GitHub: stub que responde según $MERGEADOS (lista de nros).
+cat > "$T/mergeado.sh" <<'STUB'
+#!/usr/bin/env bash
+# imprime "<merged> <base> <merge_commit_sha>" como la API; el merge commit es main del remoto
+[ -z "${MERGEADO_FALLA:-}" ] || exit 1
+MC=$(git -C "$REMOTO" rev-parse main)
+case " ${MERGEADOS:-} " in *" $1 "*) echo "true ${MERGEADO_BASE:-main} $MC";; *) echo "false main null";; esac
+STUB
+chmod +x "$T/mergeado.sh"; export HANDOFF_PR_MERGEADO="$T/mergeado.sh" MERGEADOS="1" REMOTO="$T/remoto.git"
 
 echo "1) ambos leen el mismo SHA"
 SA=$(cd "$T/A" && $H leer | sed -n 's/^HANDOFF_BASE_SHA=//p'); SB=$(cd "$T/B" && $H leer | sed -n 's/^HANDOFF_BASE_SHA=//p')
@@ -112,7 +124,51 @@ check "61+ líneas → rechazo" '! (cd "$T/A" && $H validar "$T/largo.md" 2>/dev
 check "61 líneas con la última sin newline → rechazo" '! (cd "$T/A" && $H validar "$T/sin-nl-61.md" 2>/dev/null)'
 { printf '**Pelota en:** Claude — x\n'; seq 1 58; printf 'linea-sin-newline'; } > "$T/sin-nl-60.md"
 check "exactamente 60 con la última sin newline → OK (borde)" '(cd "$T/A" && $H validar "$T/sin-nl-60.md" >/dev/null 2>&1)'
+# P-05: línea "En auditoría"
+printf '**Pelota en:** ChatGPT — x\n' > "$T/aud-falta.md"
+check "pelota en ChatGPT sin 'En auditoría' → rechazo (P-05)" '! (cd "$T/A" && $H validar "$T/aud-falta.md" 2>/dev/null)'
+printf '**Pelota en:** ChatGPT — x\n**En auditoría:** #7 @ abc1234\n' > "$T/aud-corto.md"
+check "'En auditoría' con sha corto → rechazo" '! (cd "$T/A" && $H validar "$T/aud-corto.md" 2>/dev/null)'
+printf '**Pelota en:** ChatGPT — x\n**En auditoría:** ninguno\n' > "$T/aud-ninguno-cg.md"
+check "pelota en ChatGPT con 'En auditoría: ninguno' → rechazo" '! (cd "$T/A" && $H validar "$T/aud-ninguno-cg.md" 2>/dev/null)'
+printf '**Pelota en:** ChatGPT — x\n**En auditoría:** #7 @ %s\n**En auditoría:** #8 @ %s\n' "$SHA40" "$SHA40" > "$T/aud-dos.md"
+check "dos líneas 'En auditoría' → rechazo" '! (cd "$T/A" && $H validar "$T/aud-dos.md" 2>/dev/null)'
+printf '**Pelota en:** Claude — x\n**En auditoría:** #7 @ %s\n' "$SHA40" > "$T/aud-claude.md"
+check "pelota en Claude con 'En auditoría: #7 @ sha' → OK" '(cd "$T/A" && $H validar "$T/aud-claude.md" >/dev/null 2>&1)'
+printf '**Pelota en:** Claude — x\n**En auditoría:** ninguno\n' > "$T/aud-claude-n.md"
+check "pelota en Claude con 'En auditoría: ninguno' → OK" '(cd "$T/A" && $H validar "$T/aud-claude-n.md" >/dev/null 2>&1)'
+printf '**Pelota en:** Claude — x\n' > "$T/aud-claude-sin.md"
+check "pelota en Claude sin la línea → OK (compatible con HANDOFFs anteriores)" '(cd "$T/A" && $H validar "$T/aud-claude-sin.md" >/dev/null 2>&1)'
+printf '**Pelota en:** Claude — x\n**En auditoría:** #7\n' > "$T/aud-mal.md"
+check "'En auditoría' sin sha → rechazo" '! (cd "$T/A" && $H validar "$T/aud-mal.md" 2>/dev/null)'
 check "sin HANDOFF_BASE_SHA → rechazo" '! (cd "$T/A" && env -u HANDOFF_BASE_SHA $H escribir "$T/nuevoA.md" m 2>/dev/null)'
+echo "7) P-05 (Codex sobre 89bd718): la fase activa no desaparece ni cambia de PR sin merge"
+SF=$(cd "$T/A" && $H leer | sed -n 's/^HANDOFF_BASE_SHA=//p')
+printf '# HANDOFF\n\n**Pelota en:** ChatGPT — fase 9\n**En auditoría:** #9 @ %s\n' "$SHA40" > "$T/f9.md"
+check "se anota la fase #9 (desde 'sin fase' o #1 mergeado)" '(cd "$T/A" && HANDOFF_BASE_SHA=$SF $H escribir "$T/f9.md" "fase 9" >/dev/null 2>&1)'
+SF=$(cd "$T/A" && $H leer | sed -n 's/^HANDOFF_BASE_SHA=//p')
+printf '# HANDOFF\n\n**Pelota en:** Claude — cambios\n' > "$T/f9-quita.md"
+set +e; (cd "$T/A" && HANDOFF_BASE_SHA=$SF $H escribir "$T/f9-quita.md" "pelota a Claude sin fase" 2>"$T/err7"); RC=$?; set -e
+check "pelota a Claude QUITANDO 'En auditoría' con #9 sin mergear → exit 5, nada escrito" '[ "$RC" = 5 ] && grep -q "no está mergeado" "$T/err7" && [ "$(git -C "$T/remoto.git" rev-parse main)" = "$SF" ]'
+printf '# HANDOFF\n\n**Pelota en:** Claude — cambios\n**En auditoría:** ninguno\n' > "$T/f9-ninguno.md"
+set +e; (cd "$T/A" && HANDOFF_BASE_SHA=$SF $H escribir "$T/f9-ninguno.md" "ninguno" 2>"$T/err7"); RC=$?; set -e
+check "'En auditoría: ninguno' con #9 sin mergear → exit 5" '[ "$RC" = 5 ]'
+printf '# HANDOFF\n\n**Pelota en:** ChatGPT — otra\n**En auditoría:** #10 @ %s\n' "$SHA40" > "$T/f10.md"
+set +e; (cd "$T/A" && HANDOFF_BASE_SHA=$SF $H escribir "$T/f10.md" "cambia a #10" 2>"$T/err7"); RC=$?; set -e
+check "cambiar la fase a #10 con #9 sin mergear → exit 5 y lo dice" '[ "$RC" = 5 ] && grep -q "cambia por #10" "$T/err7"'
+set +e; (cd "$T/A" && MERGEADO_FALLA=1 HANDOFF_BASE_SHA=$SF $H escribir "$T/f9-ninguno.md" "sin verificar" 2>"$T/err7"); RC=$?; set -e
+check "sin poder verificar el merge → exit 5 (falla cerrado)" '[ "$RC" = 5 ] && grep -q "no se pudo verificar" "$T/err7"'
+SHA40B=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+printf '# HANDOFF\n\n**Pelota en:** Claude — AUDIT: CAMBIOS\n**En auditoría:** #9 @ %s\n' "$SHA40" > "$T/f9-claude.md"
+check "pelota a Claude CONSERVANDO '#9 @ sha' (AUDIT: CAMBIOS) → OK sin consultar" '(cd "$T/A" && MERGEADO_FALLA=1 HANDOFF_BASE_SHA=$SF $H escribir "$T/f9-claude.md" "cambios" >/dev/null 2>&1)'
+SF=$(cd "$T/A" && $H leer | sed -n 's/^HANDOFF_BASE_SHA=//p')
+printf '# HANDOFF\n\n**Pelota en:** ChatGPT — reauditar\n**En auditoría:** #9 @ %s\n' "$SHA40B" > "$T/f9-sha2.md"
+check "mismo #9 con sha nuevo (corrección entregada) → OK sin consultar" '(cd "$T/A" && MERGEADO_FALLA=1 HANDOFF_BASE_SHA=$SF $H escribir "$T/f9-sha2.md" "reauditar" >/dev/null 2>&1)'
+SF=$(cd "$T/A" && $H leer | sed -n 's/^HANDOFF_BASE_SHA=//p')
+# Codex sobre 8fe9a9f: .merged es relativo a la base actual del PR; retargeteado y mergeado en otra rama no vale
+set +e; (cd "$T/A" && MERGEADOS="1 9" MERGEADO_BASE="fase/otra" HANDOFF_BASE_SHA=$SF $H escribir "$T/f9-ninguno.md" "otra base" 2>"$T/err7"); RC=$?; set -e
+check "#9 'mergeado' pero con base ≠ main (retarget) → exit 5 y lo dice" '[ "$RC" = 5 ] && grep -q "no en main" "$T/err7"'
+check "con #9 mergeado EN main (base main, merge commit ancestro), 'ninguno' → OK" '(cd "$T/A" && MERGEADOS="1 9" HANDOFF_BASE_SHA=$SF $H escribir "$T/f9-ninguno.md" "mergeado" >/dev/null 2>&1)'
 check "ningún git push lleva --force / --force-with-lease / -f" '! grep -E "git push.*(--force|-f\b)" "$AQUI/handoff.sh" | grep -v "^\s*#" | grep -q .'
 
 echo; echo "handoff.test: $ok ok, $fallos fallos"

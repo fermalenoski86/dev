@@ -37,6 +37,9 @@ jobs:
         run: scripts/collab/handoff.sh validar docs/collab/HANDOFF.md
       - name: handoff.sh — dos escritores sobre remoto bare
         run: bash scripts/collab/handoff.test.sh
+      # P-05: el control del trabajo paralelo pasa su prueba sobre remoto bare
+      - name: paralelo.sh — laterales, rama en auditoría y HANDOFF sobre remoto bare
+        run: bash scripts/collab/paralelo.test.sh
       - name: OpenAPI y DELIVERY regenerados sin diff
         run: pnpm docs:contract && git diff --exit-code docs/platform/openapi.json docs/platform/DELIVERY.md
       # E2 · BL-23: la matriz de §48 se genera de los tags [§48.N]; puntos sin test/estado o doc viejo → rojo
@@ -45,6 +48,9 @@ jobs:
       # P-02: PROGRESO.md se genera del manifiesto de entregables (sin red); manifiesto inválido o doc viejo → rojo
       - name: PROGRESO.md al día (P-02)
         run: pnpm progress:check
+
+  # P-05: el chequeo de trabajo paralelo corre en .github/workflows/paralelo.yml con
+  # pull_request_target, desde la revisión BASE: no desde el checkout del PR (Codex, P1).
 
   postgres:
     runs-on: ubuntu-24.04
