@@ -1,0 +1,30 @@
+# Verificación del paquete offline (#73) — salida real, 2026-10-13T17:34:42Z
+## verificar_paquete.sh
+== ZIP: TRUST-McDonalds-kit-offline.zip 37549989 bytes, sha256 9b79fd0af5c09156…
+== integridad
+SHA256SUMS: 14 archivos OK
+== videos (decodificación completa, sin errores)
+OK video/01-trust-mcd-video-principal-1080p.mp4  h264,High,1920,1080 37.000000 
+OK video/02-trust-mcd-video-alternativo-720p.mp4  h264,Main,1280,720 37.000000 
+OK video/03-trust-control-grabacion-real-1080p.mp4  h264,High,1920,1080 57.960000 
+OK video/02b-trust-mcd-video-alternativo-720p.webm  vp9,Profile 0,1280,720 37.000000 
+OK video/03b-trust-control-grabacion-real-720p.webm  vp9,Profile 0,1280,720 57.960000 
+== PDFs
+OK pdf/01-deck-ejecutivo.pdf  8 pág. 1440x810 pt 
+OK pdf/02-propuesta-una-pagina.pdf  1 pág. 595.92x842.88 pt 
+OK pdf/03-guion-reunion.pdf  1 pág. 595.92x842.88 pt 
+== imágenes
+OK imagenes/01-obelisco-noche.png  1920,1080
+OK imagenes/02-takeover.png  1920,1080
+OK imagenes/03-firma-sincronizada.png  1920,1080
+OK imagenes/04-brand-reveal.png  1920,1080
+== index.html sin recursos de red
+OK: 12 referencias locales, todas existen
+== rótulo
+index.html:2
+LEEME.txt:5
+RESULTADO: paquete offline verificado
+## prueba_navegador.py (Chromium Playwright, contexto offline)
+formato: [src, readyState, currentTime tras 1,5 s, videoWidth, error, fuente elegida]
+{'out': [[None, 4, 1.48, 1280, None, '02b-trust-mcd-video-alternativo-720p.webm'], [None, 4, 1.49, 1280, None, '02b-trust-mcd-video-alternativo-720p.webm'], [None, 4, 1.48, 1280, None, '03b-trust-control-grabacion-real-720p.webm']], 'imgs': [['imagenes/01-obelisco-noche.png', 1920], ['imagenes/02-takeover.png', 1920], ['imagenes/03-firma-sincronizada.png', 1920], ['imagenes/04-brand-reveal.png', 1920]]}
+no-file requests: []
