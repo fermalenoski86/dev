@@ -3,15 +3,14 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador) — **P-04** diagnóstico de fallas (BACKLOG §P-04, ajustes de #53).
-**En auditoría:** ninguno
-**Fase:** P-05 cerrada; P-04 arranca; después P-03 → PoC P-06 (orden confirmado por Fer). #73 (kit McDonald's) lo lleva la sesión de Claude con Fer bajo lock: los turnos horarios no lo tocan.
-**Estado:** P-05 cerrada del todo: `AUDIT: APROBADO` sobre `2fd28b9` ([#69](https://github.com/fermalenoski86/dev/pull/69#issuecomment-6135785390)), squash en `4fd1f03`, #70 cerrado, P-05 en `entregables.mjs` + `PROGRESO.md` regenerado (`835dd92`, `verificar-github` OK). PoC de `paralelo.yml` en `main`: corrió en los 3 push (4fd1f03, ce3bb09, 835dd92), re-evaluó #72 y #74 y publicó check `paralelo` OK sobre sus HEAD.
+**Pelota en:** ChatGPT (auditor) — auditar **P-04** (PR #75, issue #76).
+**En auditoría:** #75 @ 48489cca0b4124705ae187009aab4a8231b6af47
+**Fase:** P-04 en auditoría; después P-03 → PoC P-06 (orden confirmado por Fer). #73 (kit McDonald's) lo lleva la sesión de Claude con Fer bajo lock: los turnos horarios no lo tocan.
+**Estado:** P-04 entregada: PR #75 HEAD `48489cc`, CI [38332749947](https://github.com/fermalenoski86/dev/actions/runs/38332749947) verde (7/7 + paralelo). Falla provocada en los 7 jobs: runs 38331632397 y 38332414187 (7/7 rojos con entorno + cola sanitizada, 7/7 artifacts). Codex: 5 hallazgos de la revisión inicial corregidos en `f9f4ee7`; revisión final pedida sobre `48489cc`. Pedido de auditoría en #76.
 
-## P-04 · plan (próximo turno de Claude)
-- Alcance (BACKLOG §P-04 + ajustes #53): (1) anotación por job con SHA, `ImageOS/ImageVersion`, versiones Node/pnpm/Chrome/ffmpeg/PostgreSQL y cola del error; (2) `test-results/` como artifact al fallar en todos los jobs; (3) clasificación obligatoria de fallas en el PR: regresión reproducible (2/2 = reproducibilidad, no causa raíz) · intermitente (issue `flaky`) · infraestructura · `causa no determinada (en investigación)`; (4) prohibido en `AGENTS.md`: `retries > 0`, subir timeouts, bajar umbrales o `skip` para pasar; ajustes solo por decisión y auditoría explícitas con prueba de que sigue detectando; (5) sanitizar logs/trazas/artifacts (cookies, tokens, env, datos comerciales).
-- Toca `scripts/ci/run.sh`, `gates.yml`, `AGENTS.md`: riesgo alto → auditoría formal de ChatGPT. Rama propia desde `main`, un PR; Codex una vez con el PR consolidado (política de eficiencia 2026-10-12).
-- Criterio: una falla provocada en cada job deja anotación con entorno y cola; `rg "retries:" playwright.config.ts` = 0; prueba de sanitización.
+## P-04 · qué auditar
+- Alcance y criterio en `docs/reviews/P04.md` (autorrevisión A/B/C, hallazgos de Codex, contabilidad); salida real en `P04_SALIDA.txt`.
+- Rama congelada hasta `AUDIT: APROBADO`/`CAMBIOS`. Si la revisión final de Codex trae hallazgos, Claude los corrige juntos con los del auditor.
 
 ## Reglas
 - Para P-04: Claude implementa en su rama/PR y ChatGPT audita el HEAD congelado antes del merge; `En auditoría` se anota al entregar.
@@ -20,7 +19,7 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-04 diagnóstico de fallas | BACKLOG §P-04 / #53 | arranca; sin PR aún |
+| P-04 diagnóstico de fallas | PR #75 / #76 | en auditoría @ 48489cc |
 | P-03 → PoC P-06 | #53 / #54 | siguientes, en serie |
 | Kit McDonald's | #73 | lock sesión Claude+Fer (00:51 UTC); entrega vie 16/10 |
 | CS-0 Creative Studio | #59 / PR #74 | brief en PR; paralelo OK |
