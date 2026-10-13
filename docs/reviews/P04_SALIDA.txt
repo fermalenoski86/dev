@@ -1,4 +1,4 @@
-== P-04 · salida real · 2026-10-13 · rama proc/p04-diagnostico @ b1b3e71 (este entorno: Node v22.22.0, pnpm 12.5.1, git 2.43.0)
+== P-04 · salida real · 2026-10-13 · rama proc/p04-diagnostico @ 57a27e2 (este entorno: Node v22.22.0, pnpm 12.5.1, git 2.43.0)
 == bash scripts/ci/run.test.sh
 1. entorno.sh
   ✓ 1.1 exit 0 y una sola línea
@@ -21,6 +21,7 @@
   ✓ 2.7 'token: expirado' se tapa (prefiere ocultar de más)
   ✓ 2.9 valores entre comillas con espacios, comas o ; se tapan enteros (también sin cierre)
   ✓ 2.8 sin secretos no cambia nada
+  ✓ 2.10 cualquier nombre con key (ENCRYPTION_KEY, SIGNING_KEY, SSH_KEY, key) se tapa
 3. run.sh
   ✓ 3.1 verde: exit 0, ::notice con entorno y resumen, sin ::error
   ✓ 3.2 verde: no deja la marca p04-anotado
@@ -32,6 +33,8 @@
   ✓ 3.8 rojo: deja la marca p04-anotado (el paso final no duplica el entorno)
   ✓ 3.9 rojo: el título se convierte en nombre de archivo seguro
   ✓ 3.10 rojo: cola = últimas 60 líneas
+  ✓ 3.12 comandos de workflow frenados alrededor de la salida cruda (token aleatorio) y solo nuestras anotaciones después
+  ✓ 3.13 el token del freno cambia en cada corrida
   ✓ 3.11 comando inexistente: rojo con exit ≠ 0 y anotación
 4. politica-fallas.sh
   ✓ 4.1 sin foto → rojo
@@ -51,29 +54,33 @@
   ✓ 4.15 timeout de aserción ({ timeout: N }) subido en un spec → rojo
   ✓ 4.16 .only( en un test de scripts/ (lo corre vitest) → rojo
   ✓ 4.17 limpio otra vez → OK
+  ✓ 4.18 retries por suite (describe.configure) en una E2E de gate → rojo
+  ✓ 4.19 retries: 0 por suite se permite
+  ✓ 4.20 --retries=2 en el workflow → rojo
+  ✓ 4.21 limpio otra vez → OK
   ✓ 4.13 el repo real cumple la política (retries 0, foto al día, sin .only)
 5. gates.yml (estático)
   ✓ 5.1 siete jobs
-  ✓ 5.2 verify-build: paso 'Entorno (falla fuera de un gate)' con if: failure() y la marca p04-anotado
-  ✓ 5.3 verify-build: upload-artifact if: failure() con test-results/ y retención
+  ✓ 5.2 verify-build: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 verify-build: upload-artifact if: failure() || cancelled() con test-results/ y retención
   ✓ 5.4 verify-build: al menos un gate pasa por scripts/ci/run.sh
-  ✓ 5.2 postgres: paso 'Entorno (falla fuera de un gate)' con if: failure() y la marca p04-anotado
-  ✓ 5.3 postgres: upload-artifact if: failure() con test-results/ y retención
+  ✓ 5.2 postgres: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 postgres: upload-artifact if: failure() || cancelled() con test-results/ y retención
   ✓ 5.4 postgres: al menos un gate pasa por scripts/ci/run.sh
-  ✓ 5.2 compose-smoke: paso 'Entorno (falla fuera de un gate)' con if: failure() y la marca p04-anotado
-  ✓ 5.3 compose-smoke: upload-artifact if: failure() con test-results/ y retención
+  ✓ 5.2 compose-smoke: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 compose-smoke: upload-artifact if: failure() || cancelled() con test-results/ y retención
   ✓ 5.4 compose-smoke: al menos un gate pasa por scripts/ci/run.sh
-  ✓ 5.2 media: paso 'Entorno (falla fuera de un gate)' con if: failure() y la marca p04-anotado
-  ✓ 5.3 media: upload-artifact if: failure() con test-results/ y retención
+  ✓ 5.2 media: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 media: upload-artifact if: failure() || cancelled() con test-results/ y retención
   ✓ 5.4 media: al menos un gate pasa por scripts/ci/run.sh
-  ✓ 5.2 e2e-m2c: paso 'Entorno (falla fuera de un gate)' con if: failure() y la marca p04-anotado
-  ✓ 5.3 e2e-m2c: upload-artifact if: failure() con test-results/ y retención
+  ✓ 5.2 e2e-m2c: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 e2e-m2c: upload-artifact if: failure() || cancelled() con test-results/ y retención
   ✓ 5.4 e2e-m2c: al menos un gate pasa por scripts/ci/run.sh
-  ✓ 5.2 e2e-platform: paso 'Entorno (falla fuera de un gate)' con if: failure() y la marca p04-anotado
-  ✓ 5.3 e2e-platform: upload-artifact if: failure() con test-results/ y retención
+  ✓ 5.2 e2e-platform: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 e2e-platform: upload-artifact if: failure() || cancelled() con test-results/ y retención
   ✓ 5.4 e2e-platform: al menos un gate pasa por scripts/ci/run.sh
-  ✓ 5.2 mutations: paso 'Entorno (falla fuera de un gate)' con if: failure() y la marca p04-anotado
-  ✓ 5.3 mutations: upload-artifact if: failure() con test-results/ y retención
+  ✓ 5.2 mutations: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 mutations: upload-artifact if: failure() || cancelled() con test-results/ y retención
   ✓ 5.4 mutations: al menos un gate pasa por scripts/ci/run.sh
   ✓ 5.5 P04_HEAD_SHA en el env del workflow (HEAD auditado, no el merge sintético)
   ✓ 5.6 gates.yml no usa secrets.* (los artifacts no pueden contener secretos reales)
@@ -82,21 +89,31 @@
   ✓ 5.10 e2e-platform sube test-results/ entero (incluye e2e-platform-results.json)
   ✓ 5.9 retries: 0 en los dos playwright configs (acceptación P-04)
 
-run.test: 76 OK, 0 fallos
+run.test: 83 OK, 0 fallos
 exit=0
 == bash scripts/ci/politica-fallas.sh check
 politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
 exit=0
-== rg "retries:" playwright*.config.ts
+== rg "retries" playwright*.config.ts e2e e2e-platform .github/workflows package.json
 playwright.config.ts:18:  retries: 0,
 playwright.platform.config.ts:24:  retries: 0,
 == scripts/ci/entorno.sh (local, sin variables del runner)
-sha=b1b3e7194af8c7121ef4820677d9430aaf140763 head=b1b3e7194af8c7121ef4820677d9430aaf140763 run=n/d/n/d job=n/d ImageOS=n/d ImageVersion=n/d node=v22.22.0 pnpm=12.5.1 chrome=n/d ffmpeg=6.1.1-3ubuntu5 postgres=16.15 nproc=2 loadavg=0.30 0.14 0.05
+sha=57a27e24e1e4c8c247ab2e35761089a704997d18 head=57a27e24e1e4c8c247ab2e35761089a704997d18 run=n/d/n/d job=n/d ImageOS=n/d ImageVersion=n/d node=v22.22.0 pnpm=12.5.1 chrome=n/d ffmpeg=6.1.1-3ubuntu5 postgres=16.15 nproc=2 loadavg=0.72 0.22 0.07
 == sanitizar.sh sobre los ejemplos de los hallazgos de Codex
 PASSWORD="[oculto]"
 {"password":"[oculto]"}
 GITHUB_TOKEN=[oculto]
 Set-Cookie: [oculto]
+ENCRYPTION_KEY="[oculto]"
+SIGNING_KEY=[oculto]
+SSH_KEY=[oculto]
+== run.sh con un comando que imprime ::error::PASSWORD=… (token del freno real, aleatorio)
+::stop-commands::p04-c1321ab90f2b56aa32f067f83c292285
+::error::PASSWORD=hunter2
+::p04-c1321ab90f2b56aa32f067f83c292285::
+::notice title=demo (exit 1)::entorno: sha=57a27e24e1e4c8c247ab2e35761089a704997d18 head=57a27e24e1e4c8c247ab2e35761089a704997d18 run=n/d/n/d job=n/d ImageOS=n/
+::error title=demo falló (exit 1)::entorno: sha=57a27e24e1e4c8c247ab2e35761089a704997d18 head=57a27e24e1e4c8c247ab2e35761089a704997d18 run=n/d/n/d job=n/d Imag
+exit=1
 == pnpm progress:check
 $ node scripts/collab/progress.mjs check
 GATE progreso (P-02): manifiesto válido (33 entradas), docs/collab/PROGRESO.md al día
