@@ -629,3 +629,5 @@ o de OpenAI por uso, y cualquier "bot" de terceros con suscripción.
 - **Esfuerzo:** 0,25 día (prompts de los dos turnos + una línea en AGENTS.md; sin código).
 - **Criterio de aceptación:** dos sesiones de Claude sobre el mismo PR en < 90 min → la segunda no empuja nada (verificable en HISTORIAL y en el PR); un lock vencido no bloquea; al cerrar o mergear el PR la etiqueta se quita.
 - **Vigencia inmediata como regla de conducta** (sin esperar el PR): desde hoy la sesión interactiva pone la etiqueta antes de tocar un PR, aunque Fer pida no tocar `main`.
+
+- **P-04 · inventario de E2E de gate (Codex P2 en #75, 2026-10-13):** `politica-fallas.sh` no detecta el **borrado** de un spec de `e2e/`/`e2e-platform/` (solo mira lo que queda). Mejora no bloqueante: foto asimétrica de specs y cantidad de `test(` (rojo si baja, sin exigir decisión si sube). Hoy lo cubre la auditoría del diff (un borrado es visible). **Estado: propuesta.**

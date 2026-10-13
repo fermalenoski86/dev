@@ -1,6 +1,7 @@
 #!/bin/bash
 # P-04 · Política de fallas de CI, comprobable (AGENTS.md §Fallas de CI):
-#   - `retries` de Playwright siempre 0 (#26, DECISIONES 2026-10-09);
+#   - `retries` de Playwright siempre 0 (#26, DECISIONES 2026-10-09): en las configs, por suite
+#     en e2e/ y e2e-platform/, y `--retries` en workflows o package.json;
 #   - timeouts de Playwright (config y por test/aserción en e2e/, e2e-platform/) y
 #     `timeout-minutes` de gates.yml iguales a la foto en
 #     scripts/ci/umbrales.txt: cambiarlos exige decisión y auditoría explícitas, con la
@@ -38,6 +39,12 @@ for f in $PW; do
   MAL=$(grep -nE '^\s*retries:' "$f" | grep -vE 'retries:\s*0\s*,?' | sed "s#^#politica-fallas: $f:#;s/\$/ — retries tiene que ser 0/")
   [ -z "$MAL" ] || { echo "$MAL"; fallos=1; }
 done
+# 1b. retries fuera de las configs raíz: por suite (test.describe.configure({ retries: N })) en las
+#     E2E de gate y --retries en el workflow o en scripts de package.json: Playwright respeta ambos
+MAL=$( { grep -rnE '\bretries[[:space:]]*:' --include='*.ts' e2e e2e-platform 2>/dev/null | grep -v node_modules | grep -vE '\bretries[[:space:]]*:[[:space:]]*0\b'
+         grep -nE -- '--retries\b' .github/workflows/*.yml package.json 2>/dev/null | grep -vE -- '--retries[= ]0\b'; } \
+       | sed 's/^/politica-fallas: retries fuera de las configs — /;s/$/ — retries tiene que ser 0/')
+[ -z "$MAL" ] || { echo "$MAL"; fallos=1; }
 # 2. timeouts y timeout-minutes = foto
 [ -s "$FOTO" ] || { echo "politica-fallas: falta $FOTO (correr 'generar' con decisión)"; fallos=1; }
 if [ -s "$FOTO" ] && ! diff -u "$FOTO" <(foto) > /tmp/politica-fallas.diff 2>&1; then

@@ -38,7 +38,9 @@ check "2.6 líneas de tests, timeouts y aserciones quedan legibles" 'printf "%s"
 check "2.7 'token: expirado' se tapa (prefiere ocultar de más)" 'printf "%s" "$S" | grep -q "^token: \[oculto\]$"'
 Q=$(printf '%s\n' 'PASSWORD="correct horse battery staple" fin' '{"password":"abc,def","x":1}' "pw_token='a b;c' ok" 'API_KEY="sin cierre y más' "secret='sin cierre" | "$AQUI/sanitizar.sh")
 check "2.9 valores entre comillas con espacios, comas o ; se tapan enteros (también sin cierre)" 'printf "%s" "$Q" | grep -q "^PASSWORD=\"\[oculto\]\" fin$" && printf "%s" "$Q" | grep -q "^{\"password\":\"\[oculto\]\",\"x\":1}$" && printf "%s" "$Q" | grep -q "^pw_token=.\[oculto\]. ok$" && ! printf "%s" "$Q" | grep -q "horse\|battery\|def\|b;c\|cierre"'
-check "2.8 sin secretos no cambia nada" '[ "$(printf "a=1\nhola mundo\nkey=valor\nMIIEow\n" | "$AQUI/sanitizar.sh")" = "$(printf "a=1\nhola mundo\nkey=valor\nMIIEow\n")" ]'
+check "2.8 sin secretos no cambia nada" '[ "$(printf "a=1\nhola mundo\nclave=valor\nMIIEow\n" | "$AQUI/sanitizar.sh")" = "$(printf "a=1\nhola mundo\nclave=valor\nMIIEow\n")" ]'
+K=$(printf '%s\n' 'ENCRYPTION_KEY="abc def"' 'SIGNING_KEY=supersecretvalue' 'SSH_KEY=AAAAB3Nza' 'key=valor' | "$AQUI/sanitizar.sh")
+check "2.10 cualquier nombre con key (ENCRYPTION_KEY, SIGNING_KEY, SSH_KEY, key) se tapa" 'printf "%s" "$K" | grep -q "^ENCRYPTION_KEY=\"\[oculto\]\"$" && printf "%s" "$K" | grep -q "^SIGNING_KEY=\[oculto\]$" && printf "%s" "$K" | grep -q "^SSH_KEY=\[oculto\]$" && printf "%s" "$K" | grep -q "^key=\[oculto\]$" && ! printf "%s" "$K" | grep -q "abc\|supersecret\|AAAAB3\|valor"'
 
 echo "3. run.sh"
 O=$("$AQUI/run.sh" "verde" bash -c 'echo "Tests  3 passed"; echo "Authorization: Bearer xyz"; exit 0'); RC=$?
@@ -54,6 +56,10 @@ check "3.8 rojo: deja la marca p04-anotado (el paso final no duplica el entorno)
 check "3.9 rojo: el título se convierte en nombre de archivo seguro" '[ -s "$P04_LOGS/e2e-m2c_x_y.log" ]'
 O=$("$AQUI/run.sh" "largo" bash -c 'for i in $(seq 1 80); do echo "línea $i"; done; exit 1' 2>&1)
 check "3.10 rojo: cola = últimas 60 líneas" 'printf "%s" "$O" | grep "^::error" | grep -q "%0Alínea 21%0A" && ! printf "%s" "$O" | grep "^::error" | grep -q "%0Alínea 20%0A"'
+O=$("$AQUI/run.sh" "inyecta" bash -c 'echo "::error::PASSWORD=hunter2"; echo "::stop-commands::adivino"; exit 1' 2>&1)
+check "3.12 comandos de workflow frenados alrededor de la salida cruda (token aleatorio) y solo nuestras anotaciones después" 'T1=$(printf "%s\n" "$O" | sed -n "1s/^::stop-commands::\(p04-[0-9a-f]\{32\}\)$/\1/p"); [ -n "$T1" ] && N=$(printf "%s\n" "$O" | grep -nx "::$T1::" | cut -d: -f1) && [ "$N" = 4 ] && printf "%s\n" "$O" | sed -n 2p | grep -qx "::error::PASSWORD=hunter2" && printf "%s\n" "$O" | sed -n "5,\$p" | grep "^::error title=inyecta" | grep -q "PASSWORD=\[oculto\]" && ! printf "%s\n" "$O" | sed -n "5,\$p" | grep -q hunter2'
+O2=$("$AQUI/run.sh" "otro" true 2>&1)
+check "3.13 el token del freno cambia en cada corrida" '[ "$(printf "%s\n" "$O" | head -1)" != "$(printf "%s\n" "$O2" | head -1)" ]'
 check "3.11 comando inexistente: rojo con exit ≠ 0 y anotación" 'O=$("$AQUI/run.sh" "nada" /no/existe 2>&1); [ $? != 0 ] && printf "%s" "$O" | grep -q "^::error title=nada falló (exit 127)::entorno:"'
 
 echo "4. politica-fallas.sh"
@@ -96,6 +102,14 @@ mkdir -p "$R/scripts/collab"; echo "test.only('x', () => {});" > "$R/scripts/col
 check "4.16 .only( en un test de scripts/ (lo corre vitest) → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "\.only — scripts/collab/a.test.ts"'
 rm "$R/scripts/collab/a.test.ts"
 check "4.17 limpio otra vez → OK" 'PF check | grep -q "^politica-fallas: OK"'
+echo "test.describe.configure({ retries: 2 });" > "$R/e2e/c.spec.ts"
+check "4.18 retries por suite (describe.configure) en una E2E de gate → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "retries fuera de las configs — e2e/c.spec.ts:1:"'
+echo "test.describe.configure({ retries: 0, mode: 'serial' });" > "$R/e2e/c.spec.ts"
+check "4.19 retries: 0 por suite se permite" 'PF check | grep -q "^politica-fallas: OK"'
+rm "$R/e2e/c.spec.ts"; sed -i 's#playwright test -c playwright.config.ts#playwright test --retries=2 -c playwright.config.ts#' "$R/.github/workflows/gates.yml"
+check "4.20 --retries=2 en el workflow → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "retries fuera de las configs — .github/workflows/gates.yml:"'
+sed -i 's#--retries=2 ##' "$R/.github/workflows/gates.yml"
+check "4.21 limpio otra vez → OK" 'PF check | grep -q "^politica-fallas: OK"'
 check "4.13 el repo real cumple la política (retries 0, foto al día, sin .only)" 'bash "$AQUI/politica-fallas.sh" check | grep -q "^politica-fallas: OK"'
 
 echo "5. gates.yml (estático)"
@@ -105,8 +119,8 @@ bloque() { awk -v j="$1" '/^  [a-z0-9-]+:$/{en=($0=="  "j":")} en' "$G"; }
 check "5.1 siete jobs" '[ "$(printf "%s\n" $JOBS | wc -l)" = 7 ]'
 for j in $JOBS; do
   B=$(bloque "$j")
-  check "5.2 $j: paso 'Entorno (falla fuera de un gate)' con if: failure() y la marca p04-anotado" 'printf "%s" "$B" | grep -A2 "name: Entorno (falla fuera de un gate)" | grep -q "if: failure()" && printf "%s" "$B" | grep -q "p04-anotado.*entorno.sh --error \"$j: falló fuera de un gate"'
-  check "5.3 $j: upload-artifact if: failure() con test-results/ y retención" 'printf "%s" "$B" | grep -B1 -A6 "uses: actions/upload-artifact@v4" | grep -q "if: failure()" && printf "%s" "$B" | grep -A8 "if: failure()" | grep -qE "^\s+(- )?(path: test-results/|test-results/ci/)$" && printf "%s" "$B" | grep -q "retention-days:"'
+  check "5.2 $j: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado" 'printf "%s" "$B" | grep -A2 "name: Entorno (falla fuera de un gate)" | grep -q "if: failure() || cancelled()$" && printf "%s" "$B" | grep -q "p04-anotado.*entorno.sh --error \"$j: falló fuera de un gate"'
+  check "5.3 $j: upload-artifact if: failure() || cancelled() con test-results/ y retención" 'printf "%s" "$B" | grep -B1 -A6 "uses: actions/upload-artifact@v4" | grep -q "if: failure() || cancelled()$" && printf "%s" "$B" | grep -A8 "if: failure() || cancelled()" | grep -qE "^\s+(- )?(path: test-results/|test-results/ci/)$" && printf "%s" "$B" | grep -q "retention-days:"'
   check "5.4 $j: al menos un gate pasa por scripts/ci/run.sh" 'printf "%s" "$B" | grep -q "scripts/ci/run.sh "'
 done
 check "5.5 P04_HEAD_SHA en el env del workflow (HEAD auditado, no el merge sintético)" 'grep -q "^  P04_HEAD_SHA: \${{ github.event.pull_request.head.sha || github.sha }}$" "$G"'

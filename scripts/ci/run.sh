@@ -9,8 +9,14 @@ set -o pipefail
 AQUI=$(cd "$(dirname "$0")" && pwd)
 TITULO=$1; shift
 LOG=$(mktemp)
+# la salida cruda va al log del job sin sanitizar: con los comandos de workflow frenados,
+# un `::error::PASSWORD=…` del comando no se vuelve anotación (solo publican las nuestras,
+# ya sanitizadas). Token impredecible: el comando no puede reactivarlos.
+FRENO=p04-$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')
+echo "::stop-commands::$FRENO"
 "$@" 2>&1 | tee "$LOG"
 RC=${PIPESTATUS[0]}
+echo "::$FRENO::"
 limpio() { sed 's/\x1b\[[0-9;]*[A-Za-z]//g' "$LOG" | "$AQUI/sanitizar.sh"; }
 codifica() { printf '%s' "$1" | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g'; }
 ENT=$("$AQUI/entorno.sh")

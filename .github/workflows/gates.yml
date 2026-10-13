@@ -55,12 +55,13 @@ jobs:
       # P-02: PROGRESO.md se genera del manifiesto de entregables (sin red); manifiesto inválido o doc viejo → rojo
       - name: PROGRESO.md al día (P-02)
         run: scripts/ci/run.sh progreso pnpm progress:check
-      # P-04: la falla fuera de un gate (setup) igual deja el entorno anotado; test-results/ sube siempre que falla
+      # P-04: la falla fuera de un gate (setup) igual deja el entorno anotado; test-results/ sube siempre que falla.
+      # `|| cancelled()` en todos los jobs: el timeout-minutes cancela (no falla) el job; sin esto se perdía la evidencia
       - name: Entorno (falla fuera de un gate)
-        if: failure()
+        if: failure() || cancelled()
         run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "verify-build: falló fuera de un gate (ver el paso rojo)"'
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: failure() || cancelled()
         with:
           name: verify-build-${{ github.sha }}-${{ github.run_attempt }}
           path: test-results/
@@ -90,10 +91,10 @@ jobs:
       - run: scripts/ci/run.sh bootstrap bash packages/platform-db/scripts/bootstrap-smoke.sh
       # P-04: la falla fuera de un gate (setup) igual deja el entorno anotado; test-results/ sube siempre que falla
       - name: Entorno (falla fuera de un gate)
-        if: failure()
+        if: failure() || cancelled()
         run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "postgres: falló fuera de un gate (ver el paso rojo)"'
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: failure() || cancelled()
         with:
           name: postgres-${{ github.sha }}-${{ github.run_attempt }}
           path: test-results/
@@ -116,10 +117,10 @@ jobs:
         run: cat compose-smoke.log 2>/dev/null | tail -200 || true
       # P-04: la falla fuera de un gate (setup) igual deja el entorno anotado; test-results/ sube siempre que falla
       - name: Entorno (falla fuera de un gate)
-        if: failure()
+        if: failure() || cancelled()
         run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "compose-smoke: falló fuera de un gate (ver el paso rojo)"'
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: failure() || cancelled()
         with:
           name: compose-smoke-${{ github.sha }}-${{ github.run_attempt }}
           path: test-results/
@@ -138,10 +139,10 @@ jobs:
       - run: scripts/ci/run.sh media npx vitest run -c vitest.media.config.ts
       # P-04: la falla fuera de un gate (setup) igual deja el entorno anotado; test-results/ sube siempre que falla
       - name: Entorno (falla fuera de un gate)
-        if: failure()
+        if: failure() || cancelled()
         run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "media: falló fuera de un gate (ver el paso rojo)"'
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: failure() || cancelled()
         with:
           name: media-${{ github.sha }}-${{ github.run_attempt }}
           path: test-results/
@@ -175,10 +176,10 @@ jobs:
       # Issue #26 / BL-09: el trace ya se retiene al fallar (playwright.config.ts);
       # sin esto se tira. El job sigue en rojo: upload-artifact no cambia el exit.
       - name: Entorno (falla fuera de un gate)
-        if: failure()
+        if: failure() || cancelled()
         run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "e2e-m2c: falló fuera de un gate (ver el paso rojo)"'
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: failure() || cancelled()
         with:
           name: e2e-m2c-${{ github.sha }}-${{ github.run_attempt }}
           path: test-results/
@@ -246,13 +247,13 @@ jobs:
           retention-days: 90
           if-no-files-found: error
       - name: Entorno (falla fuera de un gate)
-        if: failure()
+        if: failure() || cancelled()
         run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "e2e-platform: falló fuera de un gate (ver el paso rojo)"'
       # P-04: test-results/ entero (trazas, logs, e2e-platform-results.json que leen acceptance y el
       # manifiesto, test-results/ci/ con los logs de los gates ya sanitizados). Las trazas de Playwright
       # (zip) no se reescriben: solo contienen sesiones de la instancia de test que muere con el runner
       - name: trazas de fallos
-        if: failure()
+        if: failure() || cancelled()
         uses: actions/upload-artifact@v4
         with:
           name: e2e-platform-traces-${{ github.sha }}-${{ github.run_attempt }}
@@ -280,10 +281,10 @@ jobs:
         run: scripts/ci/run.sh arbol-limpio git diff --exit-code
       # P-04: la falla fuera de un gate (setup) igual deja el entorno anotado; test-results/ sube siempre que falla
       - name: Entorno (falla fuera de un gate)
-        if: failure()
+        if: failure() || cancelled()
         run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "mutations: falló fuera de un gate (ver el paso rojo)"'
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: failure() || cancelled()
         with:
           name: mutations-${{ github.sha }}-${{ github.run_attempt }}
           path: test-results/
