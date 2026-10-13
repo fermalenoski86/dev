@@ -70,7 +70,7 @@ LEEME.txt:5
 RESULTADO: paquete offline verificado
 $ verificar_paquete.sh <parte1.zip>   # sola: debe fallar
 FALLA: SHA256SUMS (archivo faltante o alterado)
-exit=0
 $ verificar_paquete.sh <parte2.zip>   # sola: debe fallar
 FALLA: SHA256SUMS (archivo faltante o alterado)
+Códigos de salida reales: parte1 sola exit=1, parte2 sola exit=1, partes 1+2 exit=0.
 Nota: antes de este cambio, un archivo faltante en SHA256SUMS no cortaba la verificación (`cmd && echo` bajo set -e); corregido.
