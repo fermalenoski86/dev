@@ -3,45 +3,38 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador) — corregir **P-05** en PR #69 (issue AUDIT #70).
-**En auditoría:** #69 @ 7cb661a9f7ab4df2b0b0d395a5a121a1c2cc3a8f
+**Pelota en:** ChatGPT (auditor) — reauditar **P-05** en PR #69 (issue AUDIT #70).
+**En auditoría:** #69 @ 2fd28b9acc433df9a644b2655c0db0767eae535c
 **Fase:** P-05 activa; después P-04 → P-03 → PoC P-06 (orden confirmado por Fer).
-**Estado:** `AUDIT: CAMBIOS` sobre `7cb661a`: [comentario](https://github.com/fermalenoski86/dev/pull/69#issuecomment-6134269372). CI exacta [38316748544](https://github.com/fermalenoski86/dev/actions/runs/38316748544) 7/7 verde, pero queda un P1 de origen no confiable del script.
+**Estado:** corrección entregada sobre tu `AUDIT: CAMBIOS` (7cb661a). CI exacta [38322931421](https://github.com/fermalenoski86/dev/actions/runs/38322931421) **7/7 verdes** sobre `2fd28b9`. Pedido: [#69](https://github.com/fermalenoski86/dev/pull/69#issuecomment-6135104129). No mergear sin `AUDIT: APROBADO`.
 
-## Hallazgo bloqueante (ronda 30)
-- **[P1] Política directa ejecutada desde base no auditada:** `paralelo.yml` carga desde `main`, pero hace checkout de la base actual y ejecuta su `scripts/collab/paralelo.sh`. Si la base es una rama de fase, puede alterar solo el script, conservar el YAML idéntico y obtener `paralelo=success` en un PR `audit/*`.
-- Reproducción: en una rama de fase, dejar `paralelo.yml` igual a `main`, cambiar `paralelo.sh` a `exit 0` y abrir/sincronizar un PR hacia esa fase; el guard de YAML pasa y el paso directo ejecuta la copia debilitada.
-- Corrección: ejecutar el chequeo directo siempre desde un worktree de `origin/main`; número/HEAD/base son solo datos. Comparar `workflow_sha` con el workflow vigente de `main`, usar `persist-credentials: false` donde corresponda y agregar prueba adversarial.
-- Fundamento primario: GitHub documenta que `pull_request_target` es privilegiado y seguro por defecto porque solo ejecuta código de la rama predeterminada; ejecutar otra revisión rompe esa propiedad.
-
-## Verificación independiente de `7cb661a`
-- CI: 7/7 success (`verify-build`, `postgres`, `media`, `compose-smoke`, `e2e-m2c`, `e2e-platform`, `mutations`).
-- Local: lint 0 errores (12 warnings), typecheck OK, 828/828 tests ejecutados OK (1 contrato S3 omitido local), build de las 3 apps OK.
-- Focales: `paralelo.test.sh` 133/133 y `handoff.test.sh` 48/48, también con `LC_ALL=C`; `bash -n`, `node --check` y `git diff --check` OK.
-- Los gates verdes no cubren la prueba adversarial anterior; no aprobar ni mergear todavía.
+## Qué se corrigió (rondas 30–33; detalle en `docs/reviews/P05.md`, salidas en `P05_SALIDA.txt`)
+- Tu P1 (script desde la base no auditada): todo el código del workflow sale de un checkout de `main` para TODA base; base/HEAD/número solo como datos; guard de `workflow_sha` contra el `paralelo.yml` de `main`; `persist-credentials: false` ×2 y `GH_TOKEN` solo donde se publica/consulta; prueba adversarial 6b (fase con `paralelo.sh` debilitado + YAML idéntico → exit 5 con el script de main).
+- Codex (`cfc5752`, `545512c`, `168d4eb`, respondidos con su commit): conciliación de PR que entran a main durante la re-evaluación (segundo listado → SIN VEREDICTO); base del PR no disponible no corta el job; la revalidación de main/fase es lo último del script, también si el segundo listado falla.
+- Pruebas: `paralelo.test.sh` 143/143 y `handoff.test.sh` 48/48, en UTF-8 y `LC_ALL=C`.
+- Codex agotó cuota de revisiones a las 23:35 UTC (2ª vez hoy): `2fd28b9` sin revisión automática. Dato de costo para la PoC P-06.
 
 ## Próximo paso
-- Claude: corregir el P1 en la misma rama/PR, actualizar `P05.md`/salida/pruebas y pasar la pelota a ChatGPT con el nuevo SHA exacto y CI exacta.
-- ChatGPT: reauditar el nuevo HEAD, en especial que ningún código de una base distinta de `main` se ejecute con `checks: write`.
-- Al aprobar: squash-merge #69, cerrar #70, `En auditoría: ninguno`, registrar entregable P-05 y regenerar progreso; después P-04 → P-03 → PoC P-06.
+- ChatGPT: reauditar `2fd28b9` (origen del script = main, 6b, conciliación, handoff exit 5), verificar CI exacta y emitir veredicto.
+- Claude (tras `AUDIT: APROBADO`): squash-merge #69, cerrar #70, `En auditoría: ninguno`, entregable P-05 en `entregables.mjs` + `progress:generate`, PoC controlada de `paralelo.yml` en `main`; después P-04 → P-03 → PoC P-06.
 
-## Reglas mientras corrige Claude
-- P-05 sigue activa; `En auditoría` conserva #69 hasta que el PR esté mergeado en `main`.
-- Claude puede avanzar el HEAD de #69; R3/R4 siguen protegiendo laterales; ningún PR toca `HANDOFF.md`.
+## Reglas durante auditoría
+- P-05 activa hasta merge: R2 congela el HEAD `2fd28b9` (Claude no pushea a la rama); R3/R4 protegen laterales; ningún PR toca `HANDOFF.md`.
+- Hallazgos de Codex entre medio son input: se responden en el PR, sin push hasta tu veredicto.
 
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-05 trabajo paralelo controlado | PR #69 / #70 | cambios P1 solicitados sobre `7cb661a` |
+| P-05 trabajo paralelo controlado | PR #69 / #70 | en reauditoría sobre `2fd28b9` |
 | P-04 → P-03 | #53 | siguientes, en serie |
-| Agent Bridge (P-06) | #54 | PoC después de P-03 |
+| Agent Bridge (P-06) | #54 | brief `docs/briefs/P06_BRIDGE_POC.md`; PoC después de P-03 |
 | CS-0 Creative Studio | #59 | autorizado; sigue en roadmap |
-| E2E intermitente :17 | #26 | sin reproducción estable |
+| E2E intermitente :17 | #26 | observabilidad #40/#41; sin reproducción estable |
 
 ## Pendiente de Fer
 - #43: detalle de campaña para INTERNAL_APPROVER.
 - Tags opcionales bloqueados por proxy: bl31, bl07, bl08, f3a, f3a-ui.
-- `main`: required checks + rama al día después de adaptar escritores directos.
+- `main`: ruleset activo sin borrado/force-push; required checks + rama al día después de adaptar escritores directos.
 - PoC P-06: entorno Codex y `CLAUDE_CODE_OAUTH_TOKEN` (ver brief).
 
 ## Referencias
