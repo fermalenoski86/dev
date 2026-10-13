@@ -173,6 +173,19 @@ cp "$RAIZ/playwright.config.ts" "$R/"; sed -i 's/^  timeout: 30_000,/  timeout :
 check "4.30c timeout : N con el mismo valor → foto igual → OK" 'PF check | grep -q "^politica-fallas: OK"'
 cp "$RAIZ/playwright.config.ts" "$R/"
 check "4.31 limpio otra vez → OK" 'PF check | grep -q "^politica-fallas: OK"'
+# Codex #75 sobre 886d2e4: modificadores partidos en varias líneas (análisis por archivo entero)
+for c in 'test[
+"only"
+]("x", async () => {});' 'test.
+only("x", async () => {});' "test.only.each([1])('x %s', async () => {});" 'test[`only`]("x", async () => {});'; do printf "%s\n" "$c" > "$R/e2e/a.spec.ts"; check "4.32 $(printf %s "$c" | tr '\n' ' ') → rojo (Codex #75)" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "\.only — e2e/a.spec.ts:1:"'; done
+for c in 'test[
+"skip"
+]("x", async () => {});' "test.
+fixme('x', async () => {});" 'testInfo[
+  "slow"
+]();'; do printf "x;\n%s\n" "$c" > "$R/e2e/a.spec.ts"; check "4.32b $(printf %s "$c" | tr '\n' ' ') → rojo con la línea donde empieza" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "skip/fixme/slow/fail en E2E de gate — e2e/a.spec.ts:2:"'; done
+printf "const solo = { only: 1, fail: 2 };\nexpect(solo.only + solo\n.fail).toBe(3);\n" > "$R/e2e/a.spec.ts"
+check "4.32c propiedades sueltas partidas en líneas (sin llamada) → OK" 'PF check | grep -q "^politica-fallas: OK"'; rm "$R/e2e/a.spec.ts"
 check "4.13 el repo real cumple la política (retries 0, foto al día, sin .only)" 'bash "$AQUI/politica-fallas.sh" check | grep -q "^politica-fallas: OK"'
 
 echo "5. gates.yml (estático)"

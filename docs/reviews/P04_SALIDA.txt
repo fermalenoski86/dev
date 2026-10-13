@@ -408,3 +408,43 @@ ok
 GATE progreso (P-02): manifiesto válido (33 entradas), docs/collab/PROGRESO.md al día
 == node scripts/acceptance/cli.mjs check
 GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día
+
+######## Ronda 5 — Codex #75 sobre 886d2e4 (modificadores partidos en varias líneas) · 2026-10-13T07:30:57Z
+== [reproducción] con politica-fallas.sh de 886d2e4 y los tests nuevos
+  ✗ 4.32 test[ "only" ]("x", async () => {}); → rojo (Codex #75)
+  ✗ 4.32 test. only("x", async () => {}); → rojo (Codex #75)
+  ✗ 4.32 test.only.each([1])('x %s', async () => {}); → rojo (Codex #75)
+  ✗ 4.32b test[ "skip" ]("x", async () => {}); → rojo con la línea donde empieza
+  ✗ 4.32b test. fixme('x', async () => {}); → rojo con la línea donde empieza
+  ✗ 4.32b testInfo[   "slow" ](); → rojo con la línea donde empieza
+run.test: 138 OK, 6 fallos
+== bash scripts/ci/run.test.sh (corregido)
+  ✓ 4.28 test.describe.only ( con espacio → rojo (AUDIT #75)
+  ✓ 4.28b test.only ('x', async () => {}); → rojo
+  ✓ 4.28b test["only"]('x', async () => {}); → rojo
+  ✓ 4.28b test. only('x', async () => {}); → rojo
+  ✓ 4.28b test.only → rojo
+  ✓ 4.28c test.skip ('x', async () => {}); → rojo
+  ✓ 4.28c testInfo["fixme"](); → rojo
+  ✓ 4.28c test.slow (); → rojo
+  ✓ 4.28d `.only` como propiedad (sin llamada) no es foco → OK
+  ✓ 4.32 test[ "only" ]("x", async () => {}); → rojo (Codex #75)
+  ✓ 4.32 test. only("x", async () => {}); → rojo (Codex #75)
+  ✓ 4.32 test.only.each([1])('x %s', async () => {}); → rojo (Codex #75)
+  ✓ 4.32 test[`only`]("x", async () => {}); → rojo (Codex #75)
+  ✓ 4.32b test[ "skip" ]("x", async () => {}); → rojo con la línea donde empieza
+  ✓ 4.32b test. fixme('x', async () => {}); → rojo con la línea donde empieza
+  ✓ 4.32b testInfo[   "slow" ](); → rojo con la línea donde empieza
+  ✓ 4.32c propiedades sueltas partidas en líneas (sin llamada) → OK
+run.test: 144 OK, 0 fallos
+== scripts/ci/politica-fallas.sh check (repo real)
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+== foto sin cambios
+politica-fallas: foto escrita en /home/claude/dev/scripts/ci/umbrales.txt
+sin diferencias
+== bash -n scripts/ci/*.sh y git diff --check
+ok
+== node scripts/collab/progress.mjs check
+GATE progreso (P-02): manifiesto válido (33 entradas), docs/collab/PROGRESO.md al día
+== node scripts/acceptance/cli.mjs check
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día

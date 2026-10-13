@@ -93,10 +93,23 @@ NOLIT=$( { for f in $PW; do echo "$f"; done; for d in e2e e2e-platform; do [ -d 
 #    test.info(), un alias…): `.slow()` triplica el timeout sin tocar la foto y `.fail()` vuelve
 #    verde un test roto (Codex #75 sobre ecb774f).
 #    Espacios o saltos antes del paréntesis y acceso con corchetes (`test.only (`, `test["only"](`)
-#    son JS válido y enfocan igual (AUDIT #75 sobre cb6901f).
-ONLY=$(grep -rnE '(\.[[:space:]]*only|\[[[:space:]]*["'"'"'`]only["'"'"'`][[:space:]]*\])[[:space:]]*(\(|$)' --include='*.test.ts' --include='*.spec.ts' --include='*.test.mjs' --include='*.test.js' apps packages scripts e2e e2e-platform 2>/dev/null | grep -v node_modules | sed 's/^/politica-fallas: .only — /')
+#    son JS válido y enfocan igual (AUDIT #75 sobre cb6901f). El análisis es por archivo entero, no
+#    por línea: `test[\n"only"\n](`, `test.\nonly(` también enfocan (Codex #75 sobre 886d2e4). Cuenta
+#    como uso el modificador seguido de `(`, `.`, `[` o una plantilla (`test.only.each(…)`); una
+#    propiedad suelta (`solo.only`) no. Salida `archivo:línea:texto` (línea donde empieza el acceso).
+modificadores() { # $1 = nombres (alternativa perl); stdin = archivos separados por NUL
+  P04_MODS="$1" xargs -0 -r perl -0777 -ne '
+    my $n = $ENV{P04_MODS};
+    while (/(?:\.\s*(?:$n)|\[\s*(["\x27`])(?:$n)\1\s*\])\s*[(.\[`]/g) {
+      my $l = 1 + (substr($_, 0, $-[0]) =~ tr/\n//);
+      print "$ARGV:$l:" . (split /\n/, $_, -1)[$l - 1] . "\n";
+    }'
+}
+ONLY=$(find apps packages scripts e2e e2e-platform -type d -name node_modules -prune -o -type f \( -name '*.test.ts' -o -name '*.spec.ts' -o -name '*.test.mjs' -o -name '*.test.js' \) -print0 2>/dev/null \
+  | modificadores 'only' | sed 's/^/politica-fallas: .only — /')
 [ -z "$ONLY" ] || { echo "$ONLY"; fallos=1; }
-SKIP=$(grep -rnE '(\.[[:space:]]*(skip|fixme|slow|fail)|\[[[:space:]]*["'"'"'`](skip|fixme|slow|fail)["'"'"'`][[:space:]]*\])[[:space:]]*(\(|$)' e2e e2e-platform 2>/dev/null | grep -v node_modules | sed 's/^/politica-fallas: skip\/fixme\/slow\/fail en E2E de gate — /')
+SKIP=$(find e2e e2e-platform -type d -name node_modules -prune -o -type f -print0 2>/dev/null \
+  | modificadores 'skip|fixme|slow|fail' | sed 's/^/politica-fallas: skip\/fixme\/slow\/fail en E2E de gate — /')
 [ -z "$SKIP" ] || { echo "$SKIP"; fallos=1; }
 if [ "$fallos" = 0 ]; then echo "politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)"; exit 0; fi
 exit 1
