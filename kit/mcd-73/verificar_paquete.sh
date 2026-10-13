@@ -23,5 +23,9 @@ if grep -Eio '(src|href)="(https?:)?//[^"]*' index.html; then echo "FALLA: index
 missing=0; for ref in $(grep -Eo '(src|href)="[^"]+"' index.html | cut -d'"' -f2 | sort -u); do
   [ -f "$ref" ] || { echo "FALTA $ref"; missing=1; }; done
 [ $missing = 0 ] && echo "OK: $(grep -Eo '(src|href)="[^"]+"' index.html | cut -d'"' -f2 | sort -u | wc -l) referencias locales, todas existen"
+echo "== consola DMX virtual sin red"
+if grep -Eio '(src|href)="(https?:)?//[^"]*|(fetch|WebSocket|XMLHttpRequest)\(' consola/consola.html consola/luminarias.js; then echo "FALLA: la consola usa red"; exit 1; fi
+for ref in $(grep -Eo '(src|href)="[^"#]+"' consola/consola.html | cut -d'"' -f2 | sort -u); do [ -f "consola/$ref" ] || { echo "FALTA consola/$ref"; exit 1; }; done
+echo "OK: consola sin red; $(grep -Eo '(src|href)="[^"#]+"' consola/consola.html | cut -d'"' -f2 | sort -u | wc -l) referencias locales existen; rótulo: $(grep -c 'NO CONECTADO A EQUIPOS REALES' consola/consola.html)"
 echo "== rótulo"; grep -c "SIMULACIÓN CONCEPTUAL" index.html LEEME.txt
 echo "RESULTADO: paquete offline verificado"

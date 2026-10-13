@@ -1,8 +1,9 @@
-# Verificación del paquete offline (#73) — salida real, 2026-10-13T17:34:42Z
-## verificar_paquete.sh
-== ZIP: TRUST-McDonalds-kit-offline.zip 37549989 bytes, sha256 9b79fd0af5c09156…
+# Verificación del paquete offline #73 — 2026-10-13 19:31 UTC, rama kit/73-mcd (v2: + consola DMX virtual, diapositiva 4 nueva)
+# python3 -I kit/mcd-73/paquete.py <dir> && bash kit/mcd-73/verificar_paquete.sh <dir>/TRUST-McDonalds-kit-offline.zip
+
+== ZIP: TRUST-McDonalds-kit-offline.zip 35031942 bytes, sha256 f071a2b2df6103cd…
 == integridad
-SHA256SUMS: 14 archivos OK
+SHA256SUMS: 17 archivos OK
 == videos (decodificación completa, sin errores)
 OK video/01-trust-mcd-video-principal-1080p.mp4  h264,High,1920,1080 37.000000 
 OK video/02-trust-mcd-video-alternativo-720p.mp4  h264,Main,1280,720 37.000000 
@@ -19,12 +20,17 @@ OK imagenes/02-takeover.png  1920,1080
 OK imagenes/03-firma-sincronizada.png  1920,1080
 OK imagenes/04-brand-reveal.png  1920,1080
 == index.html sin recursos de red
-OK: 12 referencias locales, todas existen
+OK: 15 referencias locales, todas existen
+== consola DMX virtual sin red
+OK: consola sin red; 2 referencias locales existen; rótulo: 1
 == rótulo
 index.html:2
 LEEME.txt:5
 RESULTADO: paquete offline verificado
-## prueba_navegador.py (Chromium Playwright, contexto offline)
-formato: [src, readyState, currentTime tras 1,5 s, videoWidth, error, fuente elegida]
-{'out': [[None, 4, 1.48, 1280, None, '02b-trust-mcd-video-alternativo-720p.webm'], [None, 4, 1.49, 1280, None, '02b-trust-mcd-video-alternativo-720p.webm'], [None, 4, 1.48, 1280, None, '03b-trust-control-grabacion-real-720p.webm']], 'imgs': [['imagenes/01-obelisco-noche.png', 1920], ['imagenes/02-takeover.png', 1920], ['imagenes/03-firma-sincronizada.png', 1920], ['imagenes/04-brand-reveal.png', 1920]]}
+
+# Chromium OFFLINE sobre el ZIP descomprimido: prueba_navegador.py + abrir la consola desde index.html
+{'out': [[None, 4, 1.48, 1280, None, '02b-trust-mcd-video-alternativo-720p.webm'], [None, 4, 1.49, 1280, None, '02b-trust-mcd-video-alternativo-720p.webm'], [None, 4, 1.49, 1280, None, '03b-trust-control-grabacion-real-720p.webm']], 'imgs': [['imagenes/01-obelisco-noche.png', 1920], ['imagenes/02-takeover.png', 1920], ['imagenes/03-firma-sincronizada.png', 1920], ['imagenes/04-brand-reveal.png', 1920]]}
 no-file requests: []
+consola desde index.html: preset mcd | pantallas {'corrientes': 'Marca (mockup)', 'pellegrini': 'Marca (mockup)'} | equipos [14, 16, 16]
+rótulo: True
+pedidos fuera de file://: [] | errores: []
