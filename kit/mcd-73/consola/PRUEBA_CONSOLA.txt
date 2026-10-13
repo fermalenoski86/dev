@@ -1,0 +1,27 @@
+# Salida real de: python3 -I kit/mcd-73/consola/prueba_consola.py <dir> — 2026-10-13T18:30:18Z
+OK    rótulo SIMULACIÓN / NO CONECTADO visible
+OK    luminarias.js sin posiciones (no se inventan coordenadas)
+OK    aviso de posiciones pendientes visible
+OK    sin posiciones la capa de luz queda vacía (suma alfa=0)
+OK    46 equipos virtuales 14/16/16 → [14, 16, 16]
+OK    preset McDonald's cambia los equipos
+OK    preset McDonald's cambia pantallas
+OK    master 50% escala exactamente a la mitad
+OK    master 0% apaga todo
+OK    zona inferior a 0% no afecta la superior
+OK    reset vuelve exactamente al estado inicial (reversible)
+OK    timeline determinista: mismo t → mismo estado
+     tramos [(1, 'Negro', 'normal'), (4.5, 'Cuenta 3·2·1', 'acento'), (8, 'Takeover →', 'acento'), (11.5, 'Marca (mockup)', 'acento'), (14.9, 'Contenido habitual', 'normal')]
+OK    pistas de pantallas siguen los tramos del takeover
+OK    play avanza el reloj virtual (t=1.217)
+OK    tecla 2 → McDonald's
+OK    tecla R → reset
+OK    botón Cierre
+OK    con 46 marcas se oculta el aviso
+OK    la luz nunca oscurece la foto base (máx. oscurecimiento=0)
+OK    la luz se ve sobre la foto (máx. aclarado=200)
+OK    0 pedidos de red ([])
+OK    0 errores de consola ([])
+
+RESULTADO: TODO OK
+exit=0

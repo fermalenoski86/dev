@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Consola DMX virtual — TRUST</title>
+<style>
+:root{--bg:#0b0c0f;--panel:#15171c;--line:#2a2e37;--txt:#e9eaee;--mut:#9aa0ab;--acc:#ffc72c;--warn:#ff5a4f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.rotulo{background:var(--warn);color:#fff;font-weight:700;letter-spacing:.04em;text-align:center;padding:6px 10px;font-size:13px}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:12px;padding:12px}
+@media (max-width:1000px){.app{grid-template-columns:1fr}}
+.escena{position:relative;background:#000;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.escena img,.escena canvas{display:block;width:100%;height:auto}
+.escena canvas{position:absolute;inset:0;height:100%;mix-blend-mode:screen;pointer-events:none}
+.escena canvas#marcas{mix-blend-mode:normal}
+.escena.editor canvas#marcas{pointer-events:auto;cursor:crosshair}
+.aviso{position:absolute;left:12px;right:12px;bottom:12px;background:rgba(0,0,0,.72);border:1px dashed var(--acc);color:var(--acc);padding:8px 10px;border-radius:6px;font-size:13px}
+.sello{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.6);padding:4px 8px;border-radius:4px;font-size:12px;color:#fff}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:14px}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin:0 0 6px}
+.presets{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+button{background:#22252d;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:8px;font:inherit;cursor:pointer}
+button:hover{border-color:#4a505d}
+button.on{background:var(--acc);color:#111;border-color:var(--acc);font-weight:600}
+.fila{display:flex;align-items:center;gap:8px}
+.fila label{min-width:92px;color:var(--mut)}
+input[type=range]{flex:1}
+.reloj{font:600 22px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.04em}
+.timeline{position:relative;height:84px;border:1px solid var(--line);border-radius:6px;background:#101217;overflow:hidden}
+.pista{position:absolute;left:0;right:0;height:18px;font-size:10px;color:#111}
+.pista span{position:absolute;top:0;height:100%;padding:2px 4px;white-space:nowrap;overflow:hidden;border-right:1px solid #0006}
+.cabezal{position:absolute;top:0;bottom:0;width:2px;background:#fff;box-shadow:0 0 6px #fff}
+.nombres{display:flex;flex-direction:column;gap:0;font-size:10px;color:var(--mut)}
+.equipos .linea{display:flex;gap:3px;align-items:center;margin:3px 0}
+.equipos .linea b{width:70px;font-size:11px;font-weight:600;color:var(--mut)}
+.equipos i{width:12px;height:12px;border-radius:50%;border:1px solid #0008;display:inline-block}
+.pantallas{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pantalla{height:40px;border-radius:4px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;text-align:center;padding:2px}
+.pie{font-size:11px;color:var(--mut)}
+textarea{width:100%;height:90px;background:#0e1014;color:var(--txt);border:1px solid var(--line);border-radius:6px;font:11px ui-monospace,monospace}
+select{background:#22252d;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px}
+.oculto{display:none}
+</style>
+</head>
+<body>
+<div class="rotulo">SIMULACIÓN / CONTROL DMX VIRTUAL — NO CONECTADO A EQUIPOS REALES · sin Art-Net, sACN ni DMX · sincronía solo simulada</div>
+<div class="app">
+  <div>
+    <div class="escena" id="escena">
+      <img id="base" src="base-trust-noche.jpg" alt="Foto base del edificio TRUST de noche (capa inmutable)">
+      <canvas id="luz"></canvas>
+      <canvas id="marcas"></canvas>
+      <div class="sello">Foto base inmutable · capa de luz aditiva · ubicaciones preliminares</div>
+      <div class="aviso oculto" id="aviso"></div>
+    </div>
+    <p class="pie">La foto no se modifica: la luz es una capa aditiva encima (solo puede aclarar). Las 46 luminarias (14 superior · 16 media · 16 inferior) son ubicaciones preliminares para presentación, no plano de montaje. Mapa real de universos/canales, fotometría y compensación de latencias: trabajo futuro sujeto a inventario de hardware.</p>
+  </div>
+  <div class="panel">
+    <div>
+      <h2>Presets</h2>
+      <div class="presets" id="presets">
+        <button data-p="arquitectonica">Arquitectónica cálida</button>
+        <button data-p="mcd">McDonald's</button>
+        <button data-p="takeover">Takeover 15 s</button>
+        <button data-p="cierre">Cierre</button>
+      </div>
+    </div>
+    <div>
+      <h2>Reproducción · reloj virtual de espectáculo</h2>
+      <div class="fila"><button id="play">▶ Play</button><button id="pausa">❚❚ Pausa</button><button id="reset">↺ Reset</button><span class="reloj" id="tc">00:00.00</span></div>
+    </div>
+    <div>
+      <h2>Timeline 15 s</h2>
+      <div class="timeline" id="timeline"></div>
+      <div class="nombres pie">Pistas: Luz fachada · Corrientes · Pellegrini · Reloj</div>
+    </div>
+    <div>
+      <h2>Intensidad</h2>
+      <div class="fila"><label for="master">Master</label><input type="range" id="master" min="0" max="100" value="100"><span id="masterv">100%</span></div>
+      <div id="zonas"></div>
+    </div>
+    <div class="equipos" id="equipos"><h2>Equipos virtuales (46 RGBW)</h2></div>
+    <div>
+      <h2>Pantallas (simulado)</h2>
+      <div class="pantallas"><div class="pantalla" id="pCorr">Corrientes</div><div class="pantalla" id="pPell">Pellegrini</div></div>
+    </div>
+    <details id="editorBox">
+      <summary>Editor de posiciones (cargar la imagen anotada)</summary>
+      <p class="pie">Marcá cada punto sobre la foto siguiendo la imagen anotada, en orden de izquierda a derecha. No se inventan puntos: sin las 46 marcas la consola no dibuja luces.</p>
+      <div class="fila"><select id="edLinea"><option value="roja">Roja · superior (14)</option><option value="amarilla">Amarilla · media (16)</option><option value="verde">Verde · inferior (16)</option></select><button id="edDeshacer">Deshacer</button></div>
+      <div class="fila" style="margin-top:6px"><button id="edExportar">Exportar</button><label class="pie"><input type="file" id="edImportar" accept=".json,application/json"> Importar JSON</label></div>
+      <textarea id="edJson" placeholder="JSON de posiciones"></textarea>
+    </details>
+  </div>
+</div>
+<script src="luminarias.js"></script>
+<script>
+(function(){
+'use strict';
+const DUR=15;
+const LINEAS=['roja','amarilla','verde'];
+const CFG=JSON.parse(JSON.stringify(window.LUMINARIAS||{lineas:{}}));
+for(const k of LINEAS){ if(!CFG.lineas[k]) CFG.lineas[k]={n:0,puntos:[]}; }
+// Colores RGBW 0..1. Rojo/amarillo genéricos (no se usa logo ni brand kit).
+const C={
+  calido:[1,.55,.18,.85], blanco:[0,0,0,1], rojo:[.86,.08,.06,0], amarillo:[1,.72,0,.15], apagado:[0,0,0,0]
+};
+const PRESETS={
+  arquitectonica:{roja:C.calido,amarilla:C.calido,verde:C.calido,dim:{roja:.7,amarilla:.55,verde:.45}, pant:['Contenido habitual','Contenido habitual'], reloj:'normal'},
+  mcd:{roja:C.amarillo,amarilla:C.rojo,verde:C.amarillo,dim:{roja:.9,amarilla:.9,verde:.9}, pant:['Marca (mockup)','Marca (mockup)'], reloj:'acento'},
+  cierre:{roja:C.calido,amarilla:C.calido,verde:C.calido,dim:{roja:.25,amarilla:.18,verde:.12}, pant:['Cierre','Cierre'], reloj:'normal'}
+};
+// Secuencia determinista del takeover: cada tramo [desde, hasta, nombre].
+const TRAMOS=[[0,3,'Silencio'],[3,6,'Ola ascendente'],[6,10,'Takeover'],[10,13,'Brand reveal'],[13,15,'Retorno']];
+const PANT_TRAMOS=[['Negro','Negro'],['Cuenta 3·2·1','Cuenta 3·2·1'],['Takeover →','← Takeover'],['Marca (mockup)','Marca (mockup)'],['Contenido habitual','Contenido habitual']];
+const RELOJ_TRAMOS=['normal','acento','acento','acento','normal'];
+const st={preset:'arquitectonica',t:0,playing:false,master:1,zona:{roja:1,amarilla:1,verde:1}};
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const mix=(a,b,k)=>a.map((v,i)=>v+(b[i]-v)*k);
+const sc=(c,k)=>c.map(v=>v*k);
+function tramo(t){for(let i=0;i<TRAMOS.length;i++){if(t<TRAMOS[i][1]||i===TRAMOS.length-1)return i}return 0}
+// Color de un equipo (línea, índice) en el tiempo t, sin master ni zona.
+function equipoTakeover(linea,i,n,t){
+  const fila={verde:0,amarilla:1,roja:2}[linea];
+  const arq=sc(PRESETS.arquitectonica[linea],PRESETS.arquitectonica.dim[linea]);
+  const brand=linea==='amarilla'?C.rojo:C.amarillo;
+  if(t<3){return sc(arq,1-clamp(t/1.5,0,1)*.9)}
+  if(t<6){const fase=(t-3)/3*3-fila; const k=clamp(fase,0,1); const barrido=clamp((t-3)/3*1.4-(i/Math.max(n-1,1))*.4,0,1);
+          return sc(C.amarillo,.1+.9*k*barrido)}
+  if(t<10){const pulso=Math.floor((t-6)*2)%2; const par=(i+fila)%2===pulso; return par?brand:sc(linea==='amarilla'?C.amarillo:C.rojo,.35)}
+  if(t<13){return brand}
+  const k=clamp((t-13)/2,0,1); return mix(brand,arq,k);
+}
+function estado(){
+  const out={};
+  for(const l of LINEAS){
+    const n=CFG.lineas[l].n; out[l]=[];
+    for(let i=0;i<n;i++){
+      let c;
+      if(st.preset==='takeover') c=equipoTakeover(l,i,n,st.t);
+      else {const p=PRESETS[st.preset]; c=sc(p[l],p.dim[l]);}
+      out[l].push(sc(c,st.master*st.zona[l]).map(v=>+clamp(v,0,1).toFixed(4)));
+    }
+  }
+  let pant, reloj;
+  if(st.preset==='takeover'){const k=tramo(st.t); pant=PANT_TRAMOS[k]; reloj=RELOJ_TRAMOS[k];}
+  else {pant=PRESETS[st.preset].pant; reloj=PRESETS[st.preset].reloj;}
+  return {preset:st.preset,t:+st.t.toFixed(3),master:st.master,zona:{...st.zona},equipos:out,pantallas:{corrientes:pant[0],pellegrini:pant[1]},reloj};
+}
+const rgb=c=>{const w=c[3];return [Math.min(255,(c[0]+w*.95)*255),Math.min(255,(c[1]+w*.88)*255),Math.min(255,(c[2]+w*.78)*255)].map(Math.round)};
+// ---- dibujo ----
+const img=document.getElementById('base'), cv=document.getElementById('luz'), mk=document.getElementById('marcas');
+const completo=()=>LINEAS.every(l=>CFG.lineas[l].puntos.length===CFG.lineas[l].n&&CFG.lineas[l].n>0);
+function tam(){const W=img.naturalWidth||1920,H=img.naturalHeight||1080;for(const c of [cv,mk]){if(c.width!==W){c.width=W;c.height=H}}return [W,H]}
+function dibujar(e){
+  const [W,H]=tam(); const g=cv.getContext('2d'); g.clearRect(0,0,W,H);
+  const aviso=document.getElementById('aviso');
+  if(!completo()){
+    const f=LINEAS.map(l=>`${l} ${CFG.lineas[l].puntos.length}/${CFG.lineas[l].n}`).join(' · ');
+    aviso.textContent=`Posiciones de luminarias pendientes de la imagen anotada de Fer (${f}). La consola opera y muestra el estado de los 46 equipos, pero no dibuja luz sobre la foto hasta tener las 46 marcas: no se inventan coordenadas.`;
+    aviso.classList.remove('oculto');
+  } else {
+    aviso.classList.add('oculto');
+    g.globalCompositeOperation='lighter';
+    for(const l of LINEAS){CFG.lineas[l].puntos.forEach((p,i)=>{
+      const c=e.equipos[l][i]; if(!c) return; const [r,gg,b]=rgb(c); const a=Math.max(...c);
+      if(a<=0.001) return;
+      const x=p[0]*W,y=p[1]*H, R=H*.075;
+      // wash hacia arriba: elipse alargada desplazada sobre el punto
+      g.save(); g.translate(x,y-R*.55); g.scale(.55,1);
+      const gr=g.createRadialGradient(0,0,0,0,0,R);
+      gr.addColorStop(0,`rgba(${r},${gg},${b},${.55*a})`); gr.addColorStop(.5,`rgba(${r},${gg},${b},${.18*a})`); gr.addColorStop(1,'rgba(0,0,0,0)');
+      g.fillStyle=gr; g.beginPath(); g.arc(0,0,R,0,Math.PI*2); g.fill(); g.restore();
+      const h=g.createRadialGradient(x,y,0,x,y,H*.012); h.addColorStop(0,`rgba(${r},${gg},${b},${.9*a})`); h.addColorStop(1,'rgba(0,0,0,0)');
+      g.fillStyle=h; g.beginPath(); g.arc(x,y,H*.012,0,Math.PI*2); g.fill();
+    })}
+    g.globalCompositeOperation='source-over';
+  }
+  dibujarMarcas();
+}
+function dibujarMarcas(){
+  const [W,H]=tam(); const g=mk.getContext('2d'); g.clearRect(0,0,W,H);
+  if(!document.getElementById('escena').classList.contains('editor')) return;
+  const col={roja:'#ff3b30',amarilla:'#ffd60a',verde:'#30d158'};
+  for(const l of LINEAS){CFG.lineas[l].puntos.forEach((p,i)=>{g.fillStyle=col[l];g.strokeStyle='#000';g.lineWidth=3;g.beginPath();g.arc(p[0]*W,p[1]*H,9,0,Math.PI*2);g.fill();g.stroke();g.fillStyle='#000';g.font='bold 11px sans-serif';g.textAlign='center';g.fillText(i+1,p[0]*W,p[1]*H+4)})}
+}
+// ---- UI ----
+const $=id=>document.getElementById(id);
+function armarTimeline(){
+  const tl=$('timeline'); tl.innerHTML='';
+  const pistas=[['Luz',TRAMOS.map(x=>x[2]),['#555','#f7c948','#e5533d','#ffc72c','#c98a4b']],
+    ['Corr',PANT_TRAMOS.map(x=>x[0]),['#333','#888','#e5533d','#ffc72c','#6a7a8c']],
+    ['Pell',PANT_TRAMOS.map(x=>x[1]),['#333','#888','#e5533d','#ffc72c','#6a7a8c']],
+    ['Reloj',RELOJ_TRAMOS,['#6a7a8c','#ffd98a','#ffd98a','#ffd98a','#6a7a8c']]];
+  pistas.forEach((p,j)=>{const d=document.createElement('div');d.className='pista';d.style.top=(2+j*20)+'px';
+    TRAMOS.forEach((tr,k)=>{const s=document.createElement('span');s.style.left=(tr[0]/DUR*100)+'%';s.style.width=((tr[1]-tr[0])/DUR*100)+'%';s.style.background=p[2][k];s.textContent=p[1][k];d.appendChild(s)});tl.appendChild(d)});
+  const h=document.createElement('div');h.className='cabezal';h.id='cabezal';tl.appendChild(h);
+  tl.addEventListener('click',ev=>{const r=tl.getBoundingClientRect();api.seek((ev.clientX-r.left)/r.width*DUR)});
+}
+function armarZonas(){
+  const z=$('zonas'); const nom={roja:'Superior (14)',amarilla:'Media (16)',verde:'Inferior (16)'};
+  for(const l of LINEAS){const f=document.createElement('div');f.className='fila';
+    f.innerHTML=`<label for="z_${l}">${nom[l]}</label><input type="range" id="z_${l}" min="0" max="100" value="100"><span id="z_${l}v">100%</span>`;
+    z.appendChild(f); f.querySelector('input').addEventListener('input',ev=>api.setZona(l,ev.target.value/100));}
+  const eq=$('equipos'); const nb={roja:'Superior',amarilla:'Media',verde:'Inferior'};
+  for(const l of LINEAS){const d=document.createElement('div');d.className='linea';d.innerHTML=`<b>${nb[l]}</b>`;
+    for(let i=0;i<CFG.lineas[l].n;i++){const k=document.createElement('i');k.dataset.l=l;k.dataset.i=i;k.title=`${l} ${i+1}`;d.appendChild(k)}eq.appendChild(d);}
+}
+const fmt=t=>{const m=Math.floor(t/60),s=t-m*60;return String(m).padStart(2,'0')+':'+s.toFixed(2).padStart(5,'0')};
+function render(){
+  const e=estado();
+  document.querySelectorAll('#presets button').forEach(b=>b.classList.toggle('on',b.dataset.p===st.preset));
+  $('tc').textContent=fmt(st.t); $('cabezal').style.left=(st.t/DUR*100)+'%';
+  $('master').value=Math.round(st.master*100); $('masterv').textContent=Math.round(st.master*100)+'%';
+  for(const l of LINEAS){$('z_'+l).value=Math.round(st.zona[l]*100);$('z_'+l+'v').textContent=Math.round(st.zona[l]*100)+'%'}
+  document.querySelectorAll('#equipos i').forEach(k=>{const c=e.equipos[k.dataset.l][+k.dataset.i];const [r,g,b]=rgb(c);k.style.background=`rgb(${r},${g},${b})`});
+  const pc={'Negro':'#000','Cuenta 3·2·1':'#555','Takeover →':'#c8281e','← Takeover':'#c8281e','Marca (mockup)':'#ffc72c','Contenido habitual':'#3b4658','Cierre':'#20252e'};
+  for(const [id,txt] of [['pCorr',e.pantallas.corrientes],['pPell',e.pantallas.pellegrini]]){const p=$(id);p.textContent=(id==='pCorr'?'Corrientes: ':'Pellegrini: ')+txt;p.style.background=pc[txt]||'#333';p.style.color=(pc[txt]==='#ffc72c')?'#111':'#fff'}
+  dibujar(e);
+  return e;
+}
+let t0=null, raf=null;
+function tick(ts){ if(!st.playing) return; if(t0===null) t0=ts-st.t*1000; st.t=(ts-t0)/1000;
+  if(st.t>=DUR){st.t=DUR;st.playing=false;t0=null;render();return} render(); raf=requestAnimationFrame(tick); }
+const api={
+  setPreset(p){ if(!(p in PRESETS)&&p!=='takeover') throw new Error('preset '+p); st.preset=p; if(p!=='takeover'){st.playing=false;t0=null} return render(); },
+  setMaster(v){ st.master=clamp(+v,0,1); return render(); },
+  setZona(l,v){ st.zona[l]=clamp(+v,0,1); return render(); },
+  play(){ if(st.preset!=='takeover') st.preset='takeover'; if(st.t>=DUR) st.t=0; st.playing=true; t0=null; raf=requestAnimationFrame(tick); return render(); },
+  pause(){ st.playing=false; t0=null; return render(); },
+  reset(){ st.playing=false; t0=null; st.t=0; st.master=1; st.zona={roja:1,amarilla:1,verde:1}; st.preset='arquitectonica'; return render(); },
+  seek(t){ st.t=clamp(+t,0,DUR); t0=null; if(st.playing){raf=requestAnimationFrame(tick)} return render(); },
+  setPosiciones(obj){ for(const l of LINEAS){ const p=(obj.lineas&&obj.lineas[l]&&obj.lineas[l].puntos)||[]; if(p.length>CFG.lineas[l].n) throw new Error(l+': más puntos que equipos'); CFG.lineas[l].puntos=p.map(q=>[clamp(+q[0],0,1),clamp(+q[1],0,1)]); } if(obj.fuente!==undefined) CFG.fuente=obj.fuente; return render(); },
+  posicionesCompletas: completo,
+  snapshot: estado
+};
+window.consola=api;
+// eventos
+document.querySelectorAll('#presets button').forEach(b=>b.addEventListener('click',()=>{api.setPreset(b.dataset.p); if(b.dataset.p==='takeover'){api.seek(0);api.play()}}));
+$('play').onclick=()=>api.play(); $('pausa').onclick=()=>api.pause(); $('reset').onclick=()=>api.reset();
+$('master').addEventListener('input',ev=>api.setMaster(ev.target.value/100));
+// editor
+$('editorBox').addEventListener('toggle',ev=>{$('escena').classList.toggle('editor',ev.target.open);render()});
+mk.addEventListener('click',ev=>{const r=mk.getBoundingClientRect();const l=$('edLinea').value;const L=CFG.lineas[l];
+  if(L.puntos.length>=L.n){alert(`La línea ${l} ya tiene sus ${L.n} puntos.`);return}
+  L.puntos.push([+((ev.clientX-r.left)/r.width).toFixed(4),+((ev.clientY-r.top)/r.height).toFixed(4)]);render()});
+$('edDeshacer').onclick=()=>{CFG.lineas[$('edLinea').value].puntos.pop();render()};
+$('edExportar').onclick=()=>{$('edJson').value=JSON.stringify({fuente:CFG.fuente||'imagen anotada de Fer',lineas:CFG.lineas},null,1)};
+$('edImportar').addEventListener('change',ev=>{const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{api.setPosiciones(JSON.parse(rd.result))}catch(e){alert('JSON inválido: '+e.message)}};rd.readAsText(f)});
+// teclado: espacio = play/pausa, 1-4 presets, R reset
+document.addEventListener('keydown',ev=>{if(ev.target.tagName==='INPUT'||ev.target.tagName==='TEXTAREA')return;
+  if(ev.code==='Space'){ev.preventDefault();st.playing?api.pause():api.play()}
+  const m={'1':'arquitectonica','2':'mcd','3':'takeover','4':'cierre'}[ev.key]; if(m){api.setPreset(m)}
+  if(ev.key==='r'||ev.key==='R')api.reset()});
+armarTimeline(); armarZonas();
+if(img.complete) render(); else img.addEventListener('load',render);
+render();
+})();
+</script>
+</body>
+</html>
