@@ -12,3 +12,16 @@ playwright.platform.config.ts expect: { timeout: 15_000 }
 .github/workflows/gates.yml e2e-m2c: timeout-minutes: 30
 .github/workflows/gates.yml e2e-platform: timeout-minutes: 40
 .github/workflows/gates.yml mutations: timeout-minutes: 60
+e2e/diag/signature-window.spec.ts .setTimeout(150_000) ×1
+e2e/diag/signature-window.spec.ts timeout: 40_000 ×1
+e2e/diag/warmup-trace.spec.ts .setTimeout(120_000) ×1
+e2e/experience.spec.ts .setTimeout(120_000) ×1
+e2e/experience.spec.ts .setTimeout(150_000) ×2
+e2e/experience.spec.ts timeout: 10_000 ×2
+e2e/experience.spec.ts timeout: 12_000 ×1
+e2e/experience.spec.ts timeout: 15_000 ×1
+e2e/experience.spec.ts timeout: 25_000 ×5
+e2e/experience.spec.ts timeout: 30_000 ×1
+e2e/experience.spec.ts timeout: 40_000 ×8
+e2e/experience.spec.ts timeout: 8000 ×1
+e2e/experience.spec.ts timeout: 8_000 ×1

@@ -270,17 +270,15 @@ jobs:
       - name: Entorno (falla fuera de un gate)
         if: failure()
         run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "e2e-platform: falló fuera de un gate (ver el paso rojo)"'
-      # P-04: las trazas de Playwright (zip) no se reescriben: solo contienen sesiones de la instancia
-      # de test que muere con el runner; test-results/ci/ lleva los logs de los gates ya sanitizados
+      # P-04: test-results/ entero (trazas, logs, e2e-platform-results.json que leen acceptance y el
+      # manifiesto, test-results/ci/ con los logs de los gates ya sanitizados). Las trazas de Playwright
+      # (zip) no se reescriben: solo contienen sesiones de la instancia de test que muere con el runner
       - name: trazas de fallos
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: e2e-platform-traces-${{ github.sha }}-${{ github.run_attempt }}
-          path: |
-            test-results/e2e-platform/
-            test-results/e2e-platform-logs/
-            test-results/ci/
+          path: test-results/
           retention-days: 14
           if-no-files-found: ignore
 

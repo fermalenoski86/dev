@@ -23,6 +23,9 @@ mkdir -p "$T/bin"; for b in bash sed head tail tr cut nproc git ls dirname; do l
 check "1.6 herramienta ausente → n/d, sin fallar" 'O=$(PATH=$T/bin "$AQUI/entorno.sh"); [ $? = 0 ] && printf "%s" "$O" | grep -q "node=n/d pnpm=n/d chrome=n/d ffmpeg=n/d"'
 check "1.7 --notice publica ::notice con título" '"$AQUI/entorno.sh" --notice "media: entorno" | grep -q "^::notice title=media: entorno::sha="'
 check "1.8 --error publica ::error (falla fuera de un gate) y exit 0" 'O=$("$AQUI/entorno.sh" --error "x: falló fuera de un gate"); [ $? = 0 ] && printf "%s" "$O" | grep -q "^::error title=x: falló fuera de un gate::sha="'
+check "1.9 --error deja \$P04_LOGS/entorno.txt (artifact aunque ningún gate haya corrido)" 'rm -rf "$P04_LOGS"; "$AQUI/entorno.sh" --error "media: falló fuera de un gate" >/dev/null && head -1 "$P04_LOGS/entorno.txt" | grep -q "^media: falló fuera de un gate$" && sed -n 2p "$P04_LOGS/entorno.txt" | grep -q "^sha=.* loadavg="'
+mkdir -p "$T/chrome"; printf '#!/bin/bash\necho "Google Chrome 154.0.1.2 "\n' > "$T/chrome/google-chrome"; chmod +x "$T/chrome/google-chrome"
+check "1.10 versión de Chrome sin espacio final (la línea no queda con doble espacio)" 'PATH=$T/chrome:$PATH "$AQUI/entorno.sh" | grep -q " chrome=154.0.1.2 ffmpeg="'
 
 echo "2. sanitizar.sh"
 S=$(printf '%s\n' 'Authorization: Bearer abc.def' 'GITHUB_TOKEN=ghp_abcdefghijklmnopqrstuvwxyz0123' 'export AWS_SECRET_ACCESS_KEY="wJalrXUtnFEMI/K7MDENG"' 'AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE' 'Set-Cookie: __Host-trust_session=s3cr3t; Path=/' 'cookie=__Host-trust_session=abc; otra=1' 'DB=postgres://user:pw@host:5433/db' 'token: expirado' '{"password": "hunter2", "apiKey":"k1"}' 'jwt eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c fin' '-----BEGIN RSA PRIVATE KEY-----' 'MIIEowIBAAKCAQEA' '-----END RSA PRIVATE KEY-----' 'github_pat_11AAAAAAA0bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb' 'Tests  3 passed, timeout: 30000, TIMEOUT en builder.spec.ts:14' 'expect(received).toBe(expected) // Object.is equality' | "$AQUI/sanitizar.sh")
@@ -33,6 +36,8 @@ check "2.4 credenciales en URL ocultas, host visible" 'printf "%s" "$S" | grep -
 check "2.5 clave privada reemplazada entera" 'printf "%s" "$S" | grep -q "^\[clave privada oculta\]$" && ! printf "%s" "$S" | grep -q "MIIEow\|PRIVATE KEY"'
 check "2.6 líneas de tests, timeouts y aserciones quedan legibles" 'printf "%s" "$S" | grep -q "^Tests  3 passed, timeout: 30000, TIMEOUT en builder.spec.ts:14$" && printf "%s" "$S" | grep -q "^expect(received).toBe(expected) // Object.is equality$"'
 check "2.7 'token: expirado' se tapa (prefiere ocultar de más)" 'printf "%s" "$S" | grep -q "^token: \[oculto\]$"'
+Q=$(printf '%s\n' 'PASSWORD="correct horse battery staple" fin' '{"password":"abc,def","x":1}' "pw_token='a b;c' ok" 'API_KEY="sin cierre y más' "secret='sin cierre" | "$AQUI/sanitizar.sh")
+check "2.9 valores entre comillas con espacios, comas o ; se tapan enteros (también sin cierre)" 'printf "%s" "$Q" | grep -q "^PASSWORD=\"\[oculto\]\" fin$" && printf "%s" "$Q" | grep -q "^{\"password\":\"\[oculto\]\",\"x\":1}$" && printf "%s" "$Q" | grep -q "^pw_token=.\[oculto\]. ok$" && ! printf "%s" "$Q" | grep -q "horse\|battery\|def\|b;c\|cierre"'
 check "2.8 sin secretos no cambia nada" '[ "$(printf "a=1\nhola mundo\nkey=valor\nMIIEow\n" | "$AQUI/sanitizar.sh")" = "$(printf "a=1\nhola mundo\nkey=valor\nMIIEow\n")" ]'
 
 echo "3. run.sh"
@@ -53,7 +58,7 @@ check "3.11 comando inexistente: rojo con exit ≠ 0 y anotación" 'O=$("$AQUI/r
 
 echo "4. politica-fallas.sh"
 R=$T/repo; mkdir -p "$R/scripts/ci" "$R/.github/workflows" "$R/e2e" "$R/e2e-platform" "$R/packages/x/src"
-cp "$RAIZ"/playwright*.config.ts "$R/"; cp "$RAIZ/.github/workflows/gates.yml" "$R/.github/workflows/"; cp "$AQUI/politica-fallas.sh" "$R/scripts/ci/"
+cp "$RAIZ"/playwright*.config.ts "$R/"; cp -r "$RAIZ/e2e" "$RAIZ/e2e-platform" "$R/"; cp "$RAIZ/.github/workflows/gates.yml" "$R/.github/workflows/"; cp "$AQUI/politica-fallas.sh" "$R/scripts/ci/"
 echo "it.skip('requiere MinIO: NO ejecutado en este entorno', () => {});" > "$R/packages/x/src/a.test.ts"
 PF() { P04_RAIZ=$R bash "$R/scripts/ci/politica-fallas.sh" "$@"; }
 check "4.1 sin foto → rojo" '! PF check 2>&1 | grep -q "OK" && ! PF check >/dev/null 2>&1'
@@ -82,6 +87,15 @@ echo "test.fixme('x', async () => {});" > "$R/e2e-platform/b.spec.ts"; rm "$R/e2
 check "4.11 test.fixme( en e2e-platform/ → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "e2e-platform/b.spec.ts"'
 rm "$R/e2e-platform/b.spec.ts"
 check "4.12 limpio otra vez → OK" 'PF check | grep -q "^politica-fallas: OK"'
+sed -i '0,/setTimeout(120_000)/s//setTimeout(240_000)/' "$R/e2e/experience.spec.ts"
+check "4.14 timeout por test (test.setTimeout) subido en un spec → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "^+e2e/experience.spec.ts .setTimeout(240_000) ×1"'
+sed -i 's/setTimeout(240_000)/setTimeout(120_000)/' "$R/e2e/experience.spec.ts"; sed -i '0,/timeout: 40_000/s//timeout: 90_000/' "$R/e2e/experience.spec.ts"
+check "4.15 timeout de aserción ({ timeout: N }) subido en un spec → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "^+e2e/experience.spec.ts timeout: 90_000 ×1"'
+sed -i 's/timeout: 90_000/timeout: 40_000/' "$R/e2e/experience.spec.ts"
+mkdir -p "$R/scripts/collab"; echo "test.only('x', () => {});" > "$R/scripts/collab/a.test.ts"
+check "4.16 .only( en un test de scripts/ (lo corre vitest) → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "\.only — scripts/collab/a.test.ts"'
+rm "$R/scripts/collab/a.test.ts"
+check "4.17 limpio otra vez → OK" 'PF check | grep -q "^politica-fallas: OK"'
 check "4.13 el repo real cumple la política (retries 0, foto al día, sin .only)" 'bash "$AQUI/politica-fallas.sh" check | grep -q "^politica-fallas: OK"'
 
 echo "5. gates.yml (estático)"
@@ -99,6 +113,7 @@ check "5.5 P04_HEAD_SHA en el env del workflow (HEAD auditado, no el merge sint�
 check "5.6 gates.yml no usa secrets.* (los artifacts no pueden contener secretos reales)" '! grep -q "secrets\." "$G"'
 check "5.7 verify-build corre run.test.sh y politica-fallas.sh check" 'grep -q "scripts/ci/run.sh ci-test bash scripts/ci/run.test.sh" "$G" && grep -q "scripts/ci/run.sh politica-fallas scripts/ci/politica-fallas.sh check" "$G"'
 check "5.8 e2e-m2c publica el entorno antes del gate (entorno.sh)" 'bloque e2e-m2c | grep -q "run: scripts/ci/entorno.sh$"'
+check "5.10 e2e-platform sube test-results/ entero (incluye e2e-platform-results.json)" 'bloque e2e-platform | grep -A6 "name: trazas de fallos" | grep -qE "^\s+path: test-results/$"'
 check "5.9 retries: 0 en los dos playwright configs (acceptación P-04)" '[ "$(grep -h "retries:" "$RAIZ"/playwright.config.ts "$RAIZ"/playwright.platform.config.ts | grep -vc "retries: 0")" = 0 ] && [ "$(grep -hc "retries:" "$RAIZ"/playwright.config.ts "$RAIZ"/playwright.platform.config.ts | paste -sd+ | bc)" = 2 ]'
 
 echo
