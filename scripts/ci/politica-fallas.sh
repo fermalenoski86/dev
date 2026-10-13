@@ -7,7 +7,7 @@
 #     `timeout-minutes` de gates.yml iguales a la foto en
 #     scripts/ci/umbrales.txt: cambiarlos exige decisión y auditoría explícitas, con la
 #     foto regenerada en el mismo PR (`generar`) y la decisión citada en el PR;
-#   - ningún `.only(` en tests; ningún `.skip(`/`.fixme(` en las E2E que gates.yml corre
+#   - ningún `.only(` (con o sin espacio, o `["only"]`) en tests; ningún `.skip(`/`.fixme(` en las E2E que gates.yml corre
 #     directamente (e2e/, e2e-platform/): un test que no corre no es un test verde.
 #   uso: scripts/ci/politica-fallas.sh check     → exit 1 si algo no cumple
 #        scripts/ci/politica-fallas.sh generar   → reescribe umbrales.txt (solo con decisión)
@@ -18,16 +18,17 @@ cd "$RAIZ" || exit 2
 PW=$(ls playwright*.config.ts 2>/dev/null)
 # foto sin números de línea (una edición arriba no la invalida): archivo, job si lo hay, clave y valor, en orden
 foto() {
-  for f in $PW; do grep -E '^[[:space:]]*(retries|timeout|expect):' "$f" | sed -E "s#^[[:space:]]*#$f #;s/[[:space:]]+/ /g;s/,?[[:space:]]*(\/\/.*)?$//"
-    grep -oE '\b(action|navigation)Timeout:[[:space:]]*[A-Za-z0-9_.]+' "$f" | sed -E "s#^#$f #;s/[[:space:]]+/ /g"; done
+  # `clave :` (espacio antes de los dos puntos) es válido en TS: se normaliza a `clave:` (Codex #75 sobre cb6901f)
+  for f in $PW; do grep -E '^[[:space:]]*(retries|timeout|expect)[[:space:]]*:' "$f" | sed -E "s#^[[:space:]]*#$f #;s/[[:space:]]+/ /g;s/ :/:/;s/,?[[:space:]]*(\/\/.*)?$//"
+    grep -oE '\b(action|navigation)Timeout[[:space:]]*:[[:space:]]*[A-Za-z0-9_.]+' "$f" | sed -E "s#^#$f #;s/[[:space:]]*:[[:space:]]*/: /;s/[[:space:]]+/ /g"; done
   awk '/^  [a-z0-9-]+:$/{job=$1} /^[ \t]*timeout-minutes:/{gsub(/^[ \t]+|[ \t]+$/,""); gsub(/[ \t]+/," "); print ".github/workflows/gates.yml " job " " $0}' .github/workflows/gates.yml
   # timeouts por test/aserción en las E2E de gate (test.setTimeout, { timeout: N }, setDefault*Timeout):
   # subir uno de estos tapa una falla igual que subir el de la config. Cuenta por archivo y valor,
   # orden estable (LC_ALL=C), sin números de línea.
   for d in e2e e2e-platform; do
     [ -d "$d" ] || continue
-    grep -rHoE --include='*.ts' -e '\.set(Default)?(Navigation)?Timeout\([^)]*\)' -e '\b([a-z]+T|t)imeout:[[:space:]]*[A-Za-z0-9_.]+' "$d" 2>/dev/null \
-      | grep -v node_modules | sed -E 's/:[[:space:]]+/: /;s/^([^:]+):/\1 /' | LC_ALL=C sort | uniq -c | sed -E 's/^[[:space:]]*([0-9]+) (.*)$/\2 ×\1/'
+    grep -rHoE --include='*.ts' -e '\.set(Default)?(Navigation)?Timeout\([^)]*\)' -e '\b([a-z]+T|t)imeout[[:space:]]*:[[:space:]]*[A-Za-z0-9_.]+' "$d" 2>/dev/null \
+      | grep -v node_modules | sed -E 's/^([^:]+):/\1 /;s/[[:space:]]*:[[:space:]]*/: /' | LC_ALL=C sort | uniq -c | sed -E 's/^[[:space:]]*([0-9]+) (.*)$/\2 ×\1/'
   done
 }
 case "${1:-check}" in
@@ -36,16 +37,30 @@ case "${1:-check}" in
   *) echo "uso: $0 check|generar" >&2; exit 2 ;;
 esac
 fallos=0
-# 1. retries: 0
-for f in $PW; do
-  MAL=$(grep -nE '^\s*retries:' "$f" | grep -vE 'retries:[[:space:]]*0[[:space:]]*,?[[:space:]]*(//.*)?$' | sed "s#^#politica-fallas: $f:#;s/\$/ — retries tiene que ser 0/")
-  [ -z "$MAL" ] || { echo "$MAL"; fallos=1; }
-done
-# 1b. retries fuera de las configs raíz: por suite (test.describe.configure({ retries: N })) en las
-#     E2E de gate y --retries en el workflow o en scripts de package.json: Playwright respeta ambos
-MAL=$( { grep -rnE '\bretries[[:space:]]*:' --include='*.ts' e2e e2e-platform 2>/dev/null | grep -v node_modules | grep -vE '\bretries[[:space:]]*:[[:space:]]*0[[:space:]]*(,|\}|//|$)'
-         grep -nE -- '--retries\b' .github/workflows/*.yml package.json 2>/dev/null | grep -vE -- '--retries[= ]0([[:space:]"'"'"';]|$)'; } \
-       | sed 's/^/politica-fallas: retries fuera de las configs — /;s/$/ — retries tiene que ser 0/')
+# 1. retries: 0, ocurrencia por ocurrencia (AUDIT #75 sobre cb6901f: una línea con un retries
+#    permitido y otro prohibido no se valida entera). Vale sólo el literal 0 seguido de `,`, `}`,
+#    comentario o fin de línea; la clave puede ir entre comillas o con espacio antes de `:`.
+#    Cubre las configs raíz y las E2E de gate (por suite: test.describe.configure({ retries: N }))
+#    y `--retries` en workflows y package.json: Playwright respeta todos.
+MAL=$( { { for f in $PW; do echo "$f"; done; for d in e2e e2e-platform; do [ -d "$d" ] && grep -rl --include='*.ts' 'retries' "$d" | grep -v node_modules; done; } | sort -u | while read -r f; do
+  awk -v f="$f" '{
+    s = $0
+    while (match(s, /(^|[^A-Za-z0-9_$])retries["'"'"'`]?[ \t]*:/)) {
+      r = substr(s, RSTART + RLENGTH)
+      if (r !~ /^[ \t]*0[ \t]*(,|}|\/\/|$)/) { print f ":" FNR ": " $0; break }
+      s = r
+    }
+  }' "$f"; done
+  for f in .github/workflows/*.yml package.json; do [ -f "$f" ] || continue
+    awk -v f="$f" '{
+      s = $0
+      while (match(s, /--retries([^A-Za-z0-9_-]|$)/)) {
+        r = substr(s, RSTART + 9)
+        if (r !~ /^[= ]0([ \t"'"'"';]|$)/) { print f ":" FNR ": " $0; break }
+        s = r
+      }
+    }' "$f"; done; } \
+  | sed 's/^/politica-fallas: retries — /;s/$/ — retries tiene que ser 0 (literal)/')
 [ -z "$MAL" ] || { echo "$MAL"; fallos=1; }
 # 2. timeouts y timeout-minutes = foto
 [ -s "$FOTO" ] || { echo "politica-fallas: falta $FOTO (correr 'generar' con decisión)"; fallos=1; }
@@ -77,9 +92,11 @@ NOLIT=$( { for f in $PW; do echo "$f"; done; for d in e2e e2e-platform; do [ -d 
 # 3. .only y skips en E2E. Skips/slow/fail por cualquier receptor (test, describe, testInfo,
 #    test.info(), un alias…): `.slow()` triplica el timeout sin tocar la foto y `.fail()` vuelve
 #    verde un test roto (Codex #75 sobre ecb774f).
-ONLY=$(grep -rnE '\.only\(' --include='*.test.ts' --include='*.spec.ts' --include='*.test.mjs' --include='*.test.js' apps packages scripts e2e e2e-platform 2>/dev/null | grep -v node_modules | sed 's/^/politica-fallas: .only — /')
+#    Espacios o saltos antes del paréntesis y acceso con corchetes (`test.only (`, `test["only"](`)
+#    son JS válido y enfocan igual (AUDIT #75 sobre cb6901f).
+ONLY=$(grep -rnE '(\.[[:space:]]*only|\[[[:space:]]*["'"'"'`]only["'"'"'`][[:space:]]*\])[[:space:]]*(\(|$)' --include='*.test.ts' --include='*.spec.ts' --include='*.test.mjs' --include='*.test.js' apps packages scripts e2e e2e-platform 2>/dev/null | grep -v node_modules | sed 's/^/politica-fallas: .only — /')
 [ -z "$ONLY" ] || { echo "$ONLY"; fallos=1; }
-SKIP=$(grep -rnE '\.(skip|fixme|slow|fail)[[:space:]]*\(' e2e e2e-platform 2>/dev/null | grep -v node_modules | sed 's/^/politica-fallas: skip\/fixme\/slow\/fail en E2E de gate — /')
+SKIP=$(grep -rnE '(\.[[:space:]]*(skip|fixme|slow|fail)|\[[[:space:]]*["'"'"'`](skip|fixme|slow|fail)["'"'"'`][[:space:]]*\])[[:space:]]*(\(|$)' e2e e2e-platform 2>/dev/null | grep -v node_modules | sed 's/^/politica-fallas: skip\/fixme\/slow\/fail en E2E de gate — /')
 [ -z "$SKIP" ] || { echo "$SKIP"; fallos=1; }
 if [ "$fallos" = 0 ]; then echo "politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)"; exit 0; fi
 exit 1

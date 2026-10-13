@@ -125,16 +125,16 @@ check "4.16 .only( en un test de scripts/ (lo corre vitest) → rojo" 'O=$(PF ch
 rm "$R/scripts/collab/a.test.ts"
 check "4.17 limpio otra vez → OK" 'PF check | grep -q "^politica-fallas: OK"'
 echo "test.describe.configure({ retries: 2 });" > "$R/e2e/c.spec.ts"
-check "4.18 retries por suite (describe.configure) en una E2E de gate → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "retries fuera de las configs — e2e/c.spec.ts:1:"'
+check "4.18 retries por suite (describe.configure) en una E2E de gate → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "retries — e2e/c.spec.ts:1:"'
 echo "test.describe.configure({ retries: 0, mode: 'serial' });" > "$R/e2e/c.spec.ts"
 check "4.19 retries: 0 por suite se permite" 'PF check | grep -q "^politica-fallas: OK"'
 rm "$R/e2e/c.spec.ts"; sed -i 's#playwright test -c playwright.config.ts#playwright test --retries=2 -c playwright.config.ts#' "$R/.github/workflows/gates.yml"
-check "4.20 --retries=2 en el workflow → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "retries fuera de las configs — .github/workflows/gates.yml:"'
+check "4.20 --retries=2 en el workflow → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "retries — .github/workflows/gates.yml:"'
 sed -i 's#--retries=2 ##' "$R/.github/workflows/gates.yml"
 check "4.21 limpio otra vez → OK" 'PF check | grep -q "^politica-fallas: OK"'
-for v in "0 || 2" "0 ? 0 : 2" "0+2"; do echo "test.describe.configure({ retries: $v });" > "$R/e2e/c.spec.ts"; check "4.21b retries: $v (prefijo 0, evalúa ≠ 0) por suite → rojo (Codex #75)" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "retries fuera de las configs — e2e/c.spec.ts:1:"'; done; rm "$R/e2e/c.spec.ts"
+for v in "0 || 2" "0 ? 0 : 2" "0+2"; do echo "test.describe.configure({ retries: $v });" > "$R/e2e/c.spec.ts"; check "4.21b retries: $v (prefijo 0, evalúa ≠ 0) por suite → rojo (Codex #75)" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "retries — e2e/c.spec.ts:1:"'; done; rm "$R/e2e/c.spec.ts"
 sed -i 's/retries: 0,/retries: 0 || 2,/' "$R/playwright.config.ts"; check "4.21c retries: 0 || 2 en la config raíz → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "playwright.config.ts:.*retries tiene que ser 0"'; sed -i 's/retries: 0 || 2,/retries: 0,/' "$R/playwright.config.ts"
-sed -i 's#playwright test -c playwright.config.ts#playwright test --retries=0$((2)) -c playwright.config.ts#' "$R/.github/workflows/gates.yml"; check "4.21d --retries=0<expresión> en el workflow → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "retries fuera de las configs — .github/workflows/gates.yml:"'; sed -i 's#--retries=0$((2)) ##' "$R/.github/workflows/gates.yml"
+sed -i 's#playwright test -c playwright.config.ts#playwright test --retries=0$((2)) -c playwright.config.ts#' "$R/.github/workflows/gates.yml"; check "4.21d --retries=0<expresión> en el workflow → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "retries — .github/workflows/gates.yml:"'; sed -i 's#--retries=0$((2)) ##' "$R/.github/workflows/gates.yml"
 for c in "testInfo.skip();" "test.info().skip(true, 'x');" "test.slow();" "testInfo.slow();" "test.fail();" "test.describe.skip('x', () => {});"; do printf "test('x', async ({}, testInfo) => { %s });\n" "$c" > "$R/e2e/d.spec.ts"; check "4.21e $c en una E2E de gate → rojo (Codex #75)" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "skip/fixme/slow/fail en E2E de gate — e2e/d.spec.ts"'; done; rm "$R/e2e/d.spec.ts"
 check "4.21f limpio otra vez → OK" 'PF check | grep -q "^politica-fallas: OK"'
 sed -i '0,/{ timeout: 40_000 }/s//{ timeout: 40_000 * 10 }/' "$R/e2e/experience.spec.ts"
@@ -149,6 +149,30 @@ rm "$R/e2e-platform/d.spec.ts"; sed -i 's/^  timeout: 30_000,/  timeout: 30_000,
 check "4.26 actionTimeout literal nuevo en una config → cambia la foto → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "^+playwright.config.ts actionTimeout: 99_000"'
 cp "$RAIZ/playwright.config.ts" "$R/"
 check "4.27 limpio otra vez → OK" 'PF check | grep -q "^politica-fallas: OK"'
+# AUDIT #75 sobre cb6901f: `.only (` con espacio y retries por ocurrencia; Codex: `timeout :`
+cp "$RAIZ/e2e/experience.spec.ts" "$R/e2e/"; sed -i "0,/test.describe(/s//test.describe.only (/" "$R/e2e/experience.spec.ts"
+check "4.28 test.describe.only ( con espacio → rojo (AUDIT #75)" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "\.only — e2e/experience.spec.ts"'
+cp "$RAIZ/e2e/experience.spec.ts" "$R/e2e/"
+for c in "test.only ('x', async () => {});" "test[\"only\"]('x', async () => {});" "test. only('x', async () => {});" "test.only
+  ('x', async () => {});"; do printf "%s\n" "$c" > "$R/e2e/a.spec.ts"; check "4.28b $(printf %s "$c" | head -1) → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "\.only — e2e/a.spec.ts"'; done
+for c in "test.skip ('x', async () => {});" "testInfo[\"fixme\"]();" "test.slow ();"; do printf "%s\n" "$c" > "$R/e2e/a.spec.ts"; check "4.28c $c → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "skip/fixme/slow/fail en E2E de gate — e2e/a.spec.ts"'; done; rm "$R/e2e/a.spec.ts"
+printf "test('x', async () => { const solo = { only: 1 }; expect(solo.only).toBe(1); });\n" > "$R/e2e/a.spec.ts"
+check "4.28d \`.only\` como propiedad (sin llamada) no es foco → OK" 'PF check | grep -q "^politica-fallas: OK"'; rm "$R/e2e/a.spec.ts"
+sed -i "s/--reporter=line/--reporter=line --retries=0 --retries=2/" "$R/.github/workflows/gates.yml"
+check "4.29 --retries=0 --retries=2 en la misma línea → rojo (AUDIT #75)" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "retries — .github/workflows/gates.yml:"'
+sed -i "s/ --retries=0 --retries=2//" "$R/.github/workflows/gates.yml"
+for c in "test.describe.configure({ retries: 0, mode: 'serial' }); test.describe.configure({ retries: 2 });" "test.describe.configure({ \"retries\": 2 });" "test.describe.configure({ retries : 2 });"; do printf "%s\n" "$c" > "$R/e2e/c.spec.ts"; check "4.29b $c → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "retries — e2e/c.spec.ts:1:"'; done; rm "$R/e2e/c.spec.ts"
+sed -i "s/^  retries: 0,/  retries: 0, use: { trace: 'off' }, retries: 2,/" "$R/playwright.config.ts"
+check "4.29c retries 0 y 2 en la misma línea de la config raíz → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "retries — playwright.config.ts:"'
+cp "$RAIZ/playwright.config.ts" "$R/"
+sed -i '0,/{ timeout: 40_000 }/s//{ timeout : 999_999 }/' "$R/e2e/experience.spec.ts"
+check "4.30 { timeout : 999_999 } (espacio antes de :) en una E2E → cambia la foto → rojo (Codex #75)" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "^+e2e/experience.spec.ts timeout: 999_999 ×1"'
+cp "$RAIZ/e2e/experience.spec.ts" "$R/e2e/"; sed -i 's/^  timeout: 30_000,/  timeout : 999_999,/' "$R/playwright.config.ts"
+check "4.30b timeout : N en la config raíz → cambia la foto → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "^+playwright.config.ts timeout: 999_999"'
+cp "$RAIZ/playwright.config.ts" "$R/"; sed -i 's/^  timeout: 30_000,/  timeout : 30_000,/' "$R/playwright.config.ts"
+check "4.30c timeout : N con el mismo valor → foto igual → OK" 'PF check | grep -q "^politica-fallas: OK"'
+cp "$RAIZ/playwright.config.ts" "$R/"
+check "4.31 limpio otra vez → OK" 'PF check | grep -q "^politica-fallas: OK"'
 check "4.13 el repo real cumple la política (retries 0, foto al día, sin .only)" 'bash "$AQUI/politica-fallas.sh" check | grep -q "^politica-fallas: OK"'
 
 echo "5. gates.yml (estático)"

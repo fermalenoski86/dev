@@ -343,3 +343,68 @@ ok
 GATE progreso (P-02): manifiesto válido (33 entradas), docs/collab/PROGRESO.md al día
 == node scripts/acceptance/cli.mjs check
 GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día
+
+######## Ronda 4 — AUDIT: CAMBIOS sobre cb6901f (+ 2 hilos de Codex sobre cb6901f) — 2026-10-13 06:29 UTC
+== [cb6901f] reproducción del auditor #1: sed 's/test.describe(/test.describe.only (/' e2e/experience.spec.ts
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+exit 0
+== [cb6901f] reproducción del auditor #2: --reporter=line --retries=0 --retries=2 en gates.yml
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+exit 0
+== [cb6901f] Codex (espacio antes de `:`): test.use({ actionTimeout : 999_999 }) en e2e/builder.spec.ts (el caso `{ timeout : 999_999 }` es la regresión 4.30)
+1
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+exit 0
+== [nuevo] reproducción del auditor #1: sed 's/test.describe(/test.describe.only (/' e2e/experience.spec.ts
+politica-fallas: .only — e2e/experience.spec.ts:13:test.describe.only ('MASTER OF TRUST — Client Mode (lo que ve el cliente)', () => {
+politica-fallas: .only — e2e/experience.spec.ts:105:test.describe.only ('MASTER OF TRUST — Operator Mode', () => {
+exit 1
+== [nuevo] reproducción del auditor #2: --reporter=line --retries=0 --retries=2 en gates.yml
+politica-fallas: retries — .github/workflows/gates.yml:189:       - run: scripts/ci/run.sh e2e-m2c /tmp/pw/node_modules/.bin/playwright test -c playwright.config.ts e2e/experience.spec.ts e2e/builder.spec.ts --reporter=line --retries=0 --retries=2 — retries tiene que ser 0 (literal)
+exit 1
+== [nuevo] Codex (espacio antes de `:`): test.use({ actionTimeout : 999_999 }) en e2e/builder.spec.ts (el caso `{ timeout : 999_999 }` es la regresión 4.30)
+1
+--- /tmp/tmp.B8RyVro5Q0.w/scripts/ci/umbrales.txt	2026-10-13 06:29:32.973154017 +0000
++++ /dev/fd/63	2026-10-13 06:29:32.998321320 +0000
+@@ -12,6 +12,7 @@
+ .github/workflows/gates.yml e2e-m2c: timeout-minutes: 30
+ .github/workflows/gates.yml e2e-platform: timeout-minutes: 40
+ .github/workflows/gates.yml mutations: timeout-minutes: 60
++e2e/builder.spec.ts actionTimeout: 999_999 ×1
+ e2e/diag/signature-window.spec.ts .setTimeout(150_000) ×1
+ e2e/diag/signature-window.spec.ts timeout: 40_000 ×1
+ e2e/diag/warmup-trace.spec.ts .setTimeout(120_000) ×1
+politica-fallas: timeouts/timeout-minutes distintos de la foto — subirlos o bajarlos exige decisión y auditoría explícitas (regenerar con 'generar' en el mismo PR y citar la decisión)
+exit 1
+== bash scripts/ci/run.test.sh
+  ✓ 4.28 test.describe.only ( con espacio → rojo (AUDIT #75)
+  ✓ 4.28b test.only ('x', async () => {}); → rojo
+  ✓ 4.28b test["only"]('x', async () => {}); → rojo
+  ✓ 4.28b test. only('x', async () => {}); → rojo
+  ✓ 4.28b test.only → rojo
+  ✓ 4.28c test.skip ('x', async () => {}); → rojo
+  ✓ 4.28c testInfo["fixme"](); → rojo
+  ✓ 4.28c test.slow (); → rojo
+  ✓ 4.28d `.only` como propiedad (sin llamada) no es foco → OK
+  ✓ 4.29 --retries=0 --retries=2 en la misma línea → rojo (AUDIT #75)
+  ✓ 4.29b test.describe.configure({ retries: 0, mode: 'serial' }); test.describe.configure({ retries: 2 }); → rojo
+  ✓ 4.29b test.describe.configure({ "retries": 2 }); → rojo
+  ✓ 4.29b test.describe.configure({ retries : 2 }); → rojo
+  ✓ 4.29c retries 0 y 2 en la misma línea de la config raíz → rojo
+  ✓ 4.30 { timeout : 999_999 } (espacio antes de :) en una E2E → cambia la foto → rojo (Codex #75)
+  ✓ 4.30b timeout : N en la config raíz → cambia la foto → rojo
+  ✓ 4.30c timeout : N con el mismo valor → foto igual → OK
+  ✓ 4.31 limpio otra vez → OK
+run.test: 136 OK, 0 fallos
+== con politica-fallas.sh de cb6901f y los tests nuevos
+run.test: 116 OK, 20 fallos
+== scripts/ci/politica-fallas.sh check (repo real)
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+== foto sin cambios: politica-fallas.sh generar y diff contra la copia previa de umbrales.txt
+idéntica
+== bash -n scripts/ci/*.sh y git diff --check
+ok
+== node scripts/collab/progress.mjs check
+GATE progreso (P-02): manifiesto válido (33 entradas), docs/collab/PROGRESO.md al día
+== node scripts/acceptance/cli.mjs check
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día
