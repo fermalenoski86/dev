@@ -138,14 +138,12 @@ jobs:
 
   media:
     runs-on: ubuntu-24.04
-    timeout-minutes: 3
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       # P-04: los gates cortan antes del timeout-minutes y dejan cola + log (AUDIT #75)
       - name: Plazo de los gates (P-04)
         run: scripts/ci/plazo.sh
-      - name: FALLA PROVOCADA — gate que excede el plazo (se revierte)
-        run: scripts/ci/run.sh plazo-provocado bash scripts/ci/provocado-plazo.sh
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: sudo apt-get update -q && sudo apt-get install -yq ffmpeg && ffmpeg -version | head -1

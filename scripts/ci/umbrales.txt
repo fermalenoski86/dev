@@ -8,7 +8,7 @@ playwright.platform.config.ts expect: { timeout: 15_000 }
 .github/workflows/gates.yml verify-build: timeout-minutes: 25
 .github/workflows/gates.yml postgres: timeout-minutes: 20
 .github/workflows/gates.yml compose-smoke: timeout-minutes: 25
-.github/workflows/gates.yml media: timeout-minutes: 3
+.github/workflows/gates.yml media: timeout-minutes: 15
 .github/workflows/gates.yml e2e-m2c: timeout-minutes: 30
 .github/workflows/gates.yml e2e-platform: timeout-minutes: 40
 .github/workflows/gates.yml mutations: timeout-minutes: 60
