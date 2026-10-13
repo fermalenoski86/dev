@@ -3,39 +3,33 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude — completar cierre de **P-05** y abrir P-04.
+**Pelota en:** Claude (implementador) — **P-04** diagnóstico de fallas (BACKLOG §P-04, ajustes de #53).
 **En auditoría:** ninguno
-**Fase:** P-05 integrada en `main@4fd1f03`; después P-04 → P-03 → PoC P-06 (orden confirmado por Fer).
-**Estado:** ChatGPT publicó [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/69#issuecomment-6135785390) sobre `2fd28b9`; #69 fue squash-mergeada en `4fd1f03`. Sin hallazgos P0/P1/P2 bloqueantes.
+**Fase:** P-05 cerrada; P-04 arranca; después P-03 → PoC P-06 (orden confirmado por Fer). #73 (kit McDonald's) lo lleva la sesión de Claude con Fer bajo lock: los turnos horarios no lo tocan.
+**Estado:** P-05 cerrada del todo: `AUDIT: APROBADO` sobre `2fd28b9` ([#69](https://github.com/fermalenoski86/dev/pull/69#issuecomment-6135785390)), squash en `4fd1f03`, #70 cerrado, P-05 en `entregables.mjs` + `PROGRESO.md` regenerado (`835dd92`, `verificar-github` OK). PoC de `paralelo.yml` en `main`: corrió en los 3 push (4fd1f03, ce3bb09, 835dd92), re-evaluó #72 y #74 y publicó check `paralelo` OK sobre sus HEAD.
 
-## Verificación independiente cerrada
-- P1 de `7cb661a` resuelto: todo código del control se ejecuta desde `origin/main`; base/HEAD/número del PR son solo datos; doble `persist-credentials: false`; token limitado al paso que consulta/publica.
-- Carreras revisadas: segundo listado y conciliación; base no disponible sin aborto; revalidación final de main/fase aun si falla el segundo listado.
-- Focal: `paralelo.test.sh` 143/143 y `handoff.test.sh` 48/48; ambos también con `LC_ALL=C`; sintaxis, `node --check` y `git diff --check` verdes.
-- Local general: lint 0 errores (12 warnings preexistentes), typecheck verde, 828 tests aprobados (1 contrato S3 omitido por entorno), build verde.
-- CI exacta [38322931421](https://github.com/fermalenoski86/dev/actions/runs/38322931421): 7/7 verdes sobre `2fd28b9` — media, mutations, verify-build, e2e-m2c, compose-smoke, e2e-platform y postgres.
-
-## Próximo paso
-- Claude: cerrar #70; registrar P-05 en `entregables.mjs`, ejecutar `progress:generate` y la PoC controlada de `paralelo.yml` desde main.
-- Después: P-04 → P-03 → PoC P-06, sin confirmaciones rutinarias y respetando briefs/partes congeladas.
+## P-04 · plan (próximo turno de Claude)
+- Alcance (BACKLOG §P-04 + ajustes #53): (1) anotación por job con SHA, `ImageOS/ImageVersion`, versiones Node/pnpm/Chrome/ffmpeg/PostgreSQL y cola del error; (2) `test-results/` como artifact al fallar en todos los jobs; (3) clasificación obligatoria de fallas en el PR: regresión reproducible (2/2 = reproducibilidad, no causa raíz) · intermitente (issue `flaky`) · infraestructura · `causa no determinada (en investigación)`; (4) prohibido en `AGENTS.md`: `retries > 0`, subir timeouts, bajar umbrales o `skip` para pasar; ajustes solo por decisión y auditoría explícitas con prueba de que sigue detectando; (5) sanitizar logs/trazas/artifacts (cookies, tokens, env, datos comerciales).
+- Toca `scripts/ci/run.sh`, `gates.yml`, `AGENTS.md`: riesgo alto → auditoría formal de ChatGPT. Rama propia desde `main`, un PR; Codex una vez con el PR consolidado (política de eficiencia 2026-10-12).
+- Criterio: una falla provocada en cada job deja anotación con entorno y cola; `rg "retries:" playwright.config.ts` = 0; prueba de sanitización.
 
 ## Reglas
-- El aprobado corresponde exactamente a `2fd28b9`; P-05 quedó integrada por squash en `4fd1f03`.
-- Para la fase siguiente: Claude implementa en su rama/PR y ChatGPT audita el HEAD congelado antes del merge.
+- Para P-04: Claude implementa en su rama/PR y ChatGPT audita el HEAD congelado antes del merge; `En auditoría` se anota al entregar.
+- Codex: no por commit; agrupar correcciones y pedir con el PR consolidado; cada pedido de auditoría informa revisiones de Codex y rondas. Hoy Codex agotó cuota dos veces (dato para PoC P-06).
 
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-05 trabajo paralelo controlado | PR #69 / #70 | integrado; pendiente cierre documental/#70 |
-| P-04 → P-03 | #53 | siguientes, en serie |
-| Agent Bridge (P-06) | #54 | brief `docs/briefs/P06_BRIDGE_POC.md`; PoC después de P-03 |
-| CS-0 Creative Studio | #59 | autorizado; sigue en roadmap |
+| P-04 diagnóstico de fallas | BACKLOG §P-04 / #53 | arranca; sin PR aún |
+| P-03 → PoC P-06 | #53 / #54 | siguientes, en serie |
+| Kit McDonald's | #73 | lock sesión Claude+Fer (00:51 UTC); entrega vie 16/10 |
+| CS-0 Creative Studio | #59 / PR #74 | brief en PR; paralelo OK |
 | E2E intermitente :17 | #26 | observabilidad #40/#41; sin reproducción estable |
 
 ## Pendiente de Fer
-- #43: detalle de campaña para INTERNAL_APPROVER.
+- #43: detalle de campaña para INTERNAL_APPROVER (PR #72 abierto).
 - Tags opcionales bloqueados por proxy: bl31, bl07, bl08, f3a, f3a-ui.
-- `main`: ruleset activo sin borrado/force-push; required checks + rama al día después de adaptar escritores directos.
+- `main`: ruleset activo sin borrado/force-push; required checks (`paralelo` ya publica sobre el HEAD) + rama al día después de adaptar escritores directos.
 - PoC P-06: entorno Codex y `CLAUDE_CODE_OAUTH_TOKEN` (ver brief).
 
 ## Referencias

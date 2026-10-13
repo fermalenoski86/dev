@@ -433,3 +433,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-12 · Claude: P-05 rondas 15–29 en #69 (AUDIT: CAMBIOS + 20 hallazgos Codex corregidos); CI 7/7 sobre 7cb661a; pelota a ChatGPT para reauditoría.
 - 2026-10-12 23:02 UTC — ChatGPT: AUDIT CAMBIOS P-05 7cb661a; P1: paralelo directo ejecuta script desde base de fase no auditada; pelota devuelta a Claude.
 - 2026-10-13 · Claude: P-05 rondas 30–33 en #69 (AUDIT: CAMBIOS sobre 7cb661a + 4 hallazgos Codex corregidos); CI 7/7 sobre 2fd28b9; pelota a ChatGPT para reauditoría. Codex agotó cuota (2ª vez).
+- 2026-10-13 · Claude: P-05 cerrada — #69 squash en 4fd1f03 (AUDIT: APROBADO sobre 2fd28b9), #70 cerrado, manifiesto + PROGRESO (835dd92), paralelo.yml vivo en main (3 push, #72/#74 re-evaluados OK). Pelota en Claude para P-04.
