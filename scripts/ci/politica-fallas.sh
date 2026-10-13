@@ -38,13 +38,13 @@ esac
 fallos=0
 # 1. retries: 0
 for f in $PW; do
-  MAL=$(grep -nE '^\s*retries:' "$f" | grep -vE 'retries:\s*0\s*,?' | sed "s#^#politica-fallas: $f:#;s/\$/ — retries tiene que ser 0/")
+  MAL=$(grep -nE '^\s*retries:' "$f" | grep -vE 'retries:[[:space:]]*0[[:space:]]*,?[[:space:]]*(//.*)?$' | sed "s#^#politica-fallas: $f:#;s/\$/ — retries tiene que ser 0/")
   [ -z "$MAL" ] || { echo "$MAL"; fallos=1; }
 done
 # 1b. retries fuera de las configs raíz: por suite (test.describe.configure({ retries: N })) en las
 #     E2E de gate y --retries en el workflow o en scripts de package.json: Playwright respeta ambos
-MAL=$( { grep -rnE '\bretries[[:space:]]*:' --include='*.ts' e2e e2e-platform 2>/dev/null | grep -v node_modules | grep -vE '\bretries[[:space:]]*:[[:space:]]*0\b'
-         grep -nE -- '--retries\b' .github/workflows/*.yml package.json 2>/dev/null | grep -vE -- '--retries[= ]0\b'; } \
+MAL=$( { grep -rnE '\bretries[[:space:]]*:' --include='*.ts' e2e e2e-platform 2>/dev/null | grep -v node_modules | grep -vE '\bretries[[:space:]]*:[[:space:]]*0[[:space:]]*(,|\}|//|$)'
+         grep -nE -- '--retries\b' .github/workflows/*.yml package.json 2>/dev/null | grep -vE -- '--retries[= ]0([[:space:]"'"'"';]|$)'; } \
        | sed 's/^/politica-fallas: retries fuera de las configs — /;s/$/ — retries tiene que ser 0/')
 [ -z "$MAL" ] || { echo "$MAL"; fallos=1; }
 # 2. timeouts y timeout-minutes = foto
@@ -74,10 +74,12 @@ NOLIT=$( { for f in $PW; do echo "$f"; done; for d in e2e e2e-platform; do [ -d 
     }
   }' "$f"; done | sed 's/^/politica-fallas: timeout no literal — /;s/$/ — tiene que ser un número literal (la foto no ve expresiones)/')
 [ -z "$NOLIT" ] || { echo "$NOLIT"; fallos=1; }
-# 3. .only y skips en E2E
+# 3. .only y skips en E2E. Skips/slow/fail por cualquier receptor (test, describe, testInfo,
+#    test.info(), un alias…): `.slow()` triplica el timeout sin tocar la foto y `.fail()` vuelve
+#    verde un test roto (Codex #75 sobre ecb774f).
 ONLY=$(grep -rnE '\.only\(' --include='*.test.ts' --include='*.spec.ts' --include='*.test.mjs' --include='*.test.js' apps packages scripts e2e e2e-platform 2>/dev/null | grep -v node_modules | sed 's/^/politica-fallas: .only — /')
 [ -z "$ONLY" ] || { echo "$ONLY"; fallos=1; }
-SKIP=$(grep -rnE '\b(test|it|describe)\.(skip|fixme)\(' e2e e2e-platform 2>/dev/null | grep -v node_modules | sed 's/^/politica-fallas: skip en E2E de gate — /')
+SKIP=$(grep -rnE '\.(skip|fixme|slow|fail)[[:space:]]*\(' e2e e2e-platform 2>/dev/null | grep -v node_modules | sed 's/^/politica-fallas: skip\/fixme\/slow\/fail en E2E de gate — /')
 [ -z "$SKIP" ] || { echo "$SKIP"; fallos=1; }
 if [ "$fallos" = 0 ]; then echo "politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)"; exit 0; fi
 exit 1

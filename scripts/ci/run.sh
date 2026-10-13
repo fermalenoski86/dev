@@ -27,9 +27,14 @@ echo "::stop-commands::$FRENO"
 RC=${PIPESTATUS[0]}
 echo "::$FRENO::"
 POR_PLAZO=
-if [ -n "$PLAZO" ] && { [ "$RC" = 124 ] || [ "$RC" = 137 ]; }; then
+# 124/137 cuentan como plazo solo si el plazo efectivamente venció: un SIGKILL externo (OOM) o un
+# 124 propio del comando con tiempo de sobra no se rotula TIMEOUT (Codex #75 sobre ecb774f)
+if [ -n "$PLAZO" ] && { [ "$RC" = 124 ] || [ "$RC" = 137 ]; } && [ "$(date +%s)" -ge "$P04_PLAZO_FIN" ]; then
   POR_PLAZO=", plazo del job"
   echo "run.sh: TIMEOUT — el gate superó el plazo del job (${PLAZO}s; timeout-minutes menos el margen de plazo.sh) y se cortó (exit $RC)" >> "$LOG"
+elif [ "$RC" = 137 ]; then
+  POR_PLAZO=", SIGKILL"
+  echo "run.sh: SIGKILL — el gate murió por SIGKILL antes del plazo del job (OOM u otra señal externa; exit 137)" >> "$LOG"
 fi
 limpio() { sed 's/\x1b\[[0-9;]*[A-Za-z]//g' "$LOG" | "$AQUI/sanitizar.sh"; }
 codifica() { printf '%s' "$1" | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g'; }

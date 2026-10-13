@@ -204,3 +204,142 @@ exit=0
 == node scripts/acceptance/cli.mjs check   (lo que corre `pnpm acceptance:check`)
 GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día
 exit=0
+
+######## Codex sobre ecb774f (4 × P2) — salida real, 2026-10-13T04:31:07Z
+== bash scripts/ci/run.test.sh
+1. entorno.sh
+  ✓ 1.1 exit 0 y una sola línea
+  ✓ 1.2 lleva sha, head, ImageOS/ImageVersion, node, pnpm, chrome, ffmpeg, postgres, nproc, loadavg
+  ✓ 1.3 sha = git rev-parse HEAD
+  ✓ 1.4 head toma P04_HEAD_SHA (HEAD auditado en pull_request)
+  ✓ 1.5 ImageOS/ImageVersion/run/job del runner
+  ✓ 1.6 herramienta ausente → n/d, sin fallar
+  ✓ 1.7 --notice publica ::notice con título
+  ✓ 1.8 --error publica ::error (falla fuera de un gate) y exit 0
+  ✓ 1.9 --error deja $P04_LOGS/entorno.txt (artifact aunque ningún gate haya corrido)
+  ✓ 1.10 versión de Chrome sin espacio final (la línea no queda con doble espacio)
+2. sanitizar.sh
+  ✓ 2.1 cabecera Authorization / Set-Cookie / Cookie oculta
+  ✓ 2.2 variables *_TOKEN / *_SECRET_* / password / apiKey ocultas (shell, export y JSON)
+  ✓ 2.3 tokens de GitHub, AWS y JWT ocultos
+  ✓ 2.4 credenciales en URL ocultas, host visible
+  ✓ 2.5 clave privada reemplazada entera
+  ✓ 2.6 líneas de tests, timeouts y aserciones quedan legibles
+  ✓ 2.7 'token: expirado' se tapa (prefiere ocultar de más)
+  ✓ 2.9 valores entre comillas con espacios, comas o ; se tapan enteros (también sin cierre)
+  ✓ 2.8 sin secretos no cambia nada
+  ✓ 2.10 cualquier nombre con key (ENCRYPTION_KEY, SIGNING_KEY, SSH_KEY, key) se tapa
+  ✓ 2.11 comillas escapadas (dobles y simples) no cortan el valor: nada de DEF-SECRET (AUDIT #75)
+3. run.sh
+  ✓ 3.1 verde: exit 0, ::notice con entorno y resumen, sin ::error
+  ✓ 3.2 verde: no deja la marca p04-anotado
+  ✓ 3.3 log sanitizado en $P04_LOGS/<título>.log con la línea de entorno
+  ✓ 3.4 la salida cruda sigue yendo al log del job (tee)
+  ✓ 3.5 rojo: propaga el exit (3) y publica ::error con título 'falló (exit 3)'
+  ✓ 3.6 rojo: la anotación empieza con entorno y termina con la cola (sin líneas vacías)
+  ✓ 3.7 rojo: secreto oculto en anotación y log; % codificado
+  ✓ 3.8 rojo: deja la marca p04-anotado (el paso final no duplica el entorno)
+  ✓ 3.9 rojo: el título se convierte en nombre de archivo seguro
+  ✓ 3.10 rojo: cola = últimas 60 líneas
+  ✓ 3.12 comandos de workflow frenados alrededor de la salida cruda (token aleatorio) y solo nuestras anotaciones después
+  ✓ 3.13 el token del freno cambia en cada corrida
+  ✓ 3.11 comando inexistente: rojo con exit ≠ 0 y anotación
+  ✓ 3.14 plazo: el gate se corta al plazo (exit 124, < 20 s, hijos incluidos) y no espera al timeout del job
+  ✓ 3.15 plazo: ::error con entorno, cola sanitizada y motivo; marca p04-anotado
+  ✓ 3.16 plazo: log sanitizado completo en $P04_LOGS (artifact) con la cola y el motivo
+  ✓ 3.17 plazo vencido antes de empezar: no corre el comando, exit 124 y anotación
+  ✓ 3.18 con plazo amplio el gate verde no cambia (exit 0, sin marca de plazo)
+  ✓ 3.19 plazo.sh: timeout-minutes del job − 180 s en GITHUB_ENV
+  ✓ 3.20 plazo.sh: margen = un cuarto del timeout si es menor que 180 s; job sin timeout → error
+  ✓ 3.21 SIGKILL externo con plazo de sobra (OOM): exit 137, rotulado SIGKILL, no TIMEOUT (Codex #75)
+  ✓ 3.22 exit 124 propio del comando con plazo de sobra: no se rotula plazo (Codex #75)
+4. politica-fallas.sh
+  ✓ 4.1 sin foto → rojo
+  ✓ 4.2 foto generada = la del repo (umbrales.txt al día)
+  ✓ 4.3 con foto y configs intactas → OK (it.skip con motivo en unit test se permite)
+  ✓ 4.4 retries: 1 → rojo, nombra archivo y regla
+  ✓ 4.5 timeout subido sin regenerar la foto → rojo con diff y aviso de decisión
+  ✓ 4.6 timeout bajado también es un cambio de foto → rojo
+  ✓ 4.6b espacios/orden no cambian la foto; una línea nueva arriba tampoco
+  ✓ 4.7 timeout-minutes de gates.yml subido → rojo
+  ✓ 4.8 regenerar la foto en el mismo PR → OK (queda a la vista del auditor)
+  ✓ 4.9 .only( en un spec → rojo
+  ✓ 4.10 test.skip( en e2e/ (gate directo) → rojo
+  ✓ 4.11 test.fixme( en e2e-platform/ → rojo
+  ✓ 4.12 limpio otra vez → OK
+  ✓ 4.14 timeout por test (test.setTimeout) subido en un spec → rojo
+  ✓ 4.15 timeout de aserción ({ timeout: N }) subido en un spec → rojo
+  ✓ 4.16 .only( en un test de scripts/ (lo corre vitest) → rojo
+  ✓ 4.17 limpio otra vez → OK
+  ✓ 4.18 retries por suite (describe.configure) en una E2E de gate → rojo
+  ✓ 4.19 retries: 0 por suite se permite
+  ✓ 4.20 --retries=2 en el workflow → rojo
+  ✓ 4.21 limpio otra vez → OK
+  ✓ 4.21b retries: 0 || 2 (prefijo 0, evalúa ≠ 0) por suite → rojo (Codex #75)
+  ✓ 4.21b retries: 0 ? 0 : 2 (prefijo 0, evalúa ≠ 0) por suite → rojo (Codex #75)
+  ✓ 4.21b retries: 0+2 (prefijo 0, evalúa ≠ 0) por suite → rojo (Codex #75)
+  ✓ 4.21c retries: 0 || 2 en la config raíz → rojo
+  ✓ 4.21d --retries=0<expresión> en el workflow → rojo
+  ✓ 4.21e testInfo.skip(); en una E2E de gate → rojo (Codex #75)
+  ✓ 4.21e test.info().skip(true, 'x'); en una E2E de gate → rojo (Codex #75)
+  ✓ 4.21e test.slow(); en una E2E de gate → rojo (Codex #75)
+  ✓ 4.21e testInfo.slow(); en una E2E de gate → rojo (Codex #75)
+  ✓ 4.21e test.fail(); en una E2E de gate → rojo (Codex #75)
+  ✓ 4.21e test.describe.skip('x', () => {}); en una E2E de gate → rojo (Codex #75)
+  ✓ 4.21f limpio otra vez → OK
+  ✓ 4.22 timeout como expresión ({ timeout: 40_000 * 10 }) → rojo aunque la foto no cambie (AUDIT #75)
+  ✓ 4.23 test.setTimeout(expresión) → rojo
+  ✓ 4.24 valor en la línea siguiente (config) → rojo
+  ✓ 4.25 actionTimeout con constante en una E2E → rojo
+  ✓ 4.26 actionTimeout literal nuevo en una config → cambia la foto → rojo
+  ✓ 4.27 limpio otra vez → OK
+  ✓ 4.13 el repo real cumple la política (retries 0, foto al día, sin .only)
+5. gates.yml (estático)
+  ✓ 5.1 siete jobs
+  ✓ 5.2 verify-build: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 verify-build: upload-artifact if: failure() || cancelled() con test-results/ y retención
+  ✓ 5.11 verify-build: primer paso después del checkout = plazo.sh (AUDIT #75)
+  ✓ 5.4 verify-build: al menos un gate pasa por scripts/ci/run.sh
+  ✓ 5.2 postgres: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 postgres: upload-artifact if: failure() || cancelled() con test-results/ y retención
+  ✓ 5.11 postgres: primer paso después del checkout = plazo.sh (AUDIT #75)
+  ✓ 5.4 postgres: al menos un gate pasa por scripts/ci/run.sh
+  ✓ 5.2 compose-smoke: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 compose-smoke: upload-artifact if: failure() || cancelled() con test-results/ y retención
+  ✓ 5.11 compose-smoke: primer paso después del checkout = plazo.sh (AUDIT #75)
+  ✓ 5.4 compose-smoke: al menos un gate pasa por scripts/ci/run.sh
+  ✓ 5.2 media: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 media: upload-artifact if: failure() || cancelled() con test-results/ y retención
+  ✓ 5.11 media: primer paso después del checkout = plazo.sh (AUDIT #75)
+  ✓ 5.4 media: al menos un gate pasa por scripts/ci/run.sh
+  ✓ 5.2 e2e-m2c: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 e2e-m2c: upload-artifact if: failure() || cancelled() con test-results/ y retención
+  ✓ 5.11 e2e-m2c: primer paso después del checkout = plazo.sh (AUDIT #75)
+  ✓ 5.4 e2e-m2c: al menos un gate pasa por scripts/ci/run.sh
+  ✓ 5.2 e2e-platform: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 e2e-platform: upload-artifact if: failure() || cancelled() con test-results/ y retención
+  ✓ 5.11 e2e-platform: primer paso después del checkout = plazo.sh (AUDIT #75)
+  ✓ 5.4 e2e-platform: al menos un gate pasa por scripts/ci/run.sh
+  ✓ 5.2 mutations: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado
+  ✓ 5.3 mutations: upload-artifact if: failure() || cancelled() con test-results/ y retención
+  ✓ 5.11 mutations: primer paso después del checkout = plazo.sh (AUDIT #75)
+  ✓ 5.4 mutations: al menos un gate pasa por scripts/ci/run.sh
+  ✓ 5.5 P04_HEAD_SHA en el env del workflow (HEAD auditado, no el merge sintético)
+  ✓ 5.6 gates.yml no usa secrets.* (los artifacts no pueden contener secretos reales)
+  ✓ 5.7 verify-build corre run.test.sh y politica-fallas.sh check
+  ✓ 5.8 e2e-m2c publica el entorno antes del gate (entorno.sh)
+  ✓ 5.10 e2e-platform sube test-results/ entero (incluye e2e-platform-results.json)
+  ✓ 5.9 retries: 0 en los dos playwright configs (acceptación P-04)
+
+run.test: 118 OK, 0 fallos
+== con los scripts de ecb774f y los tests nuevos: 104 OK, 14 fallos (ver P04.md)
+== scripts/ci/politica-fallas.sh check
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+== SIGKILL externo con plazo de sobra (reproducción de Codex)
+::error title=oom falló (exit 137%2C SIGKILL)::entorno: sha
+== bash -n scripts/ci/*.sh y git diff --check
+ok
+== node scripts/collab/progress.mjs check
+GATE progreso (P-02): manifiesto válido (33 entradas), docs/collab/PROGRESO.md al día
+== node scripts/acceptance/cli.mjs check
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día

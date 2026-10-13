@@ -81,6 +81,8 @@ check "3.18 con plazo amplio el gate verde no cambia (exit 0, sin marca de plazo
 check "3.19 plazo.sh: timeout-minutes del job − 180 s en GITHUB_ENV" 'GE=$T/genv; : > "$GE"; A=$(date +%s); GITHUB_JOB=media GITHUB_ENV=$GE "$AQUI/plazo.sh" >/dev/null && F=$(sed -n "s/^P04_PLAZO_FIN=//p" "$GE") && M=$(sed -nE "/^  media:$/,/timeout-minutes/s/.*timeout-minutes: ([0-9]+).*/\1/p" "$RAIZ/.github/workflows/gates.yml") && D=$(( F - A - M * 60 + 180 )) && [ "$D" -ge 0 ] && [ "$D" -le 2 ]'
 printf 'jobs:\n  corto:\n    timeout-minutes: 3\n' > "$T/wf.yml"
 check "3.20 plazo.sh: margen = un cuarto del timeout si es menor que 180 s; job sin timeout → error" 'GE=$T/genv; : > "$GE"; A=$(date +%s); P04_WORKFLOW=$T/wf.yml GITHUB_JOB=corto GITHUB_ENV=$GE "$AQUI/plazo.sh" >/dev/null && F=$(sed -n "s/^P04_PLAZO_FIN=//p" "$GE") && D=$(( F - A - 135 )) && [ "$D" -ge 0 ] && [ "$D" -le 2 ] && ! P04_WORKFLOW=$T/wf.yml GITHUB_JOB=otro GITHUB_ENV=$GE "$AQUI/plazo.sh" >/dev/null'
+check "3.21 SIGKILL externo con plazo de sobra (OOM): exit 137, rotulado SIGKILL, no TIMEOUT (Codex #75)" 'rm -f "$RUNNER_TEMP/p04-anotado"; O=$(P04_PLAZO_FIN=$(( $(date +%s) + 600 )) "$AQUI/run.sh" "oom" bash -c "echo línea; kill -9 \$\$" 2>&1); [ $? = 137 ] && printf "%s" "$O" | grep -q "^::error title=oom falló (exit 137%2C SIGKILL)::" && ! printf "%s" "$O" | grep -q "TIMEOUT\|%2C plazo del job" && tail -1 "$P04_LOGS/oom.log" | grep -q "^run.sh: SIGKILL"'
+check "3.22 exit 124 propio del comando con plazo de sobra: no se rotula plazo (Codex #75)" 'O=$(P04_PLAZO_FIN=$(( $(date +%s) + 600 )) "$AQUI/run.sh" "propio" bash -c "exit 124" 2>&1); [ $? = 124 ] && printf "%s" "$O" | grep -q "^::error title=propio falló (exit 124)::" && ! printf "%s" "$O" | grep -q "TIMEOUT"'
 
 echo "4. politica-fallas.sh"
 R=$T/repo; mkdir -p "$R/scripts/ci" "$R/.github/workflows" "$R/e2e" "$R/e2e-platform" "$R/packages/x/src"
@@ -108,7 +110,7 @@ check "4.8 regenerar la foto en el mismo PR → OK (queda a la vista del auditor
 echo "test.only('x', async () => {});" > "$R/e2e/a.spec.ts"
 check "4.9 .only( en un spec → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "\.only — e2e/a.spec.ts"'
 echo "test.skip('x', async () => {});" > "$R/e2e/a.spec.ts"
-check "4.10 test.skip( en e2e/ (gate directo) → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "skip en E2E de gate — e2e/a.spec.ts"'
+check "4.10 test.skip( en e2e/ (gate directo) → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "skip/fixme/slow/fail en E2E de gate — e2e/a.spec.ts"'
 echo "test.fixme('x', async () => {});" > "$R/e2e-platform/b.spec.ts"; rm "$R/e2e/a.spec.ts"
 check "4.11 test.fixme( en e2e-platform/ → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "e2e-platform/b.spec.ts"'
 rm "$R/e2e-platform/b.spec.ts"
@@ -130,6 +132,11 @@ rm "$R/e2e/c.spec.ts"; sed -i 's#playwright test -c playwright.config.ts#playwri
 check "4.20 --retries=2 en el workflow → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "retries fuera de las configs — .github/workflows/gates.yml:"'
 sed -i 's#--retries=2 ##' "$R/.github/workflows/gates.yml"
 check "4.21 limpio otra vez → OK" 'PF check | grep -q "^politica-fallas: OK"'
+for v in "0 || 2" "0 ? 0 : 2" "0+2"; do echo "test.describe.configure({ retries: $v });" > "$R/e2e/c.spec.ts"; check "4.21b retries: $v (prefijo 0, evalúa ≠ 0) por suite → rojo (Codex #75)" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "retries fuera de las configs — e2e/c.spec.ts:1:"'; done; rm "$R/e2e/c.spec.ts"
+sed -i 's/retries: 0,/retries: 0 || 2,/' "$R/playwright.config.ts"; check "4.21c retries: 0 || 2 en la config raíz → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "playwright.config.ts:.*retries tiene que ser 0"'; sed -i 's/retries: 0 || 2,/retries: 0,/' "$R/playwright.config.ts"
+sed -i 's#playwright test -c playwright.config.ts#playwright test --retries=0$((2)) -c playwright.config.ts#' "$R/.github/workflows/gates.yml"; check "4.21d --retries=0<expresión> en el workflow → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "retries fuera de las configs — .github/workflows/gates.yml:"'; sed -i 's#--retries=0$((2)) ##' "$R/.github/workflows/gates.yml"
+for c in "testInfo.skip();" "test.info().skip(true, 'x');" "test.slow();" "testInfo.slow();" "test.fail();" "test.describe.skip('x', () => {});"; do printf "test('x', async ({}, testInfo) => { %s });\n" "$c" > "$R/e2e/d.spec.ts"; check "4.21e $c en una E2E de gate → rojo (Codex #75)" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "skip/fixme/slow/fail en E2E de gate — e2e/d.spec.ts"'; done; rm "$R/e2e/d.spec.ts"
+check "4.21f limpio otra vez → OK" 'PF check | grep -q "^politica-fallas: OK"'
 sed -i '0,/{ timeout: 40_000 }/s//{ timeout: 40_000 * 10 }/' "$R/e2e/experience.spec.ts"
 check "4.22 timeout como expresión ({ timeout: 40_000 * 10 }) → rojo aunque la foto no cambie (AUDIT #75)" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "timeout no literal — e2e/experience.spec.ts:" && ! printf "%s" "$O" | grep -q "^[+-]e2e"'
 cp "$RAIZ/e2e/experience.spec.ts" "$R/e2e/"; sed -i '0,/setTimeout(120_000)/s//setTimeout(120 * 1000)/' "$R/e2e/experience.spec.ts"
