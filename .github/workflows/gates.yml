@@ -15,6 +15,8 @@ concurrency:
 env:
   PNPM_VERSION: 12.5.1
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # P-04: en pull_request el checkout es el merge sintético; el HEAD auditado va en cada anotación
+  P04_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 jobs:
   verify-build:
     runs-on: ubuntu-24.04
@@ -27,27 +29,43 @@ jobs:
       - run: scripts/ci/run.sh verify pnpm verify
       # BL-30: todo `next build` de platform-web exige la API por https (no hay bandera opt-in).
       # Este build se descarta: la URL es la de los hosts de test, no un despliegue.
-      - run: pnpm build
+      - run: scripts/ci/run.sh build pnpm build
         env: { NEXT_PUBLIC_TRUST_API_URL: 'https://api.trust.test:8443' }
       # E1 · BL-11/§47: el contrato y el inventario versionados = regenerados
       # Memoria de la colaboración: HANDOFF es una foto del presente, no un historial
       # P-01: HANDOFF ≤ 60 líneas, exactamente una pelota válida, sin marcadores
       # de conflicto; y el script de escritura pasa su prueba de dos escritores.
       - name: HANDOFF.md válido (P-01)
-        run: scripts/collab/handoff.sh validar docs/collab/HANDOFF.md
+        run: scripts/ci/run.sh handoff-validar scripts/collab/handoff.sh validar docs/collab/HANDOFF.md
       - name: handoff.sh — dos escritores sobre remoto bare
-        run: bash scripts/collab/handoff.test.sh
+        run: scripts/ci/run.sh handoff-test bash scripts/collab/handoff.test.sh
       # P-05: el control del trabajo paralelo pasa su prueba sobre remoto bare
       - name: paralelo.sh — laterales, rama en auditoría y HANDOFF sobre remoto bare
-        run: bash scripts/collab/paralelo.test.sh
+        run: scripts/ci/run.sh paralelo-test bash scripts/collab/paralelo.test.sh
+      # P-04: anotaciones con entorno, sanitización, artifacts y política de fallas pasan su prueba
+      - name: scripts/ci — run.sh, entorno, sanitizar, política de fallas
+        run: scripts/ci/run.sh ci-test bash scripts/ci/run.test.sh
+      - name: Política de fallas (P-04) — retries 0, umbrales = foto, sin .only ni skips en E2E
+        run: scripts/ci/run.sh politica-fallas scripts/ci/politica-fallas.sh check
       - name: OpenAPI y DELIVERY regenerados sin diff
-        run: pnpm docs:contract && git diff --exit-code docs/platform/openapi.json docs/platform/DELIVERY.md
+        run: scripts/ci/run.sh contrato bash -c 'pnpm docs:contract && git diff --exit-code docs/platform/openapi.json docs/platform/DELIVERY.md'
       # E2 · BL-23: la matriz de §48 se genera de los tags [§48.N]; puntos sin test/estado o doc viejo → rojo
       - name: Matriz de aceptación §48 al día
-        run: pnpm acceptance:check
+        run: scripts/ci/run.sh acceptance-matriz pnpm acceptance:check
       # P-02: PROGRESO.md se genera del manifiesto de entregables (sin red); manifiesto inválido o doc viejo → rojo
       - name: PROGRESO.md al día (P-02)
-        run: pnpm progress:check
+        run: scripts/ci/run.sh progreso pnpm progress:check
+      # P-04: la falla fuera de un gate (setup) igual deja el entorno anotado; test-results/ sube siempre que falla
+      - name: Entorno (falla fuera de un gate)
+        if: failure()
+        run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "verify-build: falló fuera de un gate (ver el paso rojo)"'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: verify-build-${{ github.sha }}-${{ github.run_attempt }}
+          path: test-results/
+          retention-days: 14
+          if-no-files-found: ignore
 
   # P-05: el chequeo de trabajo paralelo corre en .github/workflows/paralelo.yml con
   # pull_request_target, desde la revisión BASE: no desde el checkout del PR (Codex, P1).
@@ -70,6 +88,17 @@ jobs:
       # E2 · BL-23: cada test etiquetado [§48.N] tiene que haber PASADO en esta corrida (un skip no cubre)
       - run: scripts/ci/run.sh acceptance pnpm acceptance:check --results platform-results.json
       - run: scripts/ci/run.sh bootstrap bash packages/platform-db/scripts/bootstrap-smoke.sh
+      # P-04: la falla fuera de un gate (setup) igual deja el entorno anotado; test-results/ sube siempre que falla
+      - name: Entorno (falla fuera de un gate)
+        if: failure()
+        run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "postgres: falló fuera de un gate (ver el paso rojo)"'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: postgres-${{ github.sha }}-${{ github.run_attempt }}
+          path: test-results/
+          retention-days: 14
+          if-no-files-found: ignore
 
   # E1 · §35: `docker compose up` reproducible, imágenes por digest y contrato S3 contra SeaweedFS (#22)
   compose-smoke:
@@ -85,6 +114,17 @@ jobs:
       - name: logs del compose
         if: always()
         run: cat compose-smoke.log 2>/dev/null | tail -200 || true
+      # P-04: la falla fuera de un gate (setup) igual deja el entorno anotado; test-results/ sube siempre que falla
+      - name: Entorno (falla fuera de un gate)
+        if: failure()
+        run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "compose-smoke: falló fuera de un gate (ver el paso rojo)"'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: compose-smoke-${{ github.sha }}-${{ github.run_attempt }}
+          path: test-results/
+          retention-days: 14
+          if-no-files-found: ignore
 
   media:
     runs-on: ubuntu-24.04
@@ -96,6 +136,17 @@ jobs:
       - run: sudo apt-get update -q && sudo apt-get install -yq ffmpeg && ffmpeg -version | head -1
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
       - run: scripts/ci/run.sh media npx vitest run -c vitest.media.config.ts
+      # P-04: la falla fuera de un gate (setup) igual deja el entorno anotado; test-results/ sube siempre que falla
+      - name: Entorno (falla fuera de un gate)
+        if: failure()
+        run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "media: falló fuera de un gate (ver el paso rojo)"'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: media-${{ github.sha }}-${{ github.run_attempt }}
+          path: test-results/
+          retention-days: 14
+          if-no-files-found: ignore
 
   e2e-m2c:
     runs-on: ubuntu-24.04
@@ -107,7 +158,7 @@ jobs:
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
       # M2C no usa platform-web (y su `next build` exige NEXT_PUBLIC_TRUST_API_URL, BL-30): se excluye
       # para no cambiar ni una variable del build de apps/control congelado.
-      - run: pnpm -r --filter '!@trust/platform-web' build
+      - run: scripts/ci/run.sh build pnpm -r --filter '!@trust/platform-web' build
       # El Chromium que baja Playwright no trae H.264: los MP4 de la experiencia
       # no cargan y la pantalla queda en LOADING. Se usa el Google Chrome que ya
       # viene en el runner (con codecs propietarios) vía TRUST_CHROMIUM_PATH.
@@ -116,21 +167,23 @@ jobs:
           npm i --no-save --prefix /tmp/pw @playwright/test@1.56.1
           /tmp/pw/node_modules/.bin/playwright install-deps chromium
           google-chrome --version
-      # Issue #26 / BL-09: versiones y entorno para correlacionar fallas intermitentes
+      # Issue #26 / BL-09 / P-04: versiones y entorno para correlacionar fallas intermitentes
       - name: Entorno del runner
-        run: |
-          echo "tree=$(git write-tree) ImageOS=$ImageOS ImageVersion=$ImageVersion nproc=$(nproc)"
-          cat /proc/loadavg
+        run: scripts/ci/entorno.sh
       - run: scripts/ci/run.sh e2e-m2c /tmp/pw/node_modules/.bin/playwright test -c playwright.config.ts e2e/experience.spec.ts e2e/builder.spec.ts --reporter=line
         env: { NODE_PATH: /tmp/pw/node_modules, TRUST_CHROMIUM_PATH: /usr/bin/google-chrome }
       # Issue #26 / BL-09: el trace ya se retiene al fallar (playwright.config.ts);
       # sin esto se tira. El job sigue en rojo: upload-artifact no cambia el exit.
+      - name: Entorno (falla fuera de un gate)
+        if: failure()
+        run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "e2e-m2c: falló fuera de un gate (ver el paso rojo)"'
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: e2e-m2c-${{ github.sha }}-${{ github.run_attempt }}
           path: test-results/
           retention-days: 30
+          if-no-files-found: ignore
 
   # E3c · E2E de plataforma (§41, §47; ADR-063): hosts HTTPS distintos
   # (web/control/api.trust.test → 127.0.0.1) con un terminador TLS de test,
@@ -192,14 +245,20 @@ jobs:
           path: e2e-platform-evidence/
           retention-days: 90
           if-no-files-found: error
+      - name: Entorno (falla fuera de un gate)
+        if: failure()
+        run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "e2e-platform: falló fuera de un gate (ver el paso rojo)"'
+      # P-04: las trazas de Playwright (zip) no se reescriben: solo contienen sesiones de la instancia
+      # de test que muere con el runner; test-results/ci/ lleva los logs de los gates ya sanitizados
       - name: trazas de fallos
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-platform-traces
+          name: e2e-platform-traces-${{ github.sha }}-${{ github.run_attempt }}
           path: |
             test-results/e2e-platform/
             test-results/e2e-platform-logs/
+            test-results/ci/
           retention-days: 14
           if-no-files-found: ignore
 
@@ -217,7 +276,18 @@ jobs:
           sudo systemctl stop postgresql || true
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
       - run: bash scripts/dev/pg-up.sh
-      - run: python3 scripts/mutation-check.py --autoprueba
+      - run: scripts/ci/run.sh autoprueba python3 scripts/mutation-check.py --autoprueba
       - run: scripts/ci/run.sh mutaciones python3 scripts/mutation-check.py
       - name: el árbol queda limpio
-        run: git diff --exit-code
+        run: scripts/ci/run.sh arbol-limpio git diff --exit-code
+      # P-04: la falla fuera de un gate (setup) igual deja el entorno anotado; test-results/ sube siempre que falla
+      - name: Entorno (falla fuera de un gate)
+        if: failure()
+        run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "mutations: falló fuera de un gate (ver el paso rojo)"'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: mutations-${{ github.sha }}-${{ github.run_attempt }}
+          path: test-results/
+          retention-days: 14
+          if-no-files-found: ignore
