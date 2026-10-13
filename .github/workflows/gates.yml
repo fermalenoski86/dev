@@ -26,6 +26,10 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
+      # P-04 · FALLA PROVOCADA (commit temporal, se revierte antes del SHA final): prueba que la
+      # anotación lleva entorno + cola sanitizada y que test-results/ sube como artifact
+      - run: |
+          scripts/ci/run.sh "verify-build (falla provocada P-04)" bash -c 'echo "Tests  1 failed"; echo "GITHUB_TOKEN=ghp_falso1234567890abcdefghijklmnop"; echo "Set-Cookie: __Host-trust_session=falsa; Path=/"; echo "FALLA PROVOCADA P-04: no es un bug"; exit 1'
       - run: scripts/ci/run.sh verify pnpm verify
       # BL-30: todo `next build` de platform-web exige la API por https (no hay bandera opt-in).
       # Este build se descarta: la URL es la de los hosts de test, no un despliegue.
@@ -84,6 +88,10 @@ jobs:
           sudo systemctl stop postgresql || true
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
       - run: bash scripts/dev/pg-up.sh
+      # P-04 · FALLA PROVOCADA (commit temporal, se revierte antes del SHA final): prueba que la
+      # anotación lleva entorno + cola sanitizada y que test-results/ sube como artifact
+      - run: |
+          scripts/ci/run.sh "postgres (falla provocada P-04)" bash -c 'echo "Tests  1 failed"; echo "GITHUB_TOKEN=ghp_falso1234567890abcdefghijklmnop"; echo "Set-Cookie: __Host-trust_session=falsa; Path=/"; echo "FALLA PROVOCADA P-04: no es un bug"; exit 1'
       - run: scripts/ci/run.sh postgres npx vitest run -c vitest.platform.config.ts --reporter=default --reporter=json --outputFile.json=platform-results.json
       # E2 · BL-23: cada test etiquetado [§48.N] tiene que haber PASADO en esta corrida (un skip no cubre)
       - run: scripts/ci/run.sh acceptance pnpm acceptance:check --results platform-results.json
@@ -110,6 +118,10 @@ jobs:
         with: { node-version: 22 }
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
       - run: docker compose version && aws --version
+      # P-04 · FALLA PROVOCADA (commit temporal, se revierte antes del SHA final): prueba que la
+      # anotación lleva entorno + cola sanitizada y que test-results/ sube como artifact
+      - run: |
+          scripts/ci/run.sh "compose-smoke (falla provocada P-04)" bash -c 'echo "Tests  1 failed"; echo "GITHUB_TOKEN=ghp_falso1234567890abcdefghijklmnop"; echo "Set-Cookie: __Host-trust_session=falsa; Path=/"; echo "FALLA PROVOCADA P-04: no es un bug"; exit 1'
       - run: scripts/ci/run.sh compose-smoke bash scripts/ci/compose-smoke.sh
       - name: logs del compose
         if: always()
@@ -135,6 +147,8 @@ jobs:
         with: { node-version: 22 }
       - run: sudo apt-get update -q && sudo apt-get install -yq ffmpeg && ffmpeg -version | head -1
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
+      # P-04 · FALLA PROVOCADA fuera de un gate (commit temporal): prueba el paso final de entorno
+      - run: 'echo "FALLA PROVOCADA P-04 fuera de un gate (media)"; exit 1'
       - run: scripts/ci/run.sh media npx vitest run -c vitest.media.config.ts
       # P-04: la falla fuera de un gate (setup) igual deja el entorno anotado; test-results/ sube siempre que falla
       - name: Entorno (falla fuera de un gate)
@@ -170,6 +184,10 @@ jobs:
       # Issue #26 / BL-09 / P-04: versiones y entorno para correlacionar fallas intermitentes
       - name: Entorno del runner
         run: scripts/ci/entorno.sh
+      # P-04 · FALLA PROVOCADA (commit temporal, se revierte antes del SHA final): prueba que la
+      # anotación lleva entorno + cola sanitizada y que test-results/ sube como artifact
+      - run: |
+          scripts/ci/run.sh "e2e-m2c (falla provocada P-04)" bash -c 'echo "Tests  1 failed"; echo "GITHUB_TOKEN=ghp_falso1234567890abcdefghijklmnop"; echo "Set-Cookie: __Host-trust_session=falsa; Path=/"; echo "FALLA PROVOCADA P-04: no es un bug"; exit 1'
       - run: scripts/ci/run.sh e2e-m2c /tmp/pw/node_modules/.bin/playwright test -c playwright.config.ts e2e/experience.spec.ts e2e/builder.spec.ts --reporter=line
         env: { NODE_PATH: /tmp/pw/node_modules, TRUST_CHROMIUM_PATH: /usr/bin/google-chrome }
       # Issue #26 / BL-09: el trace ya se retiene al fallar (playwright.config.ts);
@@ -228,6 +246,10 @@ jobs:
           # el video de §47 lo graba el ffmpeg propio de Playwright (no el del sistema)
           /tmp/pw/node_modules/.bin/playwright install ffmpeg
           google-chrome --version
+      # P-04 · FALLA PROVOCADA (commit temporal, se revierte antes del SHA final): prueba que la
+      # anotación lleva entorno + cola sanitizada y que test-results/ sube como artifact
+      - run: |
+          scripts/ci/run.sh "e2e-platform (falla provocada P-04)" bash -c 'echo "Tests  1 failed"; echo "GITHUB_TOKEN=ghp_falso1234567890abcdefghijklmnop"; echo "Set-Cookie: __Host-trust_session=falsa; Path=/"; echo "FALLA PROVOCADA P-04: no es un bug"; exit 1'
       - run: scripts/ci/run.sh e2e-platform /tmp/pw/node_modules/.bin/playwright test -c playwright.platform.config.ts
         env: { NODE_PATH: /tmp/pw/node_modules, TRUST_CHROMIUM_PATH: /usr/bin/google-chrome, E2E_WORKERS: '2' }
       # BL-23: cada test [E3-N] tiene que haber PASADO en el reporte de Playwright.
@@ -276,6 +298,10 @@ jobs:
           sudo systemctl stop postgresql || true
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
       - run: bash scripts/dev/pg-up.sh
+      # P-04 · FALLA PROVOCADA (commit temporal, se revierte antes del SHA final): prueba que la
+      # anotación lleva entorno + cola sanitizada y que test-results/ sube como artifact
+      - run: |
+          scripts/ci/run.sh "mutations (falla provocada P-04)" bash -c 'echo "Tests  1 failed"; echo "GITHUB_TOKEN=ghp_falso1234567890abcdefghijklmnop"; echo "Set-Cookie: __Host-trust_session=falsa; Path=/"; echo "FALLA PROVOCADA P-04: no es un bug"; exit 1'
       - run: scripts/ci/run.sh autoprueba python3 scripts/mutation-check.py --autoprueba
       - run: scripts/ci/run.sh mutaciones python3 scripts/mutation-check.py
       - name: el árbol queda limpio
