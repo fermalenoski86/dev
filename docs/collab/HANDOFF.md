@@ -3,29 +3,30 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** ChatGPT (auditor) — reauditar **P-05** en PR #69 (issue AUDIT #70).
-**En auditoría:** #69 @ 2fd28b9acc433df9a644b2655c0db0767eae535c
-**Fase:** P-05 activa; después P-04 → P-03 → PoC P-06 (orden confirmado por Fer).
-**Estado:** corrección entregada sobre tu `AUDIT: CAMBIOS` (7cb661a). CI exacta [38322931421](https://github.com/fermalenoski86/dev/actions/runs/38322931421) **7/7 verdes** sobre `2fd28b9`. Pedido: [#69](https://github.com/fermalenoski86/dev/pull/69#issuecomment-6135104129). No mergear sin `AUDIT: APROBADO`.
+**Pelota en:** Claude — completar cierre de **P-05** y abrir P-04.
+**En auditoría:** ninguno
+**Fase:** P-05 integrada en `main@4fd1f03`; después P-04 → P-03 → PoC P-06 (orden confirmado por Fer).
+**Estado:** ChatGPT publicó [AUDIT: APROBADO](https://github.com/fermalenoski86/dev/pull/69#issuecomment-6135785390) sobre `2fd28b9`; #69 fue squash-mergeada en `4fd1f03`. Sin hallazgos P0/P1/P2 bloqueantes.
 
-## Qué se corrigió (rondas 30–33; detalle en `docs/reviews/P05.md`, salidas en `P05_SALIDA.txt`)
-- Tu P1 (script desde la base no auditada): todo el código del workflow sale de un checkout de `main` para TODA base; base/HEAD/número solo como datos; guard de `workflow_sha` contra el `paralelo.yml` de `main`; `persist-credentials: false` ×2 y `GH_TOKEN` solo donde se publica/consulta; prueba adversarial 6b (fase con `paralelo.sh` debilitado + YAML idéntico → exit 5 con el script de main).
-- Codex (`cfc5752`, `545512c`, `168d4eb`, respondidos con su commit): conciliación de PR que entran a main durante la re-evaluación (segundo listado → SIN VEREDICTO); base del PR no disponible no corta el job; la revalidación de main/fase es lo último del script, también si el segundo listado falla.
-- Pruebas: `paralelo.test.sh` 143/143 y `handoff.test.sh` 48/48, en UTF-8 y `LC_ALL=C`.
-- Codex agotó cuota de revisiones a las 23:35 UTC (2ª vez hoy): `2fd28b9` sin revisión automática. Dato de costo para la PoC P-06.
+## Verificación independiente cerrada
+- P1 de `7cb661a` resuelto: todo código del control se ejecuta desde `origin/main`; base/HEAD/número del PR son solo datos; doble `persist-credentials: false`; token limitado al paso que consulta/publica.
+- Carreras revisadas: segundo listado y conciliación; base no disponible sin aborto; revalidación final de main/fase aun si falla el segundo listado.
+- Focal: `paralelo.test.sh` 143/143 y `handoff.test.sh` 48/48; ambos también con `LC_ALL=C`; sintaxis, `node --check` y `git diff --check` verdes.
+- Local general: lint 0 errores (12 warnings preexistentes), typecheck verde, 828 tests aprobados (1 contrato S3 omitido por entorno), build verde.
+- CI exacta [38322931421](https://github.com/fermalenoski86/dev/actions/runs/38322931421): 7/7 verdes sobre `2fd28b9` — media, mutations, verify-build, e2e-m2c, compose-smoke, e2e-platform y postgres.
 
 ## Próximo paso
-- ChatGPT: reauditar `2fd28b9` (origen del script = main, 6b, conciliación, handoff exit 5), verificar CI exacta y emitir veredicto.
-- Claude (tras `AUDIT: APROBADO`): squash-merge #69, cerrar #70, `En auditoría: ninguno`, entregable P-05 en `entregables.mjs` + `progress:generate`, PoC controlada de `paralelo.yml` en `main`; después P-04 → P-03 → PoC P-06.
+- Claude: cerrar #70; registrar P-05 en `entregables.mjs`, ejecutar `progress:generate` y la PoC controlada de `paralelo.yml` desde main.
+- Después: P-04 → P-03 → PoC P-06, sin confirmaciones rutinarias y respetando briefs/partes congeladas.
 
-## Reglas durante auditoría
-- P-05 activa hasta merge: R2 congela el HEAD `2fd28b9` (Claude no pushea a la rama); R3/R4 protegen laterales; ningún PR toca `HANDOFF.md`.
-- Hallazgos de Codex entre medio son input: se responden en el PR, sin push hasta tu veredicto.
+## Reglas
+- El aprobado corresponde exactamente a `2fd28b9`; P-05 quedó integrada por squash en `4fd1f03`.
+- Para la fase siguiente: Claude implementa en su rama/PR y ChatGPT audita el HEAD congelado antes del merge.
 
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-05 trabajo paralelo controlado | PR #69 / #70 | en reauditoría sobre `2fd28b9` |
+| P-05 trabajo paralelo controlado | PR #69 / #70 | integrado; pendiente cierre documental/#70 |
 | P-04 → P-03 | #53 | siguientes, en serie |
 | Agent Bridge (P-06) | #54 | brief `docs/briefs/P06_BRIDGE_POC.md`; PoC después de P-03 |
 | CS-0 Creative Studio | #59 | autorizado; sigue en roadmap |
