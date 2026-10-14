@@ -27,7 +27,7 @@ OK    SUP-01 al 20 %: cambia solo SUP-01, las otras 45 iguales (['SUP-01'])
 OK    SUP-01 al 20 %: salida = escena (45%) × 20 %
 OK    nivel medio al 50 %: cambian solo sus 16
 OK    arquitectónica y blanco: base visual moderada (35–50 %)
-OK    McDonald's: acentos 60–75 % por sectores, no toda la fachada (24/46)
+OK    McDonald's: acentos 60–75 % por sectores, no toda la fachada (8/46)
 OK    escena «Luces apagadas»: las 46 en 0
 OK    apertura del haz configurable por luminaria (solo SUP-03 cambió: ['SUP-03'])
 OK    46 luminarias 16/16/14 → {'superior': 16, 'medio': 16, 'inferior': 14}
@@ -37,18 +37,18 @@ OK    «Restaurar niveles» deja todo en 100 % y color de escena
 OK    blackout: pantallas, luces y reloj en 0
 OK    soltar blackout recupera los niveles
 OK    show determinista: el mismo t da exactamente la misma salida
-OK    Play avanza el reloj del show (t=1.13 s tras 1,2 s)
+OK    Play avanza el reloj del show (t=0.90 s tras 1,2 s)
 OK    Pausa congela el show
 OK    el show termina en 15 s y se detiene
 OK    a los 4 s la ola roja avanzó desde Corrientes (izquierda) hacia Pellegrini
 OK    ningún halo sobre el contenido LED: 72 píxeles dentro de las 3 pantallas idénticos con luces 100 % y 0 % (difieren 0)
-OK    noche con luces apagadas: la fachada queda en penumbra (27% del brillo de la foto)
+OK    noche con luces apagadas: la fachada queda en penumbra (32% del brillo de la foto)
 OK    vecino, torre blanca y cielo no cambian (quedan como en la foto)
-OK    un haz encendido revela la fachada (brillo ×3.6 sobre apagado)
+OK    un haz encendido revela la fachada (brillo ×3.8 sobre apagado)
 OK    SUP-05 al 20 %: baja su baño y el resto de la fachada no cambia
-OK    takeover: el rojo cubre 23/60 puntos de la fachada (acentos, no capa uniforme)
+OK    takeover: el rojo cubre 14/60 puntos de la fachada (acentos, no capa uniforme)
 OK    takeover: hay acentos rojos visibles
 OK    Corrientes al 0 %: panel en negro ([0, 0, 0])
-OK    0 pedidos de red fuera de file:// (32 pedidos locales)
+OK    0 pedidos de red fuera de file:// (36 pedidos locales)
 OK    0 errores de consola ([])
 Resultado: TODO OK

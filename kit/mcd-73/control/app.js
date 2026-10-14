@@ -17,6 +17,9 @@
   // ---------- fotos ----------
   const fotoNoche = new Image();
   fotoNoche.src = G.foto.noche.archivo;
+  // Detalle fino de la MISMA foto (generar_relieve.py): capa aparte para que la luz lea molduras y pilastras.
+  const relieve = new Image();
+  relieve.src = 'fotos/trust-relieve.jpg';
   let fotoDia = null;
   if (G.foto.dia && G.foto.dia.sha256) { fotoDia = new Image(); fotoDia.src = G.foto.dia.archivo; }
 
@@ -29,6 +32,7 @@
   const lienzo = $('lienzo'), ctx = lienzo.getContext('2d');
   const capaLuz = document.createElement('canvas'), lctx = capaLuz.getContext('2d');
   const capaTinte = document.createElement('canvas'), tctx = capaTinte.getContext('2d');
+  const promedio = document.createElement('canvas').getContext('2d', { willReadFrequently: true });   // color medio de cada contenido LED
   const CONT = {
     corrientes: mk(576, 288),
     pellegrini: mk(720, 288),
@@ -206,7 +210,9 @@
   //   · leve asimetría por equipo (ancho, alcance, inclinación) para que el solape no forme franjas idénticas.
   // El mapa de luz resultante MULTIPLICA la foto: se conservan molduras, sombras, columnas y vidrios oscuros.
   const ALCANCE = { superior: 4.6, medio: 3.6, inferior: 3.6 };   // altura útil del baño, en separaciones entre equipos
-  const VARIANTES = [[1, 1, 0], [0.9, 1.08, 0.035], [1.1, 0.93, -0.03], [0.96, 1.04, 0.015]];   // [ancho, alcance, inclinación]
+  const VARIANTES = [[1, 1, 0], [0.88, 1.09, 0.035], [1.12, 0.92, -0.03], [0.95, 1.04, 0.015],
+    [1.06, 0.97, -0.012], [0.92, 1.12, 0.022], [1.15, 0.88, 0.008], [0.98, 1.0, -0.025]];   // [ancho, alcance, inclinación]
+  const JITTER = [1, 0.9, 1.08, 0.94, 1.04, 0.88, 1.1, 0.97];   // pequeñas diferencias de flujo entre equipos reales
   const cacheSprites = new Map();
   const suaveP = (a, b, x) => { const k = Math.min(1, Math.max(0, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
   function sprite(sep, alcance, apertura, v) {
@@ -224,7 +230,7 @@
         let I;
         if (h >= 0) {
           const w = w0 + h * tg;
-          const lateral = Math.exp(-1.6 * (xs / w) ** 2);
+          const lateral = Math.exp(-1.25 * (xs / w) ** 2);   // bordes muy suaves
           const nace = 0.45 + 0.55 * suaveP(0, sep * 0.18, h);
           const cae = 1 / (1 + (h / (H * 0.5)) ** 1.8);
           const fin = 1 - suaveP(H * 0.72, H, h);
@@ -268,27 +274,73 @@
     trazarQuad(c, aPx(G.reloj.quad, W, H));
     c.fill();
   }
-  function dibujarLuces(sal, W, H) {
+  // OCLUSIÓN POR CORNISAS (medidas sobre esta foto): el baño de cada fila se corta, con borde suave, al llegar a la cornisa
+  // saliente de arriba; deja pasar solo una fracción (la luz que rebota y la que escapa por el borde).
+  //   medio  → la cornisa/balcón corrido sobre las ventanas de arco (la misma donde apoya la fila superior);
+  //   superior → la cornisa principal del remate (balaustrada).
+  const CORNISA_MEDIA = [[0.11, 0.672], [0.16, 0.665], [0.20, 0.655], [0.24, 0.647], [0.28, 0.638], [0.31, 0.630], [0.34, 0.618],
+    [0.38, 0.607], [0.44, 0.603], [0.48, 0.606], [0.52, 0.608], [0.56, 0.612], [0.60, 0.615], [0.64, 0.622], [0.68, 0.629], [0.74, 0.640]];
+  const CORNISA_REMATE = [[0.11, 0.315], [0.20, 0.318], [0.30, 0.330], [0.36, 0.352], [0.44, 0.362], [0.50, 0.365], [0.58, 0.362],
+    [0.66, 0.356], [0.74, 0.350]];
+  const OCLUSOR = { medio: { linea: CORNISA_MEDIA, pasa: 0.22 }, superior: { linea: CORNISA_REMATE, pasa: 0.4 } };
+  const capaGrupo = document.createElement('canvas'), gctx = capaGrupo.getContext('2d');
+  function ocluir(c, oc, W, H) {
+    c.save(); c.globalCompositeOperation = 'destination-out'; c.globalAlpha = 1 - oc.pasa;
+    c.filter = `blur(${Math.max(1.5, W / 450).toFixed(1)}px)`;   // borde de sombra suave
+    c.fillStyle = '#000'; c.beginPath(); c.moveTo(oc.linea[0][0] * W, 0);
+    for (const [x, y] of oc.linea) c.lineTo(x * W, y * H);
+    c.lineTo(oc.linea[oc.linea.length - 1][0] * W, 0); c.closePath(); c.fill(); c.restore();
+  }
+  // Color de luz para el MAPA: algo menos saturado que el canal puro (la piedra y el ambiente mezclan) → sin look de filtro.
+  const colorMapa = (rgb) => { const l = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2], mx = Math.max(...rgb) || 1; const s = 1 - Math.min(...rgb) / mx; const m = 0.12 + 0.12 * s; return rgb.map((v) => Math.round(255 * Math.min(1, v * (1 - m) + Math.max(l, 0.25 * mx) * m))); };   // los colores puros se suavizan algo más
+  function dibujarLuces(sal, W, H, extra) {
     for (const c of [lctx, tctx]) { c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1; c.filter = 'none'; c.clearRect(0, 0, W, H); }
+    if (capaGrupo.width !== W || capaGrupo.height !== H) { capaGrupo.width = W; capaGrupo.height = H; }
     const sep = separacion(W);
-    // Mapa de luz (tctx): ambiente neutro dentro de la silueta + baño de cada luminaria con su color.
+    // Mapa de luz (tctx): ambiente neutro dentro de la silueta + baños por fila (con oclusión) + derrame de pantallas y reloj.
     tctx.fillStyle = `rgb(${AMBIENTE.join(',')})`;
     tctx.beginPath(); tctx.moveTo(SILUETA[0][0] * W, SILUETA[0][1] * H);
     for (const [x, y] of SILUETA.slice(1)) tctx.lineTo(x * W, y * H);
     tctx.closePath(); tctx.fill();
-    tctx.globalCompositeOperation = 'lighter'; lctx.globalCompositeOperation = 'lighter';
+    lctx.globalCompositeOperation = 'lighter';
     let dibujadas = 0;
-    for (const s of sal.luces) {
-      const p = puntos[s.id];
-      if (!p || s.nivel <= 0.002) continue;
-      const col = rgbDe(s.rgbw).map((v) => Math.round(v * 255));
-      const x = p[0] * W, y = p[1] * H, sp = sep[s.grupo], k = s.nivel;
-      sumarBano(tctx, sprite(sp, ALCANCE[s.grupo], s.apertura || 40, varianteDe(s.id)), x, y, col, k * GANANCIA);
-      // la fuente misma: un punto chico y contenido (sin halo exagerado)
-      const r = sp * 0.07, hs = lctx.createRadialGradient(x, y, 0, x, y, r);
-      hs.addColorStop(0, `rgba(255,255,255,${0.7 * k})`); hs.addColorStop(0.4, `rgba(${col.join(',')},${0.5 * k})`); hs.addColorStop(1, `rgba(${col.join(',')},0)`);
-      lctx.fillStyle = hs; lctx.beginPath(); lctx.arc(x, y, r, 0, Math.PI * 2); lctx.fill();
-      dibujadas++;
+    for (const g of M.GRUPOS) {
+      gctx.setTransform(1, 0, 0, 1, 0, 0); gctx.globalCompositeOperation = 'source-over'; gctx.globalAlpha = 1; gctx.filter = 'none'; gctx.clearRect(0, 0, W, H);
+      gctx.globalCompositeOperation = 'lighter';
+      let hay = false;
+      for (const s of sal.luces) {
+        if (s.grupo !== g.id) continue;
+        const p = puntos[s.id];
+        if (!p || s.nivel <= 0.002) continue;
+        const rgb = rgbDe(s.rgbw), col = rgb.map((v) => Math.round(v * 255)), v = varianteDe(s.id);
+        const x = p[0] * W, y = p[1] * H, sp = sep[s.grupo], k = s.nivel;
+        sumarBano(gctx, sprite(sp, ALCANCE[s.grupo], s.apertura || 40, v), x, y, colorMapa(rgb), k * GANANCIA * JITTER[v]);
+        // la fuente: punto chico y contenido, sin halo
+        const r = sp * 0.06, hs = lctx.createRadialGradient(x, y, 0, x, y, r);
+        hs.addColorStop(0, `rgba(255,255,255,${0.55 * k})`); hs.addColorStop(0.45, `rgba(${col.join(',')},${0.4 * k})`); hs.addColorStop(1, `rgba(${col.join(',')},0)`);
+        lctx.fillStyle = hs; lctx.beginPath(); lctx.arc(x, y, r, 0, Math.PI * 2); lctx.fill();
+        dibujadas++; hay = true;
+      }
+      if (!hay) continue;
+      if (OCLUSOR[g.id]) ocluir(gctx, OCLUSOR[g.id], W, H);
+      tctx.globalCompositeOperation = 'lighter'; tctx.drawImage(capaGrupo, 0, 0);
+    }
+    // Derrame de las pantallas sobre la piedra vecina (integra el LED con la fachada; nunca sobre el LED: se enmascara abajo).
+    tctx.globalCompositeOperation = 'lighter';
+    for (const e of extra.pantallas) {
+      if (e.nivel <= 0.01) continue;
+      tctx.save(); tctx.filter = `blur(${Math.max(6, W / 70).toFixed(0)}px)`; tctx.globalAlpha = 0.32 * e.nivel;
+      tctx.fillStyle = `rgb(${e.color.join(',')})`; tctx.beginPath();
+      for (const qd of e.quads) trazarQuad(tctx, aPx(qd, W, H));
+      tctx.fill(); tctx.restore();
+    }
+    // El reloj iluminado baña levemente la cúpula que lo rodea (integración, sin sobreexponer).
+    if (extra.reloj.nivel > 0.01) {
+      const rq = aPx(G.reloj.quad, W, H), cx = (rq[0][0] + rq[2][0]) / 2, cy = (rq[0][1] + rq[2][1]) / 2, rr = Math.abs(rq[1][0] - rq[0][0]) * 3.2;
+      const gr = tctx.createRadialGradient(cx, cy, 0, cx, cy, rr);
+      const c = extra.reloj.color;
+      gr.addColorStop(0, `rgba(${c.join(',')},${0.55 * extra.reloj.nivel})`); gr.addColorStop(1, `rgba(${c.join(',')},0)`);
+      tctx.fillStyle = gr; tctx.beginPath(); tctx.arc(cx, cy, rr, 0, Math.PI * 2); tctx.fill();
     }
     enmascarar(lctx, W, H);
     enmascarar(tctx, W, H);
@@ -318,12 +370,28 @@
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
     ctx.drawImage(foto, 0, 0, foto.naturalWidth, foto.naturalHeight, 0, 0, W, H);   // foto entera, proporción intacta
 
+    // contenido de pantallas primero: su color medio alimenta el derrame de luz sobre la fachada
+    const extra = { pantallas: [], reloj: { nivel: sal.reloj.nivel, color: rgbDe(sal.reloj.rgbw).map((v) => Math.round(v * 255)) } };
+    for (const id of M.PANTALLAS) {
+      dibujarContenido(id, sal.contenido);
+      promedio.clearRect(0, 0, 1, 1); promedio.drawImage(CONT[id], 0, 0, 1, 1);
+      const d = promedio.getImageData(0, 0, 1, 1).data;
+      extra.pantallas.push({ nivel: sal.pantallas[id], color: [d[0], d[1], d[2]], quads: G.superficies[id].quads });
+    }
     // 2. luces
-    const n = dibujarLuces(sal, W, H);
+    const n = dibujarLuces(sal, W, H, extra);
     const suaveFiltro = `blur(${Math.max(0.5, W / 1800).toFixed(2)}px)`;   // solo suaviza el mapa: el relieve lo da la foto
     if (!dia) {   // 2a. NOCHE: el edificio solo se ve donde lo ilumina una luminaria encendida
       ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = 1; ctx.filter = suaveFiltro;
       ctx.drawImage(capaTinte, 0, 0); ctx.filter = 'none';
+      // 2a'. lectura del relieve: el detalle fino de la foto en 'soft-light', solo sobre la fachada del TRUST.
+      if (relieve.complete && relieve.naturalWidth) {
+        ctx.save(); ctx.beginPath(); ctx.moveTo(SILUETA[0][0] * W, SILUETA[0][1] * H);
+        for (const [x, y] of SILUETA.slice(1)) ctx.lineTo(x * W, y * H);
+        ctx.closePath(); ctx.clip();
+        ctx.globalCompositeOperation = 'soft-light'; ctx.globalAlpha = 0.55;
+        ctx.drawImage(relieve, 0, 0, W, H); ctx.restore();
+      }
     }
     ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = dia ? 0.06 : 0.6;   // 2b. la fuente (punto contenido)
     ctx.filter = suaveFiltro;
@@ -347,7 +415,6 @@
 
     // 4. pantallas (opacas, encima de todo)
     for (const id of M.PANTALLAS) {
-      dibujarContenido(id, sal.contenido);
       const sup = G.superficies[id], src = CONT[id], nq = sup.quads.length, nivel = sal.pantallas[id];
       sup.quads.forEach((qd, k) => {
         const qpx = aPx(qd, W, H);
@@ -358,6 +425,13 @@
         for (const qd of sup.quads) trazarQuad(ctx, aPx(qd, W, H));
         ctx.fill(); ctx.restore();
       }
+      // borde físico del gabinete LED: una línea oscura fina (la pantalla se lee como superficie instalada, no como pegote)
+      const qs = sup.quads.map((qd) => aPx(qd, W, H));
+      ctx.save(); ctx.strokeStyle = 'rgba(10,10,12,0.6)'; ctx.lineWidth = Math.max(1, W / 1000); ctx.lineJoin = 'round'; ctx.beginPath();
+      ctx.moveTo(qs[0][0][0], qs[0][0][1]); for (const q of qs) ctx.lineTo(q[1][0], q[1][1]);   // borde superior
+      ctx.lineTo(qs[qs.length - 1][2][0], qs[qs.length - 1][2][1]);                             // esquina inferior derecha
+      for (let k = qs.length - 1; k >= 0; k--) ctx.lineTo(qs[k][3][0], qs[k][3][1]);          // borde inferior
+      ctx.closePath(); ctx.stroke(); ctx.restore();
     }
     ultimaInfo = { lucesDibujadas: n, foto: foto === fotoNoche ? 'noche' : 'dia', W, H };
     actualizarUI(est, sal);
@@ -645,6 +719,7 @@
   window.addEventListener('resize', ajustarTamano);
   fotoNoche.addEventListener('load', ajustarTamano);
   if (fotoDia) fotoDia.addEventListener('load', pedirCuadro);
+  relieve.addEventListener('load', pedirCuadro);
   armarDetalle();
 
   // API para las pruebas automatizadas (no cambia el comportamiento de la demo).

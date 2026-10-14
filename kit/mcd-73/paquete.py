@@ -42,7 +42,7 @@ FILES.append(('consola/base-trust-noche.jpg', 'consola/base-trust-noche.jpg', 'F
 # TRUST Control: presentación interactiva offline (SIMULACIÓN, no conectada a equipos). Abre con doble clic.
 FILES.insert(0, ('control/index.html', 'control/index.html',
                  "TRUST Control — presentación interactiva offline: foto real, Día/Noche, pantallas y 46 luminarias con dimmers independientes, show McDonald's 15 s. SIMULACIÓN."))
-for f in ('estilo.css', 'fuentes.css', 'app.js', 'motor.js', 'geometria.js', 'luminarias.js', 'LICENCIA-Inter.txt', 'fotos/trust-noche.jpg', 'fotos/trust-dia.jpg'):
+for f in ('estilo.css', 'fuentes.css', 'app.js', 'motor.js', 'geometria.js', 'luminarias.js', 'LICENCIA-Inter.txt', 'fotos/trust-noche.jpg', 'fotos/trust-relieve.jpg', 'fotos/trust-dia.jpg'):
     if os.path.isfile(os.path.join(K, 'control', f)):
         FILES.append((f'control/{f}', f'control/{f}', 'Archivo de TRUST Control.'))
 FILES.insert(0, ('ABRIR-PRESENTACION.txt', 'ABRIR-PRESENTACION.txt', 'Cómo abrir y operar la presentación (empezar por acá).'))

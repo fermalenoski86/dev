@@ -222,7 +222,7 @@ async def main(out):
         # un fixture al 20 % cambia solo SU baño (auditoría 14/10)
         await ev(f'{M}.setLucesMaster(100); {M}.setEscena("arquitectonica")')
         cerca = [[sup5[0], sup5[1] - 0.03]]
-        lejos = [[0.62, 0.55], [0.40, 0.75], [0.20, 0.45]]
+        lejos = [[0.62, 0.55], [0.55, 0.75], [0.68, 0.45]]   # mitad derecha: fuera del alcance del baño de SUP-05 (x≈0,28)
         a1 = await ev(f'{json.dumps(cerca + lejos)}.map(([x,y])=>TRUST.pixel(x,y))')
         await ev(f'{M}.setFixture("SUP-05", 20)')
         a2 = await ev(f'{json.dumps(cerca + lejos)}.map(([x,y])=>TRUST.pixel(x,y))')

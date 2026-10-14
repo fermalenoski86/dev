@@ -31,6 +31,7 @@
   const C = {
     calido: { r: 0.32, g: 0.10, b: 0.00, w: 0.85 },   // blanco cálido arquitectónico (≈3000 K de previsualización)
     blancoArq: { r: 0.04, g: 0.05, b: 0.09, w: 0.95 },  // blanco arquitectónico neutro
+    ambar: { r: 1.00, g: 0.40, b: 0.00, w: 0.18 },      // ámbar: puente entre el rojo y el blanco cálido
     rojo: { r: 1.00, g: 0.02, b: 0.00, w: 0.00 },
     oro: { r: 1.00, g: 0.58, b: 0.00, w: 0.22 },
     blanco: { r: 1.00, g: 1.00, b: 1.00, w: 1.00 },
@@ -40,7 +41,9 @@
   // Escenas fijas. f(grupo, i, n) → { nivel 0..1, rgbw }
   // Intensidades VISUALES de referencia (Fer, 14/10): base 35–50 %, acentos 60–75 %. No son potencias DMX calibradas.
   // McDonald's: sectores de 2 luminarias que alternan rojo (acento) · cálido (base) · oro (acento) · cálido: nunca todo rojo.
-  const sectorMcd = (i) => [{ nivel: 0.72, rgbw: C.rojo }, { nivel: 0.38, rgbw: C.calido }, { nivel: 0.62, rgbw: C.oro }, { nivel: 0.38, rgbw: C.calido }][Math.floor(i / 2) % 4];
+  // Paleta mezclada (Fer, 14/10): rojo protagonista + ámbar + blanco cálido + zonas de respiro con poca luz. Nunca un baño plano.
+  const sectorMcd = (i) => [{ nivel: 0.6, rgbw: C.rojo }, { nivel: 0.38, rgbw: C.calido }, { nivel: 0.5, rgbw: C.ambar }, { nivel: 0.18, rgbw: C.calido },
+    { nivel: 0.42, rgbw: C.calido }, { nivel: 0.5, rgbw: C.ambar }, { nivel: 0.2, rgbw: C.calido }][Math.floor(i / 2) % 7];
   const ESCENAS = {
     arquitectonica: { nombre: 'Arquitectónica cálida', f: () => ({ nivel: 0.45, rgbw: C.calido }), reloj: { nivel: 0.85, rgbw: C.neutro }, pantallas: 'reposo' },
     mcd: { nombre: "McDonald's (acentos)", f: (g, i) => sectorMcd(i + (g === 'medio' ? 2 : g === 'inferior' ? 4 : 0)), reloj: { nivel: 1, rgbw: C.oro }, pantallas: 'marca' },
@@ -59,27 +62,28 @@
   ];
   // Orden espacial de la ola: índice 0 = extremo Corrientes (izquierda de la vista), último = extremo Pellegrini.
   // Coreografía de ACENTOS localizados: la base queda cálida y moderada; el rojo y el oro recorren sectores.
-  const BASE = { nivel: 0.38, rgbw: C.calido };
+  const BASE = { nivel: 0.36, rgbw: C.calido };
+  const RESPIRO = { nivel: 0.2, rgbw: C.calido };
   const mezclar = (a, b, k) => ({ nivel: lerp(a.nivel, b.nivel, k), rgbw: mezclaRGBW(a.rgbw, b.rgbw, k) });
-  function sectorTakeover(bloque, paso) {          // persecución de sectores de 3 luminarias: rojo · oro · base
-    const m = ((bloque + paso) % 3 + 3) % 3;
-    return m === 0 ? { nivel: 0.72, rgbw: C.rojo } : m === 1 ? { nivel: 0.62, rgbw: C.oro } : BASE;
+  function sectorTakeover(bloque, paso) {          // persecución de sectores de 3 luminarias: rojo · base · ámbar · respiro
+    const k = ((bloque + paso) % 4 + 4) % 4;   // 4 tiempos: rojo · base · ámbar · respiro (el rojo ocupa 1 de cada 4 sectores)
+    return k === 0 ? { nivel: 0.6, rgbw: C.rojo } : k === 1 ? BASE : k === 2 ? { nivel: 0.5, rgbw: C.ambar } : RESPIRO;
   }
   function showLuz(g, i, n, t) {
     const x = n > 1 ? i / (n - 1) : 0;
     const desfase = g === 'medio' ? 1 : g === 'inferior' ? 2 : 0;
     if (t < 3) return { nivel: lerp(0.15, 0.38, suave(t / 3)), rgbw: C.calido };
     if (t < 7) {                                   // ola: una franja roja recorre Corrientes → Pellegrini y deja acentos
-      const d = (t - 3) / 3 - x, k = Math.exp(-((d / 0.1) ** 2));
-      const resto = d > 0.1 && i % 4 === 0 ? { nivel: 0.55, rgbw: C.rojo } : BASE;
-      return mezclar(resto, { nivel: 0.75, rgbw: C.rojo }, k);
+      const d = (t - 3) / 3 - x, k = Math.exp(-((d / 0.11) ** 2));
+      const resto = d > 0.11 && i % 4 === 0 ? { nivel: 0.5, rgbw: C.rojo } : d > 0.11 && i % 4 === 2 ? { nivel: 0.45, rgbw: C.ambar } : BASE;
+      return mezclar(resto, { nivel: 0.62, rgbw: C.rojo }, k);
     }
     if (t < 11) {
       const p = (t - 7) * 2, paso = Math.floor(p), k = suave((p - paso) / 0.35);
       const b = Math.floor(i / 3) + desfase;
       return mezclar(sectorTakeover(b, paso - 1), sectorTakeover(b, paso), k);
     }
-    const desde = (i + desfase) % 3 === 0 ? { nivel: 0.62, rgbw: C.oro } : BASE;
+    const desde = (i + desfase) % 3 === 0 ? { nivel: 0.55, rgbw: C.ambar } : BASE;
     return mezclar(desde, { nivel: 0.45, rgbw: C.calido }, suave((t - 11) / 3.2));
   }
   function showReloj(t) {
