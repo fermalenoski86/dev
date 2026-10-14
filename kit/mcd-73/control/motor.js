@@ -27,7 +27,7 @@
 
   // Colores de escena (canales RGBW 0..1). Son colores de PREVISUALIZACIÓN, no un patch DMX.
   const C = {
-    calido: { r: 0.30, g: 0.12, b: 0.00, w: 0.95 },
+    calido: { r: 0.60, g: 0.20, b: 0.00, w: 0.80 },   // dorado cálido (referencia de estilo de Fer)
     rojo: { r: 1.00, g: 0.02, b: 0.00, w: 0.00 },
     oro: { r: 1.00, g: 0.58, b: 0.00, w: 0.22 },
     blanco: { r: 1.00, g: 1.00, b: 1.00, w: 1.00 },

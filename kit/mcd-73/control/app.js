@@ -175,7 +175,7 @@
   }
 
   // ---------- luces ----------
-  const rgbDe = (q) => [Math.min(1, q.r + q.w), Math.min(1, q.g + q.w * 0.86), Math.min(1, q.b + q.w * 0.66)];
+  const rgbDe = (q) => [Math.min(1, q.r + q.w), Math.min(1, q.g + q.w * 0.8), Math.min(1, q.b + q.w * 0.52)];   // W de previsualización: blanco cálido
   function separacion(W) {   // distancia típica entre vecinos del mismo nivel, para dimensionar el halo
     const out = {};
     for (const g of M.GRUPOS) {
@@ -187,8 +187,32 @@
     }
     return out;
   }
+  // Silueta de la fachada sobre ESTA foto (bordes medidos con grilla de 0,02): la luz no puede salir del edificio.
+  const SILUETA = [[0.124, 0.30], [0.843, 0.30], [0.868, 0.40], [0.843, 0.42], [0.837, 1.0], [0.117, 1.0], [0.117, 0.66], [0.124, 0.60]];
+  // Haz de bañador ("wall grazer") hacia arriba: nace angosto y brillante en el equipo y se abre barriendo la fachada.
+  function cono(c, x, y, sep, alto, col, k) {
+    const b = sep * 0.2, t = sep * 0.82, h = sep * alto;
+    const [r, g, bl] = col;
+    const tramo = (ancho0, ancho1, a0, a1, a2) => {
+      const gr = c.createLinearGradient(x, y, x, y - h);
+      gr.addColorStop(0, `rgba(${r},${g},${bl},${a0 * k})`); gr.addColorStop(0.18, `rgba(${r},${g},${bl},${a1 * k})`);
+      gr.addColorStop(0.6, `rgba(${r},${g},${bl},${a2 * k})`); gr.addColorStop(1, `rgba(${r},${g},${bl},0)`);
+      c.fillStyle = gr; c.beginPath();
+      c.moveTo(x - ancho0 / 2, y); c.lineTo(x - ancho1 / 2, y - h);
+      c.quadraticCurveTo(x, y - h * 1.07, x + ancho1 / 2, y - h); c.lineTo(x + ancho0 / 2, y); c.closePath(); c.fill();
+    };
+    tramo(b, t, 0.95, 0.72, 0.3);               // haz
+    tramo(b * 0.45, t * 0.34, 0.9, 0.6, 0.18);  // núcleo más intenso
+    const sp = c.createRadialGradient(x, y, 0, x, y, sep * 0.22);   // derrame corto sobre la cornisa
+    sp.addColorStop(0, `rgba(${r},${g},${bl},${0.55 * k})`); sp.addColorStop(1, `rgba(${r},${g},${bl},0)`);
+    c.fillStyle = sp; c.beginPath(); c.ellipse(x, y, sep * 0.22, sep * 0.09, 0, 0, Math.PI * 2); c.fill();
+    const hs = c.createRadialGradient(x, y, 0, x, y, sep * 0.08);   // el equipo
+    hs.addColorStop(0, `rgba(255,255,255,${0.9 * k})`); hs.addColorStop(1, `rgba(${r},${g},${bl},0)`);
+    c.fillStyle = hs; c.beginPath(); c.arc(x, y, sep * 0.08, 0, Math.PI * 2); c.fill();
+  }
+  const ALTO_HAZ = { superior: 3.4, medio: 3.0, inferior: 3.0 };
   function dibujarLuces(sal, W, H) {
-    lctx.setTransform(1, 0, 0, 1, 0, 0); lctx.globalCompositeOperation = 'source-over'; lctx.globalAlpha = 1;
+    lctx.setTransform(1, 0, 0, 1, 0, 0); lctx.globalCompositeOperation = 'source-over'; lctx.globalAlpha = 1; lctx.filter = 'none';
     lctx.clearRect(0, 0, W, H);
     const sep = separacion(W);
     lctx.globalCompositeOperation = 'lighter';
@@ -196,19 +220,17 @@
     for (const s of sal.luces) {
       const p = puntos[s.id];
       if (!p || s.nivel <= 0.002) continue;
-      const [r, g, b] = rgbDe(s.rgbw).map((v) => Math.round(v * 255));
-      const x = p[0] * W, y = p[1] * H, rx = sep[s.grupo] * 1.3, ry = rx * 2.1, k = s.nivel;   // bañador hacia arriba: más alto que ancho
-      lctx.save(); lctx.translate(x, y - ry * 0.45); lctx.scale(1, ry / rx);
-      const gr = lctx.createRadialGradient(0, 0, 0, 0, 0, rx);
-      gr.addColorStop(0, `rgba(${r},${g},${b},${0.66 * k})`); gr.addColorStop(0.45, `rgba(${r},${g},${b},${0.3 * k})`); gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
-      lctx.fillStyle = gr; lctx.beginPath(); lctx.arc(0, 0, rx, 0, Math.PI * 2); lctx.fill(); lctx.restore();
-      const hs = lctx.createRadialGradient(x, y, 0, x, y, rx * 0.22);
-      hs.addColorStop(0, `rgba(255,255,255,${0.85 * k})`); hs.addColorStop(0.35, `rgba(${r},${g},${b},${0.8 * k})`); hs.addColorStop(1, `rgba(${r},${g},${b},0)`);
-      lctx.fillStyle = hs; lctx.beginPath(); lctx.arc(x, y, rx * 0.22, 0, Math.PI * 2); lctx.fill();
+      const col = rgbDe(s.rgbw).map((v) => Math.round(v * 255));
+      cono(lctx, p[0] * W, p[1] * H, sep[s.grupo], ALTO_HAZ[s.grupo], col, s.nivel);
       dibujadas++;
     }
-    // Máscara de oclusión: la luz arquitectónica NUNCA cae sobre los píxeles LED ni sobre la esfera del reloj.
-    lctx.globalCompositeOperation = 'destination-out'; lctx.fillStyle = '#000';
+    // La luz queda DENTRO de la silueta del edificio (no se derrama al cielo ni al vecino)…
+    lctx.globalCompositeOperation = 'destination-in'; lctx.fillStyle = '#000';
+    lctx.beginPath(); lctx.moveTo(SILUETA[0][0] * W, SILUETA[0][1] * H);
+    for (const [x, y] of SILUETA.slice(1)) lctx.lineTo(x * W, y * H);
+    lctx.closePath(); lctx.fill();
+    // …y NUNCA cae sobre los píxeles LED ni sobre la esfera del reloj (máscara de oclusión).
+    lctx.globalCompositeOperation = 'destination-out';
     lctx.beginPath();
     for (const sup of Object.values(G.superficies)) for (const qd of sup.quads) trazarQuad(lctx, aPx(qd, W, H));
     trazarQuad(lctx, aPx(G.reloj.quad, W, H));
@@ -240,7 +262,9 @@
     // 2. luces
     const n = dibujarLuces(sal, W, H);
     ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = dia ? 0.06 : 1;
+    ctx.filter = `blur(${Math.max(0.8, W / 900).toFixed(2)}px)`;   // bordes de haz suaves, como en la realidad
     ctx.drawImage(capaLuz, 0, 0);
+    ctx.filter = 'none';
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
 
     // 3. reloj
