@@ -448,3 +448,47 @@ ok
 GATE progreso (P-02): manifiesto válido (33 entradas), docs/collab/PROGRESO.md al día
 == node scripts/acceptance/cli.mjs check
 GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día
+
+######## Ronda 6 — AUDIT: CAMBIOS sobre 15f7c8a (tee en run.sh, claves de timeout citadas) · 2026-10-14T02:32:07Z
+== [reproducción] con run.sh/politica-fallas.sh de 15f7c8a y los tests nuevos
+  ✗ 3.11 comando inexistente: rojo con exit ≠ 0 y anotación
+  ✗ 3.23 tee sin destino escribible + comando verde → exit != 0, ::error 'log no escrito' con diagnóstico (AUDIT #75)
+  ✗ 3.23b tee sin destino + comando rojo → conserva el exit del comando (3) y avisa del log
+  ✗ 3.23c mktemp fallido (TMPDIR inexistente) + comando verde → exit != 0 y 'log no escrito'
+  ✗ 4.33 test.use({ "actionTimeout": 999_999 }); → cambia la foto → rojo (AUDIT #75)
+  ✗ 4.33 test.use({ 'navigationTimeout': 999_999 }); → cambia la foto → rojo (AUDIT #75)
+  ✗ 4.33 test.use({ `actionTimeout`: 999_999 }); → cambia la foto → rojo (AUDIT #75)
+  ✗ 4.33b { "timeout": 999_999 } en una E2E (sube un 40_000) → rojo
+  ✗ 4.33c { 'timeout': 40_000 } (citada, mismo valor) → foto igual → OK
+  ✗ 4.33d "timeout": 999_999 en la config raíz → rojo
+  ✗ 4.33e 'actionTimeout' citada en la config raíz → rojo
+  ✗ 4.33f clave citada con constante o expresión → timeout no literal → rojo
+run.test: 145 OK, 12 fallos
+(3.11 rojo en los dos: artefacto local /no/existe, ver P04.md §Autorrevisión ronda 6)
+== bash scripts/ci/run.test.sh (corregido)
+  ✗ 3.11 comando inexistente: rojo con exit ≠ 0 y anotación
+  ✓ 3.23 tee sin destino escribible + comando verde → exit != 0, ::error 'log no escrito' con diagnóstico (AUDIT #75)
+  ✓ 3.23b tee sin destino + comando rojo → conserva el exit del comando (3) y avisa del log
+  ✓ 3.23c mktemp fallido (TMPDIR inexistente) + comando verde → exit != 0 y 'log no escrito'
+  ✓ 3.23d caso feliz con destino escribible: exit 0, sin ::error ni aviso de log
+  ✓ 4.33 test.use({ "actionTimeout": 999_999 }); → cambia la foto → rojo (AUDIT #75)
+  ✓ 4.33 test.use({ 'navigationTimeout': 999_999 }); → cambia la foto → rojo (AUDIT #75)
+  ✓ 4.33 test.use({ `actionTimeout`: 999_999 }); → cambia la foto → rojo (AUDIT #75)
+  ✓ 4.33b { "timeout": 999_999 } en una E2E (sube un 40_000) → rojo
+  ✓ 4.33c { 'timeout': 40_000 } (citada, mismo valor) → foto igual → OK
+  ✓ 4.33d "timeout": 999_999 en la config raíz → rojo
+  ✓ 4.33e 'actionTimeout' citada en la config raíz → rojo
+  ✓ 4.33f clave citada con constante o expresión → timeout no literal → rojo
+  ✓ 4.33g limpio otra vez → OK
+run.test: 156 OK, 1 fallos
+== scripts/ci/politica-fallas.sh check (repo real)
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+== foto sin cambios
+politica-fallas: foto escrita en /home/claude/dev/scripts/ci/umbrales.txt
+(diff vacío)
+== bash -n scripts/ci/*.sh y git diff --check
+OK
+== node scripts/collab/progress.mjs check
+GATE progreso (P-02): manifiesto válido (33 entradas), docs/collab/PROGRESO.md al día
+== node scripts/acceptance/cli.mjs check
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día

@@ -83,6 +83,12 @@ printf 'jobs:\n  corto:\n    timeout-minutes: 3\n' > "$T/wf.yml"
 check "3.20 plazo.sh: margen = un cuarto del timeout si es menor que 180 s; job sin timeout → error" 'GE=$T/genv; : > "$GE"; A=$(date +%s); P04_WORKFLOW=$T/wf.yml GITHUB_JOB=corto GITHUB_ENV=$GE "$AQUI/plazo.sh" >/dev/null && F=$(sed -n "s/^P04_PLAZO_FIN=//p" "$GE") && D=$(( F - A - 135 )) && [ "$D" -ge 0 ] && [ "$D" -le 2 ] && ! P04_WORKFLOW=$T/wf.yml GITHUB_JOB=otro GITHUB_ENV=$GE "$AQUI/plazo.sh" >/dev/null'
 check "3.21 SIGKILL externo con plazo de sobra (OOM): exit 137, rotulado SIGKILL, no TIMEOUT (Codex #75)" 'rm -f "$RUNNER_TEMP/p04-anotado"; O=$(P04_PLAZO_FIN=$(( $(date +%s) + 600 )) "$AQUI/run.sh" "oom" bash -c "echo línea; kill -9 \$\$" 2>&1); [ $? = 137 ] && printf "%s" "$O" | grep -q "^::error title=oom falló (exit 137%2C SIGKILL)::" && ! printf "%s" "$O" | grep -q "TIMEOUT\|%2C plazo del job" && tail -1 "$P04_LOGS/oom.log" | grep -q "^run.sh: SIGKILL"'
 check "3.22 exit 124 propio del comando con plazo de sobra: no se rotula plazo (Codex #75)" 'O=$(P04_PLAZO_FIN=$(( $(date +%s) + 600 )) "$AQUI/run.sh" "propio" bash -c "exit 124" 2>&1); [ $? = 124 ] && printf "%s" "$O" | grep -q "^::error title=propio falló (exit 124)::" && ! printf "%s" "$O" | grep -q "TIMEOUT"'
+# AUDIT #75 sobre 15f7c8a: si `tee` no escribe el log (ruta inválida, mktemp fallido, disco lleno) el gate no queda verde
+mkdir -p "$T/mkt"; printf '#!/bin/sh\necho /ruta/inexistente/p04.log\n' > "$T/mkt/mktemp"; chmod +x "$T/mkt/mktemp"
+check "3.23 tee sin destino escribible + comando verde → exit != 0, ::error 'log no escrito' con diagnóstico (AUDIT #75)" 'rm -f "$RUNNER_TEMP/p04-anotado"; O=$(PATH=$T/mkt:$PATH "$AQUI/run.sh" "sinlog" bash -c "echo \"Tests  1 passed\"; exit 0" 2>&1); RC=$?; [ "$RC" != 0 ] && printf "%s" "$O" | grep -q "^::error title=sinlog falló (exit $RC%2C log no escrito)::entorno: sha=.*%0Arun.sh: no se pudo escribir el log del gate (tee exit [1-9]" && [ -e "$RUNNER_TEMP/p04-anotado" ] && printf "%s" "$O" | grep -q "^Tests  1 passed$"'
+check "3.23b tee sin destino + comando rojo → conserva el exit del comando (3) y avisa del log" 'O=$(PATH=$T/mkt:$PATH "$AQUI/run.sh" "sinlog2" bash -c "echo x; exit 3" 2>&1); [ $? = 3 ] && printf "%s" "$O" | grep -q "^::error title=sinlog2 falló (exit 3%2C log no escrito)::.*no se pudo escribir el log"'
+check "3.23c mktemp fallido (TMPDIR inexistente) + comando verde → exit != 0 y 'log no escrito'" 'O=$(TMPDIR=$T/no/existe "$AQUI/run.sh" "mkfail" true 2>&1); [ $? != 0 ] && printf "%s" "$O" | grep -q "^::error title=mkfail falló (exit [1-9][0-9]*%2C log no escrito)::"'
+check "3.23d caso feliz con destino escribible: exit 0, sin ::error ni aviso de log" 'O=$("$AQUI/run.sh" "feliz" bash -c "echo \"Tests  1 passed\"" 2>&1); [ $? = 0 ] && ! printf "%s" "$O" | grep -q "^::error\|log no escrito" && grep -q "^Tests  1 passed$" "$P04_LOGS/feliz.log"'
 
 echo "4. politica-fallas.sh"
 R=$T/repo; mkdir -p "$R/scripts/ci" "$R/.github/workflows" "$R/e2e" "$R/e2e-platform" "$R/packages/x/src"
@@ -186,6 +192,19 @@ fixme('x', async () => {});" 'testInfo[
 ]();'; do printf "x;\n%s\n" "$c" > "$R/e2e/a.spec.ts"; check "4.32b $(printf %s "$c" | tr '\n' ' ') → rojo con la línea donde empieza" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "skip/fixme/slow/fail en E2E de gate — e2e/a.spec.ts:2:"'; done
 printf "const solo = { only: 1, fail: 2 };\nexpect(solo.only + solo\n.fail).toBe(3);\n" > "$R/e2e/a.spec.ts"
 check "4.32c propiedades sueltas partidas en líneas (sin llamada) → OK" 'PF check | grep -q "^politica-fallas: OK"'; rm "$R/e2e/a.spec.ts"
+# AUDIT #75 sobre 15f7c8a: claves de timeout entre comillas ("actionTimeout", 'timeout', `timeout`)
+for c in 'test.use({ "actionTimeout": 999_999 });' "test.use({ 'navigationTimeout': 999_999 });" 'test.use({ `actionTimeout`: 999_999 });'; do printf "%s\n" "$c" > "$R/e2e/q.spec.ts"; check "4.33 $c → cambia la foto → rojo (AUDIT #75)" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -qE "^\+e2e/q.spec.ts (action|navigation)Timeout: 999_999 ×1"'; done; rm "$R/e2e/q.spec.ts"
+cp "$RAIZ/e2e/experience.spec.ts" "$R/e2e/"; sed -i '0,/{ timeout: 40_000 }/s//{ "timeout": 999_999 }/' "$R/e2e/experience.spec.ts"
+check "4.33b { \"timeout\": 999_999 } en una E2E (sube un 40_000) → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "^+e2e/experience.spec.ts timeout: 999_999 ×1" && printf "%s" "$O" | grep -q "^+e2e/experience.spec.ts timeout: 40_000 ×7"'
+cp "$RAIZ/e2e/experience.spec.ts" "$R/e2e/"; sed -i "0,/{ timeout: 40_000 }/s//{ 'timeout': 40_000 }/" "$R/e2e/experience.spec.ts"
+check "4.33c { 'timeout': 40_000 } (citada, mismo valor) → foto igual → OK" 'PF check | grep -q "^politica-fallas: OK"'
+cp "$RAIZ/e2e/experience.spec.ts" "$R/e2e/"; sed -i 's/^  timeout: 30_000,/  "timeout": 999_999,/' "$R/playwright.config.ts"
+check "4.33d \"timeout\": 999_999 en la config raíz → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "^+playwright.config.ts timeout: 999_999$"'
+cp "$RAIZ/playwright.config.ts" "$R/"; sed -i "s/^  retries: 0,/  retries: 0, use: { 'actionTimeout': 999_999 },/" "$R/playwright.config.ts"
+check "4.33e 'actionTimeout' citada en la config raíz → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "^+playwright.config.ts actionTimeout: 999_999$"'
+cp "$RAIZ/playwright.config.ts" "$R/"; printf "%s\n" "test.use({ 'navigationTimeout': LARGO, \"timeout\": 40_000 * 10 });" > "$R/e2e/q.spec.ts"
+check "4.33f clave citada con constante o expresión → timeout no literal → rojo" 'O=$(PF check); [ $? = 1 ] && [ "$(printf "%s" "$O" | grep -c "timeout no literal — e2e/q.spec.ts:1:")" = 2 ]'; rm "$R/e2e/q.spec.ts"
+check "4.33g limpio otra vez → OK" 'PF check | grep -q "^politica-fallas: OK"'
 check "4.13 el repo real cumple la política (retries 0, foto al día, sin .only)" 'bash "$AQUI/politica-fallas.sh" check | grep -q "^politica-fallas: OK"'
 
 echo "5. gates.yml (estático)"

@@ -24,19 +24,27 @@ if [ -n "${P04_PLAZO_FIN:-}" ]; then
 fi
 echo "::stop-commands::$FRENO"
 "$@" 2>&1 | tee "$LOG"
-RC=${PIPESTATUS[0]}
+# los dos códigos, inmediatamente: si `tee` no puede escribir el log (disco lleno, ruta inválida,
+# mktemp fallido) el gate no puede quedar verde sin log (AUDIT #75 sobre 15f7c8a)
+EST=("${PIPESTATUS[@]}"); RC=${EST[0]}; RC_TEE=${EST[1]:-1}
 echo "::$FRENO::"
 POR_PLAZO=
+NOTA=
+if [ "$RC_TEE" != 0 ]; then
+  NOTA="run.sh: no se pudo escribir el log del gate (tee exit $RC_TEE): falta la copia completa; la salida cruda quedó solo en el log del job"
+  POR_PLAZO=", log no escrito"
+  [ "$RC" = 0 ] && RC=$RC_TEE
+fi
 # 124/137 cuentan como plazo solo si el plazo efectivamente venció: un SIGKILL externo (OOM) o un
 # 124 propio del comando con tiempo de sobra no se rotula TIMEOUT (Codex #75 sobre ecb774f)
 if [ -n "$PLAZO" ] && { [ "$RC" = 124 ] || [ "$RC" = 137 ]; } && [ "$(date +%s)" -ge "$P04_PLAZO_FIN" ]; then
-  POR_PLAZO=", plazo del job"
-  echo "run.sh: TIMEOUT — el gate superó el plazo del job (${PLAZO}s; timeout-minutes menos el margen de plazo.sh) y se cortó (exit $RC)" >> "$LOG"
+  POR_PLAZO="$POR_PLAZO, plazo del job"
+  echo "run.sh: TIMEOUT — el gate superó el plazo del job (${PLAZO}s; timeout-minutes menos el margen de plazo.sh) y se cortó (exit $RC)" 2>/dev/null >> "$LOG"
 elif [ "$RC" = 137 ]; then
-  POR_PLAZO=", SIGKILL"
-  echo "run.sh: SIGKILL — el gate murió por SIGKILL antes del plazo del job (OOM u otra señal externa; exit 137)" >> "$LOG"
+  POR_PLAZO="$POR_PLAZO, SIGKILL"
+  echo "run.sh: SIGKILL — el gate murió por SIGKILL antes del plazo del job (OOM u otra señal externa; exit 137)" 2>/dev/null >> "$LOG"
 fi
-limpio() { sed 's/\x1b\[[0-9;]*[A-Za-z]//g' "$LOG" | "$AQUI/sanitizar.sh"; }
+limpio() { { sed 's/\x1b\[[0-9;]*[A-Za-z]//g' "$LOG" 2>/dev/null; [ -z "$NOTA" ] || echo "$NOTA"; } | "$AQUI/sanitizar.sh"; }
 codifica() { printf '%s' "$1" | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g'; }
 # propiedades (title=…): además `:` y `,` (GitHub corta el título en la primera coma: run 38342453191)
 prop() { codifica "$1" | sed 's/:/%3A/g;s/,/%2C/g'; }
