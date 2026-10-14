@@ -119,7 +119,8 @@ async def main(out):
         await ev(f'{M}.setLucesMaster(100)')
         s = await ev(f'{M}.salidas()')
         med7 = next(l for l in s['luces'] if l['id'] == 'MED-07')
-        ok(abs(med7['nivel'] - 0.85 * 0.35) < 1e-9, 'master 0 → 100 restaura el ajuste individual (MED-07 35 %)')
+        base_med = next(l for l in base['luces'] if l['id'] == 'MED-07')['nivel']
+        ok(abs(med7['nivel'] - base_med * 0.35) < 1e-9, 'master 0 → 100 restaura el ajuste individual (MED-07 35 %)')
         await ev(f'{M}.reiniciarTodo()')
         antes = await ev(f'{M}.salidas()')
         await ev(f'{M}.setFixture("SUP-01", 20)')
@@ -127,11 +128,21 @@ async def main(out):
         cambiadas = [a['id'] for a, d in zip(antes['luces'], despues['luces']) if a != d]
         ok(cambiadas == ['SUP-01'], f'SUP-01 al 20 %: cambia solo SUP-01, las otras 45 iguales ({cambiadas})')
         sup1 = next(l for l in despues['luces'] if l['id'] == 'SUP-01')
-        ok(abs(sup1['nivel'] - 0.85 * 0.2) < 1e-9, 'SUP-01 al 20 %: salida = escena 85 % × 20 %')
+        sup1_0 = next(l for l in antes['luces'] if l['id'] == 'SUP-01')['nivel']
+        ok(abs(sup1['nivel'] - sup1_0 * 0.2) < 1e-9, f'SUP-01 al 20 %: salida = escena ({sup1_0:.0%}) × 20 %')
         await ev(f'{M}.setGrupo("medio", 50)')
         d2 = await ev(f'{M}.salidas()')
         cambiadas = sorted({l['grupo'] for a, l in zip(despues['luces'], d2['luces']) if a != l})
         ok(cambiadas == ['medio'] and sum(1 for a, l in zip(despues['luces'], d2['luces']) if a != l) == 16, 'nivel medio al 50 %: cambian solo sus 16')
+        niv = await ev(f'(()=>{{{M}.reiniciarTodo();const r={{}};for(const e of ["arquitectonica","blanco","mcd","apagado"]){{{M}.setEscena(e);r[e]={M}.salidas().luces.map(l=>l.nivel)}}{M}.setEscena("arquitectonica");return r}})()')
+        ok(all(0.35 <= v <= 0.5 for v in niv['arquitectonica']) and all(0.35 <= v <= 0.5 for v in niv['blanco']), 'arquitectónica y blanco: base visual moderada (35–50 %)')
+        acentos = [v for v in niv['mcd'] if v > 0.5]
+        ok(acentos and all(0.6 <= v <= 0.75 for v in acentos) and len(acentos) < len(niv['mcd']) * 0.6, f"McDonald's: acentos 60–75 % por sectores, no toda la fachada ({len(acentos)}/46)")
+        ok(all(v == 0 for v in niv['apagado']), 'escena «Luces apagadas»: las 46 en 0')
+        await ev(f'{M}.setFixtureApertura("SUP-03", 25)')
+        aps = await ev(f'{M}.salidas().luces.filter(l=>l.apertura!==({M}.APERTURA[l.grupo])).map(l=>l.id)')
+        ok(aps == ['SUP-03'], f'apertura del haz configurable por luminaria (solo SUP-03 cambió: {aps})')
+        await ev(f'{M}.reiniciarTodo(); {M}.setFixture("SUP-01", 20); {M}.setGrupo("medio", 50)')
         n = await ev(f'{M}.estado().luces.fixtures.reduce((a,f)=>(a[f.grupo]=(a[f.grupo]||0)+1,a),{{}})')
         ok(n == {'superior': 16, 'medio': 16, 'inferior': 14}, f'46 luminarias 16/16/14 → {n}')
         # Día/Noche conserva todo
@@ -201,15 +212,30 @@ async def main(out):
         await ev(f'{M}.setVista("noche"); {M}.setLucesMaster(0)'); apag = await ev(f'{json.dumps(fachada + externos_)}.map(([x,y])=>TRUST.pixel(x,y))')
         n_f = len(fachada)
         rel = sum(lum_(a) for a in apag[:n_f]) / max(1, sum(lum_(f) for f in foto[:n_f]))
-        ok(rel < 0.3, f'noche con luces apagadas: la fachada queda oscura ({rel:.0%} del brillo de la foto)')
+        ok(rel < 0.35, f'noche con luces apagadas: la fachada queda en penumbra ({rel:.0%} del brillo de la foto)')
         ok(apag[n_f:] == foto[n_f:], 'vecino, torre blanca y cielo no cambian (quedan como en la foto)')
         sup5 = (await ev('LUMINARIAS'))['puntos']['SUP-05']
         en_haz = [[sup5[0], sup5[1] - 0.02]]
         await ev(f'{M}.setLucesMaster(100)'); prend = await ev(f'{json.dumps(en_haz)}.map(([x,y])=>TRUST.pixel(x,y))')
         await ev(f'{M}.setLucesMaster(0)'); apg = await ev(f'{json.dumps(en_haz)}.map(([x,y])=>TRUST.pixel(x,y))')
-        ok(lum_(prend[0]) > 2.5 * lum_(apg[0]), f'un haz encendido revela la fachada (brillo ×{lum_(prend[0]) / max(1, lum_(apg[0])):.1f} sobre apagado)')
-        await ev(f'{M}.setLucesMaster(100); {M}.setEscena("mcd")'); rojo = await ev(f'TRUST.pixel({sup5[0]},{sup5[1] - 0.02})')
-        ok(rojo[0] > 1.6 * max(rojo[1], rojo[2]), f'luz roja: la fachada se ve roja ({rojo[:3]})')
+        ok(lum_(prend[0]) > 1.8 * lum_(apg[0]), f'un haz encendido revela la fachada (brillo ×{lum_(prend[0]) / max(1, lum_(apg[0])):.1f} sobre apagado)')
+        # un fixture al 20 % cambia solo SU baño (auditoría 14/10)
+        await ev(f'{M}.setLucesMaster(100); {M}.setEscena("arquitectonica")')
+        cerca = [[sup5[0], sup5[1] - 0.03]]
+        lejos = [[0.62, 0.55], [0.40, 0.75], [0.20, 0.45]]
+        a1 = await ev(f'{json.dumps(cerca + lejos)}.map(([x,y])=>TRUST.pixel(x,y))')
+        await ev(f'{M}.setFixture("SUP-05", 20)')
+        a2 = await ev(f'{json.dumps(cerca + lejos)}.map(([x,y])=>TRUST.pixel(x,y))')
+        ok(lum_(a2[0]) < lum_(a1[0]) - 8 and a2[1:] == a1[1:], 'SUP-05 al 20 %: baja su baño y el resto de la fachada no cambia')
+        await ev(f'{M}.setFixture("SUP-05", 100)')
+        # sin manchas de color uniformes: en el takeover el rojo es acento, no la fachada entera
+        await ev(f'{M}.cargarShow(); {M}.seek(8.3)')
+        grilla = [[0.15 + 0.55 * i / 9, 0.40 + 0.38 * j / 5] for i in range(10) for j in range(6)]
+        px = await ev(f'{json.dumps(grilla)}.map(([x,y])=>TRUST.pixel(x,y))')
+        rojos = sum(1 for c in px if c[0] > 1.8 * max(c[1], c[2], 1))
+        ok(rojos < len(px) * 0.5, f'takeover: el rojo cubre {rojos}/{len(px)} puntos de la fachada (acentos, no capa uniforme)')
+        ok(rojos > 0, 'takeover: hay acentos rojos visibles')
+        await ev(f'{M}.setEscena("arquitectonica")')
         # pantallas al 0 %: el contenido queda negro sin tocar la foto de alrededor
         await ev(f'{M}.setPantalla("corrientes", 0)')
         cen = [sum(p[0] for p in q['corrientes']['quads'][0]) / 4, sum(p[1] for p in q['corrientes']['quads'][0]) / 4]

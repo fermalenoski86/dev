@@ -190,35 +190,71 @@
   }
   // Silueta de la fachada sobre ESTA foto (bordes medidos con grilla de 0,02): la luz no puede salir del edificio.
   // El borde derecho es la UNIÓN con la torre blanca (bajada pluvial ≈ 0,727): esa torre es otro edificio (corrección de Fer, 14/10).
-  // Silueta COMPLETA del TRUST (cúpula y pisos altos incluidos), siguiendo el perfil de la azotea. Afuera queda el
-  // vecino de la izquierda y la torre blanca: no se tocan.
+  // Silueta COMPLETA del TRUST (cúpula y pisos altos incluidos), siguiendo el perfil de la azotea. Afuera quedan el vecino
+  // de la izquierda y la torre blanca (otro edificio): no se tocan.
   const SILUETA = [[0.117, 1.0], [0.117, 0.66], [0.124, 0.60], [0.124, 0.303], [0.168, 0.303], [0.168, 0.202], [0.349, 0.175],
     [0.349, 0.069], [0.47, 0.069], [0.49, 0.03], [0.505, 0.069], [0.663, 0.09], [0.663, 0.23], [0.730, 0.23], [0.730, 1.0]];   // perfil de azotea medido
-  // De noche el edificio NO tiene luz propia (Fer, 14/10): solo lo iluminan las luminarias encendidas. Ambiente de calle mínimo.
-  const AMBIENTE = [36, 38, 50];
-  // Haz de bañador ("wall grazer") hacia arriba: nace angosto y brillante en el equipo y se abre barriendo la fachada.
-  function cono(c, x, y, sep, alto, col, k, soloHaz) {
-    const b = sep * 0.2, t = sep * 0.82, h = sep * alto;
-    const [r, g, bl] = col;
-    const tramo = (ancho0, ancho1, a0, a1, a2) => {
-      const gr = c.createLinearGradient(x, y, x, y - h);
-      gr.addColorStop(0, `rgba(${r},${g},${bl},${a0 * k})`); gr.addColorStop(0.18, `rgba(${r},${g},${bl},${a1 * k})`);
-      gr.addColorStop(0.6, `rgba(${r},${g},${bl},${a2 * k})`); gr.addColorStop(1, `rgba(${r},${g},${bl},0)`);
-      c.fillStyle = gr; c.beginPath();
-      c.moveTo(x - ancho0 / 2, y); c.lineTo(x - ancho1 / 2, y - h);
-      c.quadraticCurveTo(x, y - h * 1.07, x + ancho1 / 2, y - h); c.lineTo(x + ancho0 / 2, y); c.closePath(); c.fill();
-    };
-    tramo(b, t, 0.95, 0.72, 0.3);               // haz
-    if (soloHaz) return;
-    tramo(b * 0.45, t * 0.34, 0.9, 0.6, 0.18);  // núcleo más intenso
-    const sp = c.createRadialGradient(x, y, 0, x, y, sep * 0.22);   // derrame corto sobre la cornisa
-    sp.addColorStop(0, `rgba(${r},${g},${bl},${0.55 * k})`); sp.addColorStop(1, `rgba(${r},${g},${bl},0)`);
-    c.fillStyle = sp; c.beginPath(); c.ellipse(x, y, sep * 0.22, sep * 0.09, 0, 0, Math.PI * 2); c.fill();
-    const hs = c.createRadialGradient(x, y, 0, x, y, sep * 0.08);   // el equipo
-    hs.addColorStop(0, `rgba(255,255,255,${0.9 * k})`); hs.addColorStop(1, `rgba(${r},${g},${bl},0)`);
-    c.fillStyle = hs; c.beginPath(); c.arc(x, y, sep * 0.08, 0, Math.PI * 2); c.fill();
+  // De noche el edificio no tiene luz propia: solo un ambiente urbano tenue y neutro (sin tinte de color).
+  const AMBIENTE = [66, 68, 78];
+  const GANANCIA = 2.8;   // intensidad visual del baño: nivel 45 % ≈ fachada bien leída junto al equipo
+
+  // ---- Motor de iluminación arquitectónica (simulación) ----
+  // Cada luminaria es un BAÑADOR hacia arriba ("wall washer/grazer") con:
+  //   · apertura de haz configurable (°): el ancho crece con la altura, 2·h·tan(apertura/2);
+  //   · caída suave (soft falloff): sube rápido junto al equipo y se atenúa con la altura (≈ 1/(1+(h/h0)^1.8));
+  //   · perfil lateral gaussiano (bordes suaves, sin triángulos rígidos) y dilución al abrirse;
+  //   · leve asimetría por equipo (ancho, alcance, inclinación) para que el solape no forme franjas idénticas.
+  // El mapa de luz resultante MULTIPLICA la foto: se conservan molduras, sombras, columnas y vidrios oscuros.
+  const ALCANCE = { superior: 4.6, medio: 3.6, inferior: 3.6 };   // altura útil del baño, en separaciones entre equipos
+  const VARIANTES = [[1, 1, 0], [0.9, 1.08, 0.035], [1.1, 0.93, -0.03], [0.96, 1.04, 0.015]];   // [ancho, alcance, inclinación]
+  const cacheSprites = new Map();
+  const suaveP = (a, b, x) => { const k = Math.min(1, Math.max(0, (x - a) / (b - a))); return k * k * (3 - 2 * k); };
+  function sprite(sep, alcance, apertura, v) {
+    const clave = `${Math.round(sep)}|${alcance}|${apertura}|${v}`;
+    if (cacheSprites.has(clave)) return cacheSprites.get(clave);
+    const [wj, hj, incl] = VARIANTES[v], H = sep * alcance * hj, abajo = sep * 0.4, tg = Math.tan((apertura / 2) * Math.PI / 180) * wj;
+    const w0 = sep * 0.14, mitad = w0 + H * tg, ancho = Math.ceil((mitad * 1.6 + Math.abs(incl) * H) * 2) + 4, alto = Math.ceil(H + abajo);
+    const cx = ancho / 2, oy = Math.ceil(H);
+    const c = document.createElement('canvas'); c.width = ancho; c.height = alto;
+    const g = c.getContext('2d'), img = g.createImageData(ancho, alto), d = img.data;
+    for (let py = 0; py < alto; py++) {
+      const h = oy - py;
+      for (let px = 0; px < ancho; px++) {
+        const xs = px - cx - incl * Math.max(0, h);
+        let I;
+        if (h >= 0) {
+          const w = w0 + h * tg;
+          const lateral = Math.exp(-1.6 * (xs / w) ** 2);
+          const nace = 0.45 + 0.55 * suaveP(0, sep * 0.18, h);
+          const cae = 1 / (1 + (h / (H * 0.5)) ** 1.8);
+          const fin = 1 - suaveP(H * 0.72, H, h);
+          I = lateral * nace * cae * fin * Math.pow(w0 / w, 0.22);
+        } else {
+          const e = -h;
+          I = 0.5 * Math.exp(-2.2 * (xs / (sep * 0.32)) ** 2) * Math.exp(-e / (sep * 0.1));
+        }
+        d[(py * ancho + px) * 4 + 0] = 255; d[(py * ancho + px) * 4 + 1] = 255; d[(py * ancho + px) * 4 + 2] = 255;
+        d[(py * ancho + px) * 4 + 3] = Math.round(Math.min(1, I) * 255);
+      }
+    }
+    g.putImageData(img, 0, 0);
+    const s = { c, cx, oy };
+    cacheSprites.set(clave, s);
+    return s;
   }
-  const ALTO_HAZ = { superior: 3.4, medio: 3.0, inferior: 3.0 };
+  const varianteDe = (id) => { let hsh = 0; for (const ch of id) hsh = (hsh * 31 + ch.charCodeAt(0)) >>> 0; return hsh % VARIANTES.length; };
+  const tinte = document.createElement('canvas'), tictx = tinte.getContext('2d');
+  function sumarBano(dst, sp, x, y, col, alfa) {
+    const w = sp.c.width, h = sp.c.height;
+    if (tinte.width < w || tinte.height < h) { tinte.width = Math.max(tinte.width, w); tinte.height = Math.max(tinte.height, h); }
+    tictx.globalCompositeOperation = 'source-over'; tictx.clearRect(0, 0, w, h); tictx.drawImage(sp.c, 0, 0);
+    tictx.globalCompositeOperation = 'source-in'; tictx.fillStyle = `rgb(${col.join(',')})`; tictx.fillRect(0, 0, w, h);
+    // intensidades por encima de 1: varias pasadas aditivas (el canvas limita alfa a 1)
+    const n = Math.max(1, Math.ceil(alfa)), a = alfa / n;
+    dst.globalAlpha = Math.min(1, a);
+    for (let i = 0; i < n; i++) dst.drawImage(tinte, 0, 0, w, h, x - sp.cx, y - sp.oy, w, h);
+    dst.globalAlpha = 1;
+  }
   function enmascarar(c, W, H) {
     // La luz queda DENTRO de la silueta del edificio (no se derrama al cielo, al vecino ni a la torre blanca)…
     c.globalCompositeOperation = 'destination-in'; c.fillStyle = '#000';
@@ -235,37 +271,23 @@
   function dibujarLuces(sal, W, H) {
     for (const c of [lctx, tctx]) { c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1; c.filter = 'none'; c.clearRect(0, 0, W, H); }
     const sep = separacion(W);
-    // Mapa de luz (tctx): ambiente dentro de la silueta + cada haz con su color. Se MULTIPLICA con la foto:
-    // donde no llega un haz, la fachada queda oscura; donde llega, aparece con el color de esa luz.
+    // Mapa de luz (tctx): ambiente neutro dentro de la silueta + baño de cada luminaria con su color.
     tctx.fillStyle = `rgb(${AMBIENTE.join(',')})`;
     tctx.beginPath(); tctx.moveTo(SILUETA[0][0] * W, SILUETA[0][1] * H);
     for (const [x, y] of SILUETA.slice(1)) tctx.lineTo(x * W, y * H);
     tctx.closePath(); tctx.fill();
-    lctx.globalCompositeOperation = 'lighter'; tctx.globalCompositeOperation = 'lighter';
-    // Baño general: con la fachada iluminada, la piedra rebota luz y TODO el edificio se ve encendido (referencia de Fer,
-    // 14/10). Proporcional al nivel y color promedio de las 46 salidas: con todo apagado vuelve al ambiente mínimo.
-    let sr = 0, sg = 0, sb = 0, sk = 0;
-    for (const s of sal.luces) { const c = rgbDe(s.rgbw); sr += c[0] * s.nivel; sg += c[1] * s.nivel; sb += c[2] * s.nivel; sk += s.nivel; }
-    if (sk > 0.01) {
-      const n = sal.luces.length, kprom = sk / n, col = [sr / sk, sg / sk, sb / sk].map((v) => Math.round(v * 255));
-      const gf = tctx.createLinearGradient(0, H, 0, 0);
-      gf.addColorStop(0, `rgba(${col.join(',')},${0.85 * kprom})`); gf.addColorStop(0.55, `rgba(${col.join(',')},${0.85 * kprom})`);
-      gf.addColorStop(1, `rgba(${col.join(',')},${0.82 * kprom})`);   // parejo hasta la cúpula: se luce el edificio entero
-      tctx.fillStyle = gf; tctx.fillRect(0, 0, W, H);
-    }
+    tctx.globalCompositeOperation = 'lighter'; lctx.globalCompositeOperation = 'lighter';
     let dibujadas = 0;
     for (const s of sal.luces) {
       const p = puntos[s.id];
       if (!p || s.nivel <= 0.002) continue;
-      const rgb = rgbDe(s.rgbw), col = rgb.map((v) => Math.round(v * 255));
+      const col = rgbDe(s.rgbw).map((v) => Math.round(v * 255));
       const x = p[0] * W, y = p[1] * H, sp = sep[s.grupo], k = s.nivel;
-      // en el mapa: haz fuerte + baño suave alrededor (la piedra rebota luz entre haces)
-      cono(tctx, x, y, sp, ALTO_HAZ[s.grupo], col, Math.min(1, k * 1.35));
-      const ba = tctx.createRadialGradient(x, y - sp * 1.2, 0, x, y - sp * 1.2, sp * 1.9);
-      ba.addColorStop(0, `rgba(${col.join(',')},${0.55 * k})`); ba.addColorStop(1, `rgba(${col.join(',')},0)`);
-      tctx.fillStyle = ba; tctx.beginPath(); tctx.ellipse(x, y - sp * 1.2, sp * 1.3, sp * 1.9, 0, 0, Math.PI * 2); tctx.fill();
-      // en el brillo: el haz suma un poco de destello encima (bloom)
-      cono(lctx, x, y, sp, ALTO_HAZ[s.grupo], col, k);
+      sumarBano(tctx, sprite(sp, ALCANCE[s.grupo], s.apertura || 40, varianteDe(s.id)), x, y, col, k * GANANCIA);
+      // la fuente misma: un punto chico y contenido (sin halo exagerado)
+      const r = sp * 0.07, hs = lctx.createRadialGradient(x, y, 0, x, y, r);
+      hs.addColorStop(0, `rgba(255,255,255,${0.7 * k})`); hs.addColorStop(0.4, `rgba(${col.join(',')},${0.5 * k})`); hs.addColorStop(1, `rgba(${col.join(',')},0)`);
+      lctx.fillStyle = hs; lctx.beginPath(); lctx.arc(x, y, r, 0, Math.PI * 2); lctx.fill();
       dibujadas++;
     }
     enmascarar(lctx, W, H);
@@ -298,12 +320,12 @@
 
     // 2. luces
     const n = dibujarLuces(sal, W, H);
-    const suaveFiltro = `blur(${Math.max(0.8, W / 900).toFixed(2)}px)`;   // bordes de haz suaves, como en la realidad
+    const suaveFiltro = `blur(${Math.max(0.5, W / 1800).toFixed(2)}px)`;   // solo suaviza el mapa: el relieve lo da la foto
     if (!dia) {   // 2a. NOCHE: el edificio solo se ve donde lo ilumina una luminaria encendida
       ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = 1; ctx.filter = suaveFiltro;
       ctx.drawImage(capaTinte, 0, 0); ctx.filter = 'none';
     }
-    ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = dia ? 0.06 : 0.8;   // 2b. destello del haz
+    ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = dia ? 0.06 : 0.6;   // 2b. la fuente (punto contenido)
     ctx.filter = suaveFiltro;
     ctx.drawImage(capaLuz, 0, 0);
     ctx.filter = 'none';
@@ -396,6 +418,7 @@
         <button class="b" id="d-escena" title="El color vuelve a seguir la escena o el show">Color de escena</button>
       </div>
       <div class="fila"><label for="d-nivel">Dimmer individual</label><input type="range" class="r-oro" id="d-nivel" min="0" max="100" value="${f.nivel}"><span class="valor" id="d-nivel-v">${f.nivel}%</span></div>
+      <div class="fila"><label for="d-ap" title="Apertura visual del haz en el simulador (no es la óptica real del equipo)">Apertura del haz</label><input type="range" class="r-azul2" id="d-ap" min="10" max="90" value="${f.apertura}"><span class="valor" id="d-ap-v">${f.apertura}°</span></div>
       ${['r', 'g', 'b', 'w'].map((k) => `<div class="fila"><label for="d-${k}">${{ r: 'Rojo (R)', g: 'Verde (G)', b: 'Azul (B)', w: 'Blanco (W)' }[k]}</label><input type="range" class="${{ r: 'r-rojo', g: 'r-verde', b: 'r-azul2', w: 'r-blanco' }[k]}" id="d-${k}" min="0" max="100" value="${Math.round(col[k] * 100)}"><span class="valor" id="d-${k}-v">${Math.round(col[k] * 100)}%</span></div>`).join('')}`;
     const id = f.id;
     $('d-on').addEventListener('click', () => M.setFixtureOn(id, !M.estado().luces.fixtures.find((x) => x.id === id).on));
@@ -404,6 +427,7 @@
     $('d-100').addEventListener('click', () => M.setFixture(id, 100));
     $('d-escena').addEventListener('click', () => { M.setFixtureColor(id, null); armarDetalle(); });
     $('d-nivel').addEventListener('input', (e) => M.setFixture(id, +e.target.value));
+    $('d-ap').addEventListener('input', (e) => M.setFixtureApertura(id, +e.target.value));
     for (const k of ['r', 'g', 'b', 'w']) $('d-' + k).addEventListener('input', () => {
       const c = {}; for (const q of ['r', 'g', 'b', 'w']) c[q] = +$('d-' + q).value / 100;
       M.setFixtureColor(id, c);
@@ -593,6 +617,7 @@
       $('d-on').textContent = f.on ? 'ON' : 'OFF'; $('d-on').className = 'b ' + (f.on ? 'on' : 'apagado');
       const dn = $('d-nivel'); if (document.activeElement !== dn) dn.value = f.nivel; dn.style.setProperty('--p', dn.value + '%');
       $('d-nivel-v').textContent = f.nivel + '%';
+      const ap = $('d-ap'); if (document.activeElement !== ap) ap.value = f.apertura; ap.style.setProperty('--p', ((ap.value - 10) / 80 * 100) + '%'); $('d-ap-v').textContent = f.apertura + '°';
       const so = sal.luces.find((x) => x.id === seleccion);
       $('d-pos').textContent = `salida ${Math.round(so.nivel * 100)}%` + (f.color ? ' · color propio' : ' · color de escena') + (puntos[f.id] ? '' : ' · fuera de cuadro en esta foto');
       for (const k of ['r', 'g', 'b', 'w']) { const el = $('d-' + k); el.style.setProperty('--p', el.value + '%'); $('d-' + k + '-v').textContent = el.value + '%'; }
