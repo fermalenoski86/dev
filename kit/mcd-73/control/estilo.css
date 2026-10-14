@@ -220,3 +220,12 @@ textarea { width: 100%; height: 90px; background: var(--panel-2); color: var(--t
 .plan .cab { margin: 0; color: var(--oro); font-weight: 600; }
 .b.oro { border-color: var(--oro); color: var(--oro); font-weight: 600; }
 .b.oro:hover { background: rgba(232, 182, 91, .12); }
+
+/* Director de show plegable (Fer, 14/10): libera espacio para los controles de luminarias */
+#t-director > header { position: relative; }
+.plegar { margin-left: auto; width: 32px; height: 32px; border-radius: 9px; border: 1px solid var(--borde); background: var(--panel-2); color: var(--texto-2); cursor: pointer; display: grid; place-items: center; flex: none; }
+.plegar:hover { border-color: var(--azul); color: var(--texto); }
+.plegar svg { width: 16px; height: 16px; transition: transform .2s; }
+#t-director.plegado .plegar svg { transform: rotate(180deg); }
+#t-director.plegado .cuerpo-director { display: none; }
+#t-director.plegado > header { margin-bottom: 4px; }

@@ -3,7 +3,7 @@ OK    1. index.html abre sin red y muestra la portada con «Comenzar»
 OK    1. «Comenzar» deja ver la consola
 OK    2. «Generar minishow (simulado)» carga la plantilla en t=0, en pausa
 OK    2. el plan en pantalla se rotula como plantilla, no IA
-OK    3. Play avanza y Pausa lo frena a mitad del show (t=5.38 s, bloque «Ola roja»)
+OK    3. Play avanza y Pausa lo frena a mitad del show (t=4.93 s, bloque «Ola roja»)
 OK    3. el timeline muestra el bloque en curso
 OK    4. en pausa el tiempo no avanza
 OK    4. clic en la grilla abre el detalle de SUP-05
@@ -11,7 +11,7 @@ OK    4. SUP-05 al 20 % en pausa: cambia solo SUP-05, las otras 45 iguales (['SU
 OK    4. pantallas y reloj no se mueven al tocar la luminaria
 OK    4. salida de SUP-05 = show × 20 % (0.500 → 0.100)
 OK    5. Play reanuda desde donde se pausó
-OK    5. el show llega a 15 s y se detiene solo (22.2 s de reloj, incluida la pausa)
+OK    5. el show llega a 15 s y se detiene solo (16.5 s de reloj, incluida la pausa)
 OK    5. el ajuste de SUP-05 se mantuvo durante el resto del show (cierre: 0.090 vs SUP-04 0.450)
 OK    6. «Restaurar niveles»: las 46 vuelven a 100 %, ON y color de escena
 OK    6. escena arquitectónica: el show queda descargado

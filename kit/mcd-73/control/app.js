@@ -32,6 +32,34 @@
   const lienzo = $('lienzo'), ctx = lienzo.getContext('2d');
   const capaLuz = document.createElement('canvas'), lctx = capaLuz.getContext('2d');
   const capaTinte = document.createElement('canvas'), tctx = capaTinte.getContext('2d');
+  const capaSuma = document.createElement('canvas'), sctx = capaSuma.getContext('2d');   // foto × luz agregada
+  const capaAmb = document.createElement('canvas'), actx = capaAmb.getContext('2d');      // ambiente urbano (cacheado por tamaño)
+  function mapaAmbiente(W, H) {
+    if (capaAmb.width === W && capaAmb.height === H && capaAmb.dataset.listo) return capaAmb;
+    capaAmb.width = W; capaAmb.height = H;
+    actx.fillStyle = '#fff'; actx.fillRect(0, 0, W, H);
+    actx.fillStyle = `rgb(${AMBIENTE.join(',')})`; actx.beginPath(); actx.moveTo(SILUETA[0][0] * W, SILUETA[0][1] * H);
+    for (const [x, y] of SILUETA.slice(1)) actx.lineTo(x * W, y * H);
+    actx.closePath(); actx.fill();
+    actx.fillStyle = '#fff'; actx.beginPath();   // pantallas y reloj: su propia pista, sin ambiente
+    for (const sup of Object.values(G.superficies)) for (const qd of sup.quads) trazarQuad(actx, aPx(qd, W, H));
+    trazarQuad(actx, aPx(G.reloj.quad, W, H)); actx.fill();
+    capaAmb.dataset.listo = '1';
+    return capaAmb;
+  }
+  const capaSombra = document.createElement('canvas');
+  function sombrasContacto(W, H) {   // sombra de contacto bajo el gabinete de las pantallas superiores (estática por tamaño)
+    if (capaSombra.width === W && capaSombra.height === H && capaSombra.dataset.listo) return capaSombra;
+    capaSombra.width = W; capaSombra.height = H; const c = capaSombra.getContext('2d');
+    c.filter = `blur(${Math.max(2, W / 380).toFixed(1)}px)`; c.fillStyle = 'rgba(0,0,0,0.5)';
+    for (const id of ['corrientes', 'pellegrini']) {
+      const qd = aPx(G.superficies[id].quads[0], W, H), alto = Math.hypot(qd[3][0] - qd[0][0], qd[3][1] - qd[0][1]);
+      c.beginPath(); c.moveTo(qd[3][0], qd[3][1]); c.lineTo(qd[2][0], qd[2][1]);
+      c.lineTo(qd[2][0], qd[2][1] + alto * 0.16); c.lineTo(qd[3][0], qd[3][1] + alto * 0.16); c.closePath(); c.fill();
+    }
+    capaSombra.dataset.listo = '1';
+    return capaSombra;
+  }
   const promedio = document.createElement('canvas').getContext('2d', { willReadFrequently: true });   // color medio de cada contenido LED
   const CONT = {
     corrientes: mk(576, 288),
@@ -48,7 +76,9 @@
     lienzo.style.width = cssW + 'px'; lienzo.style.height = cssH + 'px';
     const pw = Math.round(cssW * dpr), ph = Math.round(cssH * dpr);
     if (lienzo.width !== pw || lienzo.height !== ph) {
-      lienzo.width = pw; lienzo.height = ph; capaLuz.width = pw; capaLuz.height = ph; capaTinte.width = pw; capaTinte.height = ph;
+      lienzo.width = pw; lienzo.height = ph;
+      // los mapas de luz son suaves: se calculan a MEDIA resolución y se escalan (interpolación bilineal = más suavidad)
+      capaLuz.width = Math.ceil(pw / 2); capaLuz.height = Math.ceil(ph / 2); capaTinte.width = capaLuz.width; capaTinte.height = capaLuz.height;
     }
     ubicarEtiquetas();
     pedirCuadro();
@@ -180,7 +210,7 @@
   }
 
   // ---------- luces ----------
-  const rgbDe = (q) => [Math.min(1, q.r + q.w), Math.min(1, q.g + q.w * 0.8), Math.min(1, q.b + q.w * 0.52)];   // W de previsualización: blanco cálido
+  const rgbDe = (q) => [Math.min(1, q.r + q.w), Math.min(1, q.g + q.w * 0.84), Math.min(1, q.b + q.w * 0.66)];   // W de previsualización ≈ 3300 K
   function separacion(W) {   // distancia típica entre vecinos del mismo nivel, para dimensionar el halo
     const out = {};
     for (const g of M.GRUPOS) {
@@ -199,8 +229,10 @@
   const SILUETA = [[0.117, 1.0], [0.117, 0.66], [0.124, 0.60], [0.124, 0.303], [0.168, 0.303], [0.168, 0.202], [0.349, 0.175],
     [0.349, 0.069], [0.47, 0.069], [0.49, 0.03], [0.505, 0.069], [0.663, 0.09], [0.663, 0.23], [0.730, 0.23], [0.730, 1.0]];   // perfil de azotea medido
   // De noche el edificio no tiene luz propia: solo un ambiente urbano tenue y neutro (sin tinte de color).
-  const AMBIENTE = [66, 68, 78];
-  const GANANCIA = 2.8;   // intensidad visual del baño: nivel 45 % ≈ fachada bien leída junto al equipo
+  // Luz AMBIENTAL URBANA (Fer, 14/10): la que ya existe (farolas, reflejos, cielo). Con nuestras 46 apagadas el TRUST sigue
+  // visible: la foto queda a este nivel, levemente neutra/fría. NUESTRA luz se SUMA encima (no reemplaza a la de la ciudad).
+  const AMBIENTE = [150, 149, 148];
+  const GANANCIA = 1.95;  // intensidad visual del baño que se suma: nivel 45 % ≈ fachada algo más clara que la foto junto al equipo
 
   // ---- Motor de iluminación arquitectónica (simulación) ----
   // Cada luminaria es un BAÑADOR hacia arriba ("wall washer/grazer") con:
@@ -230,11 +262,12 @@
         let I;
         if (h >= 0) {
           const w = w0 + h * tg;
-          const lateral = Math.exp(-1.25 * (xs / w) ** 2);   // bordes muy suaves
           const nace = 0.45 + 0.55 * suaveP(0, sep * 0.18, h);
-          const cae = 1 / (1 + (h / (H * 0.5)) ** 1.8);
           const fin = 1 - suaveP(H * 0.72, H, h);
-          I = lateral * nace * cae * fin * Math.pow(w0 / w, 0.22);
+          // núcleo del haz (bordes gaussianos) + halo ancho de luz dispersa: los vecinos se funden sin franjas
+          const nucleo = Math.exp(-1.35 * (xs / w) ** 2) / (1 + (h / (H * 0.48)) ** 1.8) * Math.pow(w0 / w, 0.22);
+          const halo = Math.exp(-1.1 * (xs / (w * 2.2 + sep * 0.3)) ** 2) / (1 + (h / (H * 0.62)) ** 1.6) * 0.45;
+          I = (0.7 * nucleo + 0.3 * halo) * nace * fin;
         } else {
           const e = -h;
           I = 0.5 * Math.exp(-2.2 * (xs / (sep * 0.32)) ** 2) * Math.exp(-e / (sep * 0.1));
@@ -248,7 +281,17 @@
     cacheSprites.set(clave, s);
     return s;
   }
-  const varianteDe = (id) => { let hsh = 0; for (const ch of id) hsh = (hsh * 31 + ch.charCodeAt(0)) >>> 0; return hsh % VARIANTES.length; };
+  const hashDe = (id) => { let hsh = 2166136261; for (const ch of id) hsh = Math.imul(hsh ^ ch.charCodeAt(0), 16777619) >>> 0; return hsh; };
+  const varianteDe = (id) => hashDe(id) % VARIANTES.length;
+  // Variación DETERMINISTA por equipo (misma en cada cuadro: sin parpadeo): ±6° de apertura, flujo 0,86–1,14, ±~150 K.
+  const VARIACION = new Map();
+  function variacionDe(id) {
+    if (!VARIACION.has(id)) {
+      const hsh = hashDe(id + '#v'), a = (hsh & 255) / 255, b = ((hsh >>> 8) & 255) / 255, c = ((hsh >>> 16) & 255) / 255;
+      VARIACION.set(id, { dAp: Math.round((a - 0.5) * 12), flujo: 0.86 + 0.28 * b, temp: (c - 0.5) * 0.08 });
+    }
+    return VARIACION.get(id);
+  }
   const tinte = document.createElement('canvas'), tictx = tinte.getContext('2d');
   function sumarBano(dst, sp, x, y, col, alfa) {
     const w = sp.c.width, h = sp.c.height;
@@ -284,12 +327,18 @@
     [0.66, 0.356], [0.74, 0.350]];
   const OCLUSOR = { medio: { linea: CORNISA_MEDIA, pasa: 0.22 }, superior: { linea: CORNISA_REMATE, pasa: 0.4 } };
   const capaGrupo = document.createElement('canvas'), gctx = capaGrupo.getContext('2d');
+  const cacheOclusor = new Map();
   function ocluir(c, oc, W, H) {
-    c.save(); c.globalCompositeOperation = 'destination-out'; c.globalAlpha = 1 - oc.pasa;
-    c.filter = `blur(${Math.max(1.5, W / 450).toFixed(1)}px)`;   // borde de sombra suave
-    c.fillStyle = '#000'; c.beginPath(); c.moveTo(oc.linea[0][0] * W, 0);
-    for (const [x, y] of oc.linea) c.lineTo(x * W, y * H);
-    c.lineTo(oc.linea[oc.linea.length - 1][0] * W, 0); c.closePath(); c.fill(); c.restore();
+    const clave = `${W}x${H}|${oc.pasa}|${oc.linea[0]}`;
+    if (!cacheOclusor.has(clave)) {   // máscara fija por tamaño: se calcula una vez
+      const m = document.createElement('canvas'); m.width = W; m.height = H; const mc = m.getContext('2d');
+      mc.filter = `blur(${Math.max(1, W / 450).toFixed(1)}px)`;   // borde de sombra suave
+      mc.fillStyle = `rgba(0,0,0,${1 - oc.pasa})`; mc.beginPath(); mc.moveTo(oc.linea[0][0] * W, 0);
+      for (const [x, y] of oc.linea) mc.lineTo(x * W, y * H);
+      mc.lineTo(oc.linea[oc.linea.length - 1][0] * W, 0); mc.closePath(); mc.fill();
+      cacheOclusor.set(clave, m);
+    }
+    c.save(); c.globalCompositeOperation = 'destination-out'; c.drawImage(cacheOclusor.get(clave), 0, 0); c.restore();
   }
   // Color de luz para el MAPA: algo menos saturado que el canal puro (la piedra y el ambiente mezclan) → sin look de filtro.
   const colorMapa = (rgb) => { const l = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2], mx = Math.max(...rgb) || 1; const s = 1 - Math.min(...rgb) / mx; const m = 0.12 + 0.12 * s; return rgb.map((v) => Math.round(255 * Math.min(1, v * (1 - m) + Math.max(l, 0.25 * mx) * m))); };   // los colores puros se suavizan algo más
@@ -297,11 +346,7 @@
     for (const c of [lctx, tctx]) { c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1; c.filter = 'none'; c.clearRect(0, 0, W, H); }
     if (capaGrupo.width !== W || capaGrupo.height !== H) { capaGrupo.width = W; capaGrupo.height = H; }
     const sep = separacion(W);
-    // Mapa de luz (tctx): ambiente neutro dentro de la silueta + baños por fila (con oclusión) + derrame de pantallas y reloj.
-    tctx.fillStyle = `rgb(${AMBIENTE.join(',')})`;
-    tctx.beginPath(); tctx.moveTo(SILUETA[0][0] * W, SILUETA[0][1] * H);
-    for (const [x, y] of SILUETA.slice(1)) tctx.lineTo(x * W, y * H);
-    tctx.closePath(); tctx.fill();
+    // Mapa de la luz QUE AGREGAMOS (tctx): baños por fila (con oclusión) + derrame de pantallas + reloj/cúpula. Fondo negro.
     lctx.globalCompositeOperation = 'lighter';
     let dibujadas = 0;
     for (const g of M.GRUPOS) {
@@ -312,9 +357,12 @@
         if (s.grupo !== g.id) continue;
         const p = puntos[s.id];
         if (!p || s.nivel <= 0.002) continue;
-        const rgb = rgbDe(s.rgbw), col = rgb.map((v) => Math.round(v * 255)), v = varianteDe(s.id);
+        const vr = variacionDe(s.id), rgb0 = rgbDe(s.rgbw), v = varianteDe(s.id);
+        const rgb = [rgb0[0], rgb0[1] * (1 + vr.temp * 0.4), rgb0[2] * (1 + vr.temp)];   // pequeña diferencia de temperatura
+        const col = rgb.map((c) => Math.round(Math.min(1, c) * 255));
         const x = p[0] * W, y = p[1] * H, sp = sep[s.grupo], k = s.nivel;
-        sumarBano(gctx, sprite(sp, ALCANCE[s.grupo], s.apertura || 40, v), x, y, colorMapa(rgb), k * GANANCIA * JITTER[v]);
+        const ap = Math.max(10, Math.min(90, Math.round(((s.apertura || 40) + vr.dAp) / 2) * 2));   // paso de 2° para reusar sprites
+        sumarBano(gctx, sprite(sp, ALCANCE[s.grupo], ap, v), x, y, colorMapa(rgb.map((c) => Math.min(1, c))), k * GANANCIA * JITTER[v] * vr.flujo);
         // la fuente: punto chico y contenido, sin halo
         const r = sp * 0.06, hs = lctx.createRadialGradient(x, y, 0, x, y, r);
         hs.addColorStop(0, `rgba(255,255,255,${0.55 * k})`); hs.addColorStop(0.45, `rgba(${col.join(',')},${0.4 * k})`); hs.addColorStop(1, `rgba(${col.join(',')},0)`);
@@ -339,13 +387,18 @@
       const rq = aPx(G.reloj.quad, W, H), cx = (rq[0][0] + rq[2][0]) / 2, cy = (rq[0][1] + rq[2][1]) / 2, rr = Math.abs(rq[1][0] - rq[0][0]) * 3.2;
       const gr = tctx.createRadialGradient(cx, cy, 0, cx, cy, rr);
       const c = extra.reloj.color;
-      gr.addColorStop(0, `rgba(${c.join(',')},${0.55 * extra.reloj.nivel})`); gr.addColorStop(1, `rgba(${c.join(',')},0)`);
+      gr.addColorStop(0, `rgba(${c.join(',')},${0.38 * extra.reloj.nivel})`); gr.addColorStop(1, `rgba(${c.join(',')},0)`);
       tctx.fillStyle = gr; tctx.beginPath(); tctx.arc(cx, cy, rr, 0, Math.PI * 2); tctx.fill();
+      // cúpula: baño cálido y suave sobre sus ornamentos (zona 'dome' aprobada en composition.ts), parte de la pista del reloj
+      const dc = [0.49 * W, 0.25 * H], drx = 0.085 * W, dry = 0.12 * H, gd = tctx.createRadialGradient(dc[0], dc[1] + dry * 0.5, 0, dc[0], dc[1] + dry * 0.5, dry * 1.2);
+      gd.addColorStop(0, `rgba(255,214,166,${0.42 * extra.reloj.nivel})`); gd.addColorStop(1, 'rgba(255,214,166,0)');
+      tctx.save(); tctx.translate(dc[0], 0); tctx.scale(drx / dry, 1); tctx.translate(-dc[0], 0);
+      tctx.fillStyle = gd; tctx.beginPath(); tctx.arc(dc[0], dc[1] + dry * 0.5, dry * 1.2, 0, Math.PI * 2); tctx.fill(); tctx.restore();
     }
     enmascarar(lctx, W, H);
     enmascarar(tctx, W, H);
-    // fuera de la silueta, pantallas y reloj: el mapa vale blanco (la foto queda igual)
-    tctx.globalCompositeOperation = 'destination-over'; tctx.fillStyle = '#fff'; tctx.fillRect(0, 0, W, H);
+    // fuera de la silueta, pantallas y reloj: no agregamos luz (negro)
+    tctx.globalCompositeOperation = 'destination-over'; tctx.fillStyle = '#000'; tctx.fillRect(0, 0, W, H);
     return dibujadas;
   }
 
@@ -356,7 +409,7 @@
     pedido = false;
     const est = M.estado();
     if (est.show.reproduciendo) {
-      const dt = ultimo == null ? 0 : Math.min(0.1, (ts - ultimo) / 1000);
+      const dt = ultimo == null ? 0 : Math.min(0.5, (ts - ultimo) / 1000);   // el show sigue el reloj REAL aunque baje el fps
       ultimo = ts; M.avanzar(dt);
       pedirCuadro();
     } else ultimo = null;
@@ -379,11 +432,23 @@
       extra.pantallas.push({ nivel: sal.pantallas[id], color: [d[0], d[1], d[2]], quads: G.superficies[id].quads });
     }
     // 2. luces
-    const n = dibujarLuces(sal, W, H, extra);
+    const n = dibujarLuces(sal, capaTinte.width, capaTinte.height, extra);
     const suaveFiltro = `blur(${Math.max(0.5, W / 1800).toFixed(2)}px)`;   // solo suaviza el mapa: el relieve lo da la foto
-    if (!dia) {   // 2a. NOCHE: el edificio solo se ve donde lo ilumina una luminaria encendida
-      ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = 1; ctx.filter = suaveFiltro;
-      ctx.drawImage(capaTinte, 0, 0); ctx.filter = 'none';
+    if (!dia) {
+      // 2a. NOCHE: la ciudad queda (ambiente urbano sobre el TRUST) y NUESTRA luz se suma: foto × mapa de luz, aditivo.
+      ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = 1;
+      ctx.drawImage(mapaAmbiente(W, H), 0, 0);
+      if (capaSuma.width !== W || capaSuma.height !== H) { capaSuma.width = W; capaSuma.height = H; }
+      sctx.globalCompositeOperation = 'source-over'; sctx.globalAlpha = 1; sctx.filter = 'none';
+      sctx.drawImage(foto, 0, 0, foto.naturalWidth, foto.naturalHeight, 0, 0, W, H);
+      sctx.globalCompositeOperation = 'multiply'; sctx.drawImage(capaTinte, 0, 0, W, H);
+      ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(capaSuma, 0, 0);
+      // equilibrio de temperatura: la franja baja (farolas de sodio en la foto) se neutraliza levemente
+      ctx.save(); ctx.beginPath(); ctx.moveTo(SILUETA[0][0] * W, SILUETA[0][1] * H);
+      for (const [x, y] of SILUETA.slice(1)) ctx.lineTo(x * W, y * H);
+      ctx.closePath(); ctx.clip();
+      const wb = ctx.createLinearGradient(0, 0.6 * H, 0, H); wb.addColorStop(0, 'rgb(255,255,255)'); wb.addColorStop(1, 'rgb(236,244,255)');
+      ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = wb; ctx.fillRect(0, 0.6 * H, W, 0.4 * H); ctx.restore();
       // 2a'. lectura del relieve: el detalle fino de la foto en 'soft-light', solo sobre la fachada del TRUST.
       if (relieve.complete && relieve.naturalWidth) {
         ctx.save(); ctx.beginPath(); ctx.moveTo(SILUETA[0][0] * W, SILUETA[0][1] * H);
@@ -394,9 +459,7 @@
       }
     }
     ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = dia ? 0.06 : 0.6;   // 2b. la fuente (punto contenido)
-    ctx.filter = suaveFiltro;
-    ctx.drawImage(capaLuz, 0, 0);
-    ctx.filter = 'none';
+    ctx.drawImage(capaLuz, 0, 0, W, H);
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
 
     // 3. reloj
@@ -409,10 +472,21 @@
     if (!dia && rn > 0) {
       ctx.save(); ctx.globalCompositeOperation = 'screen';
       const gr = ctx.createRadialGradient(rc[0], rc[1], 0, rc[0], rc[1], rr * 1.6);
-      gr.addColorStop(0, `rgba(${cr},${cg},${cb},${0.55 * rn})`); gr.addColorStop(0.6, `rgba(${cr},${cg},${cb},${0.18 * rn})`); gr.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+      gr.addColorStop(0, `rgba(${cr},${cg},${cb},${0.28 * rn})`); gr.addColorStop(0.6, `rgba(${cr},${cg},${cb},${0.12 * rn})`); gr.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
       ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(rc[0], rc[1], rr * 1.6, 0, Math.PI * 2); ctx.fill(); ctx.restore();
     }
 
+    // 3b. integración de las pantallas superiores: sombra de contacto bajo el gabinete y emisión suave alrededor.
+    //     Se dibuja ANTES del contenido (que es opaco): ningún efecto cae sobre los píxeles LED. La pantalla media, limpia.
+    for (const id of ['corrientes', 'pellegrini']) {
+      const qd = aPx(G.superficies[id].quads[0], W, H), e = extra.pantallas.find((x) => x.quads === G.superficies[id].quads);
+      if (id === 'corrientes') ctx.drawImage(sombrasContacto(W, H), 0, 0);   // las dos sombras, en una capa cacheada
+      if (!dia && e && e.nivel > 0.01) {
+        ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = 0.22 * e.nivel;
+        ctx.filter = `blur(${Math.max(6, W / 110).toFixed(0)}px)`; ctx.fillStyle = `rgb(${e.color.join(',')})`;
+        ctx.beginPath(); trazarQuad(ctx, qd); ctx.fill(); ctx.restore();
+      }
+    }
     // 4. pantallas (opacas, encima de todo)
     for (const id of M.PANTALLAS) {
       const sup = G.superficies[id], src = CONT[id], nq = sup.quads.length, nivel = sal.pantallas[id];
@@ -600,7 +674,13 @@
     takeover: 'takeover conjunto de las 3 pantallas · acentos RGBW · reloj dorado',
     cierre: 'cierre de marca · fundido a arquitectónica cálida · reloj neutro',
   };
+  function plegarDirector(plegado) {
+    $('t-director').classList.toggle('plegado', plegado);
+    $('director-plegar').setAttribute('aria-expanded', String(!plegado));
+  }
+  $('director-plegar').addEventListener('click', () => plegarDirector(!$('t-director').classList.contains('plegado')));
   function generarMinishow() {
+    plegarDirector(false);   // en la demo se muestra el plan cargado
     M.cargarShow(); M.seek(0);
     const ol = $('plan-ol'); ol.innerHTML = '';
     $('plan-cab').textContent = "Plantilla cargada: McDonald's Takeover 15 s (preprogramada, no es generación por IA)";
@@ -730,5 +810,6 @@
     pixel: (nx, ny) => { dibujar(); const d = ctx.getImageData(Math.floor(nx * lienzo.width), Math.floor(ny * lienzo.height), 1, 1).data; return [d[0], d[1], d[2], d[3]]; },
     usarPuntosDePrueba: (obj) => { for (const k of Object.keys(puntos)) delete puntos[k]; Object.assign(puntos, obj); puntosDePrueba = true; pedirCuadro(); },
     seleccionar,
+    variacion: (id) => Object.assign({}, variacionDe(id)),
   };
 })();

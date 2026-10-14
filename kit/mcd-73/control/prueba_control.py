@@ -139,6 +139,16 @@ async def main(out):
         acentos = [v for v in niv['mcd'] if v > 0.5]
         ok(acentos and all(0.6 <= v <= 0.75 for v in acentos) and len(acentos) < len(niv['mcd']) * 0.6, f"McDonald's: acentos 60–75 % por sectores, no toda la fachada ({len(acentos)}/46)")
         ok(all(v == 0 for v in niv['apagado']), 'escena «Luces apagadas»: las 46 en 0')
+        cal = await ev(f'(()=>{{{M}.setEscena("arquitectonica");return {M}.salidas().luces[0].rgbw}})()')
+        r_, g_, b_ = min(1, cal['r'] + cal['w']), min(1, cal['g'] + cal['w'] * 0.84), min(1, cal['b'] + cal['w'] * 0.66)
+        ok(b_ / r_ >= 0.6 and g_ / r_ >= 0.78, f'blanco cálido de previsualización sin amarillo saturado (≈3200 K: R {r_:.2f} G {g_:.2f} B {b_:.2f})')
+        await pg.reload(); await pg.wait_for_function('window.TRUST && TRUST.info().W > 0')   # estado de apertura recién abierto
+        await ev('document.getElementById("portada").classList.add("fuera")'); await pg.wait_for_timeout(700)
+        ple = await ev('[document.getElementById("t-director").classList.contains("plegado"), document.getElementById("director-cuerpo").offsetParent === null, !!document.getElementById("generar").offsetParent]')
+        ok(ple == [True, True, True], f'Director de show plegado al abrir: prompt oculto, botón Generar visible ({ple})')
+        await pg.click('#director-plegar')
+        ok(await ev('document.getElementById("director-cuerpo").offsetParent !== null && document.getElementById("director-plegar").getAttribute("aria-expanded") === "true"'), 'Director de show: se despliega con su botón')
+        await pg.click('#director-plegar')
         await ev(f'{M}.setFixtureApertura("SUP-03", 25)')
         aps = await ev(f'{M}.salidas().luces.filter(l=>l.apertura!==({M}.APERTURA[l.grupo])).map(l=>l.id)')
         ok(aps == ['SUP-03'], f'apertura del haz configurable por luminaria (solo SUP-03 cambió: {aps})')
@@ -203,7 +213,7 @@ async def main(out):
         await ev(apagar); sin = await ev(f'{json.dumps(muestras)}.map(([x,y])=>TRUST.pixel(x,y))')
         dif = sum(1 for a, c in zip(con, sin) if a != c)
         ok(dif == 0, f'ningún halo sobre el contenido LED: {len(muestras)} píxeles dentro de las 3 pantallas idénticos con luces 100 % y 0 % (difieren {dif})')
-        # Noche = el edificio NO tiene luz propia (Fer, 14/10): solo lo ilumina lo que está encendido.
+        # Noche (Fer, 14/10 refinamiento): apagar NUESTRAS 46 luces no apaga la luz urbana: el TRUST sigue visible.
         await ev(f'{M}.reiniciarTodo()'); await pg.reload(); await pg.wait_for_function('window.TRUST && TRUST.info().W > 0')
         lum_ = lambda px: 0.2126 * px[0] + 0.7152 * px[1] + 0.0722 * px[2]
         fachada = [[0.30, 0.50], [0.45, 0.70], [0.60, 0.45], [0.25, 0.75], [0.55, 0.62]]   # fachada del TRUST, fuera de pantallas
@@ -212,13 +222,13 @@ async def main(out):
         await ev(f'{M}.setVista("noche"); {M}.setLucesMaster(0)'); apag = await ev(f'{json.dumps(fachada + externos_)}.map(([x,y])=>TRUST.pixel(x,y))')
         n_f = len(fachada)
         rel = sum(lum_(a) for a in apag[:n_f]) / max(1, sum(lum_(f) for f in foto[:n_f]))
-        ok(rel < 0.35, f'noche con luces apagadas: la fachada queda en penumbra ({rel:.0%} del brillo de la foto)')
+        ok(0.45 < rel < 0.8, f'luces apagadas: el TRUST sigue visible con la luz urbana ({rel:.0%} del brillo de la foto)')
         ok(apag[n_f:] == foto[n_f:], 'vecino, torre blanca y cielo no cambian (quedan como en la foto)')
         sup5 = (await ev('LUMINARIAS'))['puntos']['SUP-05']
         en_haz = [[sup5[0], sup5[1] - 0.02]]
         await ev(f'{M}.setLucesMaster(100)'); prend = await ev(f'{json.dumps(en_haz)}.map(([x,y])=>TRUST.pixel(x,y))')
         await ev(f'{M}.setLucesMaster(0)'); apg = await ev(f'{json.dumps(en_haz)}.map(([x,y])=>TRUST.pixel(x,y))')
-        ok(lum_(prend[0]) > 1.8 * lum_(apg[0]), f'un haz encendido revela la fachada (brillo ×{lum_(prend[0]) / max(1, lum_(apg[0])):.1f} sobre apagado)')
+        ok(lum_(prend[0]) > 1.15 * lum_(apg[0]), f'un haz encendido se suma a la luz urbana (brillo ×{lum_(prend[0]) / max(1, lum_(apg[0])):.1f} sobre apagado)')
         # un fixture al 20 % cambia solo SU baño (auditoría 14/10)
         await ev(f'{M}.setLucesMaster(100); {M}.setEscena("arquitectonica")')
         cerca = [[sup5[0], sup5[1] - 0.03]]
@@ -229,12 +239,21 @@ async def main(out):
         ok(lum_(a2[0]) < lum_(a1[0]) - 8 and a2[1:] == a1[1:], 'SUP-05 al 20 %: baja su baño y el resto de la fachada no cambia')
         await ev(f'{M}.setFixture("SUP-05", 100)')
         # sin manchas de color uniformes: en el takeover el rojo es acento, no la fachada entera
-        await ev(f'{M}.cargarShow(); {M}.seek(8.3)')
         grilla = [[0.15 + 0.55 * i / 9, 0.40 + 0.38 * j / 5] for i in range(10) for j in range(6)]
+        arq = await ev(f'{json.dumps(grilla)}.map(([x,y])=>TRUST.pixel(x,y))')
+        await ev(f'{M}.cargarShow(); {M}.seek(8.3)')
         px = await ev(f'{json.dumps(grilla)}.map(([x,y])=>TRUST.pixel(x,y))')
-        rojos = sum(1 for c in px if c[0] > 1.8 * max(c[1], c[2], 1))
+        rg = lambda c: c[0] / max(1, c[1])
+        rojos = sum(1 for c, a in zip(px, arq) if rg(c) > 1.3 * rg(a))   # el punto se volvió claramente más rojo que en la cálida
         ok(rojos < len(px) * 0.5, f'takeover: el rojo cubre {rojos}/{len(px)} puntos de la fachada (acentos, no capa uniforme)')
         ok(rojos > 0, 'takeover: hay acentos rojos visibles')
+        # sin parpadeo: el mismo instante se dibuja idéntico (variaciones deterministas)
+        d1 = await ev(f'{json.dumps(grilla[:20])}.map(([x,y])=>TRUST.pixel(x,y))'); d2 = await ev(f'{json.dumps(grilla[:20])}.map(([x,y])=>TRUST.pixel(x,y))')
+        ok(d1 == d2, 'mismo instante del show → mismos píxeles (sin parpadeo)')
+        var = await ev('["SUP-01","SUP-02","SUP-03","MED-07"].map(id=>TRUST.variacion(id))')
+        var2 = await ev('["SUP-01","SUP-02","SUP-03","MED-07"].map(id=>TRUST.variacion(id))')
+        ok(var == var2 and len({(v['dAp'], round(v['flujo'], 3)) for v in var}) > 1 and all(abs(v['dAp']) <= 6 and 0.85 <= v['flujo'] <= 1.15 for v in var),
+           f'variación por equipo determinista y acotada (±6° de apertura, flujo 0,86–1,14): {[(v["dAp"], round(v["flujo"], 2)) for v in var]}')
         await ev(f'{M}.setEscena("arquitectonica")')
         # pantallas al 0 %: el contenido queda negro sin tocar la foto de alrededor
         await ev(f'{M}.setPantalla("corrientes", 0)')

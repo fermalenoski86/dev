@@ -29,8 +29,8 @@
 
   // Colores de escena (canales RGBW 0..1). Son colores de PREVISUALIZACIÓN, no un patch DMX.
   const C = {
-    calido: { r: 0.32, g: 0.10, b: 0.00, w: 0.85 },   // blanco cálido arquitectónico (≈3000 K de previsualización)
-    blancoArq: { r: 0.04, g: 0.05, b: 0.09, w: 0.95 },  // blanco arquitectónico neutro
+    calido: { r: 0.04, g: 0.00, b: 0.00, w: 0.95 },   // blanco cálido arquitectónico ≈ 3200 K (referencia visual, no fotometría)
+    blancoArq: { r: 0.00, g: 0.03, b: 0.12, w: 0.95 },  // blanco arquitectónico ≈ 4000 K
     ambar: { r: 1.00, g: 0.40, b: 0.00, w: 0.18 },      // ámbar: puente entre el rojo y el blanco cálido
     rojo: { r: 1.00, g: 0.02, b: 0.00, w: 0.00 },
     oro: { r: 1.00, g: 0.58, b: 0.00, w: 0.22 },
