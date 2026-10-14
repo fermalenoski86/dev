@@ -492,3 +492,27 @@ OK
 GATE progreso (P-02): manifiesto válido (33 entradas), docs/collab/PROGRESO.md al día
 == node scripts/acceptance/cli.mjs check
 GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día
+
+== ronda 7 (Codex sobre e79fb97) — 2026-10-14T03:30:08Z
+== reproducción con el script de e79fb97
+mkdir: cannot create directory '/proc/forbidden': No such file or directory
+::notice title=demo (exit 0)::entorno: sha=… head=… run=n/d/n/d job=n/d ImageOS=n/d ImageVersion=n/d node=v22.22.0 pnpm=10.28.0 chrome=n/d ffmpeg=6.1.1-3ubuntu5 postgres=16.15 nproc=2 loadavg=1.38 0.59 0.22
+exit=0
+== bash scripts/ci/run.test.sh (script de e79fb97)
+  ✗ 3.23e copia del log no escribible (P04_LOGS bajo /proc) + comando verde → exit != 0, ::error 'log no escrito' con diagnóstico (Codex #75 sobre e79fb97)
+  ✗ 3.23f P04_LOGS es un archivo (no directorio) + comando verde → exit != 0
+  ✗ 3.23g copia no escribible + comando rojo → conserva el exit del comando (3)
+  ✗ 3.23h tee y copia fallan juntos → un solo 'log no escrito' en el título y las dos notas
+run.test: 157 OK, 4 fallos
+== bash scripts/ci/run.test.sh (corregido)
+  ✓ 3.23 tee sin destino escribible + comando verde → exit != 0, ::error 'log no escrito' con diagnóstico (AUDIT #75)
+  ✓ 3.23b tee sin destino + comando rojo → conserva el exit del comando (3) y avisa del log
+  ✓ 3.23c mktemp fallido (TMPDIR inexistente) + comando verde → exit != 0 y 'log no escrito'
+  ✓ 3.23d caso feliz con destino escribible: exit 0, sin ::error ni aviso de log
+  ✓ 3.23e copia del log no escribible (P04_LOGS bajo /proc) + comando verde → exit != 0, ::error 'log no escrito' con diagnóstico (Codex #75 sobre e79fb97)
+  ✓ 3.23f P04_LOGS es un archivo (no directorio) + comando verde → exit != 0
+  ✓ 3.23g copia no escribible + comando rojo → conserva el exit del comando (3)
+  ✓ 3.23h tee y copia fallan juntos → un solo 'log no escrito' en el título y las dos notas
+run.test: 161 OK, 0 fallos
+== scripts/ci/politica-fallas.sh check
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)

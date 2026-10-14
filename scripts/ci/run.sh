@@ -51,7 +51,14 @@ prop() { codifica "$1" | sed 's/:/%3A/g;s/,/%2C/g'; }
 ENT=$("$AQUI/entorno.sh")
 # copia sanitizada de la salida completa (artifact al fallar, P-04)
 DIR=${P04_LOGS:-test-results/ci}
-mkdir -p "$DIR" && { echo "entorno: $ENT"; limpio; } > "$DIR/$(printf '%s' "$TITULO" | tr -c 'A-Za-z0-9._-' '_').log"
+# si la copia no se puede escribir (sin permisos, volumen lleno, `test-results` es archivo), el gate
+# no queda verde sin el log completo, igual que con `tee` (Codex #75 sobre e79fb97)
+if ! { mkdir -p "$DIR" && { echo "entorno: $ENT"; limpio; } > "$DIR/$(printf '%s' "$TITULO" | tr -c 'A-Za-z0-9._-' '_').log"; } 2>/dev/null; then
+  NOTA="${NOTA:+$NOTA
+}run.sh: no se pudo escribir la copia del log en $DIR (artifact): falta el log completo"
+  case "$POR_PLAZO" in *"log no escrito"*) ;; *) POR_PLAZO="$POR_PLAZO, log no escrito" ;; esac
+  [ "$RC" = 0 ] && RC=1
+fi
 # resumen siempre (también en verde): líneas de conteo de tests
 RES=$(limpio | grep -aE 'Tests  |Test Files|[0-9]+ (passed|failed)|ATRAPADA|SOBREVIVE|SIN SALIDA|TIMEOUT|TODAS|GATE|atrapadas|paralelo:' | grep -avE '^\s*ATRAPADA' | tail -15)
 echo "::notice title=$(prop "$TITULO (exit $RC)")::$(codifica "entorno: $ENT
