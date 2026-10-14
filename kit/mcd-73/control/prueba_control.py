@@ -140,8 +140,14 @@ async def main(out):
         ok(acentos and all(0.6 <= v <= 0.75 for v in acentos) and len(acentos) < len(niv['mcd']) * 0.6, f"McDonald's: acentos 60–75 % por sectores, no toda la fachada ({len(acentos)}/46)")
         ok(all(v == 0 for v in niv['apagado']), 'escena «Luces apagadas»: las 46 en 0')
         cal = await ev(f'(()=>{{{M}.setEscena("arquitectonica");return {M}.salidas().luces[0].rgbw}})()')
-        r_, g_, b_ = min(1, cal['r'] + cal['w']), min(1, cal['g'] + cal['w'] * 0.84), min(1, cal['b'] + cal['w'] * 0.66)
-        ok(b_ / r_ >= 0.6 and g_ / r_ >= 0.78, f'blanco cálido de previsualización sin amarillo saturado (≈3200 K: R {r_:.2f} G {g_:.2f} B {b_:.2f})')
+        r_, g_, b_ = await ev(f'TRUST.rgbDe({json.dumps(cal)})')   # mezcla RGBW → color de previsualización (W = blanco fijo del equipo)
+        ok(b_ / r_ >= 0.55 and g_ / r_ >= 0.72 and b_ < g_ < r_, f'blanco cálido = mezcla RGBW, sin amarillo saturado (≈3000–3500 K: R {r_:.2f} G {g_:.2f} B {b_:.2f})')
+        lib = await ev(f'(()=>{{{M}.setEscena("libre");const s={M}.salidas().luces;{M}.setEscena("arquitectonica");return s.map(l=>[l.nivel,l.rgbw])}})()')
+        ok(len(lib) == 46 and all(0.35 <= n <= 0.5 for n, _ in lib), 'escena «RGBW libre»: base neutra moderada para colorear por luminaria o grupo')
+        await ev(f'{M}.setColorGrupo("medio", {{r:0,g:.2,b:1,w:0}})')
+        gc = await ev(f'{M}.estado().luces.fixtures.map(f=>[f.grupo, !!f.color])')
+        ok(all(c == (g == 'medio') for g, c in gc), 'color por grupo: «medio» en azul, superior e inferior sin tocar')
+        await ev(f'{M}.setColorGrupo("todas", null)')
         await pg.reload(); await pg.wait_for_function('window.TRUST && TRUST.info().W > 0')   # estado de apertura recién abierto
         await ev('document.getElementById("portada").classList.add("fuera")'); await pg.wait_for_timeout(700)
         ple = await ev('[document.getElementById("t-director").classList.contains("plegado"), document.getElementById("director-cuerpo").offsetParent === null, !!document.getElementById("generar").offsetParent]')
@@ -238,6 +244,23 @@ async def main(out):
         a2 = await ev(f'{json.dumps(cerca + lejos)}.map(([x,y])=>TRUST.pixel(x,y))')
         ok(lum_(a2[0]) < lum_(a1[0]) - 8 and a2[1:] == a1[1:], 'SUP-05 al 20 %: baja su baño y el resto de la fachada no cambia')
         await ev(f'{M}.setFixture("SUP-05", 100)')
+        # RGBW individual (Fer, ajuste fino 14/10): 3 luminarias cambian de color y las otras 43 quedan intactas
+        tres = {'SUP-04': {'r': 0, 'g': .25, 'b': 1, 'w': 0}, 'SUP-11': {'r': 0, 'g': 1, 'b': .15, 'w': 0}, 'MED-08': {'r': 1, 'g': 0, 'b': .75, 'w': 0}}
+        pts = await ev('LUMINARIAS'); pts = pts['puntos']
+        s0 = await ev(f'{M}.salidas().luces')
+        cerca3 = [[pts[i][0], pts[i][1] - 0.03] for i in tres]
+        lejos3 = [[x, y] for x, y in [[0.02 + 0.70 * i / 34, 0.42 + 0.34 * j / 4] for i in range(35) for j in range(5)]
+                  if all(abs(x - pts[i][0]) > 0.14 for i in tres)]   # fuera del halo (≈0,13 de alcance)
+        b0 = await ev(f'{json.dumps(cerca3 + lejos3)}.map(([x,y])=>TRUST.pixel(x,y))')
+        for i, c in tres.items(): await ev(f'{M}.setFixtureColor("{i}", {json.dumps(c)})')
+        s1_ = await ev(f'{M}.salidas().luces')
+        b1 = await ev(f'{json.dumps(cerca3 + lejos3)}.map(([x,y])=>TRUST.pixel(x,y))')
+        otras = [(a, b) for a, b in zip(s0, s1_) if a['id'] not in tres]
+        ok(len(otras) == 43 and all(a == b for a, b in otras), '3 luminarias cambian de color: las otras 43 salidas idénticas')
+        ok(b1[0][2] > b0[0][2] + 6 and b1[1][1] > b1[1][0] and b1[2][0] > b1[2][1], f'SUP-04 azul, SUP-11 verde, MED-08 magenta visibles en su baño ({b1[:3]})')
+        dif3 = [(p_, a, b) for p_, a, b in zip(lejos3, b0[3:], b1[3:]) if a != b]
+        ok(len(lejos3) >= 10 and not dif3, f'fuera de esos 3 baños la fachada no cambia ({len(lejos3)} puntos idénticos)')
+        for i in tres: await ev(f'{M}.setFixtureColor("{i}", null)')
         # sin manchas de color uniformes: en el takeover el rojo es acento, no la fachada entera
         grilla = [[0.15 + 0.55 * i / 9, 0.40 + 0.38 * j / 5] for i in range(10) for j in range(6)]
         arq = await ev(f'{json.dumps(grilla)}.map(([x,y])=>TRUST.pixel(x,y))')

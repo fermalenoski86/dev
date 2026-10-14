@@ -29,7 +29,9 @@ OK    nivel medio al 50 %: cambian solo sus 16
 OK    arquitectónica y blanco: base visual moderada (35–50 %)
 OK    McDonald's: acentos 60–75 % por sectores, no toda la fachada (8/46)
 OK    escena «Luces apagadas»: las 46 en 0
-OK    blanco cálido de previsualización sin amarillo saturado (≈3200 K: R 0.99 G 0.80 B 0.63)
+OK    blanco cálido = mezcla RGBW, sin amarillo saturado (≈3000–3500 K: R 1.00 G 0.77 B 0.61)
+OK    escena «RGBW libre»: base neutra moderada para colorear por luminaria o grupo
+OK    color por grupo: «medio» en azul, superior e inferior sin tocar
 OK    Director de show plegado al abrir: prompt oculto, botón Generar visible ([True, True, True])
 OK    Director de show: se despliega con su botón
 OK    apertura del haz configurable por luminaria (solo SUP-03 cambió: ['SUP-03'])
@@ -40,16 +42,19 @@ OK    «Restaurar niveles» deja todo en 100 % y color de escena
 OK    blackout: pantallas, luces y reloj en 0
 OK    soltar blackout recupera los niveles
 OK    show determinista: el mismo t da exactamente la misma salida
-OK    Play avanza el reloj del show (t=1.17 s tras 1,2 s)
+OK    Play avanza el reloj del show (t=1.18 s tras 1,2 s)
 OK    Pausa congela el show
 OK    el show termina en 15 s y se detiene
 OK    a los 4 s la ola roja avanzó desde Corrientes (izquierda) hacia Pellegrini
 OK    ningún halo sobre el contenido LED: 72 píxeles dentro de las 3 pantallas idénticos con luces 100 % y 0 % (difieren 0)
 OK    luces apagadas: el TRUST sigue visible con la luz urbana (62% del brillo de la foto)
 OK    vecino, torre blanca y cielo no cambian (quedan como en la foto)
-OK    un haz encendido se suma a la luz urbana (brillo ×1.8 sobre apagado)
+OK    un haz encendido se suma a la luz urbana (brillo ×2.1 sobre apagado)
 OK    SUP-05 al 20 %: baja su baño y el resto de la fachada no cambia
-OK    takeover: el rojo cubre 11/60 puntos de la fachada (acentos, no capa uniforme)
+OK    3 luminarias cambian de color: las otras 43 salidas idénticas
+OK    SUP-04 azul, SUP-11 verde, MED-08 magenta visibles en su baño ([[52, 58, 99, 255], [80, 135, 86, 255], [96, 45, 71, 255]])
+OK    fuera de esos 3 baños la fachada no cambia (30 puntos idénticos)
+OK    takeover: el rojo cubre 10/60 puntos de la fachada (acentos, no capa uniforme)
 OK    takeover: hay acentos rojos visibles
 OK    mismo instante del show → mismos píxeles (sin parpadeo)
 OK    variación por equipo determinista y acotada (±6° de apertura, flujo 0,86–1,14): [(-3, 1.03), (-3, 0.89), (-5, 1.12), (6, 1.1)]

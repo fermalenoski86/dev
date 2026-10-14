@@ -229,3 +229,8 @@ textarea { width: 100%; height: 90px; background: var(--panel-2); color: var(--t
 #t-director.plegado .plegar svg { transform: rotate(180deg); }
 #t-director.plegado .cuerpo-director { display: none; }
 #t-director.plegado > header { margin-bottom: 4px; }
+
+/* Colores rápidos RGBW en el panel de la luminaria */
+.muestras { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; margin: 6px 0 4px; }
+.muestra { height: 22px; border-radius: 6px; border: 1px solid var(--borde); background: var(--m); cursor: pointer; box-shadow: inset 0 0 0 2px rgba(0,0,0,.25); }
+.muestra:hover { border-color: #fff; }

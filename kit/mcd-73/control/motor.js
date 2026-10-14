@@ -29,8 +29,8 @@
 
   // Colores de escena (canales RGBW 0..1). Son colores de PREVISUALIZACIÓN, no un patch DMX.
   const C = {
-    calido: { r: 0.04, g: 0.00, b: 0.00, w: 0.95 },   // blanco cálido arquitectónico ≈ 3200 K (referencia visual, no fotometría)
-    blancoArq: { r: 0.00, g: 0.03, b: 0.12, w: 0.95 },  // blanco arquitectónico ≈ 4000 K
+    calido: { r: 0.30, g: 0.07, b: 0.00, w: 0.78 },   // blanco cálido ≈ 3200 K = W + algo de R/G (mezcla RGBW; referencia visual)
+    blancoArq: { r: 0.00, g: 0.00, b: 0.02, w: 0.95 },  // blanco arquitectónico: el W del equipo, limpio
     ambar: { r: 1.00, g: 0.40, b: 0.00, w: 0.18 },      // ámbar: puente entre el rojo y el blanco cálido
     rojo: { r: 1.00, g: 0.02, b: 0.00, w: 0.00 },
     oro: { r: 1.00, g: 0.58, b: 0.00, w: 0.22 },
@@ -48,6 +48,8 @@
     arquitectonica: { nombre: 'Arquitectónica cálida', f: () => ({ nivel: 0.45, rgbw: C.calido }), reloj: { nivel: 0.85, rgbw: C.neutro }, pantallas: 'reposo' },
     mcd: { nombre: "McDonald's (acentos)", f: (g, i) => sectorMcd(i + (g === 'medio' ? 2 : g === 'inferior' ? 4 : 0)), reloj: { nivel: 1, rgbw: C.oro }, pantallas: 'marca' },
     blanco: { nombre: 'Blanco arquitectónico', f: () => ({ nivel: 0.42, rgbw: C.blancoArq }), reloj: { nivel: 0.85, rgbw: C.neutro }, pantallas: 'reposo' },
+    // RGBW libre: base W neutra baja; cada luminaria o nivel toma el color que elija el operador (color propio).
+    libre: { nombre: 'RGBW libre', f: () => ({ nivel: 0.45, rgbw: C.blancoArq }), reloj: { nivel: 0.85, rgbw: C.neutro }, pantallas: 'reposo' },
     apagado: { nombre: 'Luces apagadas', f: () => ({ nivel: 0, rgbw: C.calido }), reloj: { nivel: 0.85, rgbw: C.neutro }, pantallas: 'reposo' },
     cierre: { nombre: 'Cierre', f: () => ({ nivel: 0.3, rgbw: C.calido }), reloj: { nivel: 0.7, rgbw: C.neutro }, pantallas: 'reposo' },
   };
@@ -167,6 +169,11 @@
     setFixtureOn(id, on) { fx(id).on = !!on; return avisar(); },
     setFixtureColor(id, rgbw) {
       fx(id).color = rgbw ? { r: clamp(+rgbw.r, 0, 1), g: clamp(+rgbw.g, 0, 1), b: clamp(+rgbw.b, 0, 1), w: clamp(+rgbw.w, 0, 1) } : null;
+      return avisar();
+    },
+    setColorGrupo(g, rgbw) {   // aplica (o quita, con null) un color propio a todo un nivel; no toca niveles ni ON/OFF
+      if (g !== 'todas' && !(g in S.luces.grupos)) throw new Error('grupo ' + g);
+      for (const f of S.luces.fixtures) if (g === 'todas' || f.grupo === g) f.color = rgbw ? { r: clamp(+rgbw.r, 0, 1), g: clamp(+rgbw.g, 0, 1), b: clamp(+rgbw.b, 0, 1), w: clamp(+rgbw.w, 0, 1) } : null;
       return avisar();
     },
     setFixtureApertura(id, grados) { fx(id).apertura = clamp(Math.round(+grados), 10, 90); return avisar(); },

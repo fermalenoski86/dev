@@ -210,7 +210,9 @@
   }
 
   // ---------- luces ----------
-  const rgbDe = (q) => [Math.min(1, q.r + q.w), Math.min(1, q.g + q.w * 0.84), Math.min(1, q.b + q.w * 0.66)];   // W de previsualización ≈ 3300 K
+  // Canal W = el LED blanco FIJO del equipo (Fer, 14/10: no asumir blanco cálido regulable). Previsualización ≈ 4000 K;
+  // el blanco real depende del LED W de la luminaria elegida. Los cálidos salen de MEZCLAR W con R/G, como en un RGBW real.
+  const rgbDe = (q) => [Math.min(1, q.r + q.w), Math.min(1, q.g + q.w * 0.9), Math.min(1, q.b + q.w * 0.78)];
   function separacion(W) {   // distancia típica entre vecinos del mismo nivel, para dimensionar el halo
     const out = {};
     for (const g of M.GRUPOS) {
@@ -262,12 +264,12 @@
         let I;
         if (h >= 0) {
           const w = w0 + h * tg;
-          const nace = 0.45 + 0.55 * suaveP(0, sep * 0.18, h);
+          const nace = 0.6 + 0.4 * suaveP(0, sep * 0.16, h);   // más intensidad junto al origen
           const fin = 1 - suaveP(H * 0.72, H, h);
           // núcleo del haz (bordes gaussianos) + halo ancho de luz dispersa: los vecinos se funden sin franjas
-          const nucleo = Math.exp(-1.35 * (xs / w) ** 2) / (1 + (h / (H * 0.48)) ** 1.8) * Math.pow(w0 / w, 0.22);
+          const nucleo = Math.exp(-1.7 * (xs / w) ** 2) / (1 + (h / (H * 0.52)) ** 1.7) * Math.pow(w0 / w, 0.2);   // proyección vertical más legible
           const halo = Math.exp(-1.1 * (xs / (w * 2.2 + sep * 0.3)) ** 2) / (1 + (h / (H * 0.62)) ** 1.6) * 0.45;
-          I = (0.7 * nucleo + 0.3 * halo) * nace * fin;
+          I = (0.82 * nucleo + 0.18 * halo) * nace * fin;
         } else {
           const e = -h;
           I = 0.5 * Math.exp(-2.2 * (xs / (sep * 0.32)) ** 2) * Math.exp(-e / (sep * 0.1));
@@ -364,8 +366,15 @@
         const ap = Math.max(10, Math.min(90, Math.round(((s.apertura || 40) + vr.dAp) / 2) * 2));   // paso de 2° para reusar sprites
         sumarBano(gctx, sprite(sp, ALCANCE[s.grupo], ap, v), x, y, colorMapa(rgb.map((c) => Math.min(1, c))), k * GANANCIA * JITTER[v] * vr.flujo);
         // la fuente: punto chico y contenido, sin halo
-        const r = sp * 0.06, hs = lctx.createRadialGradient(x, y, 0, x, y, r);
-        hs.addColorStop(0, `rgba(255,255,255,${0.55 * k})`); hs.addColorStop(0.45, `rgba(${col.join(',')},${0.4 * k})`); hs.addColorStop(1, `rgba(${col.join(',')},0)`);
+        // hotspot suave sobre la piedra, justo arriba del proyector (donde el haz pega más fuerte)
+        const cm = colorMapa(rgb.map((c) => Math.min(1, c))), hy = y - sp * 0.42, hrx = sp * 0.26, hry = sp * 0.55;
+        const hw = gctx.createRadialGradient(x, hy, 0, x, hy, hry);
+        hw.addColorStop(0, `rgba(${cm.join(',')},${Math.min(1, 0.55 * k * vr.flujo)})`); hw.addColorStop(1, `rgba(${cm.join(',')},0)`);
+        gctx.save(); gctx.translate(x, hy); gctx.scale(hrx / hry, 1); gctx.translate(-x, -hy);
+        gctx.fillStyle = hw; gctx.beginPath(); gctx.arc(x, hy, hry, 0, Math.PI * 2); gctx.fill(); gctx.restore();
+        // el equipo mismo: punto chico y contenido
+        const r = sp * 0.08, hs = lctx.createRadialGradient(x, y, 0, x, y, r);
+        hs.addColorStop(0, `rgba(255,255,255,${0.7 * k})`); hs.addColorStop(0.4, `rgba(${col.join(',')},${0.5 * k})`); hs.addColorStop(1, `rgba(${col.join(',')},0)`);
         lctx.fillStyle = hs; lctx.beginPath(); lctx.arc(x, y, r, 0, Math.PI * 2); lctx.fill();
         dibujadas++; hay = true;
       }
@@ -553,6 +562,14 @@
     }
   })();
 
+  // Colores rápidos RGBW (cualquier otro sale de los 4 sliders). Valores de canal, no colores de pantalla.
+  const MUESTRAS = [
+    { n: 'Rojo', c: { r: 1, g: 0, b: 0, w: 0 }, css: '#ff3b30' }, { n: 'Ámbar', c: { r: 1, g: 0.4, b: 0, w: 0.1 }, css: '#ff9a1f' },
+    { n: 'Oro', c: { r: 1, g: 0.58, b: 0, w: 0.2 }, css: '#ffc24d' }, { n: 'Verde', c: { r: 0, g: 1, b: 0, w: 0 }, css: '#34c759' },
+    { n: 'Cian', c: { r: 0, g: 1, b: 1, w: 0 }, css: '#32d4e6' }, { n: 'Azul', c: { r: 0, g: 0, b: 1, w: 0 }, css: '#3a6dff' },
+    { n: 'Violeta', c: { r: 0.55, g: 0, b: 1, w: 0 }, css: '#8e5cff' }, { n: 'Magenta', c: { r: 1, g: 0, b: 0.8, w: 0 }, css: '#ff3fd0' },
+    { n: 'Blanco cálido (W + R/G)', c: { r: 0.3, g: 0.07, b: 0, w: 0.78 }, css: '#ffd2a0' }, { n: 'Blanco W', c: { r: 0, g: 0, b: 0, w: 1 }, css: '#fff1df' },
+  ];
   function seleccionar(id) { seleccion = id; armarDetalle(); pedirCuadro(); }
   function armarDetalle() {
     const f = M.estado().luces.fixtures.find((x) => x.id === seleccion);
@@ -567,7 +584,9 @@
       </div>
       <div class="fila"><label for="d-nivel">Dimmer individual</label><input type="range" class="r-oro" id="d-nivel" min="0" max="100" value="${f.nivel}"><span class="valor" id="d-nivel-v">${f.nivel}%</span></div>
       <div class="fila"><label for="d-ap" title="Apertura visual del haz en el simulador (no es la óptica real del equipo)">Apertura del haz</label><input type="range" class="r-azul2" id="d-ap" min="10" max="90" value="${f.apertura}"><span class="valor" id="d-ap-v">${f.apertura}°</span></div>
-      ${['r', 'g', 'b', 'w'].map((k) => `<div class="fila"><label for="d-${k}">${{ r: 'Rojo (R)', g: 'Verde (G)', b: 'Azul (B)', w: 'Blanco (W)' }[k]}</label><input type="range" class="${{ r: 'r-rojo', g: 'r-verde', b: 'r-azul2', w: 'r-blanco' }[k]}" id="d-${k}" min="0" max="100" value="${Math.round(col[k] * 100)}"><span class="valor" id="d-${k}-v">${Math.round(col[k] * 100)}%</span></div>`).join('')}`;
+      <div class="muestras" role="group" aria-label="Color RGBW rápido">${MUESTRAS.map((m, i) => `<button class="muestra" data-i="${i}" title="${m.n}" style="--m:${m.css}"></button>`).join('')}</div>
+      ${['r', 'g', 'b', 'w'].map((k) => `<div class="fila"><label for="d-${k}">${{ r: 'Rojo (R)', g: 'Verde (G)', b: 'Azul (B)', w: 'Blanco (W)' }[k]}</label><input type="range" class="${{ r: 'r-rojo', g: 'r-verde', b: 'r-azul2', w: 'r-blanco' }[k]}" id="d-${k}" min="0" max="100" value="${Math.round(col[k] * 100)}"><span class="valor" id="d-${k}-v">${Math.round(col[k] * 100)}%</span></div>`).join('')}
+      <div class="botonera" style="margin-top:6px"><button class="b" id="d-nivelcolor">Aplicar color a todo el nivel</button><button class="b" id="d-todascolor">Aplicar a las 46</button></div>`;
     const id = f.id;
     $('d-on').addEventListener('click', () => M.setFixtureOn(id, !M.estado().luces.fixtures.find((x) => x.id === id).on));
     $('d-20').addEventListener('click', () => M.setFixture(id, 20));
@@ -576,10 +595,11 @@
     $('d-escena').addEventListener('click', () => { M.setFixtureColor(id, null); armarDetalle(); });
     $('d-nivel').addEventListener('input', (e) => M.setFixture(id, +e.target.value));
     $('d-ap').addEventListener('input', (e) => M.setFixtureApertura(id, +e.target.value));
-    for (const k of ['r', 'g', 'b', 'w']) $('d-' + k).addEventListener('input', () => {
-      const c = {}; for (const q of ['r', 'g', 'b', 'w']) c[q] = +$('d-' + q).value / 100;
-      M.setFixtureColor(id, c);
-    });
+    const leer = () => { const c = {}; for (const q of ['r', 'g', 'b', 'w']) c[q] = +$('d-' + q).value / 100; return c; };
+    for (const k of ['r', 'g', 'b', 'w']) $('d-' + k).addEventListener('input', () => M.setFixtureColor(id, leer()));
+    document.querySelectorAll('#detalle .muestra').forEach((b) => b.addEventListener('click', () => { M.setFixtureColor(id, MUESTRAS[+b.dataset.i].c); armarDetalle(); }));
+    $('d-nivelcolor').addEventListener('click', () => M.setColorGrupo(f.grupo, leer()));
+    $('d-todascolor').addEventListener('click', () => M.setColorGrupo('todas', leer()));
   }
 
   // escenas
@@ -811,5 +831,6 @@
     usarPuntosDePrueba: (obj) => { for (const k of Object.keys(puntos)) delete puntos[k]; Object.assign(puntos, obj); puntosDePrueba = true; pedirCuadro(); },
     seleccionar,
     variacion: (id) => Object.assign({}, variacionDe(id)),
+    rgbDe: (q) => rgbDe(q),
   };
 })();
