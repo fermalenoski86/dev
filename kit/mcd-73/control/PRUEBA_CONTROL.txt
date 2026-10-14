@@ -42,7 +42,7 @@ OK    «Restaurar niveles» deja todo en 100 % y color de escena
 OK    blackout: pantallas, luces y reloj en 0
 OK    soltar blackout recupera los niveles
 OK    show determinista: el mismo t da exactamente la misma salida
-OK    Play avanza el reloj del show (t=1.15 s tras 1,2 s)
+OK    Play avanza el reloj del show (t=1.18 s tras 1,2 s)
 OK    Pausa congela el show
 OK    el show termina en 15 s y se detiene
 OK    a los 4 s la ola roja avanzó desde Corrientes (izquierda) hacia Pellegrini
@@ -82,6 +82,29 @@ OK    takeover: hay acentos rojos visibles
 OK    mismo instante del show → mismos píxeles (sin parpadeo)
 OK    variación por equipo determinista y acotada (±6° de apertura, flujo 0,86–1,14): [(-3, 1.03), (-3, 0.89), (-5, 1.12), (6, 1.1)]
 OK    Corrientes al 0 %: panel en negro ([0, 0, 0])
-OK    0 pedidos de red fuera de file:// (50 pedidos locales)
+OK    AI Content Studio: botón «+ UPLOAD MEDIA» visible
+OK    MediaAttachment: MP4 / PNG / JPG → READY; .txt → REJECTED (tipo no admitido)
+OK    MP4 H.264: READY si el navegador trae el códec; si no, REJECTED con motivo claro (REJECTED)
+OK    metadata técnica real del MP4 (cajas ISO-BMFF): 1920×1080 · 25 fps · vp09 · 13000 ms
+OK    análisis básico: 5 keyframes (0/25/50/75/100 %), corte de escena ≈7 s [7], colores ['rojo', 'negro', 'amarillo', 'amarillo']
+OK    imagen: resolución, aspecto y transparencia (candidata a logo)
+OK    huella SHA-256 local = la del archivo original (el original no se toca)
+OK    nada es publicable por defecto: todo entra como REFERENCE MEDIA
+OK    preview: player + metadata + AI NOTES rotuladas como análisis generado + source timeline + atajos
+OK    «BUILD 15s TAKEOVER FROM THIS VIDEO» precompleta el prompt
+OK    solo referencia: el plan usa paleta y ritmo (USE_AS_REFERENCE), no publica cuadros del video
+OK    solo adjuntos READY entran al concepto (['logo.png', 'packshot.jpg', 'spot_vp9.mp4'])
+OK    plan por superficie sin estirar: cubrir (crop) · master A+B (split) · contener (reframe + fondo extendido) · logo · paleta
+OK    el logo se usa solo en Signature (10–13 s)
+OK    FX LIGHT WAVE · PRODUCT GLOW · SIGNATURE GLOW y storyboard de 5 momentos
+OK    3 derivadas con derivedFromAssetId, formato real de la superficie y estado «requiere Asset Validation M3A»
+OK    rendered campaign assets coherentes con el contrato v1: upperMode independent → ['horizontal', 'screen_a', 'screen_b'] (no se mezclan modos)
+OK    crop sin deformar: recorte 1920×960 = 2:1 exacto para screen_a
+OK    source timeline: el rango elegido (2,0 → 9,0 s) manda sobre el sugerido
+OK    preview aplicado: Corrientes muestra el clip subido a los 3,4 s ([218, 40, 28])
+OK    Product Hero: el producto del packshot (contenido, sin estirar) al centro de Pellegrini a los 7 s ([201, 117, 44])
+OK    «Quitar media del preview» vuelve al contenido generado
+OK    [remove] quita el adjunto
+OK    0 pedidos de red fuera de file:// (72 pedidos locales)
 OK    0 errores de consola ([])
 Resultado: TODO OK

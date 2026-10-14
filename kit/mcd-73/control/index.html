@@ -60,15 +60,22 @@
     <aside id="panel">
       <div class="tarjeta plegado" id="t-director">
         <header><div class="ico oro"><svg viewBox="0 0 24 24" fill="none" stroke="#E8B65B" stroke-width="2"><path d="M4 20l7-7M14 4l1.5 3L19 8.5 15.5 10 14 13l-1.5-3L9 8.5 12.5 7z"/></svg></div>
-          <div><h2>Director de show <span class="sim">simulado</span></h2><p>Un prompt, una coreografía: pantallas + 46 luces + reloj</p></div>
+          <div><h2>AI Content Studio <span class="sim">simulado</span></h2><p>Idea first · Media first · Media + prompt → pantallas + 46 luces + reloj</p></div>
           <button class="plegar" id="director-plegar" aria-expanded="false" aria-controls="director-cuerpo" title="Mostrar u ocultar el prompt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 15l6-6 6 6"/></svg></button></header>
         <div class="cuerpo-director" id="director-cuerpo">
-        <label class="lbl" for="prompt">Prompt de ejemplo (editable)</label>
+        <label class="lbl" for="prompt">PROMPT (editable)</label>
         <textarea id="prompt" class="prompt" rows="5">Armá un takeover premium de 15 s para McDonald's: la fachada cálida, una luz dorada que nace en Corrientes, cruza a Pellegrini y aterriza en la pantalla media revelando la marca; rojo arquitectónico de soporte, firma dorada y salida suave a la escena cálida.</textarea>
         <div class="plan" id="plan" hidden><p class="cab" id="plan-cab"></p><ol id="plan-ol"></ol></div>
-        <p class="nota" id="director-nota"><b>Hoy en demo:</b> el botón carga una <b>plantilla preprogramada</b>; el texto del prompt <b>no se interpreta</b> ni se envía a ningún modelo. <b>Futuro:</b> generación con modelo IA como plan estructurado, validado y aprobado por dos personas.</p>
+        <p class="nota" id="director-nota"><b>Hoy en demo:</b> sin material adjunto, el botón carga una <b>plantilla preprogramada</b>. Con material, un <b>planificador local con reglas</b> arma el plan por pantalla; el prompt <b>no se interpreta</b> con IA (solo palabras clave) ni se envía a ningún modelo, y los archivos <b>no salen de este navegador</b>. <b>Futuro:</b> proveedor multimodal (texto + imágenes + keyframes) que devuelve un plan estructurado, validado y aprobado por dos personas.</p>
         </div>
-        <div class="botonera" style="margin-top:8px"><button class="b oro" id="generar">Generar minishow (simulado)</button></div>
+        <div class="adjuntos" id="adjuntos">
+          <div class="adj-cab"><span class="lbl">ATTACHED MEDIA</span><button class="b" id="upload" title="MP4 · JPG · PNG · WEBP">+ UPLOAD MEDIA</button></div>
+          <ul id="adj-lista" class="adj-lista"></ul>
+          <div class="adj-vacio" id="adj-vacio">Drop videos or images here · MP4 · JPG · PNG · WEBP · el material queda en este navegador</div>
+          <input type="file" id="adj-archivo" accept="video/mp4,image/jpeg,image/png,image/webp" multiple hidden>
+        </div>
+        <div class="concepto" id="concepto" hidden></div>
+        <div class="botonera" style="margin-top:8px"><button class="b oro" id="generar">Generar concepto (simulado)</button></div>
       </div>
       <div class="tarjeta" id="t-pantallas">
         <header><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#9cbcff" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div>
@@ -146,10 +153,13 @@
   </footer>
 </div>
 
+<div class="visor" id="visor" hidden role="dialog" aria-label="Preview del material"><div class="vis-caja"></div></div>
+
 <script src="geometria.js"></script>
 <script src="luminarias.js"></script>
 <script src="motor.js"></script>
 <script src="contenido.js"></script>
 <script src="app.js"></script>
+<script src="estudio.js"></script>
 </body>
 </html>

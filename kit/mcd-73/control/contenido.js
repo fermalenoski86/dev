@@ -364,12 +364,70 @@
     enMomento(c, id, vn, t, cr);
   }
 
+  // ---------- MATERIAL SUBIDO (AI Content Studio): capa encima del contenido generado, en píxeles REALES de la pantalla ----------
+  // Los lienzos de contenido tienen la proporción de cada superficie (A 1152×576 = 2:1 · B 1440×576 = 2,5:1 · marquesina
+  // 1920×412): un recorte con esa proporción se dibuja sin deformar. NUNCA se estira: cubrir (crop con foco), master A+B
+  // (crop 2592×576 partido en A y B), contener (reencuadre + fondo extendido desenfocado), logo (contenido) o paleta.
+  let MEDIA = null;
+  function setMedia(m) { MEDIA = m; }
+  const dimsDe = (el) => (el.videoWidth ? [el.videoWidth, el.videoHeight] : [el.naturalWidth || el.width, el.naturalHeight || el.height]);
+  function recorteCubrir(sw, sh, asp, foco) {
+    let cw = sw, ch = sw / asp; if (ch > sh) { ch = sh; cw = sh * asp; }
+    const fx = foco ? foco[0] : 0.5, fy = foco ? foco[1] : 0.5;
+    return [(sw - cw) * fx, (sh - ch) * fy, cw, ch];
+  }
+  function paletaMov(c, w, h, t, paleta, a) {   // motion background con la paleta del material (contenido generado combinado)
+    const cols = (paleta && paleta.length ? paleta : ['#DA291C', '#FFC72C', '#27251F']).map((x) => [parseInt(x.slice(1, 3), 16), parseInt(x.slice(3, 5), 16), parseInt(x.slice(5, 7), 16)]);
+    const lum = (q) => q[0] * 0.3 + q[1] * 0.59 + q[2] * 0.11, sat = (q) => Math.max(...q) - Math.min(...q);
+    const oscuro = cols.slice().sort((x, y) => lum(x) - lum(y))[0], vivos = cols.slice().sort((x, y) => sat(y) - sat(x));
+    c.save(); c.globalAlpha = a;
+    c.fillStyle = `rgb(${oscuro.map((v) => Math.round(v * 0.35)).join(',')})`; c.fillRect(0, 0, w, h);
+    c.globalCompositeOperation = 'lighter';
+    vivos.slice(0, 3).forEach((q, k) => {
+      const x = w * (0.5 + 0.42 * Math.sin(t * (0.35 + k * 0.17) + k * 2.1)), y = h * (0.5 + 0.3 * Math.sin(t * 0.5 + k)), r = Math.max(w, h) * (0.35 + 0.1 * k);
+      const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(${q.join(',')},0.55)`); g.addColorStop(1, `rgba(${q.join(',')},0)`);
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+    });
+    const sx = ((t * 0.18) % 1.4 - 0.2) * w, g2 = c.createLinearGradient(sx - w * 0.08, 0, sx + w * 0.08, 0);   // rastro de luz
+    g2.addColorStop(0, 'rgba(255,220,150,0)'); g2.addColorStop(0.5, 'rgba(255,230,170,0.5)'); g2.addColorStop(1, 'rgba(255,220,150,0)');
+    c.fillStyle = g2; c.fillRect(sx - w * 0.08, 0, w * 0.16, h);
+    c.restore();
+  }
+  function capaMedia(cv, id, t) {
+    const seg = (MEDIA.pistas[id] || []).find((x) => t >= x.desde && t < x.hasta); if (!seg) return null;
+    const c = cv.getContext('2d'), w = cv.width, h = cv.height, a = sv((t - seg.desde) / 0.35) * sv((seg.hasta - t) / 0.35);
+    c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-over';
+    if (seg.modo === 'paleta' || seg.modo === 'logo') paletaMov(c, w, h, t, seg.paleta, a);
+    const el = seg.modo === 'paleta' ? null : MEDIA.fuentes[seg.fuente];
+    if (el) {
+      if (seg.src && MEDIA.sincronizar) MEDIA.sincronizar(seg, t);
+      const [sw, sh] = dimsDe(el);
+      if (sw && sh) {
+        c.globalAlpha = a;
+        if (seg.modo === 'cubrir') { const r = recorteCubrir(sw, sh, w / h, seg.foco); c.drawImage(el, r[0], r[1], r[2], r[3], 0, 0, w, h); }
+        else if (seg.modo === 'master') {
+          const r = recorteCubrir(sw, sh, 2592 / 576, seg.foco), fa = 1152 / 2592;
+          const sub = seg.parte === 'a' ? [r[0], r[1], r[2] * fa, r[3]] : [r[0] + r[2] * fa, r[1], r[2] * (1 - fa), r[3]];
+          c.drawImage(el, sub[0], sub[1], sub[2], sub[3], 0, 0, w, h);
+        } else if (seg.modo === 'contener') {
+          const r = recorteCubrir(sw, sh, w / h, [0.5, 0.5]);
+          c.filter = `blur(${Math.round(h * 0.06)}px) brightness(0.45)`; c.drawImage(el, r[0], r[1], r[2], r[3], -w * 0.04, -h * 0.08, w * 1.08, h * 1.16); c.filter = 'none';
+          const k = Math.min(w / sw, h / sh) * 0.94, dw = sw * k, dh = sh * k; c.drawImage(el, 0, 0, sw, sh, (w - dw) / 2, (h - dh) / 2, dw, dh);
+        } else if (seg.modo === 'logo') {
+          const k = Math.min(w * 0.8 / sw, h * 0.74 / sh), dw = sw * k, dh = sh * k; c.drawImage(el, 0, 0, sw, sh, (w - dw) / 2, (h - dh) / 2, dw, dh);
+        }
+      }
+    }
+    c.restore();
+    return seg;
+  }
+
   // ---------- entrada ----------
   function dibujar(cv, id, cont) {
     const c = cv.getContext('2d'), w = cv.width, h = cv.height, vn = VEN[id];
     c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; c.clearRect(0, 0, w, h);
     const cr = cont.creatividad || 'C';
-    if (cont.modo === 'show') show(cv, id, vn, cont.t, cr);
+    if (cont.modo === 'show') { show(cv, id, vn, cont.t, cr); if (MEDIA) capaMedia(cv, id, cont.t); }
     else {
       aMundo(c, w, h, vn);
       if (cont.modo === 'marca') takeover(c, id, vn, 7.6, cr);
@@ -388,5 +446,5 @@
     LARGO.length = 1; for (let i = 1; i < CAMINO.length; i++) LARGO.push(LARGO[i - 1] + Math.hypot(CAMINO[i][0] - CAMINO[i - 1][0], CAMINO[i][1] - CAMINO[i - 1][1]));
     return VEN;
   }
-  window.CONTENIDO = { preparar, dibujar, enCamino, ventanas: () => VEN };
+  window.CONTENIDO = { preparar, dibujar, enCamino, ventanas: () => VEN, setMedia, hayMedia: () => !!MEDIA, recorteCubrir };
 })();

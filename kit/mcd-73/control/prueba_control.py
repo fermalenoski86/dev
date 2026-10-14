@@ -6,7 +6,7 @@ Cubre las validaciones obligatorias del pedido de Fer (14/10/2026):
   funciona sin internet · no emite DMX/Art-Net/sACN/NovaStar · rótulo de simulación.
 Las pruebas de píxeles usan --allow-file-access-from-files (solo para leer el lienzo en la prueba; la demo no lo necesita).
 Las posiciones de luz usadas en la prueba de halos son SINTÉTICAS y no se guardan."""
-import sys, os, re, json, asyncio, hashlib
+import subprocess, sys, os, re, json, asyncio, hashlib
 from playwright.async_api import async_playwright
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
@@ -359,10 +359,92 @@ async def main(out):
         await ev(f'{M}.setEscena("arquitectonica")')
         # pantallas al 0 %: el contenido queda negro sin tocar la foto de alrededor
         await ev(f'{M}.setPantalla("corrientes", 0)')
-        cen = [sum(p[0] for p in q['corrientes']['quads'][0]) / 4, sum(p[1] for p in q['corrientes']['quads'][0]) / 4]
-        px = await ev(f'TRUST.pixel({cen[0]},{cen[1]})')
+        qc = q['corrientes']['quads'][0]; u_, v_ = 0.15, 0.5   # zona izquierda del panel: fondo rojo del clip (el cuadrado amarillo está al centro)
+        top = [qc[0][0] + (qc[1][0] - qc[0][0]) * u_, qc[0][1] + (qc[1][1] - qc[0][1]) * u_]; bot = [qc[3][0] + (qc[2][0] - qc[3][0]) * u_, qc[3][1] + (qc[2][1] - qc[3][1]) * u_]
+        px = await ev(f'TRUST.pixel({top[0] + (bot[0] - top[0]) * v_},{top[1] + (bot[1] - top[1]) * v_})')
         ok(max(px[:3]) <= 3, f'Corrientes al 0 %: panel en negro ({px[:3]})')
         await ev(f'{M}.reiniciarTodo(); {M}.setTransicion(0)')
+        await pg.reload(); await pg.wait_for_function('window.TRUST && TRUST.info().W > 0'); await pg.evaluate('TRUST.motor.setTransicion(0)')
+
+        # --- AI CONTENT STUDIO (brief §40–59): UPLOAD MEDIA, análisis local, plan por superficie, referencia vs final
+        med = os.path.join(out, 'media'); os.makedirs(med, exist_ok=True)
+        ff = lambda *a: subprocess.run(['ffmpeg', '-v', 'error', '-y', *a], check=True)
+        ff('-f', 'lavfi', '-i', 'color=c=0xDA291C:s=1920x1080:r=25:d=7', '-f', 'lavfi', '-i', 'color=c=0xFFC72C:s=360x360:r=25:d=7', '-filter_complex', "[0][1]overlay=x='100+t*220':y=360", '-pix_fmt', 'yuv420p', '-c:v', 'libx264', os.path.join(med, 'a.mp4'))
+        ff('-f', 'lavfi', '-i', 'color=c=0x050505:s=1920x1080:r=25:d=6', '-f', 'lavfi', '-i', 'color=c=0xFFC72C:s=500x200:r=25:d=6', '-filter_complex', '[0][1]overlay=x=710:y=440', '-pix_fmt', 'yuv420p', '-c:v', 'libx264', os.path.join(med, 'c.mp4'))
+        open(os.path.join(med, 'l.txt'), 'w').write("file 'a.mp4'\nfile 'c.mp4'\n")
+        ff('-f', 'concat', '-safe', '0', '-i', os.path.join(med, 'l.txt'), '-c', 'copy', os.path.join(med, 'spot_h264.mp4'))
+        ff('-i', os.path.join(med, 'spot_h264.mp4'), '-c:v', 'libvpx-vp9', '-b:v', '0', '-crf', '40', '-row-mt', '1', '-deadline', 'realtime', '-cpu-used', '8', '-pix_fmt', 'yuv420p', os.path.join(med, 'spot_vp9.mp4'))
+        from PIL import Image as _I, ImageDraw as _D
+        lg = _I.new('RGBA', (800, 400), (0, 0, 0, 0)); _D.Draw(lg).rounded_rectangle((150, 100, 650, 300), 60, fill=(255, 199, 44, 255)); lg.save(os.path.join(med, 'logo.png'))
+        pk = _I.new('RGB', (1200, 1200), (245, 245, 240)); _D.Draw(pk).ellipse((300, 350, 900, 650), fill=(200, 116, 42)); pk.save(os.path.join(med, 'packshot.jpg'), quality=90)
+        open(os.path.join(med, 'notas.txt'), 'w').write('no es media')
+        await ev('document.getElementById("portada").classList.add("fuera")'); await pg.wait_for_timeout(300)
+        ok(await ev('!!document.getElementById("upload").offsetParent && document.getElementById("t-director").classList.contains("plegado") === false || !!document.getElementById("upload").offsetParent'), 'AI Content Studio: botón «+ UPLOAD MEDIA» visible')
+        archivos = ['spot_vp9.mp4', 'logo.png', 'packshot.jpg', 'notas.txt', 'spot_h264.mp4']
+        await pg.set_input_files('#adj-archivo', [os.path.join(med, f) for f in archivos])
+        await pg.wait_for_function('ESTUDIO.adjuntos().length === 5 && ESTUDIO.adjuntos().every(a => a.status === "READY" || a.status === "REJECTED")', timeout=90000)
+        ad = {a['filename']: a for a in await ev('ESTUDIO.adjuntos()')}
+        v9, lgA, pkA, tx, h264 = (ad[f] for f in archivos)
+        ok(v9['status'] == 'READY' and lgA['status'] == 'READY' and pkA['status'] == 'READY' and tx['status'] == 'REJECTED' and 'tipo no admitido' in tx['motivo'],
+           'MediaAttachment: MP4 / PNG / JPG → READY; .txt → REJECTED (tipo no admitido)')
+        ok(h264['status'] == 'READY' or ('H.264' in (h264['motivo'] or '') and 'Chrome o Edge' in h264['motivo']), f'MP4 H.264: READY si el navegador trae el códec; si no, REJECTED con motivo claro ({h264["status"]})')
+        ok(v9['width'] == 1920 and v9['height'] == 1080 and v9['fps'] == 25 and v9['codec'] == 'vp09' and abs(v9['durationMs'] - 13000) <= 120,
+           f'metadata técnica real del MP4 (cajas ISO-BMFF): {v9["width"]}×{v9["height"]} · {v9["fps"]} fps · {v9["codec"]} · {v9["durationMs"]} ms')
+        vis = v9['analisis']['visual']; nombres = [c['nombre'] for c in vis['colores']]
+        ok(len(v9['keyframes']) == 5 and [round(k['t'] / 13, 2) for k in v9['keyframes']][1:4] == [0.25, 0.5, 0.75] and any(abs(c - 7) < 0.6 for c in vis['cortes']) and 'rojo' in nombres and 'amarillo' in nombres and 'negro' in nombres,
+           f'análisis básico: 5 keyframes (0/25/50/75/100 %), corte de escena ≈7 s {vis["cortes"]}, colores {nombres[:4]}')
+        ok(lgA['analisis']['tecnico']['transparencia'].startswith('sí') and lgA['width'] == 800, 'imagen: resolución, aspecto y transparencia (candidata a logo)')
+        ok(v9['sha256'] == hashlib.sha256(open(os.path.join(med, 'spot_vp9.mp4'), 'rb').read()).hexdigest(), 'huella SHA-256 local = la del archivo original (el original no se toca)')
+        ok(all(not a['uso']['final'] for a in ad.values()), 'nada es publicable por defecto: todo entra como REFERENCE MEDIA')
+        ids = {a['filename']: a['id'] for a in ad.values()}
+        await pg.click(f'.adj-ver[data-id="{ids["spot_vp9.mp4"]}"]'); await pg.wait_for_timeout(300)
+        vtxt = await ev('document.getElementById("visor").innerText')
+        ok(await ev('!!document.getElementById("vis-player") && !document.getElementById("u-fin").checked') and 'análisis generado' in vtxt and 'no es metadata técnica' in vtxt and 'USE:' in vtxt and 'BUILD 15s TAKEOVER FROM THIS VIDEO' in vtxt,
+           'preview: player + metadata + AI NOTES rotuladas como análisis generado + source timeline + atajos')
+        await pg.click('#build15')
+        ok('15-second premium MASTER OF TRUST takeover' in await ev('document.getElementById("prompt").value'), '«BUILD 15s TAKEOVER FROM THIS VIDEO» precompleta el prompt')
+        await pg.click('#vis-cerrar')
+        await pg.click('#generar'); await pg.wait_for_function('!!ESTUDIO.concepto()')
+        c0 = await ev('ESTUDIO.concepto()')
+        ok(c0['flujo'] == 'MEDIA + PROMPT' and not any(d['fuente'] == 'spot_vp9.mp4' for d in c0['derivadas']) and any('REFERENCIA' in n for n in c0['notas']),
+           'solo referencia: el plan usa paleta y ritmo (USE_AS_REFERENCE), no publica cuadros del video')
+        await ev(f'ESTUDIO.marcar("{ids["spot_vp9.mp4"]}", {{final: true, roles: ["clip"]}}); ESTUDIO.marcar("{ids["logo.png"]}", {{final: true, roles: ["logo"]}}); ESTUDIO.marcar("{ids["packshot.jpg"]}", {{final: true, roles: ["producto"]}})')
+        await pg.click('#generar'); await pg.wait_for_timeout(200)
+        c1 = await ev('ESTUDIO.concepto()')
+        segs = [s for p_ in c1['pistas'].values() for s in p_]
+        fu = {f['filename'] for f in c1['fuentes']}
+        ok(fu == {'spot_vp9.mp4', 'logo.png', 'packshot.jpg'} | ({'spot_h264.mp4'} if h264['status'] == 'READY' else set()), f'solo adjuntos READY entran al concepto ({sorted(fu)})')
+        estr = await ev('ESTUDIO.ESTRATEGIAS')
+        ok(all(s['modo'] in ('cubrir', 'master', 'contener', 'logo', 'paleta') for s in segs) and all(e in estr for s in segs for e in s['estrategias']),
+           'plan por superficie sin estirar: cubrir (crop) · master A+B (split) · contener (reframe + fondo extendido) · logo · paleta')
+        lg_seg = [s for s in c1['pistas']['media'] if s['modo'] == 'logo']
+        ok(lg_seg and all(s['desde'] >= 10 and s['hasta'] <= 13 for s in lg_seg), 'el logo se usa solo en Signature (10–13 s)')
+        ok({f['fx'] for f in c1['fx']} >= {'LIGHT WAVE', 'PRODUCT GLOW', 'SIGNATURE GLOW'} and len(c1['momentos']) == 5, 'FX LIGHT WAVE · PRODUCT GLOW · SIGNATURE GLOW y storyboard de 5 momentos')
+        fmts = await ev('Object.values(ESTUDIO.FORMATOS).map(f => f.w + "×" + f.h)')
+        ok(c1['derivadas'] and all(d['derivedFromAssetId'] and d['formatoDestino'].split(' ')[0] in fmts and 'Asset Validation M3A' in d['estado'] for d in c1['derivadas']) and len({d['nombre'] for d in c1['derivadas']}) == len(c1['derivadas']),
+           f'{len(c1["derivadas"])} derivadas con derivedFromAssetId, formato real de la superficie y estado «requiere Asset Validation M3A»')
+        sups = {d['superficie'] for d in c1['derivadas']}
+        ok((c1['upperMode'] == 'master' and sups <= {'master', 'horizontal'}) or (c1['upperMode'] == 'independent' and 'master' not in sups),
+           f'rendered campaign assets coherentes con el contrato v1: upperMode {c1["upperMode"]} → {sorted(sups)} (no se mezclan modos)')
+        r = await ev('CONTENIDO.recorteCubrir(1920, 1080, 1152 / 576, [0.42, 0.5])')
+        ok(abs(r[2] / r[3] - 2) < 1e-9 and r[2] == 1920, f'crop sin deformar: recorte {r[2]:.0f}×{r[3]:.0f} = 2:1 exacto para screen_a')
+        await ev(f'ESTUDIO.marcar("{ids["spot_vp9.mp4"]}", {{rango: [2, 9]}})'); await pg.click('#generar'); await pg.wait_for_timeout(200)
+        c2 = await ev('ESTUDIO.concepto()')
+        sv_ = [s['src'] for p_ in c2['pistas'].values() for s in p_ if s.get('src')]
+        ok(sv_ and all(2 - 1e-6 <= x['desde'] and x['hasta'] <= 9 + 1e-6 for x in sv_), 'source timeline: el rango elegido (2,0 → 9,0 s) manda sobre el sugerido')
+        await pg.click('#c-aplicar'); await ev(f'{M}.seek(3.4)'); await pg.wait_for_timeout(800)
+        qc = q['corrientes']['quads'][0]; u_, v_ = 0.15, 0.5   # zona izquierda del panel: fondo rojo del clip (el cuadrado amarillo está al centro)
+        top = [qc[0][0] + (qc[1][0] - qc[0][0]) * u_, qc[0][1] + (qc[1][1] - qc[0][1]) * u_]; bot = [qc[3][0] + (qc[2][0] - qc[3][0]) * u_, qc[3][1] + (qc[2][1] - qc[3][1]) * u_]
+        px = await ev(f'TRUST.pixel({top[0] + (bot[0] - top[0]) * v_},{top[1] + (bot[1] - top[1]) * v_})')
+        ok(await ev('CONTENIDO.hayMedia()') and px[0] > 150 and px[1] < 90, f'preview aplicado: Corrientes muestra el clip subido a los 3,4 s ({px[:3]})')
+        await ev(f'{M}.seek(7)'); await pg.wait_for_timeout(300)
+        pe = [sum(p[0] for p in q['pellegrini']['quads'][0]) / 4, sum(p[1] for p in q['pellegrini']['quads'][0]) / 4]
+        px2 = await ev(f'TRUST.pixel({pe[0]},{pe[1]})')
+        ok(sum(abs(a_ - b_) for a_, b_ in zip(px2[:3], (200, 116, 42))) < 60, f'Product Hero: el producto del packshot (contenido, sin estirar) al centro de Pellegrini a los 7 s ({px2[:3]})')
+        await pg.click('#c-quitar')
+        ok(not await ev('CONTENIDO.hayMedia()'), '«Quitar media del preview» vuelve al contenido generado')
+        await pg.click(f'.adj-quitar[data-id="{ids["notas.txt"]}"]')
+        ok('notas.txt' not in [a['filename'] for a in await ev('ESTUDIO.adjuntos()')], '[remove] quita el adjunto')
         await pg.reload(); await pg.wait_for_function('window.TRUST && TRUST.info().W > 0'); await pg.evaluate('TRUST.motor.setTransicion(0)')
 
         # --- capturas de validación (posiciones reales, sin las sintéticas)

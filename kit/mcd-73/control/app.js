@@ -712,8 +712,13 @@
       ol.appendChild(li);
     }
     $('plan').hidden = false;
+    if (window.CONTENIDO) window.CONTENIDO.setMedia(null);
   }
-  $('generar').addEventListener('click', generarMinishow);
+  // AI Content Studio: con material READY arma el concepto (estudio.js); sin material, IDEA FIRST = plantilla preprogramada.
+  $('generar').addEventListener('click', () => {
+    if (window.ESTUDIO && window.ESTUDIO.hayMedia()) { plegarDirector(false); $('plan').hidden = true; window.ESTUDIO.generar(); }
+    else generarMinishow();
+  });
   $('play').addEventListener('click', () => M.play());
   $('pausa').addEventListener('click', () => M.pausa());
   $('reset').addEventListener('click', () => M.resetShow());
