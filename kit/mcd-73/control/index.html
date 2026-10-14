@@ -28,6 +28,10 @@
     <div class="sep"></div>
     <div class="dato"><b>Escena</b><span class="oro" id="h-escena">Arquitectónica cálida</span></div>
     <div class="espacio"></div>
+    <div class="modo-toggle" role="group" aria-label="Modo de la presentación">
+      <button id="m-cliente" aria-pressed="false" title="Vista para el cliente: solo momentos, sin controles técnicos">Cliente</button>
+      <button id="m-operador" aria-pressed="true" title="Vista de operación: master, zonas, RGBW, transiciones, escenas">Operador</button>
+    </div>
     <button class="btn-guion" id="btn-guion" title="Guion de la demo (flechas ← →)">Guion de demo</button>
     <div class="estado" title="No hay equipos conectados: todo lo que se ve es una previsualización local.">
       <i></i><div><b>Simulación offline</b><small>Sin equipos conectados · sin red</small></div>
@@ -48,6 +52,8 @@
       </div>
       <div class="guion" id="guion"><span id="guion-txt"></span><button class="b" id="g-ant">◀</button><button class="b" id="g-sig">Siguiente ▶</button><button class="b" id="g-cerrar">✕</button></div>
       <div class="chip-modo" id="chip-modo"></div>
+      <div class="diag" id="diag" hidden><b>DIAGNOSTIC MODE</b><span>Escena técnica de prueba RGB · no es una propuesta comercial</span></div>
+      <div class="antes-despues" id="antes-despues" hidden></div>
       <div class="aviso" id="aviso"></div>
     </section>
 
@@ -58,7 +64,7 @@
           <button class="plegar" id="director-plegar" aria-expanded="false" aria-controls="director-cuerpo" title="Mostrar u ocultar el prompt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 15l6-6 6 6"/></svg></button></header>
         <div class="cuerpo-director" id="director-cuerpo">
         <label class="lbl" for="prompt">Prompt de ejemplo (editable)</label>
-        <textarea id="prompt" class="prompt" rows="5">Armá un takeover premium de 15 s para McDonald's: comienzo negro con arcos dorados discretos, luego producto y mensaje de campaña en las pantallas, una ola roja por las luces de Corrientes a Pellegrini, realce dorado del reloj y cierre cálido sin destellos bruscos.</textarea>
+        <textarea id="prompt" class="prompt" rows="5">Armá un takeover premium de 15 s para McDonald's: la fachada cálida, una luz dorada que nace en Corrientes, cruza a Pellegrini y aterriza en la pantalla media revelando la marca; rojo arquitectónico de soporte, firma dorada y salida suave a la escena cálida.</textarea>
         <div class="plan" id="plan" hidden><p class="cab" id="plan-cab"></p><ol id="plan-ol"></ol></div>
         <p class="nota" id="director-nota"><b>Hoy en demo:</b> el botón carga una <b>plantilla preprogramada</b>; el texto del prompt <b>no se interpreta</b> ni se envía a ningún modelo. <b>Futuro:</b> generación con modelo IA como plan estructurado, validado y aprobado por dos personas.</p>
         </div>
@@ -66,30 +72,48 @@
       </div>
       <div class="tarjeta" id="t-pantallas">
         <header><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#9cbcff" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div>
-          <div><h2>Pantallas</h2><p>Dimmer de pantallas LED · independiente de la iluminación</p></div></header>
+          <div><h2>Pantallas</h2><p>Screen dimmer · independiente de la iluminación arquitectónica</p></div></header>
         <div class="fila master"><label for="p-master">Master pantallas</label><input type="range" id="p-master" min="0" max="100"><span class="valor" id="p-master-v"></span></div>
         <div class="fila"><label for="p-corrientes">Corrientes</label><input type="range" class="r-rojo" id="p-corrientes" min="0" max="100"><span class="valor" id="p-corrientes-v"></span></div>
         <div class="fila"><label for="p-pellegrini">Pellegrini</label><input type="range" class="r-azul2" id="p-pellegrini" min="0" max="100"><span class="valor" id="p-pellegrini-v"></span></div>
         <div class="fila"><label for="p-media">Pantalla media</label><input type="range" class="r-mag" id="p-media" min="0" max="100"><span class="valor" id="p-media-v"></span></div>
+        <label class="lbl">Creatividad del takeover · las 3 pantallas como una sola pieza</label>
+        <div class="segmentos" id="creatividad" role="group" aria-label="Variante creativa">
+          <button data-v="A" title="Logo + color + movimiento arquitectónico">A · Brand dominance</button>
+          <button data-v="B" title="Producto grande, limpio, premium">B · Product hero</button>
+          <button data-v="C" title="La creatividad recorre las 3 superficies como una sola pieza">C · Iconic moment</button>
+        </div>
       </div>
 
       <div class="tarjeta" id="t-luces">
         <header><div class="ico oro"><svg viewBox="0 0 24 24" fill="none" stroke="#E8B65B" stroke-width="2"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V17h5.2v-1.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg></div>
-          <div><h2>Iluminación RGBW</h2><p>46 luminarias · control individual · independiente de pantallas</p></div></header>
-        <div class="fila master"><label for="l-master">Master luces</label><input type="range" class="r-oro" id="l-master" min="0" max="100"><span class="valor" id="l-master-v"></span></div>
-        <div class="fila"><label for="g-superior">Nivel superior (16)</label><input type="range" class="r-oro" id="g-superior" min="0" max="100"><span class="valor" id="g-superior-v"></span></div>
-        <div class="fila"><label for="g-medio">Nivel medio (16)</label><input type="range" class="r-oro" id="g-medio" min="0" max="100"><span class="valor" id="g-medio-v"></span></div>
-        <div class="fila"><label for="g-inferior">Nivel inferior (14)</label><input type="range" class="r-oro" id="g-inferior" min="0" max="100"><span class="valor" id="g-inferior-v"></span></div>
+          <div><h2>Iluminación arquitectónica</h2><p>Lighting dimmer · zonas RGBW · 46 luminarias direccionables · independiente de pantallas</p></div></header>
+        <div class="fila master"><label for="l-master" title="Escala la intensidad general; no cambia la mezcla RGBW de la escena">Master luces</label><input type="range" class="r-oro" id="l-master" min="0" max="100"><span class="valor" id="l-master-v"></span></div>
+        <div class="fila zona"><button class="zsel" data-z="superior" title="Color de la zona">●</button><label for="g-superior" title="Fachada superior · 16 luminarias">Superior (16)</label><input type="range" class="r-oro" id="g-superior" min="0" max="100"><span class="valor" id="g-superior-v"></span></div>
+        <div class="fila zona"><button class="zsel" data-z="medio" title="Color de la zona">●</button><label for="g-medio" title="Fachada media · 16 luminarias">Media (16)</label><input type="range" class="r-oro" id="g-medio" min="0" max="100"><span class="valor" id="g-medio-v"></span></div>
+        <div class="fila zona"><button class="zsel" data-z="inferior" title="Color de la zona">●</button><label for="g-inferior" title="Fachada inferior · 14 luminarias">Inferior (14)</label><input type="range" class="r-oro" id="g-inferior" min="0" max="100"><span class="valor" id="g-inferior-v"></span></div>
+        <div class="fila zona"><button class="zsel" data-z="cupula" title="Color de la zona">●</button><label for="z-cupula">Cúpula</label><input type="range" class="r-oro" id="z-cupula" min="0" max="100"><span class="valor" id="z-cupula-v"></span></div>
+        <div class="fila zona"><button class="zsel" data-z="cornisas" title="Color de la zona">●</button><label for="z-cornisas">Cornisas <em class="prop" title="Equipos lineales adicionales propuestos: no forman parte de las 46 relevadas">prop.</em></label><input type="range" class="r-oro" id="z-cornisas" min="0" max="100"><span class="valor" id="z-cornisas-v"></span></div>
+        <div class="fila zona"><button class="zsel" data-z="ochava" title="Color de la zona">●</button><label for="z-ochava" title="Esquina / ochava · 13 luminarias de las 3 filas">Ochava (13)</label><input type="range" class="r-oro" id="z-ochava" min="0" max="100"><span class="valor" id="z-ochava-v"></span></div>
+        <div class="zona-rgbw" id="zona-rgbw"></div>
+        <label class="lbl">Transición entre escenas</label>
+        <div class="segmentos" id="transicion" role="group" aria-label="Tiempo de transición">
+          <button data-s="0.5">0,5 s</button><button data-s="1">1 s</button><button data-s="2">2 s</button><button data-s="3">3 s</button><button data-s="5">5 s</button>
+        </div>
+        <label class="lbl">Escenas técnicas</label>
+        <div class="escenas-tec" id="escenas-tec"></div>
+        <details class="equipos-det"><summary>46 luminarias · control individual</summary>
         <div id="equipos"></div>
         <div class="detalle" id="detalle"></div>
-        <p class="nota">Salida = escena × ajuste individual × nivel × master. Cargar una escena o el show <b>no borra</b> tus ajustes individuales (punto dorado); «Restaurar niveles» los vuelve a 100 %.</p>
-        <div class="botonera" style="margin-top:8px"><button class="b" id="restaurar">Restaurar niveles</button><button class="b" id="guardar">Guardar escena (archivo)</button><button class="b" id="abrir">Abrir escena…</button><input type="file" id="archivo" accept="application/json,.json" hidden></div>
+        </details>
+        <p class="nota">Salida = escena × individual × zona × master. El master escala la intensidad <b>sin cambiar la mezcla RGBW</b>. Cargar una escena o el show <b>no borra</b> tus ajustes individuales (punto dorado); «Restaurar niveles» los vuelve a 100 %.</p>
+        <div class="botonera" style="margin-top:8px"><button class="b oro" id="volver" title="Quita overrides de zona y de equipo; vuelve a la escena programada">Volver a escena</button><button class="b" id="restaurar">Restaurar niveles</button><button class="b" id="guardar">Guardar escena (archivo)</button><button class="b" id="abrir">Abrir escena…</button><input type="file" id="archivo" accept="application/json,.json" hidden></div>
       </div>
 
       <div class="tarjeta" id="t-reloj">
         <header><div class="ico oro"><svg viewBox="0 0 24 24" fill="none" stroke="#E8B65B" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
-          <div><h2>Reloj</h2><p>Pista propia · simulado hasta la ingeniería real</p></div></header>
-        <div class="fila"><label for="r-nivel">Iluminación reloj</label><input type="range" class="r-blanco" id="r-nivel" min="0" max="100"><span class="valor" id="r-nivel-v"></span></div>
+          <div><h2>Clock accent <span class="sim">next phase</span></h2><p>Visualización de propuesta · no es hardware instalado</p></div></header>
+        <div class="fila"><label for="r-nivel">Acento del reloj</label><input type="range" class="r-blanco" id="r-nivel" min="0" max="100"><span class="valor" id="r-nivel-v"></span></div>
       </div>
 
       <div class="tarjeta editor-panel" id="t-editor">
@@ -100,6 +124,12 @@
     </aside>
   </main>
 
+  <div class="cliente-bar" id="cliente-bar">
+    <button data-c="normal"><b>NORMAL</b><span>El TRUST de noche</span></button>
+    <button data-c="takeover"><b>TAKEOVER</b><span>McDonald's · 15 s</span></button>
+    <button data-c="firma"><b>SIGNATURE</b><span>Firma de marca</span></button>
+    <button data-c="antes"><b>ANTES / DESPUÉS</b><span>Sin y con iluminación</span></button>
+  </div>
   <footer>
     <div class="timeline">
       <div class="tl-cab"><h2>Línea de tiempo del show · 15 s</h2><span class="t" id="tl-t">00:00.00</span><span class="bloque" id="tl-bloque"></span><span class="esp"></span><span class="bloque">Plantilla preprogramada · no es generación por IA</span></div>
@@ -119,6 +149,7 @@
 <script src="geometria.js"></script>
 <script src="luminarias.js"></script>
 <script src="motor.js"></script>
+<script src="contenido.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

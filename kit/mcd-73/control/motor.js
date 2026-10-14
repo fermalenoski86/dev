@@ -1,16 +1,23 @@
 // TRUST Control — motor de la simulación (sin DOM, determinista).
 // SIMULACIÓN CONCEPTUAL — NO CONECTADA A EQUIPOS REALES. Este archivo no abre red ni emite DMX/Art-Net/sACN.
+// Capa de control/visualización del kit #73: no importa ni modifica packages/ (ShowEngine, M2C.2, M3A).
 //
 // Subsistemas independientes (cada uno con su propio estado; ninguno lee ni escribe el de otro):
-//   pantallas: master + Corrientes + Pellegrini + media          (0–100)
-//   luces:     master + 3 grupos (16/16/14) + 46 equipos RGBW      (0–100, ON/OFF, color propio opcional)
-//   reloj:     nivel propio                                         (0–100)
+//   pantallas: master + Corrientes + Pellegrini + media          (0–100)  ← SCREEN DIMMER
+//   luces:     master + ZONAS + 46 equipos RGBW                   (0–100)  ← ARCHITECTURAL LIGHTING DIMMER (nunca un master común)
+//   reloj:     nivel propio (CLOCK ACCENT · próxima fase, no instalado)
 // Vista Día/Noche: SOLO representación. No toca ningún nivel.
 //
-// Salida de una luminaria = escena(t) × individual × grupo × master × ON × (sin blackout)
-//   - "escena" la pone el preset activo o el show de 15 s; el ajuste individual es un TRIM que se multiplica
-//     y nunca se pisa: cargar un preset o el show NO borra tus ajustes. "Restaurar niveles" sí los vuelve a 100.
-//   - Color: si el equipo tiene color propio (RGBW) manda ese; si no, sigue la escena.
+// ZONAS (visual polish, 14/10): las 46 siguen direccionables, pero se operan como zonas arquitectónicas:
+//   superior 16 · medio 16 · inferior 14  (las filas reales del plano de Fer)
+//   ochava  (13 equipos de las 3 filas que miran la esquina curva; su dimmer y su RGBW mandan sobre los de la fila)
+//   cúpula  (baño de la cúpula, antes atado al reloj) · cornisas (PROPUESTA: equipos adicionales, fuera de las 46)
+//
+// Salida de una luminaria = base(t) × individual × fila × ochava(si pertenece) × master × ON × (sin blackout)
+//   - "base" = preset activo (con transición suave) o el show de 15 s. Los ajustes son TRIMS que se multiplican:
+//     cargar un preset o el show NO los borra. «Volver a escena» quita los overrides; «Restaurar niveles» deja todo en 100.
+//   - Color: equipo propio > zona (ochava > fila) > escena.
+//   - El master escala la intensidad: NUNCA cambia la mezcla RGBW relativa.
 (function () {
   'use strict';
   const DUR = 15;
@@ -20,84 +27,127 @@
     { id: 'inferior', nombre: 'Nivel inferior', n: 14, pref: 'INF' },
   ];
   const PANTALLAS = ['corrientes', 'pellegrini', 'media'];
+  const ZONAS = [
+    { id: 'superior', nombre: 'Fachada superior', fila: true },
+    { id: 'medio', nombre: 'Fachada media', fila: true },
+    { id: 'inferior', nombre: 'Fachada inferior', fila: true },
+    { id: 'cupula', nombre: 'Cúpula' },
+    { id: 'cornisas', nombre: 'Cornisas', propuesta: true },
+    { id: 'ochava', nombre: 'Esquina / ochava' },
+  ];
+  // Ochava: los equipos frente a la esquina curva (posiciones del plano de Fer; inferior por simetría, fuera de cuadro).
+  const OCHAVA = ['SUP-07', 'SUP-08', 'SUP-09', 'SUP-10', 'SUP-11', 'MED-09', 'MED-10', 'MED-11', 'MED-12', 'INF-06', 'INF-07', 'INF-08', 'INF-09'];
+  const enOchava = new Set(OCHAVA);
+  const TRANSICIONES = [0.5, 1, 2, 3, 5];
   // Apertura visual del haz (°), configurable por luminaria. Valor de SIMULACIÓN: la real depende de la óptica del equipo.
   const APERTURA = { superior: 40, medio: 50, inferior: 50 };
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const lerp = (a, b, k) => a + (b - a) * k;
   const suave = (k) => { k = clamp(k, 0, 1); return k * k * (3 - 2 * k); };
   const mezclaRGBW = (a, b, k) => ({ r: lerp(a.r, b.r, k), g: lerp(a.g, b.g, k), b: lerp(a.b, b.b, k), w: lerp(a.w, b.w, k) });
+  const mezclar = (a, b, k) => ({ nivel: lerp(a.nivel, b.nivel, k), rgbw: mezclaRGBW(a.rgbw, b.rgbw, k) });
+  const rgbwOk = (q) => ({ r: clamp(+q.r, 0, 1), g: clamp(+q.g, 0, 1), b: clamp(+q.b, 0, 1), w: clamp(+q.w, 0, 1) });
 
-  // Colores de escena (canales RGBW 0..1). Son colores de PREVISUALIZACIÓN, no un patch DMX.
+  // Colores (canales RGBW 0..1) de PREVISUALIZACIÓN, no un patch DMX.
+  // Regla comercial (brief 14/10): nunca R, G y B juntos; siempre 2 canales + W. Los puros quedan para diagnóstico.
   const C = {
-    calido: { r: 0.30, g: 0.07, b: 0.00, w: 0.78 },   // blanco cálido ≈ 3200 K = W + algo de R/G (mezcla RGBW; referencia visual)
+    calido: { r: 0.30, g: 0.07, b: 0.00, w: 0.78 },    // blanco cálido: W dominante + R leve + G mínimo (≈3000–3200 K visual)
     blancoArq: { r: 0.00, g: 0.00, b: 0.02, w: 0.95 },  // blanco arquitectónico: el W del equipo, limpio
-    ambar: { r: 1.00, g: 0.40, b: 0.00, w: 0.18 },      // ámbar: puente entre el rojo y el blanco cálido
-    rojo: { r: 1.00, g: 0.02, b: 0.00, w: 0.00 },
-    oro: { r: 1.00, g: 0.58, b: 0.00, w: 0.22 },
-    blanco: { r: 1.00, g: 1.00, b: 1.00, w: 1.00 },
+    ambar: { r: 1.00, g: 0.40, b: 0.00, w: 0.18 },
+    rojo: { r: 1.00, g: 0.03, b: 0.00, w: 0.10 },       // rojo McDonald's: R alto, W bajo, G/B mínimos
+    oro: { r: 1.00, g: 0.55, b: 0.00, w: 0.35 },        // oro: R alto, G medio, W moderado
     neutro: { r: 0.00, g: 0.00, b: 0.00, w: 0.85 },
+    azul: { r: 0.00, g: 0.25, b: 1.00, w: 0.00 },       // solo diagnóstico
+    verde: { r: 0.00, g: 1.00, b: 0.15, w: 0.00 },      // solo diagnóstico
+    magenta: { r: 1.00, g: 0.00, b: 0.75, w: 0.00 },    // solo diagnóstico
   };
+  const L_ = (nivel, rgbw) => ({ nivel, rgbw });
 
-  // Escenas fijas. f(grupo, i, n) → { nivel 0..1, rgbw }
-  // Intensidades VISUALES de referencia (Fer, 14/10): base 35–50 %, acentos 60–75 %. No son potencias DMX calibradas.
-  // McDonald's: sectores de 2 luminarias que alternan rojo (acento) · cálido (base) · oro (acento) · cálido: nunca todo rojo.
-  // Paleta mezclada (Fer, 14/10): rojo protagonista + ámbar + blanco cálido + zonas de respiro con poca luz. Nunca un baño plano.
-  const sectorMcd = (i) => [{ nivel: 0.6, rgbw: C.rojo }, { nivel: 0.38, rgbw: C.calido }, { nivel: 0.5, rgbw: C.ambar }, { nivel: 0.18, rgbw: C.calido },
-    { nivel: 0.42, rgbw: C.calido }, { nivel: 0.5, rgbw: C.ambar }, { nivel: 0.2, rgbw: C.calido }][Math.floor(i / 2) % 7];
+  // Presets. f(grupo, i, n, id) → { nivel 0..1, rgbw }; zonas = cúpula y cornisas; reloj; contenido de pantallas.
+  // Intensidades VISUALES de referencia (brief 14/10), no potencias DMX calibradas.
+  const sector = (patron, g, i) => patron[(Math.floor(i / 2) + (g === 'medio' ? 1 : g === 'inferior' ? 2 : 0)) % patron.length];
+  const PAT_MCD = [L_(0.70, C.rojo), L_(0.40, C.oro), L_(0.22, C.calido), L_(0.70, C.rojo), L_(0.40, C.oro), L_(0.22, C.calido), L_(0.40, C.oro)];
+  const PAT_FIRMA = [L_(0.50, C.oro), L_(0.45, C.calido), L_(0.30, C.rojo), L_(0.45, C.calido), L_(0.50, C.oro), L_(0.45, C.calido)];
+  const DIAG = { 'SUP-04': C.azul, 'SUP-11': C.verde, 'MED-08': C.magenta };
+  const calida = (base, och) => (g, i, n, id) => L_(enOchava.has(id) ? och : base, C.calido);
   const ESCENAS = {
-    arquitectonica: { nombre: 'Arquitectónica cálida', f: () => ({ nivel: 0.45, rgbw: C.calido }), reloj: { nivel: 0.85, rgbw: C.neutro }, pantallas: 'reposo' },
-    mcd: { nombre: "McDonald's (acentos)", f: (g, i) => sectorMcd(i + (g === 'medio' ? 2 : g === 'inferior' ? 4 : 0)), reloj: { nivel: 1, rgbw: C.oro }, pantallas: 'marca' },
-    blanco: { nombre: 'Blanco arquitectónico', f: () => ({ nivel: 0.42, rgbw: C.blancoArq }), reloj: { nivel: 0.85, rgbw: C.neutro }, pantallas: 'reposo' },
-    // RGBW libre: base W neutra baja; cada luminaria o nivel toma el color que elija el operador (color propio).
-    libre: { nombre: 'RGBW libre', f: () => ({ nivel: 0.45, rgbw: C.blancoArq }), reloj: { nivel: 0.85, rgbw: C.neutro }, pantallas: 'reposo' },
-    apagado: { nombre: 'Luces apagadas', f: () => ({ nivel: 0, rgbw: C.calido }), reloj: { nivel: 0.85, rgbw: C.neutro }, pantallas: 'reposo' },
-    cierre: { nombre: 'Cierre', f: () => ({ nivel: 0.3, rgbw: C.calido }), reloj: { nivel: 0.7, rgbw: C.neutro }, pantallas: 'reposo' },
+    arquitectonica: { clave: 'ARCHITECTURAL_WARM', nombre: 'Arquitectónica cálida', comercial: true, f: calida(0.40, 0.46),
+      zonas: { cupula: L_(0.5, C.calido), cornisas: L_(0.35, C.calido) }, reloj: L_(0.85, C.neutro), pantallas: 'reposo' },
+    nocheIdle: { clave: 'NIGHT_IDLE', nombre: 'Noche institucional', comercial: true, f: calida(0.37, 0.42),
+      zonas: { cupula: L_(0.45, C.calido), cornisas: L_(0.32, C.calido) }, reloj: L_(0.9, C.calido), pantallas: 'institucional' },
+    mcd: { clave: 'MCD_TAKEOVER', nombre: "McDonald's takeover", comercial: true, f: (g, i) => sector(PAT_MCD, g, i),
+      zonas: { cupula: L_(0.4, C.oro), cornisas: L_(0.22, C.calido) }, reloj: L_(1, C.oro), pantallas: 'marca' },
+    firma: { clave: 'MCD_SIGNATURE', nombre: "McDonald's firma", comercial: true, f: (g, i) => sector(PAT_FIRMA, g, i),
+      zonas: { cupula: L_(0.55, C.oro), cornisas: L_(0.4, C.calido) }, reloj: L_(1, C.oro), pantallas: 'firma' },
+    blanco: { clave: 'ARCH_WHITE', nombre: 'Blanco arquitectónico', comercial: true, f: () => L_(0.42, C.blancoArq),
+      zonas: { cupula: L_(0.45, C.blancoArq), cornisas: L_(0.32, C.blancoArq) }, reloj: L_(0.85, C.neutro), pantallas: 'reposo' },
+    diagnostico: { clave: 'RGB_DIAGNOSTIC', nombre: 'Diagnóstico RGB', diagnostico: true, f: (g, i, n, id) => L_(0.45, DIAG[id] || C.blancoArq),
+      zonas: { cupula: L_(0.3, C.neutro), cornisas: L_(0.25, C.neutro) }, reloj: L_(0.85, C.neutro), pantallas: 'diagnostico' },
+    // RGBW libre (técnico): base W neutra; cada luminaria, zona o nivel toma el color que elija el operador.
+    libre: { clave: 'RGBW_FREE', nombre: 'RGBW libre (técnico)', diagnostico: true, f: () => L_(0.45, C.blancoArq),
+      zonas: { cupula: L_(0.3, C.neutro), cornisas: L_(0.25, C.neutro) }, reloj: L_(0.85, C.neutro), pantallas: 'reposo' },
+    apagado: { clave: 'ALL_OFF', nombre: 'Iluminación apagada', comercial: true, f: () => L_(0, C.calido),
+      zonas: { cupula: L_(0, C.calido), cornisas: L_(0, C.calido) }, reloj: L_(0.85, C.neutro), pantallas: 'reposo' },
+    cierre: { clave: 'CLOSE', nombre: 'Cierre', comercial: true, f: () => L_(0.3, C.calido),
+      zonas: { cupula: L_(0.35, C.calido), cornisas: L_(0.25, C.calido) }, reloj: L_(0.7, C.neutro), pantallas: 'reposo' },
   };
 
   // Show "McDonald's Takeover 15 s" — PLANTILLA PREPROGRAMADA (no es generación por IA).
-  // Bloques del guion (#73, 14/10): 0–3 apertura · 3–7 contenido + ola roja Corrientes→Pellegrini · 7–11 takeover · 11–15 cierre.
+  // NORMAL → BRAND REVEAL → FULL TAKEOVER → SIGNATURE → EXIT, con fundidos de 1 s entre momentos (sin saltos).
   const BLOQUES = [
-    { desde: 0, hasta: 3, id: 'apertura', nombre: 'Apertura' },
-    { desde: 3, hasta: 7, id: 'ola', nombre: 'Ola roja' },
-    { desde: 7, hasta: 11, id: 'takeover', nombre: 'Takeover' },
-    { desde: 11, hasta: 15, id: 'cierre', nombre: 'Cierre' },
+    { desde: 0, hasta: 2, id: 'normal', nombre: 'Normal' },
+    { desde: 2, hasta: 5, id: 'revelacion', nombre: 'Brand reveal' },
+    { desde: 5, hasta: 10, id: 'takeover', nombre: 'Full takeover' },
+    { desde: 10, hasta: 13, id: 'firma', nombre: 'Signature' },
+    { desde: 13, hasta: 15, id: 'salida', nombre: 'Exit' },
   ];
-  // Orden espacial de la ola: índice 0 = extremo Corrientes (izquierda de la vista), último = extremo Pellegrini.
-  // Coreografía de ACENTOS localizados: la base queda cálida y moderada; el rojo y el oro recorren sectores.
-  const BASE = { nivel: 0.36, rgbw: C.calido };
-  const RESPIRO = { nivel: 0.2, rgbw: C.calido };
-  const mezclar = (a, b, k) => ({ nivel: lerp(a.nivel, b.nivel, k), rgbw: mezclaRGBW(a.rgbw, b.rgbw, k) });
-  function sectorTakeover(bloque, paso) {          // persecución de sectores de 3 luminarias: rojo · base · ámbar · respiro
-    const k = ((bloque + paso) % 4 + 4) % 4;   // 4 tiempos: rojo · base · ámbar · respiro (el rojo ocupa 1 de cada 4 sectores)
-    return k === 0 ? { nivel: 0.6, rgbw: C.rojo } : k === 1 ? BASE : k === 2 ? { nivel: 0.5, rgbw: C.ambar } : RESPIRO;
-  }
-  function showLuz(g, i, n, t) {
-    const x = n > 1 ? i / (n - 1) : 0;
-    const desfase = g === 'medio' ? 1 : g === 'inferior' ? 2 : 0;
-    if (t < 3) return { nivel: lerp(0.15, 0.38, suave(t / 3)), rgbw: C.calido };
-    if (t < 7) {                                   // ola: una franja roja recorre Corrientes → Pellegrini y deja acentos
-      const d = (t - 3) / 3 - x, k = Math.exp(-((d / 0.11) ** 2));
-      const resto = d > 0.11 && i % 4 === 0 ? { nivel: 0.5, rgbw: C.rojo } : d > 0.11 && i % 4 === 2 ? { nivel: 0.45, rgbw: C.ambar } : BASE;
-      return mezclar(resto, { nivel: 0.62, rgbw: C.rojo }, k);
+  // Jerarquía: con las pantallas a máxima presencia la arquitectura baja un poco (soporte, no competencia).
+  const presencia = (t) => suave((t - 4.5) / 1) * (1 - suave((t - 10) / 1));
+  const JERARQUIA = 0.08;
+  const desfaseDe = (g) => (g === 'medio' ? 1 : g === 'inferior' ? 2 : 0);
+  // Cada momento es una función continua en t; el show los encadena con fundidos (ventana de 1 s centrada en el corte).
+  const MOMENTOS = [
+    { desde: 0, luz: (g, i, n, id) => L_(enOchava.has(id) ? 0.42 : 0.38, C.calido) },
+    { desde: 2, luz: (g, i, n, id, t) => {      // la cálida baja a 25 %; el rojo sube y avanza Corrientes → Pellegrini
+      const x = n > 1 ? i / (n - 1) : 0, frente = (t - 2) / 2.4, k = suave((frente - x + 0.05) / 0.25);
+      const base = L_(enOchava.has(id) ? 0.34 : 0.25, C.calido);   // la ochava conserva volumen en blanco cálido
+      return (i + desfaseDe(g)) % 2 === 0 ? mezclar(base, L_(0.55, C.rojo), k) : base;
+    } },
+    { desde: 5, luz: (g, i, n, id, t) => {      // persecución lenta de sectores de 3: rojo · oro · cálido (brief: 65–75 · 35–45 · 15–25 %)
+      const p = (t - 5) / 1.25, paso = Math.floor(p), k = suave((p - paso) / 0.4), b = Math.floor(i / 3) + desfaseDe(g);
+      const est = (s) => [L_(0.72, C.rojo), L_(0.42, C.oro), L_(0.22, C.calido)][((b + s) % 3 + 3) % 3];   // con jerarquía −8 %: 66 · 39 · 20 %
+      return mezclar(est(paso - 1), est(paso), k);
+    } },
+    { desde: 10, luz: (g, i) => [L_(0.50, C.oro), L_(0.45, C.calido), L_(0.30, C.rojo)][(Math.floor(i / 3) + 0) % 3] },
+    { desde: 13, luz: (g, i, n, id) => ESCENAS.arquitectonica.f(g, i, n, id) },
+  ];
+  const ZONAS_MOMENTO = [
+    { cupula: L_(0.5, C.calido), cornisas: L_(0.35, C.calido) },
+    { cupula: L_(0.45, C.calido), cornisas: L_(0.3, C.calido) },
+    { cupula: L_(0.45, C.oro), cornisas: L_(0.22, C.calido) },
+    { cupula: L_(0.6, C.oro), cornisas: L_(0.4, C.oro) },
+    { cupula: L_(0.5, C.calido), cornisas: L_(0.35, C.calido) },
+  ];
+  function encadenar(t, valor) {   // valor(k) → {nivel, rgbw} del momento k; fundido suave en cada corte
+    let v = valor(0);
+    for (let k = 1; k < MOMENTOS.length; k++) {
+      const a = suave((t - MOMENTOS[k].desde + 0.5) / 1);
+      if (a <= 0) break;
+      v = a >= 1 ? valor(k) : mezclar(v, valor(k), a);
     }
-    if (t < 11) {
-      const p = (t - 7) * 2, paso = Math.floor(p), k = suave((p - paso) / 0.35);
-      const b = Math.floor(i / 3) + desfase;
-      return mezclar(sectorTakeover(b, paso - 1), sectorTakeover(b, paso), k);
-    }
-    const desde = (i + desfase) % 3 === 0 ? { nivel: 0.55, rgbw: C.ambar } : BASE;
-    return mezclar(desde, { nivel: 0.45, rgbw: C.calido }, suave((t - 11) / 3.2));
+    return v;
   }
-  function showReloj(t) {
-    if (t < 7) return { nivel: 0.85, rgbw: C.neutro };
-    if (t < 13.5) return { nivel: 1, rgbw: mezclaRGBW(C.neutro, C.oro, suave((t - 7) / 0.8)) };
-    return { nivel: 0.85, rgbw: mezclaRGBW(C.oro, C.neutro, suave((t - 13.5) / 1.5)) };
+  function showLuz(g, i, n, id, t) {
+    const v = encadenar(t, (k) => MOMENTOS[k].luz(g, i, n, id, t));
+    return L_(v.nivel * (1 - JERARQUIA * presencia(t)), v.rgbw);
   }
-  // Nivel base de cada pantalla según el show (el contenido lo dibuja render; acá solo el nivel).
-  function showPantalla(id, t) {
-    if (t < 3) return 0.55 + 0.45 * suave(t / 3);
-    return 1;
+  function showZona(z, t) { const v = encadenar(t, (k) => ZONAS_MOMENTO[k][z]); return L_(v.nivel * (1 - JERARQUIA * presencia(t)), v.rgbw); }
+  function showReloj(t) {   // CLOCK ACCENT (próxima fase): realce dorado durante takeover y firma
+    if (t < 5) return L_(0.85, C.neutro);
+    if (t < 13) return L_(1, mezclaRGBW(C.neutro, C.oro, suave((t - 5) / 1)));
+    return L_(0.85, mezclaRGBW(C.oro, C.neutro, suave((t - 13) / 1.5)));
   }
+  function showPantalla() { return 1; }   // el contenido maneja sus propios fundidos
 
   function nuevoEstado() {
     const fixtures = [];
@@ -107,10 +157,14 @@
     return {
       vista: 'noche',
       pantallas: { master: 100, corrientes: 100, pellegrini: 100, media: 100 },
-      luces: { master: 100, grupos: { superior: 100, medio: 100, inferior: 100 }, fixtures },
+      luces: { master: 100, grupos: { superior: 100, medio: 100, inferior: 100 }, zonas: { ochava: 100, cupula: 100, cornisas: 100 },
+        zonaColor: { superior: null, medio: null, inferior: null, ochava: null, cupula: null, cornisas: null }, fixtures },
       reloj: { nivel: 100 },
       blackout: false,
       escena: 'arquitectonica',
+      transicion: 2,           // s (default comercial)
+      fundido: null,           // transición en curso entre presets: { t, dur, desde }
+      creatividad: 'C',        // A brand dominance · B product hero · C iconic moment
       show: { cargado: false, t: 0, reproduciendo: false },
     };
   }
@@ -123,40 +177,52 @@
 
   function bloque(t) { return BLOQUES.find((b) => t < b.hasta) || BLOQUES[BLOQUES.length - 1]; }
 
+  // ---------- base (preset / show / fundido) ----------
+  function objetivoLuz(f) { return S.show.cargado ? showLuz(f.grupo, f.i, f.n, f.id, S.show.t) : ESCENAS[S.escena].f(f.grupo, f.i, f.n, f.id); }
+  function objetivoZona(z) { return S.show.cargado ? showZona(z, S.show.t) : ESCENAS[S.escena].zonas[z]; }
+  function objetivoReloj() { return S.show.cargado ? showReloj(S.show.t) : ESCENAS[S.escena].reloj; }
+  const kFundido = () => suave(S.fundido.t / S.fundido.dur);
+  function baseLuz(f, idx) { const o = objetivoLuz(f); return S.fundido ? mezclar(S.fundido.desde.luces[idx], o, kFundido()) : o; }
+  function baseZona(z) { const o = objetivoZona(z); return S.fundido ? mezclar(S.fundido.desde.zonas[z], o, kFundido()) : o; }
+  function baseReloj() { const o = objetivoReloj(); return S.fundido ? mezclar(S.fundido.desde.reloj, o, kFundido()) : o; }
+  const fotoBase = () => ({ luces: S.luces.fixtures.map(baseLuz), zonas: { cupula: baseZona('cupula'), cornisas: baseZona('cornisas') }, reloj: baseReloj() });
+
   // ---------- salidas (lo que se ve) ----------
-  function baseLuz(f) {
-    if (S.show.cargado) return showLuz(f.grupo, f.i, f.n, S.show.t);
-    return ESCENAS[S.escena].f(f.grupo, f.i, f.n);
+  function salidaLuz(f, idx) {
+    const b = baseLuz(f, idx), och = enOchava.has(f.id);
+    const zona = (och ? S.luces.zonas.ochava / 100 : 1) * (S.luces.grupos[f.grupo] / 100);
+    const k = S.blackout || !f.on ? 0 : b.nivel * (f.nivel / 100) * zona * (S.luces.master / 100);
+    const zc = (och && S.luces.zonaColor.ochava) || S.luces.zonaColor[f.grupo];
+    return { id: f.id, grupo: f.grupo, nivel: k, rgbw: f.color || zc || b.rgbw, apertura: f.apertura, ochava: och };
   }
-  function salidaLuz(f) {
-    const b = baseLuz(f);
-    const k = S.blackout || !f.on ? 0 : b.nivel * (f.nivel / 100) * (S.luces.grupos[f.grupo] / 100) * (S.luces.master / 100);
-    return { id: f.id, grupo: f.grupo, nivel: k, rgbw: f.color || b.rgbw, apertura: f.apertura };
+  function salidaZona(z) {
+    const b = baseZona(z);
+    return { nivel: S.blackout ? 0 : b.nivel * (S.luces.zonas[z] / 100) * (S.luces.master / 100), rgbw: S.luces.zonaColor[z] || b.rgbw };
   }
   function salidaPantalla(id) {
     const base = S.show.cargado ? showPantalla(id, S.show.t) : 1;
     return S.blackout ? 0 : base * (S.pantallas[id] / 100) * (S.pantallas.master / 100);
   }
-  function salidaReloj() {
-    const b = S.show.cargado ? showReloj(S.show.t) : ESCENAS[S.escena].reloj;
-    return { nivel: S.blackout ? 0 : b.nivel * (S.reloj.nivel / 100), rgbw: b.rgbw };
-  }
+  function salidaReloj() { const b = baseReloj(); return { nivel: S.blackout ? 0 : b.nivel * (S.reloj.nivel / 100), rgbw: b.rgbw }; }
   function contenido() {
-    if (S.show.cargado) return { modo: 'show', t: S.show.t, bloque: bloque(S.show.t).id };
-    return { modo: ESCENAS[S.escena].pantallas, t: 0, bloque: null };
+    if (S.show.cargado) return { modo: 'show', t: S.show.t, bloque: bloque(S.show.t).id, creatividad: S.creatividad };
+    return { modo: ESCENAS[S.escena].pantallas, t: 0, bloque: null, creatividad: S.creatividad };
   }
   function salidas() {
     return {
       luces: S.luces.fixtures.map(salidaLuz),
+      zonas: { cupula: salidaZona('cupula'), cornisas: salidaZona('cornisas') },
       pantallas: Object.fromEntries(PANTALLAS.map((p) => [p, salidaPantalla(p)])),
       reloj: salidaReloj(),
       contenido: contenido(),
+      diagnostico: !S.show.cargado && !!ESCENAS[S.escena].diagnostico,
     };
   }
+  function iniciarFundido() { S.fundido = S.transicion > 0 ? { t: 0, dur: S.transicion, desde: fotoBase() } : null; }
 
   // ---------- acciones ----------
   const api = {
-    DUR, GRUPOS, PANTALLAS, ESCENAS, BLOQUES, APERTURA,
+    DUR, GRUPOS, PANTALLAS, ESCENAS, BLOQUES, APERTURA, ZONAS, OCHAVA, TRANSICIONES, COLORES: C,
     estado: () => JSON.parse(JSON.stringify(S)),
     salidas,
     bloque,
@@ -165,42 +231,62 @@
     setPantalla(id, v) { if (!(id in S.pantallas)) throw new Error('pantalla ' + id); S.pantallas[id] = pct(v); return avisar(); },
     setLucesMaster(v) { S.luces.master = pct(v); return avisar(); },
     setGrupo(g, v) { if (!(g in S.luces.grupos)) throw new Error('grupo ' + g); S.luces.grupos[g] = pct(v); return avisar(); },
+    setZona(z, v) { if (z in S.luces.grupos) return api.setGrupo(z, v); if (!(z in S.luces.zonas)) throw new Error('zona ' + z); S.luces.zonas[z] = pct(v); return avisar(); },
+    setZonaColor(z, rgbw) { if (!(z in S.luces.zonaColor)) throw new Error('zona ' + z); S.luces.zonaColor[z] = rgbw ? rgbwOk(rgbw) : null; return avisar(); },
     setFixture(id, v) { fx(id).nivel = pct(v); return avisar(); },
     setFixtureOn(id, on) { fx(id).on = !!on; return avisar(); },
-    setFixtureColor(id, rgbw) {
-      fx(id).color = rgbw ? { r: clamp(+rgbw.r, 0, 1), g: clamp(+rgbw.g, 0, 1), b: clamp(+rgbw.b, 0, 1), w: clamp(+rgbw.w, 0, 1) } : null;
-      return avisar();
-    },
+    setFixtureColor(id, rgbw) { fx(id).color = rgbw ? rgbwOk(rgbw) : null; return avisar(); },
     setColorGrupo(g, rgbw) {   // aplica (o quita, con null) un color propio a todo un nivel; no toca niveles ni ON/OFF
       if (g !== 'todas' && !(g in S.luces.grupos)) throw new Error('grupo ' + g);
-      for (const f of S.luces.fixtures) if (g === 'todas' || f.grupo === g) f.color = rgbw ? { r: clamp(+rgbw.r, 0, 1), g: clamp(+rgbw.g, 0, 1), b: clamp(+rgbw.b, 0, 1), w: clamp(+rgbw.w, 0, 1) } : null;
+      for (const f of S.luces.fixtures) if (g === 'todas' || f.grupo === g) f.color = rgbw ? rgbwOk(rgbw) : null;
       return avisar();
     },
     setFixtureApertura(id, grados) { fx(id).apertura = clamp(Math.round(+grados), 10, 90); return avisar(); },
     setReloj(v) { S.reloj.nivel = pct(v); return avisar(); },
     setBlackout(b) { S.blackout = !!b; return avisar(); },
-    setEscena(e) { if (!(e in ESCENAS)) throw new Error('escena ' + e); S.escena = e; S.show = { cargado: false, t: 0, reproduciendo: false }; return avisar(); },
-    cargarShow() { S.show = { cargado: true, t: 0, reproduciendo: false }; return avisar(); },
+    setTransicion(s) { s = +s; if (s !== 0 && !TRANSICIONES.includes(s)) throw new Error('transición ' + s); S.transicion = s; if (!s) S.fundido = null; return avisar(); },
+    setCreatividad(v) { if (!['A', 'B', 'C'].includes(v)) throw new Error('creatividad ' + v); S.creatividad = v; return avisar(); },
+    setEscena(e) {
+      if (!(e in ESCENAS)) throw new Error('escena ' + e);
+      iniciarFundido();   // la transición parte de lo que se ve ahora (preset, show o fundido en curso)
+      S.escena = e; S.show = { cargado: false, t: 0, reproduciendo: false };
+      return avisar();
+    },
+    cargarShow() { S.fundido = null; S.show = { cargado: true, t: 0, reproduciendo: false }; return avisar(); },
     play() { if (!S.show.cargado) api.cargarShow(); if (S.show.t >= DUR) S.show.t = 0; S.show.reproduciendo = true; return avisar(); },
     pausa() { S.show.reproduciendo = false; return avisar(); },
     resetShow() { if (S.show.cargado) { S.show.t = 0; S.show.reproduciendo = false; } return avisar(); },
     seek(t) { if (!S.show.cargado) api.cargarShow(); S.show.t = clamp(+t, 0, DUR); return avisar(); },
+    animando: () => !!S.fundido || (S.show.cargado && S.show.reproduciendo),
     avanzar(dt) {
-      if (!S.show.cargado || !S.show.reproduciendo) return S;
-      S.show.t = Math.min(DUR, S.show.t + dt);
-      if (S.show.t >= DUR) S.show.reproduciendo = false;
+      let cambio = false;
+      if (S.fundido) { S.fundido.t += dt; if (S.fundido.t >= S.fundido.dur) S.fundido = null; cambio = true; }
+      if (S.show.cargado && S.show.reproduciendo) {
+        S.show.t = Math.min(DUR, S.show.t + dt);
+        if (S.show.t >= DUR) S.show.reproduciendo = false;
+        cambio = true;
+      }
+      return cambio ? avisar() : S;
+    },
+    terminarTransicion() { S.fundido = null; return avisar(); },
+    // Quita los overrides del operador (colores y trims de zona/equipo) y vuelve a la escena tal como está programada.
+    volverAEscena() {
+      S.luces.grupos = { superior: 100, medio: 100, inferior: 100 }; S.luces.zonas = { ochava: 100, cupula: 100, cornisas: 100 };
+      for (const z of Object.keys(S.luces.zonaColor)) S.luces.zonaColor[z] = null;
+      S.luces.fixtures.forEach((f) => { f.on = true; f.nivel = 100; f.color = null; });
       return avisar();
     },
     restaurarNiveles() {
       S.pantallas = { master: 100, corrientes: 100, pellegrini: 100, media: 100 };
-      S.luces.master = 100; S.luces.grupos = { superior: 100, medio: 100, inferior: 100 };
-      S.luces.fixtures.forEach((f) => { f.on = true; f.nivel = 100; f.color = null; });
-      S.reloj.nivel = 100; S.blackout = false;
-      return avisar();
+      S.luces.master = 100; S.reloj.nivel = 100; S.blackout = false;
+      return api.volverAEscena();
     },
     reiniciarTodo() { S = nuevoEstado(); return avisar(); },
     // Escenas guardadas como archivo local (sin servicio ni red).
-    exportarEscena() { return JSON.stringify({ formato: 'trust-escena-v1', simulacion: true, pantallas: S.pantallas, luces: S.luces, reloj: S.reloj }, null, 1); },
+    exportarEscena() {
+      return JSON.stringify({ formato: 'trust-escena-v1', simulacion: true, escena: S.escena, transicion: S.transicion, creatividad: S.creatividad,
+        pantallas: S.pantallas, luces: S.luces, reloj: S.reloj }, null, 1);
+    },
     importarEscena(txt) {
       const d = JSON.parse(txt);
       if (d.formato !== 'trust-escena-v1') throw new Error('formato desconocido');
@@ -208,12 +294,17 @@
       for (const k of Object.keys(nuevo.pantallas)) if (k in d.pantallas) nuevo.pantallas[k] = pct(d.pantallas[k]);
       nuevo.luces.master = pct(d.luces.master);
       for (const g of Object.keys(nuevo.luces.grupos)) nuevo.luces.grupos[g] = pct(d.luces.grupos[g]);
+      for (const z of Object.keys(nuevo.luces.zonas)) if (d.luces.zonas && z in d.luces.zonas) nuevo.luces.zonas[z] = pct(d.luces.zonas[z]);
+      for (const z of Object.keys(nuevo.luces.zonaColor)) if (d.luces.zonaColor && d.luces.zonaColor[z]) nuevo.luces.zonaColor[z] = rgbwOk(d.luces.zonaColor[z]);
       for (const f of nuevo.luces.fixtures) {
         const o = (d.luces.fixtures || []).find((x) => x.id === f.id);
-        if (o) { f.on = !!o.on; f.nivel = pct(o.nivel); f.color = o.color || null; if (o.apertura) f.apertura = clamp(Math.round(+o.apertura), 10, 90); }
+        if (o) { f.on = !!o.on; f.nivel = pct(o.nivel); f.color = o.color ? rgbwOk(o.color) : null; if (o.apertura) f.apertura = clamp(Math.round(+o.apertura), 10, 90); }
       }
       nuevo.reloj.nivel = pct(d.reloj.nivel);
       S.pantallas = nuevo.pantallas; S.luces = nuevo.luces; S.reloj = nuevo.reloj;
+      if (d.escena in ESCENAS) { iniciarFundido(); S.escena = d.escena; S.show = { cargado: false, t: 0, reproduciendo: false }; }
+      if (TRANSICIONES.includes(d.transicion)) S.transicion = d.transicion;
+      if (['A', 'B', 'C'].includes(d.creatividad)) S.creatividad = d.creatividad;
       return avisar();
     },
   };

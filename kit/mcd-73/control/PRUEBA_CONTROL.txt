@@ -5,10 +5,10 @@ OK    rótulo «SIMULACIÓN CONCEPTUAL — NO CONECTADA A EQUIPOS REALES» visib
 OK    no dice «Sistema Online», «Enviar show» ni control.trust.local
 OK    estado del header: «Simulación offline»
 OK    geometría atada a la foto exacta (sha256 8ac8a62f0ee6…)
-OK    foto sin deformar: proporción en pantalla 1.4781 vs original 1.4772
+OK    foto sin deformar: proporción en pantalla 1.4770 vs original 1.4772
 OK    Director: prompt de ejemplo «McDonald's 15 s» precargado
 OK    Director: «Generar minishow (simulado)» carga la plantilla en t=0, en pausa
-OK    Director: el plan muestra 4 bloques y se rotula como plantilla, no IA
+OK    Director: el plan muestra 5 momentos (Normal → Brand reveal → Full takeover → Signature → Exit) y se rotula como plantilla, no IA
 OK    Director: la nota aclara que el prompt no se interpreta (hoy en demo / futuro)
 OK    pantallas y reloj = geometría aprobada en composition.ts (216 coordenadas idénticas)
 OK    Corrientes a la izquierda, Pellegrini a la derecha
@@ -24,10 +24,10 @@ OK    luces al 0 %: pantallas sin cambios
 OK    luces al 0 %: las 46 salidas en 0
 OK    master 0 → 100 restaura el ajuste individual (MED-07 35 %)
 OK    SUP-01 al 20 %: cambia solo SUP-01, las otras 45 iguales (['SUP-01'])
-OK    SUP-01 al 20 %: salida = escena (45%) × 20 %
+OK    SUP-01 al 20 %: salida = escena (40%) × 20 %
 OK    nivel medio al 50 %: cambian solo sus 16
 OK    arquitectónica y blanco: base visual moderada (35–50 %)
-OK    McDonald's: acentos 60–75 % por sectores, no toda la fachada (8/46)
+OK    McDonald's: acentos 60–75 % por sectores, no toda la fachada (14/46)
 OK    escena «Luces apagadas»: las 46 en 0
 OK    blanco cálido = mezcla RGBW, sin amarillo saturado (≈3000–3500 K: R 1.00 G 0.77 B 0.61)
 OK    escena «RGBW libre»: base neutra moderada para colorear por luminaria o grupo
@@ -42,23 +42,46 @@ OK    «Restaurar niveles» deja todo en 100 % y color de escena
 OK    blackout: pantallas, luces y reloj en 0
 OK    soltar blackout recupera los niveles
 OK    show determinista: el mismo t da exactamente la misma salida
-OK    Play avanza el reloj del show (t=1.18 s tras 1,2 s)
+OK    Play avanza el reloj del show (t=1.15 s tras 1,2 s)
 OK    Pausa congela el show
 OK    el show termina en 15 s y se detiene
 OK    a los 4 s la ola roja avanzó desde Corrientes (izquierda) hacia Pellegrini
+OK    zona ochava al 50 %: cambian solo sus 13 equipos (esquina curva de las 3 filas)
+OK    RGBW por zona: la cúpula cambia de color; cornisas y 46 luminarias intactas
+OK    Master iluminación al 50 %: escala la intensidad de luces y zonas; la mezcla RGBW no cambia
+OK    Master de iluminación ≠ dimmer de pantallas (las pantallas no cambian)
+OK    dimmer de pantallas al 30 %: las luces no cambian
+OK    «Volver a escena»: quita overrides de zona y vuelve a la escena programada
+OK    presets mínimos: ARCHITECTURAL_WARM · MCD_TAKEOVER · MCD_SIGNATURE · RGB_DIAGNOSTIC · ALL_OFF · NIGHT_IDLE
+OK    escenas comerciales y show: nunca R, G y B juntos (2 canales + W) — 0 casos []
+OK    transiciones 0,5 / 1 / 2 / 3 / 5 s, default comercial 2 s
+OK    preset → preset: transición suave de 2 s (arranca en lo que se ve, termina en el preset; salto máx. 0.022 cada 0,1 s)
+OK    show 15 s sin saltos: cambio máximo por luminaria 0.070 cada 0,05 s
+OK    FULL TAKEOVER (7,5 s): rojo 0.66–0.66 · oro 0.39–0.39 · cálido 0.20–0.20 (65–75 / 35–45 / 15–25 % con −8 % de jerarquía)
+OK    NORMAL (1 s): fachada cálida 38 % (ochava 42 %)
+OK    EXIT: el show termina exactamente en ARCHITECTURAL_WARM
+OK    RGB_DIAGNOSTIC: rotulado «DIAGNOSTIC MODE», SUP-04 azul · SUP-11 verde · MED-08 magenta (['MED-08', 'SUP-04', 'SUP-11'])
+OK    escena comercial: sin rótulo de diagnóstico
+OK    una sola composición: 3,0 s solo Corrientes · 3,9 s Corrientes + Pellegrini · 7,5 s las tres ([133, 0, 0] → [90, 194, 0] → [199, 243, 175])
+OK    contenido sin textos de demo («TAKEOVER 15 s», «UN MOMENTO SINCRONIZADO»…)
+OK    creatividades A · B · C: tres variantes visuales distintas
+OK    modo cliente: 0 sliders visibles y solo ['NORMAL', 'TAKEOVER', 'SIGNATURE', 'ANTES / DESPUÉS']
+OK    ANTES / DESPUÉS: sin iluminación ↔ arquitectónica cálida
+OK    modo cliente: TAKEOVER reproduce el show
+OK    modo operador: vuelve el panel completo (master, zonas, RGBW, transiciones, escenas)
 OK    ningún halo sobre el contenido LED: 72 píxeles dentro de las 3 pantallas idénticos con luces 100 % y 0 % (difieren 0)
 OK    luces apagadas: el TRUST sigue visible con la luz urbana (62% del brillo de la foto)
 OK    vecino, torre blanca y cielo no cambian (quedan como en la foto)
-OK    un haz encendido se suma a la luz urbana (brillo ×2.1 sobre apagado)
+OK    un haz encendido se suma a la luz urbana (brillo ×2.2 sobre apagado)
 OK    SUP-05 al 20 %: baja su baño y el resto de la fachada no cambia
 OK    3 luminarias cambian de color: las otras 43 salidas idénticas
-OK    SUP-04 azul, SUP-11 verde, MED-08 magenta visibles en su baño ([[52, 58, 99, 255], [80, 135, 86, 255], [96, 45, 71, 255]])
+OK    SUP-04 azul, SUP-11 verde, MED-08 magenta visibles en su baño ([[67, 75, 127, 255], [80, 144, 87, 255], [89, 39, 64, 255]])
 OK    fuera de esos 3 baños la fachada no cambia (30 puntos idénticos)
-OK    takeover: el rojo cubre 10/60 puntos de la fachada (acentos, no capa uniforme)
+OK    takeover: el rojo cubre 17/60 puntos de la fachada (acentos, no capa uniforme)
 OK    takeover: hay acentos rojos visibles
 OK    mismo instante del show → mismos píxeles (sin parpadeo)
 OK    variación por equipo determinista y acotada (±6° de apertura, flujo 0,86–1,14): [(-3, 1.03), (-3, 0.89), (-5, 1.12), (6, 1.1)]
 OK    Corrientes al 0 %: panel en negro ([0, 0, 0])
-OK    0 pedidos de red fuera de file:// (45 pedidos locales)
+OK    0 pedidos de red fuera de file:// (50 pedidos locales)
 OK    0 errores de consola ([])
 Resultado: TODO OK

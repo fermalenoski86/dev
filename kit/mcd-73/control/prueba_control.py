@@ -44,7 +44,7 @@ async def main(out):
         pg.on('console', lambda m: m.type == 'error' and errs.append(m.text))
         pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto('file://' + os.path.join(AQUI, 'index.html'))
-        await pg.wait_for_function('window.TRUST && TRUST.info().W > 0')
+        await pg.wait_for_function('window.TRUST && TRUST.info().W > 0'); await pg.evaluate('TRUST.motor.setTransicion(0)')
         ev = pg.evaluate
 
         # --- rótulo y estado honesto
@@ -69,7 +69,7 @@ async def main(out):
         est_g = await ev('TRUST.motor.estado().show')
         plan = await ev('document.getElementById("plan").innerText')
         ok(est_g['cargado'] and est_g['t'] == 0 and not est_g['reproduciendo'], 'Director: «Generar minishow (simulado)» carga la plantilla en t=0, en pausa')
-        ok('preprogramada' in plan and 'no es generación por IA' in plan and plan.count(' s · ') == 4, 'Director: el plan muestra 4 bloques y se rotula como plantilla, no IA')
+        ok('preprogramada' in plan and 'no es generación por IA' in plan and plan.count(' s · ') == 5, 'Director: el plan muestra 5 momentos (Normal → Brand reveal → Full takeover → Signature → Exit) y se rotula como plantilla, no IA')
         ok('no se interpreta' in await ev('document.getElementById("director-nota").innerText'), 'Director: la nota aclara que el prompt no se interpreta (hoy en demo / futuro)')
         await ev('TRUST.motor.setEscena("arquitectonica")')
 
@@ -105,7 +105,7 @@ async def main(out):
 
         # --- independencia y niveles (motor)
         M = 'TRUST.motor'
-        await ev(f'{M}.reiniciarTodo()')
+        await ev(f'{M}.reiniciarTodo(); {M}.setTransicion(0)')
         base = await ev(f'{M}.salidas()')
         await ev(f'{M}.setPantalla("master", 20)')
         s = await ev(f'{M}.salidas()')
@@ -121,7 +121,7 @@ async def main(out):
         med7 = next(l for l in s['luces'] if l['id'] == 'MED-07')
         base_med = next(l for l in base['luces'] if l['id'] == 'MED-07')['nivel']
         ok(abs(med7['nivel'] - base_med * 0.35) < 1e-9, 'master 0 → 100 restaura el ajuste individual (MED-07 35 %)')
-        await ev(f'{M}.reiniciarTodo()')
+        await ev(f'{M}.reiniciarTodo(); {M}.setTransicion(0)')
         antes = await ev(f'{M}.salidas()')
         await ev(f'{M}.setFixture("SUP-01", 20)')
         despues = await ev(f'{M}.salidas()')
@@ -134,7 +134,7 @@ async def main(out):
         d2 = await ev(f'{M}.salidas()')
         cambiadas = sorted({l['grupo'] for a, l in zip(despues['luces'], d2['luces']) if a != l})
         ok(cambiadas == ['medio'] and sum(1 for a, l in zip(despues['luces'], d2['luces']) if a != l) == 16, 'nivel medio al 50 %: cambian solo sus 16')
-        niv = await ev(f'(()=>{{{M}.reiniciarTodo();const r={{}};for(const e of ["arquitectonica","blanco","mcd","apagado"]){{{M}.setEscena(e);r[e]={M}.salidas().luces.map(l=>l.nivel)}}{M}.setEscena("arquitectonica");return r}})()')
+        niv = await ev(f'(()=>{{{M}.reiniciarTodo(); {M}.setTransicion(0);const r={{}};for(const e of ["arquitectonica","blanco","mcd","apagado"]){{{M}.setEscena(e);r[e]={M}.salidas().luces.map(l=>l.nivel)}}{M}.setEscena("arquitectonica");return r}})()')
         ok(all(0.35 <= v <= 0.5 for v in niv['arquitectonica']) and all(0.35 <= v <= 0.5 for v in niv['blanco']), 'arquitectónica y blanco: base visual moderada (35–50 %)')
         acentos = [v for v in niv['mcd'] if v > 0.5]
         ok(acentos and all(0.6 <= v <= 0.75 for v in acentos) and len(acentos) < len(niv['mcd']) * 0.6, f"McDonald's: acentos 60–75 % por sectores, no toda la fachada ({len(acentos)}/46)")
@@ -148,7 +148,7 @@ async def main(out):
         gc = await ev(f'{M}.estado().luces.fixtures.map(f=>[f.grupo, !!f.color])')
         ok(all(c == (g == 'medio') for g, c in gc), 'color por grupo: «medio» en azul, superior e inferior sin tocar')
         await ev(f'{M}.setColorGrupo("todas", null)')
-        await pg.reload(); await pg.wait_for_function('window.TRUST && TRUST.info().W > 0')   # estado de apertura recién abierto
+        await pg.reload(); await pg.wait_for_function('window.TRUST && TRUST.info().W > 0'); await pg.evaluate('TRUST.motor.setTransicion(0)')   # estado de apertura recién abierto
         await ev('document.getElementById("portada").classList.add("fuera")'); await pg.wait_for_timeout(700)
         ple = await ev('[document.getElementById("t-director").classList.contains("plegado"), document.getElementById("director-cuerpo").offsetParent === null, !!document.getElementById("generar").offsetParent]')
         ok(ple == [True, True, True], f'Director de show plegado al abrir: prompt oculto, botón Generar visible ({ple})')
@@ -158,7 +158,7 @@ async def main(out):
         await ev(f'{M}.setFixtureApertura("SUP-03", 25)')
         aps = await ev(f'{M}.salidas().luces.filter(l=>l.apertura!==({M}.APERTURA[l.grupo])).map(l=>l.id)')
         ok(aps == ['SUP-03'], f'apertura del haz configurable por luminaria (solo SUP-03 cambió: {aps})')
-        await ev(f'{M}.reiniciarTodo(); {M}.setFixture("SUP-01", 20); {M}.setGrupo("medio", 50)')
+        await ev(f'{M}.reiniciarTodo(); {M}.setTransicion(0); {M}.setFixture("SUP-01", 20); {M}.setGrupo("medio", 50)')
         n = await ev(f'{M}.estado().luces.fixtures.reduce((a,f)=>(a[f.grupo]=(a[f.grupo]||0)+1,a),{{}})')
         ok(n == {'superior': 16, 'medio': 16, 'inferior': 14}, f'46 luminarias 16/16/14 → {n}')
         # Día/Noche conserva todo
@@ -196,8 +196,87 @@ async def main(out):
         sup = [l['nivel'] for l in s if l['grupo'] == 'superior']
         ok(sup[0] > sup[-1], 'a los 4 s la ola roja avanzó desde Corrientes (izquierda) hacia Pellegrini')
 
+        # --- visual polish 14/10: zonas, master, presets, transiciones, jerarquía, diagnóstico, modos
+        await ev(f'{M}.reiniciarTodo(); {M}.setTransicion(0)')
+        och = await ev(f'{M}.OCHAVA')
+        a0 = await ev(f'{M}.salidas().luces'); await ev(f'{M}.setZona("ochava", 50)'); a1 = await ev(f'{M}.salidas().luces')
+        cambian = sorted(x['id'] for x, y in zip(a0, a1) if x != y)
+        ok(cambian == sorted(och) and len(och) == 13, f'zona ochava al 50 %: cambian solo sus {len(och)} equipos (esquina curva de las 3 filas)')
+        await ev(f'{M}.setZona("ochava", 100)')
+        z0 = await ev(f'{M}.salidas()'); await ev(f'{M}.setZonaColor("cupula", {{r:1,g:.55,b:0,w:.35}})'); z1 = await ev(f'{M}.salidas()')
+        ok(z1['zonas']['cupula']['rgbw']['g'] == 0.55 and z1['zonas']['cornisas'] == z0['zonas']['cornisas'] and z1['luces'] == z0['luces'], 'RGBW por zona: la cúpula cambia de color; cornisas y 46 luminarias intactas')
+        await ev(f'{M}.setZonaColor("cupula", null)')
+        await ev(f'{M}.setEscena("mcd")'); m0 = await ev(f'{M}.salidas()'); await ev(f'{M}.setLucesMaster(50)'); m1 = await ev(f'{M}.salidas()')
+        ok(all(abs(b_['nivel'] - a_['nivel'] / 2) < 1e-9 and b_['rgbw'] == a_['rgbw'] for a_, b_ in zip(m0['luces'], m1['luces'])) and abs(m1['zonas']['cupula']['nivel'] - m0['zonas']['cupula']['nivel'] / 2) < 1e-9,
+           'Master iluminación al 50 %: escala la intensidad de luces y zonas; la mezcla RGBW no cambia')
+        ok(m1['pantallas'] == m0['pantallas'], 'Master de iluminación ≠ dimmer de pantallas (las pantallas no cambian)')
+        await ev(f'{M}.setLucesMaster(100); {M}.setPantalla("master", 30)'); m2 = await ev(f'{M}.salidas()')
+        ok(m2['luces'] == m0['luces'] and m2['pantallas']['corrientes'] == 0.3, 'dimmer de pantallas al 30 %: las luces no cambian')
+        await ev(f'{M}.setPantalla("master", 100); {M}.setZonaColor("superior", {{r:0,g:0,b:0,w:1}}); {M}.setZona("cornisas", 40); {M}.volverAEscena()')
+        e_ = await ev(f'{M}.estado().luces')
+        ok(all(v is None for v in e_['zonaColor'].values()) and e_['zonas']['cornisas'] == 100 and e_['master'] == 100, '«Volver a escena»: quita overrides de zona y vuelve a la escena programada')
+        claves = await ev(f'Object.values({M}.ESCENAS).map(e=>e.clave)')
+        ok(all(k in claves for k in ['ARCHITECTURAL_WARM', 'MCD_TAKEOVER', 'MCD_SIGNATURE', 'RGB_DIAGNOSTIC', 'ALL_OFF', 'NIGHT_IDLE']), 'presets mínimos: ARCHITECTURAL_WARM · MCD_TAKEOVER · MCD_SIGNATURE · RGB_DIAGNOSTIC · ALL_OFF · NIGHT_IDLE')
+        puros = await ev(f"""(()=>{{const M={M},r=[];const chk=(q,d)=>{{if(q.r>0.001&&q.g>0.001&&q.b>0.001)r.push(d)}};
+          for(const [k,e] of Object.entries(M.ESCENAS)){{if(!e.comercial)continue;M.setEscena(k);const s=M.salidas();s.luces.forEach(l=>chk(l.rgbw,k+':'+l.id));Object.entries(s.zonas).forEach(([z,v])=>chk(v.rgbw,k+':'+z))}}
+          M.cargarShow();for(let t=0;t<=15;t+=0.25){{M.seek(t);const s=M.salidas();s.luces.forEach(l=>chk(l.rgbw,'show'+t+':'+l.id));Object.entries(s.zonas).forEach(([z,v])=>chk(v.rgbw,'show'+t+':'+z))}}
+          M.setEscena('arquitectonica');return r}})()""")
+        ok(not puros, f'escenas comerciales y show: nunca R, G y B juntos (2 canales + W) — {len(puros)} casos {puros[:3]}')
+        # transición configurable: 2 s por defecto, suave, sin saltos
+        await ev(f'{M}.reiniciarTodo()')
+        ok(await ev(f'{M}.estado().transicion') == 2 and await ev(f'{M}.TRANSICIONES') == [0.5, 1, 2, 3, 5], 'transiciones 0,5 / 1 / 2 / 3 / 5 s, default comercial 2 s')
+        tr = await ev(f"""(()=>{{const M={M};const a=M.salidas().luces.map(l=>l.nivel);M.setEscena('mcd');const r=[M.salidas().luces.map(l=>l.nivel)];
+          for(let i=0;i<22;i++){{M.avanzar(0.1);r.push(M.salidas().luces.map(l=>l.nivel))}}M.terminarTransicion();return {{a,r,fin:M.salidas().luces.map(l=>l.nivel),anim:M.animando()}}}})()""")
+        salto = max(abs(x - y) for f0, f1 in zip(tr['r'], tr['r'][1:]) for x, y in zip(f0, f1))
+        ok(tr['r'][0] == tr['a'] and tr['r'][-1] == tr['fin'] and salto < 0.06 and not tr['anim'], f'preset → preset: transición suave de 2 s (arranca en lo que se ve, termina en el preset; salto máx. {salto:.3f} cada 0,1 s)')
+        await ev(f'{M}.setTransicion(0)')
+        # show: momentos y valores del brief, sin saltos
+        sh = await ev(f"""(()=>{{const M={M};M.reiniciarTodo();M.setTransicion(0);M.cargarShow();const r=[];for(let t=0;t<=15.0001;t+=0.05){{M.seek(t);r.push(M.salidas().luces.map(l=>[l.nivel,l.rgbw.r,l.rgbw.g,l.rgbw.w]))}}return r}})()""")
+        salto = max(abs(a_[0] - b_[0]) for f0, f1 in zip(sh, sh[1:]) for a_, b_ in zip(f0, f1))
+        ok(salto < 0.08, f'show 15 s sin saltos: cambio máximo por luminaria {salto:.3f} cada 0,05 s')
+        t75 = sh[150]
+        rojos = [n for n, r, g, w in t75 if r > 0.9 and g < 0.1]; oros = [n for n, r, g, w in t75 if r > 0.9 and 0.45 < g < 0.65]; cal = [n for n, r, g, w in t75 if r < 0.5 and w > 0.6]
+        ok(rojos and oros and cal and all(0.6 <= n <= 0.75 for n in rojos) and all(0.35 <= n <= 0.45 for n in oros) and all(0.15 <= n <= 0.25 for n in cal),
+           f'FULL TAKEOVER (7,5 s): rojo {min(rojos):.2f}–{max(rojos):.2f} · oro {min(oros):.2f}–{max(oros):.2f} · cálido {min(cal):.2f}–{max(cal):.2f} (65–75 / 35–45 / 15–25 % con −8 % de jerarquía)')
+        ok(all(abs(n - (0.42 if i in [6,7,8,9,10,24,25,26,27,37,38,39,40] else 0.38)) < 1e-6 for i, (n, *_r) in enumerate(sh[20])), 'NORMAL (1 s): fachada cálida 38 % (ochava 42 %)')
+        fin = await ev(f'(()=>{{const M={M};M.seek(15);const a=M.salidas().luces;M.setEscena("arquitectonica");const b=M.salidas().luces;return [a.map(l=>l.nivel),b.map(l=>l.nivel)]}})()')
+        ok(all(abs(x - y) < 1e-6 for x, y in zip(*fin)), 'EXIT: el show termina exactamente en ARCHITECTURAL_WARM')
+        # diagnóstico separado de lo comercial
+        await ev(f'{M}.setEscena("diagnostico")'); await pg.wait_for_timeout(120)
+        dg = await ev(f'[!document.getElementById("diag").hidden, document.getElementById("diag").innerText, {M}.salidas().luces.filter(l=>l.rgbw.b>0.5||l.rgbw.g>0.9||(l.rgbw.r>0.9&&l.rgbw.b>0.5)).map(l=>l.id).sort()]')
+        ok(dg[0] and 'DIAGNOSTIC MODE' in dg[1] and dg[2] == ['MED-08', 'SUP-04', 'SUP-11'], f'RGB_DIAGNOSTIC: rotulado «DIAGNOSTIC MODE», SUP-04 azul · SUP-11 verde · MED-08 magenta ({dg[2]})')
+        await ev(f'{M}.setEscena("mcd")'); await pg.wait_for_timeout(120)
+        ok(await ev('document.getElementById("diag").hidden'), 'escena comercial: sin rótulo de diagnóstico')
+        # pantallas como una sola pieza: el elemento nace en Corrientes, pasa a Pellegrini y aterriza en la media
+        cq = lambda sid: [sum(p[0] for p in q[sid]['quads'][0]) / 4, sum(p[1] for p in q[sid]['quads'][0]) / 4]
+        mq = q['media']['quads'][12]; cm_ = [sum(p[0] for p in mq) / 4, sum(p[1] for p in mq) / 4]
+        lum3 = lambda c: max(c[:3])
+        await ev(f'{M}.cargarShow(); {M}.seek(3.0)'); r1 = [await ev(f'TRUST.pixel({x},{y})') for x, y in (cq('corrientes'), cq('pellegrini'), cm_)]
+        await ev(f'{M}.seek(3.9)'); r2 = [await ev(f'TRUST.pixel({x},{y})') for x, y in (cq('corrientes'), cq('pellegrini'), cm_)]
+        await ev(f'{M}.seek(7.5)'); r3 = [await ev(f'TRUST.pixel({x},{y})') for x, y in (cq('corrientes'), cq('pellegrini'), cm_)]
+        ok(lum3(r1[0]) > 40 and lum3(r1[1]) < 12 and lum3(r1[2]) < 12 and lum3(r2[1]) > 40 and lum3(r2[2]) < 12 and all(lum3(c) > 40 for c in r3),
+           f'una sola composición: 3,0 s solo Corrientes · 3,9 s Corrientes + Pellegrini · 7,5 s las tres ({[lum3(c) for c in r1]} → {[lum3(c) for c in r2]} → {[lum3(c) for c in r3]})')
+        src = open(os.path.join(AQUI, 'contenido.js'), encoding='utf-8').read() + open(os.path.join(AQUI, 'app.js'), encoding='utf-8').read()
+        ok(all(x not in src for x in ['TAKEOVER 15 s', 'UN MOMENTO SINCRONIZADO', 'FRENTE AL OBELISCO']), 'contenido sin textos de demo («TAKEOVER 15 s», «UN MOMENTO SINCRONIZADO»…)')
+        vs = []
+        for cr in 'ABC':
+            await ev(f'{M}.setCreatividad("{cr}"); {M}.seek(7.5)'); vs.append(await ev(f'TRUST.pixel({cq("pellegrini")[0]},{cq("pellegrini")[1]})'))
+        ok(len({tuple(v) for v in vs}) == 3, 'creatividades A · B · C: tres variantes visuales distintas')
+        await ev(f'{M}.setCreatividad("C")')
+        # modo cliente: sin sliders ni detalles técnicos; solo NORMAL / TAKEOVER / SIGNATURE / ANTES-DESPUÉS
+        await pg.click('#m-cliente'); await pg.wait_for_timeout(150)
+        cli = await ev('[[...document.querySelectorAll("input[type=range]")].filter(e=>e.offsetParent!==null).length, [...document.querySelectorAll("#cliente-bar button")].filter(e=>e.offsetParent!==null).map(b=>b.querySelector("b").innerText)]')
+        ok(cli[0] == 0 and cli[1] == ['NORMAL', 'TAKEOVER', 'SIGNATURE', 'ANTES / DESPUÉS'], f'modo cliente: 0 sliders visibles y solo {cli[1]}')
+        await pg.click('#cliente-bar button[data-c="antes"]'); a_ = await ev(f'{M}.estado().escena')
+        await pg.click('#cliente-bar button[data-c="antes"]'); d_ = await ev(f'{M}.estado().escena')
+        ok((a_, d_) == ('apagado', 'arquitectonica'), 'ANTES / DESPUÉS: sin iluminación ↔ arquitectónica cálida')
+        await pg.click('#cliente-bar button[data-c="takeover"]'); ok(await ev(f'{M}.estado().show.reproduciendo'), 'modo cliente: TAKEOVER reproduce el show')
+        await ev(f'{M}.pausa()'); await pg.click('#m-operador'); await pg.wait_for_timeout(150)
+        ok(await ev('document.getElementById("panel").offsetParent !== null && !document.body.classList.contains("cliente")'), 'modo operador: vuelve el panel completo (master, zonas, RGBW, transiciones, escenas)')
+        await ev(f'{M}.reiniciarTodo(); {M}.setTransicion(0)')
+
         # --- píxeles: ningún halo sobre pantallas
-        await ev(f'{M}.reiniciarTodo(); {M}.setEscena("blanco")')
+        await ev(f'{M}.reiniciarTodo(); {M}.setTransicion(0); {M}.setEscena("blanco")')
         sint = {}
         for sid in ('corrientes', 'pellegrini'):
             qd = q[sid]['quads'][0]
@@ -220,7 +299,7 @@ async def main(out):
         dif = sum(1 for a, c in zip(con, sin) if a != c)
         ok(dif == 0, f'ningún halo sobre el contenido LED: {len(muestras)} píxeles dentro de las 3 pantallas idénticos con luces 100 % y 0 % (difieren {dif})')
         # Noche (Fer, 14/10 refinamiento): apagar NUESTRAS 46 luces no apaga la luz urbana: el TRUST sigue visible.
-        await ev(f'{M}.reiniciarTodo()'); await pg.reload(); await pg.wait_for_function('window.TRUST && TRUST.info().W > 0')
+        await ev(f'{M}.reiniciarTodo(); {M}.setTransicion(0)'); await pg.reload(); await pg.wait_for_function('window.TRUST && TRUST.info().W > 0'); await pg.evaluate('TRUST.motor.setTransicion(0)')
         lum_ = lambda px: 0.2126 * px[0] + 0.7152 * px[1] + 0.0722 * px[2]
         fachada = [[0.30, 0.50], [0.45, 0.70], [0.60, 0.45], [0.25, 0.75], [0.55, 0.62]]   # fachada del TRUST, fuera de pantallas
         externos_ = [[0.05, 0.62], [0.78, 0.55], [0.90, 0.15]]                         # vecino, torre blanca, cielo
@@ -283,8 +362,8 @@ async def main(out):
         cen = [sum(p[0] for p in q['corrientes']['quads'][0]) / 4, sum(p[1] for p in q['corrientes']['quads'][0]) / 4]
         px = await ev(f'TRUST.pixel({cen[0]},{cen[1]})')
         ok(max(px[:3]) <= 3, f'Corrientes al 0 %: panel en negro ({px[:3]})')
-        await ev(f'{M}.reiniciarTodo()')
-        await pg.reload(); await pg.wait_for_function('window.TRUST && TRUST.info().W > 0')
+        await ev(f'{M}.reiniciarTodo(); {M}.setTransicion(0)')
+        await pg.reload(); await pg.wait_for_function('window.TRUST && TRUST.info().W > 0'); await pg.evaluate('TRUST.motor.setTransicion(0)')
 
         # --- capturas de validación (posiciones reales, sin las sintéticas)
         await ev('document.getElementById("portada").classList.add("fuera")'); await pg.wait_for_timeout(700)

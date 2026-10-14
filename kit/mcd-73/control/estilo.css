@@ -234,3 +234,47 @@ textarea { width: 100%; height: 90px; background: var(--panel-2); color: var(--t
 .muestras { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; margin: 6px 0 4px; }
 .muestra { height: 22px; border-radius: 6px; border: 1px solid var(--borde); background: var(--m); cursor: pointer; box-shadow: inset 0 0 0 2px rgba(0,0,0,.25); }
 .muestra:hover { border-color: #fff; }
+
+/* ---------- visual polish 14/10: modos, zonas, transiciones, creatividad ---------- */
+.modo-toggle { display: flex; gap: 3px; padding: 3px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--borde); }
+.modo-toggle button { padding: 7px 14px; border: 0; border-radius: 8px; background: transparent; color: var(--texto-2); font-weight: 700; font-size: 13px; cursor: pointer; }
+.modo-toggle button.on { background: var(--oro); color: #241703; }
+.lbl { display: block; margin: 10px 0 6px; font-size: 12px; color: var(--texto-2); font-weight: 600; }
+.segmentos { display: flex; gap: 4px; padding: 3px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--borde); }
+.segmentos button { flex: 1; padding: 7px 4px; border: 0; border-radius: 7px; background: transparent; color: var(--texto-2); font-weight: 600; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.segmentos button.on { background: rgba(232, 182, 91, .18); color: #ffe2a6; box-shadow: inset 0 0 0 1px rgba(232, 182, 91, .55); }
+.fila.zona { grid-template-columns: 22px 118px minmax(0, 1fr) 52px; gap: 8px; }
+.zsel { width: 22px; height: 22px; border-radius: 6px; border: 1px solid var(--borde); background: var(--panel-2); color: #5d6b82; font-size: 13px; line-height: 1; cursor: pointer; padding: 0; }
+.zsel:hover, .zsel.on { border-color: var(--oro); }
+.zsel.override { box-shadow: 0 0 8px currentColor; }
+.prop { font-style: normal; font-size: 9.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #ffd9a8; background: rgba(242, 169, 59, .14); border: 1px solid rgba(242, 169, 59, .45); border-radius: 5px; padding: 0 4px; margin-left: 4px; }
+.zona-rgbw:empty { display: none; }
+.zona-rgbw { margin: 6px 0 4px; padding: 10px 12px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--borde); }
+.zcab { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.zcab small { color: var(--texto-3); flex: 1; }
+.zona-rgbw .fila { grid-template-columns: 22px minmax(0, 1fr) 52px; }
+.muestras.m5 { grid-template-columns: repeat(5, 1fr); }
+.equipos-det { margin-top: 10px; border-top: 1px solid rgba(48, 65, 88, .6); padding-top: 8px; }
+.equipos-det summary { cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--texto-2); }
+.escenas .b small { display: block; font-size: 9px; letter-spacing: .06em; color: var(--texto-3); font-weight: 700; }
+.escenas .b.tec { border-style: dashed; color: var(--texto-3); }
+.diag { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); padding: 8px 16px; border-radius: 10px; background: repeating-linear-gradient(45deg, #2a2d33 0 10px, #1f2227 10px 20px); border: 1px solid #8a8f99; color: #e9edf5; text-align: center; pointer-events: none; }
+.diag b { display: block; letter-spacing: .16em; font-size: 15px; }
+.diag span { font-size: 12px; color: #b9c0cc; }
+.antes-despues { position: absolute; bottom: 18px; right: 18px; padding: 10px 16px; border-radius: 12px; background: rgba(11, 18, 32, .86); border: 1px solid var(--oro); pointer-events: none; }
+.antes-despues b { display: block; color: var(--oro); letter-spacing: .14em; font-size: 16px; }
+.antes-despues span { color: var(--texto-2); font-size: 12.5px; }
+.cliente-bar { display: none; }
+body.cliente main { grid-template-columns: minmax(0, 1fr); }
+body.cliente aside, body.cliente footer, body.cliente .btn-guion, body.cliente .etiqueta, body.cliente .marca-sel { display: none !important; }
+body.cliente .cliente-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 14px; }
+.cliente-bar button { padding: 14px 10px; border-radius: 12px; border: 1px solid var(--borde); background: var(--panel); cursor: pointer; text-align: center; transition: border-color .15s, box-shadow .2s; }
+.cliente-bar button:hover { border-color: var(--oro); box-shadow: 0 0 18px rgba(232, 182, 91, .25); }
+.cliente-bar b { display: block; font-size: 16px; letter-spacing: .12em; color: var(--texto); }
+.cliente-bar span { font-size: 12px; color: var(--texto-2); }
+@media (max-width: 900px) { body.cliente .cliente-bar { grid-template-columns: repeat(2, 1fr); } }
+footer .escenas { grid-template-columns: repeat(3, 1fr); }
+.escenas-tec { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.escenas-tec .b { font-size: 11.5px; padding: 6px 4px; text-align: center; }
+.escenas-tec .b small { display: block; font-size: 9px; letter-spacing: .06em; color: var(--texto-3); font-weight: 700; }
+.escenas-tec .b.on { background: rgba(86, 140, 255, .2); border-color: var(--azul); }

@@ -48,16 +48,17 @@ async def main(out):
 
         # 3. Play
         await pg.click('#play'); t0 = time.monotonic()
-        await pg.wait_for_function(f'{M}.estado().show.t >= 4.5', timeout=10000)
+        await pg.wait_for_function(f'{M}.estado().show.t >= 6', timeout=12000)
         await pg.click('#pausa')
         sh = await ev(f'{M}.estado().show')
-        ok(not sh['reproduciendo'] and 4.5 <= sh['t'] < 7, f'3. Play avanza y Pausa lo frena a mitad del show (t={sh["t"]:.2f} s, bloque «Ola roja»)')
-        ok('Ola' in await ev('document.getElementById("tl-bloque").innerText'), '3. el timeline muestra el bloque en curso')
+        ok(not sh['reproduciendo'] and 6 <= sh['t'] < 8.5, f'3. Play avanza y Pausa lo frena a mitad del show (t={sh["t"]:.2f} s, momento «Full takeover»)')
+        ok('Full takeover' in await ev('document.getElementById("tl-bloque").innerText'), '3. el timeline muestra el momento en curso')
         t1 = sh['t']; await pg.wait_for_timeout(600)
         ok(await ev(f'{M}.estado().show.t') == t1, '4. en pausa el tiempo no avanza')
 
         # 4. ajustar UNA sola luminaria con la grilla y el detalle
         antes = await ev(f'{M}.salidas()')
+        await pg.click('.equipos-det summary')   # «46 luminarias · control individual»
         await pg.click('#equipos button[data-id="SUP-05"]')
         ok('SUP-05' in await ev('document.getElementById("detalle").innerText'), '4. clic en la grilla abre el detalle de SUP-05')
         await pg.click('#d-20')

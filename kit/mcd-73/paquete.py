@@ -25,6 +25,12 @@ FILES = [
      'Grabación real de TRUST CONTROL (58 s): entorno de prueba local, datos de prueba, sin pantallas ni equipos conectados.'),
     ('video/04-trust-control-show-mcd-15s-1080p.mp4', 'trust-control-show-15s.mp4',
      "Respaldo grabado de TRUST Control (19 s): Generar minishow (simulado) → show McDonald's 15 s en vista Noche → Restaurar + Arquitectónica. Plantilla preprogramada, SIMULACIÓN."),
+    ('video/05-trust-mcd-takeover-15s-C-iconic-moment.mp4', 'trust-mcd-takeover-15s-C-iconic.mp4',
+     "Takeover McDonald's 15 s en modo Cliente, creatividad C · Iconic moment: una luz nace en Corrientes, cruza a Pellegrini y aterriza en la media (las 3 pantallas como una pieza). SIMULACIÓN."),
+    ('video/06-trust-mcd-takeover-15s-A-brand-dominance.mp4', 'trust-mcd-takeover-15s-A-brand.mp4',
+     "Takeover McDonald's 15 s, creatividad A · Brand dominance: un solo nombre gigante entre las dos pantallas superiores + pilastras de luz. SIMULACIÓN."),
+    ('video/07-trust-mcd-takeover-15s-B-product-hero.mp4', 'trust-mcd-takeover-15s-B-producto.mp4',
+     "Takeover McDonald's 15 s, creatividad B · Product hero: producto genérico grande + macro del mismo producto. SIMULACIÓN."),
     ('pdf/01-deck-ejecutivo.pdf', 'trust-mcd-deck-v0.pdf', 'Deck ejecutivo, 8 diapositivas: HOY FUNCIONA / SE IMPLEMENTARÁ.'),
     ('pdf/02-propuesta-una-pagina.pdf', 'trust-mcd-propuesta-v0.pdf', 'Propuesta comercial de una página (sin precios).'),
     ('pdf/03-guion-reunion.pdf', 'trust-mcd-guion-v0.pdf', 'Guion de reunión de 30 min (uso interno, no entregar a la marca).'),
@@ -42,7 +48,7 @@ FILES.append(('consola/base-trust-noche.jpg', 'consola/base-trust-noche.jpg', 'F
 # TRUST Control: presentación interactiva offline (SIMULACIÓN, no conectada a equipos). Abre con doble clic.
 FILES.insert(0, ('control/index.html', 'control/index.html',
                  "TRUST Control — presentación interactiva offline: foto real, Día/Noche, pantallas y 46 luminarias con dimmers independientes, show McDonald's 15 s. SIMULACIÓN."))
-for f in ('estilo.css', 'fuentes.css', 'app.js', 'motor.js', 'geometria.js', 'luminarias.js', 'LICENCIA-Inter.txt', 'fotos/trust-noche.jpg', 'fotos/trust-relieve.jpg', 'fotos/trust-dia.jpg'):
+for f in ('estilo.css', 'fuentes.css', 'app.js', 'motor.js', 'contenido.js', 'geometria.js', 'luminarias.js', 'LICENCIA-Inter.txt', 'fotos/trust-noche.jpg', 'fotos/trust-relieve.jpg', 'fotos/trust-dia.jpg'):
     if os.path.isfile(os.path.join(K, 'control', f)):
         FILES.append((f'control/{f}', f'control/{f}', 'Archivo de TRUST Control.'))
 FILES.insert(0, ('ABRIR-PRESENTACION.txt', 'ABRIR-PRESENTACION.txt', 'Cómo abrir y operar la presentación (empezar por acá).'))
@@ -73,13 +79,18 @@ webm('trust-control-show-15s.mp4', WEBM_SHOW)
 FILES.insert(2, (WEBM, None, 'Video principal en 720p VP9/WebM, para navegadores sin H.264.'))
 FILES.insert(4, (WEBM_DEMO, None, 'Grabación de TRUST CONTROL en 720p VP9/WebM, para navegadores sin H.264.'))
 FILES.insert(6, (WEBM_SHOW, None, "Respaldo del show McDonald's 15 s en TRUST Control, 720p VP9/WebM, para navegadores sin H.264."))
+FB = {}
+for n, v in (('05', 'C-iconic'), ('06', 'A-brand'), ('07', 'B-producto')):
+    w = f'video/{n}b-trust-mcd-takeover-15s-{v}-720p.webm'; webm(f'trust-mcd-takeover-15s-{v}.mp4', w)
+    FB[next(d for d, s_, _ in FILES if s_ == f'trust-mcd-takeover-15s-{v}.mp4')] = w
+    FILES.append((w, None, 'Mismo takeover en VP9/WebM, para navegadores sin H.264.'))
 
 rows = ''.join(
     f'<tr><td><a href="{html.escape(d)}">{html.escape(d)}</a></td><td>{html.escape(t)}</td></tr>' for d, _, t in FILES)
 def player(d):
     srcs = f'<source src="{html.escape(d)}" type="video/mp4">'
     # respaldo WebM del MISMO video si el navegador no tiene H.264
-    fb = WEBM_SHOW if 'trust-control-show' in d else WEBM_DEMO if 'trust-control' in d else WEBM
+    fb = FB.get(d) or (WEBM_SHOW if 'trust-control-show' in d else WEBM_DEMO if 'trust-control' in d else WEBM)
     srcs += f'<source src="{html.escape(fb)}" type="video/webm">'
     return f'<h3>{html.escape(d)}</h3><video controls preload="metadata">{srcs}</video>'
 videos = ''.join(player(d) for d, _, _ in FILES if d.endswith('.mp4'))

@@ -133,81 +133,10 @@
   const aPx = (qd, W, H) => qd.map(([x, y]) => [x * W, y * H]);
   function trazarQuad(c, qpx) { c.moveTo(qpx[0][0], qpx[0][1]); for (let i = 1; i < 4; i++) c.lineTo(qpx[i][0], qpx[i][1]); c.closePath(); }
 
-  // ---------- contenido de pantallas (generado en vivo, determinista por t) ----------
+  // ---------- contenido de pantallas: UNA composición sobre las 3 superficies (contenido.js), determinista por t ----------
   const suave = (k) => { k = Math.min(1, Math.max(0, k)); return k * k * (3 - 2 * k); };
-  function fondo(c, w, h, a, b, k) {
-    const gr = c.createLinearGradient(0, 0, w, h);
-    gr.addColorStop(0, a); gr.addColorStop(0.5, b); gr.addColorStop(1, a);
-    c.globalAlpha = 1; c.fillStyle = gr; c.fillRect(0, 0, w, h);
-    if (k < 1) { c.fillStyle = `rgba(0,0,0,${1 - k})`; c.fillRect(0, 0, w, h); }
-  }
-  function ondas(c, w, h, t, sem, inten) {
-    c.save(); c.globalCompositeOperation = 'lighter';
-    for (let j = 0; j < 3; j++) {
-      const amp = h * (0.13 + 0.05 * j), fr = 1.1 + 0.35 * j, vel = 0.9 + 0.35 * j, ph = sem + j * 1.9;
-      const camino = () => { c.beginPath(); for (let x = 0; x <= w; x += 6) { const y = h * 0.5 + amp * Math.sin((x / w) * Math.PI * 2 * fr + t * vel + ph) + h * 0.06 * Math.sin(x / w * 7 + t * 0.6 + j); x ? c.lineTo(x, y) : c.moveTo(x, y); } };
-      camino(); c.strokeStyle = `rgba(255,120,30,${0.22 * inten})`; c.lineWidth = h * 0.07; c.stroke();
-      camino(); c.strokeStyle = `rgba(255,214,120,${0.85 * inten})`; c.lineWidth = Math.max(1.5, h * 0.012); c.stroke();
-    }
-    c.restore();
-  }
-  function texto(c, w, h, txt, alfa, tam, color, esp, y) {
-    if (alfa <= 0) return;
-    c.save(); c.globalAlpha = Math.min(1, alfa); c.fillStyle = color || '#f6d38a';
-    c.font = `700 ${Math.round(h * tam)}px Inter, "Segoe UI", system-ui, sans-serif`;
-    if ('letterSpacing' in c) c.letterSpacing = esp || '0px';
-    c.textAlign = 'center'; c.textBaseline = 'middle';
-    c.shadowColor = 'rgba(255,190,90,.55)'; c.shadowBlur = h * 0.05;
-    c.fillText(txt, w / 2, h * (y == null ? 0.5 : y));
-    c.restore();
-  }
-  function barra(c, w, h, x, ancho) {
-    const gr = c.createLinearGradient(x - ancho, 0, x + ancho, 0);
-    gr.addColorStop(0, 'rgba(232,182,91,0)'); gr.addColorStop(0.5, 'rgba(255,224,150,1)'); gr.addColorStop(1, 'rgba(232,182,91,0)');
-    c.save(); c.globalCompositeOperation = 'lighter'; c.fillStyle = gr; c.fillRect(x - ancho, 0, ancho * 2, h); c.restore();
-  }
-  // Tramo horizontal de cada superficie dentro del "lienzo continuo" Corrientes → media → Pellegrini (para barridos).
-  const TRAMO = { corrientes: [0, 1 / 3], media: [1 / 3, 2 / 3], pellegrini: [2 / 3, 1] };
-  function dibujarContenido(id, cont) {
-    const cv = CONT[id], c = cv.getContext('2d'), w = cv.width, h = cv.height;
-    c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
-    if (cont.modo === 'reposo') {
-      fondo(c, w, h, '#0a1630', '#14284d', 1);
-      c.fillStyle = 'rgba(232,182,91,.55)'; c.fillRect(0, h * 0.86, w, Math.max(1, h * 0.012));
-      texto(c, w, h, id === 'media' ? 'EL TRUST · BUENOS AIRES' : 'EL TRUST', 0.9, id === 'media' ? 0.2 : 0.16, '#e8c27a', '0.18em');
-      return;
-    }
-    if (cont.modo === 'marca') {
-      fondo(c, w, h, '#7c0808', '#c4140f', 1); ondas(c, w, h, 2, id.length, 0.8);
-      texto(c, w, h, "McDonald's", 1, id === 'media' ? 0.36 : 0.22, '#ffd27a', '0.02em');
-      return;
-    }
-    const t = cont.t, [a0, a1] = TRAMO[id];
-    if (t < 3) {                                   // Apertura: negro, barrido dorado que revela rojo
-      c.fillStyle = '#000'; c.fillRect(0, 0, w, h);
-      const g = (t / 3) * 1.2 - 0.1, xl = ((g - a0) / (a1 - a0)) * w;
-      if (xl > 0) { c.fillStyle = '#9e0c0b'; c.fillRect(0, 0, Math.min(w, xl), h); }
-      barra(c, w, h, xl, w * 0.06);
-      if (id === 'media') texto(c, w, h, "McDonald's × EL TRUST", suave((t - 1.8) / 1), 0.3, '#ffd27a', '0.04em');
-    } else if (t < 7) {                            // Contenido + ola
-      fondo(c, w, h, '#8a0b0a', '#c8150f', 1); ondas(c, w, h, t, a0 * 9, 0.9);
-      if (id === 'pellegrini') texto(c, w, h, 'UN MOMENTO SINCRONIZADO', suave((t - 3.8) / 0.9), 0.15, '#ffe1a3', '0.12em');
-      if (id === 'media') texto(c, w, h, 'TAKEOVER 15 s', suave((t - 3.4) / 0.8), 0.34, '#ffe1a3', '0.1em');
-      if (id === 'corrientes') texto(c, w, h, "McDonald's", suave((t - 3.2) / 0.8), 0.24, '#ffd27a', '0.02em');
-    } else if (t < 11) {                           // Takeover conjunto: barrido oro continuo Corrientes → media → Pellegrini
-      const pulso = 0.85 + 0.15 * Math.sin((t - 7) * 5);
-      fondo(c, w, h, '#a00d0c', '#e01a12', pulso); ondas(c, w, h, t * 1.6, a0 * 9, 1);
-      const g = (t - 7) / 4, xl = ((g - a0) / (a1 - a0)) * w;
-      barra(c, w, h, xl, w * 0.09);
-    } else {                                       // Cierre premium, fade a reposo de marca
-      const k = suave((t - 11) / 1.2), f = 1 - 0.55 * suave((t - 13.8) / 1.2);
-      fondo(c, w, h, '#4a0605', '#7d0b09', f);
-      c.fillStyle = `rgba(232,182,91,${0.8 * f})`; c.fillRect(w * 0.1, h * 0.8, w * 0.8, Math.max(1, h * 0.012));
-      if (id === 'corrientes') texto(c, w, h, "McDonald's", k * f, 0.26, '#ffd27a', '0.02em');
-      if (id === 'media') texto(c, w, h, "McDonald's  ·  EL TRUST", k * f, 0.32, '#ffd27a', '0.06em');
-      if (id === 'pellegrini') texto(c, w, h, 'FRENTE AL OBELISCO', k * f, 0.15, '#ffe1a3', '0.16em');
-    }
-  }
+  window.CONTENIDO.preparar(G);
+  function dibujarContenido(id, cont) { window.CONTENIDO.dibujar(CONT[id], id, cont); }
 
   // ---------- luces ----------
   // Canal W = el LED blanco FIJO del equipo (Fer, 14/10: no asumir blanco cálido regulable). Previsualización ≈ 4000 K;
@@ -234,7 +163,7 @@
   // Luz AMBIENTAL URBANA (Fer, 14/10): la que ya existe (farolas, reflejos, cielo). Con nuestras 46 apagadas el TRUST sigue
   // visible: la foto queda a este nivel, levemente neutra/fría. NUESTRA luz se SUMA encima (no reemplaza a la de la ciudad).
   const AMBIENTE = [150, 149, 148];
-  const GANANCIA = 1.95;  // intensidad visual del baño que se suma: nivel 45 % ≈ fachada algo más clara que la foto junto al equipo
+  const GANANCIA = 2.4;   // intensidad visual del baño que se suma (+23 % perceptual, brief 14/10: más presencia sin saturar)
 
   // ---- Motor de iluminación arquitectónica (simulación) ----
   // Cada luminaria es un BAÑADOR hacia arriba ("wall washer/grazer") con:
@@ -398,11 +327,30 @@
       const c = extra.reloj.color;
       gr.addColorStop(0, `rgba(${c.join(',')},${0.38 * extra.reloj.nivel})`); gr.addColorStop(1, `rgba(${c.join(',')},0)`);
       tctx.fillStyle = gr; tctx.beginPath(); tctx.arc(cx, cy, rr, 0, Math.PI * 2); tctx.fill();
-      // cúpula: baño cálido y suave sobre sus ornamentos (zona 'dome' aprobada en composition.ts), parte de la pista del reloj
+    }
+    // ZONA CÚPULA: baño suave sobre sus ornamentos (zona 'dome' de composition.ts), con su propio dimmer y RGBW.
+    const zc = extra.zonas.cupula;
+    if (zc.nivel > 0.005) {
+      const cm = colorMapa(rgbDe(zc.rgbw).map((v) => Math.min(1, v)));
       const dc = [0.49 * W, 0.25 * H], drx = 0.085 * W, dry = 0.12 * H, gd = tctx.createRadialGradient(dc[0], dc[1] + dry * 0.5, 0, dc[0], dc[1] + dry * 0.5, dry * 1.2);
-      gd.addColorStop(0, `rgba(255,214,166,${0.42 * extra.reloj.nivel})`); gd.addColorStop(1, 'rgba(255,214,166,0)');
+      gd.addColorStop(0, `rgba(${cm.join(',')},${Math.min(1, 0.9 * zc.nivel * GANANCIA / 2.4)})`); gd.addColorStop(1, `rgba(${cm.join(',')},0)`);
       tctx.save(); tctx.translate(dc[0], 0); tctx.scale(drx / dry, 1); tctx.translate(-dc[0], 0);
       tctx.fillStyle = gd; tctx.beginPath(); tctx.arc(dc[0], dc[1] + dry * 0.5, dry * 1.2, 0, Math.PI * 2); tctx.fill(); tctx.restore();
+    }
+    // ZONA CORNISAS (PROPUESTA: equipos lineales adicionales, fuera de las 46): rasante corto que dibuja el perfil de cada cornisa.
+    const zk = extra.zonas.cornisas;
+    if (zk.nivel > 0.005) {
+      const cm = colorMapa(rgbDe(zk.rgbw).map((v) => Math.min(1, v)));
+      for (const [linea, alto] of [[CORNISA_MEDIA, 0.022], [CORNISA_REMATE, 0.03]]) {
+        for (let i = 1; i < linea.length; i++) {
+          const [xa, ya] = linea[i - 1], [xb, yb] = linea[i], ym = (ya + yb) / 2 * H;
+          const gr = tctx.createLinearGradient(0, ym - alto * H, 0, ym + 0.006 * H);
+          gr.addColorStop(0, `rgba(${cm.join(',')},0)`); gr.addColorStop(0.78, `rgba(${cm.join(',')},${Math.min(1, 1.15 * zk.nivel)})`); gr.addColorStop(1, `rgba(${cm.join(',')},0)`);
+          tctx.fillStyle = gr; tctx.beginPath();
+          tctx.moveTo(xa * W, ya * H - alto * H); tctx.lineTo(xb * W, yb * H - alto * H); tctx.lineTo(xb * W, yb * H + 0.006 * H); tctx.lineTo(xa * W, ya * H + 0.006 * H);
+          tctx.closePath(); tctx.fill();
+        }
+      }
     }
     enmascarar(lctx, W, H);
     enmascarar(tctx, W, H);
@@ -417,7 +365,7 @@
   function cuadro(ts) {
     pedido = false;
     const est = M.estado();
-    if (est.show.reproduciendo) {
+    if (M.animando()) {   // show en reproducción o transición entre presets
       const dt = ultimo == null ? 0 : Math.min(0.5, (ts - ultimo) / 1000);   // el show sigue el reloj REAL aunque baje el fps
       ultimo = ts; M.avanzar(dt);
       pedirCuadro();
@@ -433,7 +381,7 @@
     ctx.drawImage(foto, 0, 0, foto.naturalWidth, foto.naturalHeight, 0, 0, W, H);   // foto entera, proporción intacta
 
     // contenido de pantallas primero: su color medio alimenta el derrame de luz sobre la fachada
-    const extra = { pantallas: [], reloj: { nivel: sal.reloj.nivel, color: rgbDe(sal.reloj.rgbw).map((v) => Math.round(v * 255)) } };
+    const extra = { pantallas: [], zonas: sal.zonas, reloj: { nivel: sal.reloj.nivel, color: rgbDe(sal.reloj.rgbw).map((v) => Math.round(v * 255)) } };
     for (const id of M.PANTALLAS) {
       dibujarContenido(id, sal.contenido);
       promedio.clearRect(0, 0, 1, 1); promedio.drawImage(CONT[id], 0, 0, 1, 1);
@@ -540,6 +488,9 @@
     enlazarRango('g-medio', (x) => M.setGrupo('medio', x), () => M.estado().luces.grupos.medio),
     enlazarRango('g-inferior', (x) => M.setGrupo('inferior', x), () => M.estado().luces.grupos.inferior),
     enlazarRango('r-nivel', (x) => M.setReloj(x), () => M.estado().reloj.nivel),
+    enlazarRango('z-cupula', (x) => M.setZona('cupula', x), () => M.estado().luces.zonas.cupula),
+    enlazarRango('z-cornisas', (x) => M.setZona('cornisas', x), () => M.estado().luces.zonas.cornisas),
+    enlazarRango('z-ochava', (x) => M.setZona('ochava', x), () => M.estado().luces.zonas.ochava),
   ];
 
   // grilla de 46 equipos
@@ -602,24 +553,74 @@
     $('d-todascolor').addEventListener('click', () => M.setColorGrupo('todas', leer()));
   }
 
-  // escenas
+  // ---------- zonas: color RGBW por zona (override temporal; «Color de escena» lo quita) ----------
+  // Paleta comercial (2 canales + W, nunca R+G+B juntos) y, aparte, colores técnicos de diagnóstico.
+  const PALETA_ZONA = [
+    { n: 'Blanco cálido', c: M.COLORES.calido, css: '#ffd2a0' }, { n: 'Blanco W', c: { r: 0, g: 0, b: 0, w: 1 }, css: '#fff1df' },
+    { n: 'Ámbar', c: M.COLORES.ambar, css: '#ff9a1f' }, { n: 'Oro', c: M.COLORES.oro, css: '#ffc24d' }, { n: 'Rojo McDonald\'s', c: M.COLORES.rojo, css: '#e1251b' },
+  ];
+  const NOMBRE_ZONA = Object.fromEntries(M.ZONAS.map((z) => [z.id, z.nombre]));
+  let zonaSel = null;
+  function armarZona() {
+    const caja = $('zona-rgbw');
+    document.querySelectorAll('.zsel').forEach((b) => b.classList.toggle('on', b.dataset.z === zonaSel));
+    if (!zonaSel) { caja.innerHTML = ''; return; }
+    const col = M.estado().luces.zonaColor[zonaSel];
+    const v = col || { r: 0, g: 0, b: 0, w: 0 };
+    caja.innerHTML = `<div class="zcab"><b>Color · ${NOMBRE_ZONA[zonaSel]}</b><small>${col ? 'override de zona' : 'sigue la escena'}</small><button class="b" id="zc-escena">Color de escena</button><button class="b" id="zc-cerrar" title="Cerrar">✕</button></div>
+      <div class="muestras m5" role="group" aria-label="Paleta comercial">${PALETA_ZONA.map((m, i) => `<button class="muestra" data-i="${i}" title="${m.n}" style="--m:${m.css}"></button>`).join('')}</div>
+      ${['r', 'g', 'b', 'w'].map((k) => `<div class="fila"><label for="zc-${k}">${{ r: 'R', g: 'G', b: 'B', w: 'W' }[k]}</label><input type="range" class="${{ r: 'r-rojo', g: 'r-verde', b: 'r-azul2', w: 'r-blanco' }[k]}" id="zc-${k}" min="0" max="100" value="${Math.round(v[k] * 100)}" style="--p:${Math.round(v[k] * 100)}%"><span class="valor" id="zc-${k}-v">${Math.round(v[k] * 100)}%</span></div>`).join('')}`;
+    const leer = () => { const c = {}; for (const q of ['r', 'g', 'b', 'w']) c[q] = +$('zc-' + q).value / 100; return c; };
+    for (const k of ['r', 'g', 'b', 'w']) $('zc-' + k).addEventListener('input', () => { M.setZonaColor(zonaSel, leer()); $('zc-' + k + '-v').textContent = $('zc-' + k).value + '%'; $('zc-' + k).style.setProperty('--p', $('zc-' + k).value + '%'); });
+    caja.querySelectorAll('.muestra').forEach((b) => b.addEventListener('click', () => { M.setZonaColor(zonaSel, PALETA_ZONA[+b.dataset.i].c); armarZona(); }));
+    $('zc-escena').addEventListener('click', () => { M.setZonaColor(zonaSel, null); armarZona(); });
+    $('zc-cerrar').addEventListener('click', () => { zonaSel = null; armarZona(); });
+  }
+  document.querySelectorAll('.zsel').forEach((b) => b.addEventListener('click', () => { zonaSel = zonaSel === b.dataset.z ? null : b.dataset.z; armarZona(); }));
+  document.querySelectorAll('#transicion button').forEach((b) => b.addEventListener('click', () => M.setTransicion(+b.dataset.s)));
+  document.querySelectorAll('#creatividad button').forEach((b) => b.addEventListener('click', () => M.setCreatividad(b.dataset.v)));
+
+  // escenas (presets). Los técnicos/diagnóstico quedan separados de los comerciales.
   (function armarEscenas() {
     for (const [k, e] of Object.entries(M.ESCENAS)) {
-      const b = document.createElement('button'); b.className = 'b'; b.textContent = e.nombre; b.dataset.e = k;
+      const b = document.createElement('button'); b.className = 'b' + (e.diagnostico ? ' tec' : ''); b.dataset.e = k;
+      b.innerHTML = `<small>${e.clave}</small>${e.nombre}`; b.title = e.diagnostico ? 'Escena técnica (no comercial)' : 'Preset comercial';
       b.addEventListener('click', () => M.setEscena(k));
-      $('escenas').appendChild(b);
+      $(['blanco', 'libre', 'cierre'].includes(k) ? 'escenas-tec' : 'escenas').appendChild(b);
     }
   })();
 
+  // ---------- modo Cliente / Operador ----------
+  function setModo(cliente) {
+    document.body.classList.toggle('cliente', cliente);
+    $('m-cliente').classList.toggle('on', cliente); $('m-cliente').setAttribute('aria-pressed', cliente);
+    $('m-operador').classList.toggle('on', !cliente); $('m-operador').setAttribute('aria-pressed', !cliente);
+    if (cliente) { guionVisible = false; $('guion').classList.remove('on'); }
+    setTimeout(ajustarTamano, 0);
+  }
+  $('m-cliente').addEventListener('click', () => setModo(true));
+  $('m-operador').addEventListener('click', () => setModo(false));
+  let antes = null;   // ANTES / DESPUÉS: el TRUST hoy (sin iluminación arquitectónica) vs. con la escena cálida
+  document.querySelectorAll('#cliente-bar button').forEach((b) => b.addEventListener('click', () => {
+    const c = b.dataset.c;
+    if (c !== 'antes') antes = null;
+    if (c === 'normal') M.setEscena('nocheIdle');
+    else if (c === 'takeover') { M.restaurarNiveles(); M.cargarShow(); M.play(); }
+    else if (c === 'firma') M.setEscena('firma');
+    else { antes = antes === 'antes' ? 'despues' : 'antes'; M.setEscena(antes === 'antes' ? 'apagado' : 'arquitectonica'); }
+    pedirCuadro();
+  }));
+
   // timeline
   const PISTAS = [
-    { id: 'corrientes', nombre: 'Pantalla Corrientes', color: '#c0392b', clips: [[0, 3, 'Negro · barrido oro'], [3, 7, "Ondas rojas · McDonald's"], [7, 11, 'Takeover · barrido →'], [11, 15, 'Cierre de marca']] },
-    { id: 'pellegrini', nombre: 'Pantalla Pellegrini', color: '#2f6fd6', clips: [[0, 3, 'Negro · barrido oro'], [3, 7, 'Mensaje de campaña'], [7, 11, 'Takeover · barrido →'], [11, 15, 'Frente al Obelisco']] },
-    { id: 'media', nombre: 'Pantalla media', color: '#8e44ad', clips: [[0, 3, "McDonald's × EL TRUST"], [3, 7, 'TAKEOVER 15 s'], [7, 11, 'Barrido oro'], [11, 15, 'Firma']] },
-    { id: 'superior', nombre: 'Luminarias superior', color: '#b8892d', clips: [[0, 3, 'Cálida baja'], [3, 7, 'Ola roja →'], [7, 11, 'Rojo / oro pulso'], [11, 15, 'Fade cálido']] },
-    { id: 'medio', nombre: 'Luminarias medio', color: '#c96f22', clips: [[0, 3, 'Cálida baja'], [3, 7, 'Ola roja →'], [7, 11, 'Rojo / oro pulso'], [11, 15, 'Fade cálido']] },
-    { id: 'inferior', nombre: 'Luminarias inferior', color: '#a35b1f', clips: [[0, 3, 'Cálida baja'], [3, 7, 'Ola roja →'], [7, 11, 'Rojo / oro pulso'], [11, 15, 'Fade cálido']] },
-    { id: 'reloj', nombre: 'Reloj', color: '#7d7d7d', clips: [[0, 7, 'Neutro'], [7, 13.5, 'Realce dorado'], [13.5, 15, 'Neutro']] },
+    { id: 'corrientes', nombre: 'Pantalla Corrientes', color: '#c0392b', clips: [[0, 2, 'Noche institucional'], [2, 5, 'Nace la luz →'], [5, 10, 'Takeover · una pieza'], [10, 13, 'Firma dorada'], [13, 15, 'Salida']] },
+    { id: 'pellegrini', nombre: 'Pantalla Pellegrini', color: '#2f6fd6', clips: [[0, 2, 'Noche institucional'], [2, 5, 'La luz cruza →'], [5, 10, 'Takeover · una pieza'], [10, 13, 'Firma dorada'], [13, 15, 'Salida']] },
+    { id: 'media', nombre: 'Pantalla media', color: '#8e44ad', clips: [[0, 2, 'EL TRUST'], [2, 5, 'Aterriza · ← revela'], [5, 10, 'Marca'], [10, 13, 'Firma'], [13, 15, 'Salida']] },
+    { id: 'superior', nombre: 'Fachada superior', color: '#b8892d', clips: [[0, 2, 'Cálida 38 %'], [2, 5, 'Rojo 55 % →'], [5, 10, 'Rojo 70 · oro 40 · cálido 20'], [10, 13, 'Oro + cálido'], [13, 15, 'A cálida']] },
+    { id: 'medio', nombre: 'Fachada media', color: '#c96f22', clips: [[0, 2, 'Cálida 38 %'], [2, 5, 'Rojo 55 % →'], [5, 10, 'Rojo 70 · oro 40 · cálido 20'], [10, 13, 'Oro + cálido'], [13, 15, 'A cálida']] },
+    { id: 'inferior', nombre: 'Fachada inferior', color: '#a35b1f', clips: [[0, 2, 'Cálida 38 %'], [2, 5, 'Rojo 55 % →'], [5, 10, 'Rojo 70 · oro 40 · cálido 20'], [10, 13, 'Oro + cálido'], [13, 15, 'A cálida']] },
+    { id: 'zonas', nombre: 'Cúpula · cornisas', color: '#8a6d3b', clips: [[0, 5, 'Cálido · volumen'], [5, 13, 'Cúpula oro'], [13, 15, 'Cálido']] },
+    { id: 'reloj', nombre: 'Clock accent', color: '#7d7d7d', clips: [[0, 5, 'Neutro'], [5, 13, 'Acento dorado'], [13, 15, 'Neutro']] },
   ];
   (function armarTimeline() {
     const p = $('pistas'), D = M.DUR;
@@ -671,7 +672,7 @@
     { t: 'Vista del TRUST de día', f: () => { $('portada').classList.add('fuera'); M.setEscena('arquitectonica'); M.setVista('dia'); } },
     { t: 'Cambio a modo noche', f: () => { M.setVista('noche'); } },
     { t: 'Dimmers independientes: pantallas al 40 % (las luces no cambian) y Superior 01 al 20 % (las otras 45 no cambian)', f: () => { M.setPantalla('master', 40); M.setFixture('SUP-01', 20); seleccionar('SUP-01'); } },
-    { t: "Un prompt → «Generar minishow (simulado)»: carga la plantilla McDonald's 15 s (niveles restaurados al 100 %; el prompt no se interpreta)", f: () => { M.restaurarNiveles(); generarMinishow(); } },
+    { t: "Un prompt → «Generar minishow (simulado)»: carga la plantilla McDonald's 15 s (Normal → Brand reveal → Full takeover → Signature → Exit; el prompt no se interpreta)", f: () => { M.restaurarNiveles(); generarMinishow(); } },
     { t: 'Ejecutar la secuencia sincronizada: pantallas + luces + reloj', f: () => { M.seek(0); M.play(); } },
     { t: 'Volver a la escena arquitectónica', f: () => { M.setEscena('arquitectonica'); } },
   ];
@@ -689,10 +690,11 @@
   $('cargar').addEventListener('click', () => M.cargarShow());
   // Director de show (SIMULADO): siempre carga la plantilla McDonald's 15 s; el prompt no se interpreta ni sale del navegador.
   const PLAN = {
-    apertura: 'pantallas oscuras con marca conceptual · fachada cálida baja · reloj neutro',
-    ola: 'producto y mensaje en pantallas · ola roja Corrientes → Pellegrini',
-    takeover: 'takeover conjunto de las 3 pantallas · acentos RGBW · reloj dorado',
-    cierre: 'cierre de marca · fundido a arquitectónica cálida · reloj neutro',
+    normal: 'fachada cálida 38 % · pantallas en noche institucional',
+    revelacion: 'una luz nace en Corrientes, cruza a Pellegrini y aterriza en la media · la cálida baja a 25 % y el rojo sube a 55 % en el mismo sentido',
+    takeover: 'las 3 pantallas como una pieza, máxima presencia · rojo 70 % · oro 40 % · cálido 20 % · arquitectura −8 % (soporte)',
+    firma: 'onda dorada como firma · sube oro y cálido, baja el rojo · la fachada recupera elegancia',
+    salida: 'fundido suave a ARCHITECTURAL_WARM',
   };
   function plegarDirector(plegado) {
     $('t-director').classList.toggle('plegado', plegado);
@@ -716,7 +718,8 @@
   $('pausa').addEventListener('click', () => M.pausa());
   $('reset').addEventListener('click', () => M.resetShow());
   $('blackout').addEventListener('click', () => M.setBlackout(!M.estado().blackout));
-  $('restaurar').addEventListener('click', () => { M.restaurarNiveles(); armarDetalle(); });
+  $('restaurar').addEventListener('click', () => { M.restaurarNiveles(); armarDetalle(); armarZona(); });
+  $('volver').addEventListener('click', () => { M.volverAEscena(); armarDetalle(); armarZona(); });
   $('guardar').addEventListener('click', () => {
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([M.exportarEscena()], { type: 'application/json' }));
     a.download = 'escena-trust.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
@@ -766,9 +769,19 @@
     refrescos.forEach((f) => f());
     $('v-dia').classList.toggle('on', est.vista === 'dia'); $('v-dia').setAttribute('aria-pressed', est.vista === 'dia');
     $('v-noche').classList.toggle('on', est.vista === 'noche'); $('v-noche').setAttribute('aria-pressed', est.vista === 'noche');
-    const nombreEscena = est.show.cargado ? "McDonald's Takeover 15 s" : M.ESCENAS[est.escena].nombre;
+    const nombreEscena = est.show.cargado ? "MCD_TAKEOVER · show 15 s" : M.ESCENAS[est.escena].clave + ' · ' + M.ESCENAS[est.escena].nombre;
+    $('diag').hidden = !sal.diagnostico;
+    document.querySelectorAll('#transicion button').forEach((b) => b.classList.toggle('on', +b.dataset.s === est.transicion));
+    document.querySelectorAll('#creatividad button').forEach((b) => b.classList.toggle('on', b.dataset.v === est.creatividad));
+    for (const z of ['superior', 'medio', 'inferior', 'cupula', 'cornisas', 'ochava']) {
+      const zb = document.querySelector(`.zsel[data-z="${z}"]`), q = est.luces.zonaColor[z];
+      if (zb) { zb.style.color = q ? `rgb(${rgbDe(q).map((v) => Math.round(v * 255)).join(',')})` : ''; zb.classList.toggle('override', !!q); }
+    }
+    const ad = $('antes-despues');
+    ad.hidden = !antes || est.show.cargado;
+    ad.innerHTML = antes === 'antes' ? '<b>ANTES</b><span>El TRUST hoy · sin iluminación arquitectónica</span>' : '<b>DESPUÉS</b><span>Iluminación arquitectónica cálida + pantallas</span>';
     $('h-escena').textContent = nombreEscena;
-    document.querySelectorAll('#escenas .b').forEach((b) => b.classList.toggle('on', !est.show.cargado && b.dataset.e === est.escena));
+    document.querySelectorAll('#escenas .b, #escenas-tec .b').forEach((b) => b.classList.toggle('on', !est.show.cargado && b.dataset.e === est.escena));
     $('cargar').classList.toggle('cargado', est.show.cargado);
     $('cargar').querySelector('span').textContent = est.show.cargado ? "Show McDonald's cargado" : "Cargar show McDonald's";
     $('play').classList.toggle('activo', est.show.reproduciendo);
