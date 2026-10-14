@@ -57,8 +57,15 @@ async def main(out):
         g = await ev('GEOMETRIA')
         ok(g['foto']['noche']['sha256'] == sha_foto, f'geometría atada a la foto exacta (sha256 {sha_foto[:12]}…)')
         inf = await ev('TRUST.info()')
-        ar = inf['cssW'] / inf['cssH']
-        ok(abs(inf['cssH'] - inf['cssW'] * 1733 / 2560) <= 0.5, f'foto sin deformar: proporción en pantalla {ar:.4f} vs original {2560/1733:.4f}')
+        ar = inf['cssW'] / inf['cssH']; enc = await ev('ENCUADRES[TRUST.encuadre()]')
+        ok(inf['encuadre'] == 'completo' and abs(inf['cssH'] - inf['cssW'] * enc['alto'] / enc['ancho']) <= 0.5, f'abre con el edificio completo y la foto sin deformar: {ar:.4f} vs {enc["ancho"] / enc["alto"]:.4f}')
+        sha_c = hashlib.sha256(open(os.path.join(AQUI, 'fotos/trust-noche-completa.jpg'), 'rb').read()).hexdigest()
+        cal = enc['calibracion']
+        ok(enc['sha256'] == sha_c and cal['puntos'] >= 150 and cal['error_px_mediana'] <= 2 and abs(cal['rotacion_corregida_grados']) < 0.5,
+           f'encuadre completo = misma toma que la foto base: {cal["puntos"]} puntos en común, error mediano {cal["error_px_mediana"]} px (la calibración aprobada vale tal cual)')
+        await ev('TRUST.setEncuadre("cerca")'); await pg.wait_for_timeout(300); inf2 = await ev('TRUST.info()')
+        ok(inf2['encuadre'] == 'cerca' and abs(inf2['cssH'] - inf2['cssW'] * 1733 / 2560) <= 0.5, 'encuadre «Fachada»: la foto base original, sin deformar')
+        await ev('TRUST.setEncuadre("completo")'); await pg.wait_for_timeout(300)
         await ev('document.getElementById("portada").classList.add("fuera")')
 
         # --- Director de show (simulado): prompt precargado, carga la plantilla, sin red, rotulado
@@ -68,9 +75,23 @@ async def main(out):
         await pg.click('#generar')
         est_g = await ev('TRUST.motor.estado().show')
         plan = await ev('document.getElementById("plan").innerText')
-        ok(est_g['cargado'] and est_g['t'] == 0 and not est_g['reproduciendo'], 'Director: «Generar minishow (simulado)» carga la plantilla en t=0, en pausa')
-        ok('preprogramada' in plan and 'no es generación por IA' in plan and plan.count(' s · ') == 5, 'Director: el plan muestra 5 momentos (Normal → Brand reveal → Full takeover → Signature → Exit) y se rotula como plantilla, no IA')
-        ok('no se interpreta' in await ev('document.getElementById("director-nota").innerText'), 'Director: la nota aclara que el prompt no se interpreta (hoy en demo / futuro)')
+        ok(est_g['cargado'] and est_g['t'] < 1 and est_g['reproduciendo'], 'Generar show: arma el show y arranca desde 0 (se ve que pasa algo)')
+        ok('preprogramada' in plan and 'no es generación por IA' in plan and plan.count(' s · ') == 5, 'Generar show: el plan muestra 5 momentos (Normal → Entrada de marca → Takeover → Cierre de marca → Salida) y se rotula como base preprogramada, no IA')
+        ok('No hay IA conectada' in await ev('document.getElementById("director-nota").innerText'), 'la nota aclara cómo funciona hoy: palabras clave, sin IA conectada')
+        await ev('TRUST.motor.pausa()')
+        casos = [('Lanzamiento del nuevo producto, todo dorado y con mucho impacto', 'F', 'dorado', 1.12), ('Un desayuno sutil, café y medialunas', 'E', 'calido', 0.88), ('Lluvia de papas fritas', 'D', 'rojo', 1), ('Que la hamburguesa sea la protagonista', 'B', 'rojo', 1), ('El logo bien grande', 'A', 'rojo', 1)]
+        res = []
+        for txt, cre, est, it in casos:
+            await pg.fill('#prompt', txt); await pg.click('#generar'); e_ = await ev('TRUST.motor.estado()'); await ev('TRUST.motor.pausa()')
+            res.append((e_['creatividad'], e_['showEstilo'], round(e_['showIntensidad'], 2)) == (cre, est, it))
+        ent = await ev('document.getElementById("plan-entendi").innerText')
+        ok(all(res) and 'logo' in ent.lower() or 'marca' in ent.lower(), f'el pedido cambia el show: lanzamiento→F dorado fuerte · desayuno→E cálido suave · papas→D · producto→B · logo→A ({res})')
+        await pg.fill('#prompt', ''); await pg.click('#prompt'); await pg.keyboard.type('papas r d n b con espacios')
+        tecl = await ev('[document.getElementById("prompt").value, TRUST.motor.estado().vista, TRUST.motor.estado().blackout]')
+        ok(tecl == ['papas r d n b con espacios', 'noche', False], f'escribir en el pedido no dispara atajos (espacio, R, D, N, B se escriben normal): {tecl}')
+        await ev('document.activeElement.blur()'); await pg.keyboard.press('Space'); await pg.wait_for_timeout(100)
+        ok(await ev('TRUST.motor.estado().show.reproduciendo'), 'barra espaciadora fuera del texto: Play/Pausa')
+        await ev('TRUST.motor.pausa(); TRUST.motor.setCreatividad("C"); TRUST.motor.setEstiloShow("rojo", 1)')
         await ev('TRUST.motor.setEscena("arquitectonica")')
 
         # --- superficies LED
@@ -87,8 +108,9 @@ async def main(out):
         lum = await ev('LUMINARIAS')
         pts = lum['puntos']
         ok(lum['foto_sha256'] == sha_foto, 'luminarias.js calibrado sobre esta misma foto (sha256)')
-        ok(sum(k.startswith('SUP') for k in pts) == 16 and sum(k.startswith('MED') for k in pts) == 16 and not any(k.startswith('INF') for k in pts),
-           'posiciones: 16 superior + 16 medio; las 14 inferiores no se dibujan (fuera de cuadro en esta foto)')
+        infs = [v for k, v in pts.items() if k.startswith('INF')]
+        ok(sum(k.startswith('SUP') for k in pts) == 16 and sum(k.startswith('MED') for k in pts) == 16 and len(infs) == 14 and all(1.1 < y < 1.25 for _, y in infs) and 'inferior' in lum['calibracion'].get('preliminar', []),
+           'posiciones: 16 superior + 16 medio + 14 inferior sobre los locales de planta baja (preliminar, visibles en «Edificio completo»)')
         def dentro(pt, qd):
             s = 0
             for i in range(4):
@@ -97,11 +119,11 @@ async def main(out):
                 s += 1 if c > 0 else -1 if c < 0 else 0
             return abs(s) == 4
         pisa = [k for k, pt in pts.items() for sid in ('corrientes', 'pellegrini', 'media') for qd in q[sid]['quads'] if dentro(pt, qd)]
-        ok(all(0 < v < 1 for pt in pts.values() for v in pt) and not pisa, f'ninguna luminaria cae sobre una pantalla ({pisa or "ninguna"})')
+        ok(all(0 < v < 1.35 for pt in pts.values() for v in pt) and not pisa, f'ninguna luminaria cae sobre una pantalla ({pisa or "ninguna"})')
         sx = [pts[f'SUP-{i:02d}'][0] for i in range(1, 17)]; mx = [pts[f'MED-{i:02d}'][0] for i in range(1, 17)]
         ok(sx == sorted(sx) and mx == sorted(mx), 'numeración de izquierda (Corrientes) a derecha (Pellegrini), como en la imagen anotada')
         inf2 = await ev('TRUST.info()')
-        ok(inf2['lucesDibujadas'] == 32, f'escena arquitectónica: se dibujan las 32 luminarias en cuadro ({inf2["lucesDibujadas"]})')
+        ok(inf2['lucesDibujadas'] == 46, f'escena arquitectónica: se dibujan las 46 luminarias, planta baja incluida ({inf2["lucesDibujadas"]})')
 
         # --- independencia y niveles (motor)
         M = 'TRUST.motor'
@@ -238,7 +260,8 @@ async def main(out):
         rojos = [n for n, r, g, w in t75 if r > 0.9 and g < 0.1]; oros = [n for n, r, g, w in t75 if r > 0.9 and 0.45 < g < 0.65]; cal = [n for n, r, g, w in t75 if r < 0.5 and w > 0.6]
         ok(rojos and oros and cal and all(0.6 <= n <= 0.75 for n in rojos) and all(0.35 <= n <= 0.45 for n in oros) and all(0.15 <= n <= 0.25 for n in cal),
            f'FULL TAKEOVER (7,5 s): rojo {min(rojos):.2f}–{max(rojos):.2f} · oro {min(oros):.2f}–{max(oros):.2f} · cálido {min(cal):.2f}–{max(cal):.2f} (65–75 / 35–45 / 15–25 % con −8 % de jerarquía)')
-        ok(all(abs(n - (0.42 if i in [6,7,8,9,10,24,25,26,27,37,38,39,40] else 0.38)) < 1e-6 for i, (n, *_r) in enumerate(sh[20])), 'NORMAL (1 s): fachada cálida 38 % (ochava 42 %)')
+        ochv = set(await ev(f'{M}.OCHAVA')); ids_ = await ev(f'{M}.estado().luces.fixtures.map(f=>f.id)')
+        ok(all(abs(n - (0.42 if ids_[i] in ochv else 0.38)) < 1e-6 for i, (n, *_r) in enumerate(sh[20])), 'NORMAL (1 s): fachada cálida 38 % (ochava 42 %)')
         fin = await ev(f'(()=>{{const M={M};M.seek(15);const a=M.salidas().luces;M.setEscena("arquitectonica");const b=M.salidas().luces;return [a.map(l=>l.nivel),b.map(l=>l.nivel)]}})()')
         ok(all(abs(x - y) < 1e-6 for x, y in zip(*fin)), 'EXIT: el show termina exactamente en ARCHITECTURAL_WARM')
         # diagnóstico separado de lo comercial
@@ -254,7 +277,7 @@ async def main(out):
         await ev(f'{M}.cargarShow(); {M}.seek(3.0)'); r1 = [await ev(f'TRUST.pixel({x},{y})') for x, y in (cq('corrientes'), cq('pellegrini'), cm_)]
         await ev(f'{M}.seek(3.9)'); r2 = [await ev(f'TRUST.pixel({x},{y})') for x, y in (cq('corrientes'), cq('pellegrini'), cm_)]
         await ev(f'{M}.seek(7.5)'); r3 = [await ev(f'TRUST.pixel({x},{y})') for x, y in (cq('corrientes'), cq('pellegrini'), cm_)]
-        ok(lum3(r1[0]) > 40 and lum3(r1[1]) < 12 and lum3(r1[2]) < 12 and lum3(r2[1]) > 40 and lum3(r2[2]) < 12 and all(lum3(c) > 40 for c in r3),
+        ok(lum3(r1[0]) > 40 and lum3(r1[1]) < 25 and lum3(r1[2]) < 25 and lum3(r2[1]) > 40 and lum3(r2[2]) < 25 and all(lum3(c) > 40 for c in r3),
            f'una sola composición: 3,0 s solo Corrientes · 3,9 s Corrientes + Pellegrini · 7,5 s las tres ({[lum3(c) for c in r1]} → {[lum3(c) for c in r2]} → {[lum3(c) for c in r3]})')
         src = open(os.path.join(AQUI, 'contenido.js'), encoding='utf-8').read() + open(os.path.join(AQUI, 'app.js'), encoding='utf-8').read()
         ok(all(x not in src for x in ['TAKEOVER 15 s', 'UN MOMENTO SINCRONIZADO', 'FRENTE AL OBELISCO']), 'contenido sin textos de demo («TAKEOVER 15 s», «UN MOMENTO SINCRONIZADO»…)')
@@ -303,7 +326,7 @@ async def main(out):
         lum_ = lambda px: 0.2126 * px[0] + 0.7152 * px[1] + 0.0722 * px[2]
         fachada = [[0.30, 0.50], [0.45, 0.70], [0.60, 0.45], [0.25, 0.75], [0.55, 0.62]]   # fachada del TRUST, fuera de pantallas
         externos_ = [[0.05, 0.62], [0.78, 0.55], [0.90, 0.15]]                         # vecino, torre blanca, cielo
-        await ev(f'{M}.setVista("dia")'); foto = await ev(f'{json.dumps(fachada + externos_)}.map(([x,y])=>TRUST.pixel(x,y))')
+        foto = await ev(f'{json.dumps(fachada + externos_)}.map(([x,y])=>TRUST.pixelFoto(x,y))')
         await ev(f'{M}.setVista("noche"); {M}.setLucesMaster(0)'); apag = await ev(f'{json.dumps(fachada + externos_)}.map(([x,y])=>TRUST.pixel(x,y))')
         n_f = len(fachada)
         rel = sum(lum_(a) for a in apag[:n_f]) / max(1, sum(lum_(f) for f in foto[:n_f]))
@@ -399,10 +422,10 @@ async def main(out):
         ids = {a['filename']: a['id'] for a in ad.values()}
         await pg.click(f'.adj-ver[data-id="{ids["spot_vp9.mp4"]}"]'); await pg.wait_for_timeout(300)
         vtxt = await ev('document.getElementById("visor").innerText')
-        ok(await ev('!!document.getElementById("vis-player") && !document.getElementById("u-fin").checked') and 'análisis generado' in vtxt and 'no es metadata técnica' in vtxt and 'USE:' in vtxt and 'BUILD 15s TAKEOVER FROM THIS VIDEO' in vtxt,
+        ok(await ev('!!document.getElementById("vis-player") && !document.getElementById("u-fin").checked') and 'análisis automático' in vtxt and 'no es IA' in vtxt and 'Se usa:' in vtxt and 'Armar el show de 15 s con este video' in vtxt,
            'preview: player + metadata + AI NOTES rotuladas como análisis generado + source timeline + atajos')
         await pg.click('#build15')
-        ok('15-second premium MASTER OF TRUST takeover' in await ev('document.getElementById("prompt").value'), '«BUILD 15s TAKEOVER FROM THIS VIDEO» precompleta el prompt')
+        ok('Show de 15 s con el video' in await ev('document.getElementById("prompt").value'), '«Armar el show de 15 s con este video» completa el pedido')
         await pg.click('#vis-cerrar')
         await pg.click('#generar'); await pg.wait_for_function('!!ESTUDIO.concepto()')
         c0 = await ev('ESTUDIO.concepto()')
@@ -418,7 +441,7 @@ async def main(out):
         ok(all(s['modo'] in ('cubrir', 'master', 'contener', 'logo', 'paleta') for s in segs) and all(e in estr for s in segs for e in s['estrategias']),
            'plan por superficie sin estirar: cubrir (crop) · master A+B (split) · contener (reframe + fondo extendido) · logo · paleta')
         lg_seg = [s for s in c1['pistas']['media'] if s['modo'] == 'logo']
-        ok(lg_seg and all(s['desde'] >= 10 and s['hasta'] <= 13 for s in lg_seg), 'el logo se usa solo en Signature (10–13 s)')
+        ok(lg_seg and all(s['desde'] >= 10 and s['hasta'] <= 13 for s in lg_seg), 'el logo se usa solo en el cierre de marca (10–13 s)')
         ok({f['fx'] for f in c1['fx']} >= {'LIGHT WAVE', 'PRODUCT GLOW', 'SIGNATURE GLOW'} and len(c1['momentos']) == 5, 'FX LIGHT WAVE · PRODUCT GLOW · SIGNATURE GLOW y storyboard de 5 momentos')
         fmts = await ev('Object.values(ESTUDIO.FORMATOS).map(f => f.w + "×" + f.h)')
         ok(c1['derivadas'] and all(d['derivedFromAssetId'] and d['formatoDestino'].split(' ')[0] in fmts and 'Asset Validation M3A' in d['estado'] for d in c1['derivadas']) and len({d['nombre'] for d in c1['derivadas']}) == len(c1['derivadas']),

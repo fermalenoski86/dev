@@ -12,14 +12,42 @@
   'use strict';
   const G = window.GEOMETRIA, L = window.LUMINARIAS, M = window.MOTOR;
   const $ = (id) => document.getElementById(id);
-  const FW = G.foto.noche.ancho, FH = G.foto.noche.alto;
+  // ---------- encuadres (encuadres.js) ----------
+  // «completo»: la MISMA toma entera (planta baja y calle). La foto base calibrada ocupa el rectángulo rect: toda la geometría
+  // aprobada (pantallas, reloj, luminarias, máscaras) se dibuja en coordenadas de la foto base y se ubica con ese rectángulo.
+  const ENC = window.ENCUADRES || { cerca: { archivo: G.foto.noche.archivo, ancho: G.foto.noche.ancho, alto: G.foto.noche.alto, relieve: 'fotos/trust-relieve.jpg', cielo: 'fotos/trust-cielo.png', rect: [0, 0, 1, 1] } };
+  let encuadre = ENC.completo ? 'completo' : 'cerca';
+  const IMGS = {};
+  function imagen(src) {
+    if (!IMGS[src]) { const i = new Image(); i.addEventListener('load', () => { capaAmb.dataset.listo = ''; capaCielo.dataset.listo = ''; pedirCuadro(); }); i.src = src; IMGS[src] = i; }
+    return IMGS[src];
+  }
+  const fotoE = () => imagen(ENC[encuadre].archivo), relieveE = () => imagen(ENC[encuadre].relieve), cieloE = () => imagen(ENC[encuadre].cielo);
+  let OFF = [0, 0];   // desplazamiento del marco base dentro del lienzo (lo usa el mapeo de las pantallas)
+  function marco(Wc, Hc) { const r = ENC[encuadre].rect; return { ox: r[0] * Wc, oy: r[1] * Hc, W: r[2] * Wc, H: r[3] * Hc }; }
+  // normalizado de la foto base ↔ normalizado del lienzo actual
+  const aLienzo = (x, y) => { const r = ENC[encuadre].rect; return [r[0] + x * r[2], r[1] + y * r[3]]; };
+  const deLienzo = (x, y) => { const r = ENC[encuadre].rect; return [(x - r[0]) / r[2], (y - r[1]) / r[3]]; };
 
   // ---------- fotos ----------
-  const fotoNoche = new Image();
-  fotoNoche.src = G.foto.noche.archivo;
+  const fotoNoche = fotoE();
   // Detalle fino de la MISMA foto (generar_relieve.py): capa aparte para que la luz lea molduras y pilastras.
-  const relieve = new Image();
-  relieve.src = 'fotos/trust-relieve.jpg';
+  // Cielo de la foto (generar_cielo.py): permite simular el DÍA sobre la toma nocturna mientras no haya foto diurna.
+  const capaCielo = document.createElement('canvas');
+  function cieloDeDia(W, H) {   // cielo celeste (más claro hacia el horizonte), recortado con la máscara; cacheado por tamaño
+    const cielo = cieloE();
+    if (capaCielo.width === W && capaCielo.height === H && capaCielo.dataset.listo === encuadre) return capaCielo;
+    capaCielo.width = W; capaCielo.height = H; const c = capaCielo.getContext('2d');
+    const g = c.createLinearGradient(0, 0, 0, H * 0.75);
+    g.addColorStop(0, '#4f9ee0'); g.addColorStop(0.55, '#86c2ef'); g.addColorStop(1, '#cfe7f8');
+    c.fillStyle = g; c.fillRect(0, 0, W, H);
+    const sol = c.createRadialGradient(W * 0.86, H * 0.08, 0, W * 0.86, H * 0.08, W * 0.35);   // luz de sol suave arriba a la derecha
+    sol.addColorStop(0, 'rgba(255,255,240,0.35)'); sol.addColorStop(1, 'rgba(255,255,240,0)');
+    c.fillStyle = sol; c.fillRect(0, 0, W, H);
+    c.globalCompositeOperation = 'destination-in'; c.drawImage(cielo, 0, 0, W, H);
+    capaCielo.dataset.listo = cielo.complete && cielo.naturalWidth ? encuadre : '';
+    return capaCielo;
+  }
   let fotoDia = null;
   if (G.foto.dia && G.foto.dia.sha256) { fotoDia = new Image(); fotoDia.src = G.foto.dia.archivo; }
 
@@ -34,17 +62,22 @@
   const capaTinte = document.createElement('canvas'), tctx = capaTinte.getContext('2d');
   const capaSuma = document.createElement('canvas'), sctx = capaSuma.getContext('2d');   // foto × luz agregada
   const capaAmb = document.createElement('canvas'), actx = capaAmb.getContext('2d');      // ambiente urbano (cacheado por tamaño)
-  function mapaAmbiente(W, H) {
-    if (capaAmb.width === W && capaAmb.height === H && capaAmb.dataset.listo) return capaAmb;
-    capaAmb.width = W; capaAmb.height = H;
-    actx.fillStyle = '#fff'; actx.fillRect(0, 0, W, H);
+  function mapaAmbiente(Wc, Hc) {
+    if (capaAmb.width === Wc && capaAmb.height === Hc && capaAmb.dataset.listo === encuadre) return capaAmb;
+    capaAmb.width = Wc; capaAmb.height = Hc;
+    actx.setTransform(1, 0, 0, 1, 0, 0); actx.fillStyle = '#fff'; actx.fillRect(0, 0, Wc, Hc);
+    const mk_ = marco(Wc, Hc), W = mk_.W, H = mk_.H; actx.setTransform(1, 0, 0, 1, mk_.ox, mk_.oy);
     actx.fillStyle = `rgb(${AMBIENTE.join(',')})`; actx.beginPath(); actx.moveTo(SILUETA[0][0] * W, SILUETA[0][1] * H);
     for (const [x, y] of SILUETA.slice(1)) actx.lineTo(x * W, y * H);
     actx.closePath(); actx.fill();
+    // planta baja: los locales tienen su propia luz (vidrieras, carteles); el ambiente se desvanece hacia la vereda
+    const pb = actx.createLinearGradient(0, 1.1 * H, 0, 1.24 * H); pb.addColorStop(0, 'rgba(255,255,255,0)'); pb.addColorStop(1, 'rgba(255,255,255,1)');
+    actx.fillStyle = pb; actx.fillRect(0, 1.1 * H, W, 0.4 * H);
     actx.fillStyle = '#fff'; actx.beginPath();   // pantallas y reloj: su propia pista, sin ambiente
     for (const sup of Object.values(G.superficies)) for (const qd of sup.quads) trazarQuad(actx, aPx(qd, W, H));
     trazarQuad(actx, aPx(G.reloj.quad, W, H)); actx.fill();
-    capaAmb.dataset.listo = '1';
+    actx.setTransform(1, 0, 0, 1, 0, 0);
+    capaAmb.dataset.listo = encuadre;
     return capaAmb;
   }
   const capaSombra = document.createElement('canvas');
@@ -70,6 +103,7 @@
 
   function ajustarTamano() {
     const esc = $('escenario');   // área interior (sin borde): así el CSS nunca comprime el lienzo
+    const FW = ENC[encuadre].ancho, FH = ENC[encuadre].alto;
     const k = Math.min(esc.clientWidth / FW, esc.clientHeight / FH);
     const cssW = Math.floor(FW * k), cssH = Math.round(cssW * FH / FW);   // alto derivado del ancho: proporción exacta al píxel
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -126,7 +160,7 @@
     const ia = sy2 / det, ib = -sx2 / det, ic = -sy1 / det, id = sx1 / det;
     const m11 = dx1 * ia + dx2 * ic, m12 = dx1 * ib + dx2 * id, m21 = dy1 * ia + dy2 * ic, m22 = dy1 * ib + dy2 * id;
     const tx = d0[0] - m11 * s0[0] - m12 * s0[1], ty = d0[1] - m21 * s0[0] - m22 * s0[1];
-    c.setTransform(m11, m21, m12, m22, tx, ty);
+    c.setTransform(m11, m21, m12, m22, tx + OFF[0], ty + OFF[1]);
     c.drawImage(src, 0, 0);
     c.restore();
   }
@@ -157,8 +191,8 @@
   // El borde derecho es la UNIÓN con la torre blanca (bajada pluvial ≈ 0,727): esa torre es otro edificio (corrección de Fer, 14/10).
   // Silueta COMPLETA del TRUST (cúpula y pisos altos incluidos), siguiendo el perfil de la azotea. Afuera quedan el vecino
   // de la izquierda y la torre blanca (otro edificio): no se tocan.
-  const SILUETA = [[0.117, 1.0], [0.117, 0.66], [0.124, 0.60], [0.124, 0.303], [0.168, 0.303], [0.168, 0.202], [0.349, 0.175],
-    [0.349, 0.069], [0.47, 0.069], [0.49, 0.03], [0.505, 0.069], [0.663, 0.09], [0.663, 0.23], [0.730, 0.23], [0.730, 1.0]];   // perfil de azotea medido
+  const SILUETA = [[0.117, 1.32], [0.117, 0.66], [0.124, 0.60], [0.124, 0.303], [0.168, 0.303], [0.168, 0.202], [0.349, 0.175],
+    [0.349, 0.069], [0.47, 0.069], [0.49, 0.03], [0.505, 0.069], [0.663, 0.09], [0.663, 0.23], [0.730, 0.23], [0.730, 1.32]];   // abajo llega a la vereda (1,32: fuera de la foto base, visible en «completo»)   // perfil de azotea medido
   // De noche el edificio no tiene luz propia: solo un ambiente urbano tenue y neutro (sin tinte de color).
   // Luz AMBIENTAL URBANA (Fer, 14/10): la que ya existe (farolas, reflejos, cielo). Con nuestras 46 apagadas el TRUST sigue
   // visible: la foto queda a este nivel, levemente neutra/fría. NUESTRA luz se SUMA encima (no reemplaza a la de la ciudad).
@@ -256,7 +290,9 @@
     [0.38, 0.607], [0.44, 0.603], [0.48, 0.606], [0.52, 0.608], [0.56, 0.612], [0.60, 0.615], [0.64, 0.622], [0.68, 0.629], [0.74, 0.640]];
   const CORNISA_REMATE = [[0.11, 0.315], [0.20, 0.318], [0.30, 0.330], [0.36, 0.352], [0.44, 0.362], [0.50, 0.365], [0.58, 0.362],
     [0.66, 0.356], [0.74, 0.350]];
-  const OCLUSOR = { medio: { linea: CORNISA_MEDIA, pasa: 0.22 }, superior: { linea: CORNISA_REMATE, pasa: 0.4 } };
+  // inferior → la luz de los locales sube por el piso de arcos y se corta contra el borde inferior de la pantalla media
+  const BORDE_MEDIA = G.superficies.media.quads.flatMap((q, k, a) => (k === a.length - 1 ? [q[3], q[2]] : [q[3]])).map(([x, y]) => [x, y + 0.004]);
+  const OCLUSOR = { medio: { linea: CORNISA_MEDIA, pasa: 0.22 }, superior: { linea: CORNISA_REMATE, pasa: 0.4 }, inferior: { linea: BORDE_MEDIA, pasa: 0.12 } };
   const capaGrupo = document.createElement('canvas'), gctx = capaGrupo.getContext('2d');
   const cacheOclusor = new Map();
   function ocluir(c, oc, W, H) {
@@ -273,15 +309,16 @@
   }
   // Color de luz para el MAPA: algo menos saturado que el canal puro (la piedra y el ambiente mezclan) → sin look de filtro.
   const colorMapa = (rgb) => { const l = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2], mx = Math.max(...rgb) || 1; const s = 1 - Math.min(...rgb) / mx; const m = 0.12 + 0.12 * s; return rgb.map((v) => Math.round(255 * Math.min(1, v * (1 - m) + Math.max(l, 0.25 * mx) * m))); };   // los colores puros se suavizan algo más
-  function dibujarLuces(sal, W, H, extra) {
-    for (const c of [lctx, tctx]) { c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1; c.filter = 'none'; c.clearRect(0, 0, W, H); }
-    if (capaGrupo.width !== W || capaGrupo.height !== H) { capaGrupo.width = W; capaGrupo.height = H; }
+  function dibujarLuces(sal, Wl, Hl, extra) {
+    const mk_ = marco(Wl, Hl), W = mk_.W, H = mk_.H;   // se dibuja en coordenadas de la foto base, ubicada dentro del lienzo
+    for (const c of [lctx, tctx]) { c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1; c.filter = 'none'; c.clearRect(0, 0, Wl, Hl); c.setTransform(1, 0, 0, 1, mk_.ox, mk_.oy); }
+    if (capaGrupo.width !== Wl || capaGrupo.height !== Hl) { capaGrupo.width = Wl; capaGrupo.height = Hl; }
     const sep = separacion(W);
     // Mapa de la luz QUE AGREGAMOS (tctx): baños por fila (con oclusión) + derrame de pantallas + reloj/cúpula. Fondo negro.
     lctx.globalCompositeOperation = 'lighter';
     let dibujadas = 0;
     for (const g of M.GRUPOS) {
-      gctx.setTransform(1, 0, 0, 1, 0, 0); gctx.globalCompositeOperation = 'source-over'; gctx.globalAlpha = 1; gctx.filter = 'none'; gctx.clearRect(0, 0, W, H);
+      gctx.setTransform(1, 0, 0, 1, 0, 0); gctx.globalCompositeOperation = 'source-over'; gctx.globalAlpha = 1; gctx.filter = 'none'; gctx.clearRect(0, 0, Wl, Hl); gctx.setTransform(1, 0, 0, 1, mk_.ox, mk_.oy);
       gctx.globalCompositeOperation = 'lighter';
       let hay = false;
       for (const s of sal.luces) {
@@ -309,7 +346,7 @@
       }
       if (!hay) continue;
       if (OCLUSOR[g.id]) ocluir(gctx, OCLUSOR[g.id], W, H);
-      tctx.globalCompositeOperation = 'lighter'; tctx.drawImage(capaGrupo, 0, 0);
+      tctx.save(); tctx.setTransform(1, 0, 0, 1, 0, 0); tctx.globalCompositeOperation = 'lighter'; tctx.drawImage(capaGrupo, 0, 0); tctx.restore();
     }
     // Derrame de las pantallas sobre la piedra vecina (integra el LED con la fachada; nunca sobre el LED: se enmascara abajo).
     tctx.globalCompositeOperation = 'lighter';
@@ -355,7 +392,8 @@
     enmascarar(lctx, W, H);
     enmascarar(tctx, W, H);
     // fuera de la silueta, pantallas y reloj: no agregamos luz (negro)
-    tctx.globalCompositeOperation = 'destination-over'; tctx.fillStyle = '#000'; tctx.fillRect(0, 0, W, H);
+    tctx.setTransform(1, 0, 0, 1, 0, 0); lctx.setTransform(1, 0, 0, 1, 0, 0);
+    tctx.globalCompositeOperation = 'destination-over'; tctx.fillStyle = '#000'; tctx.fillRect(0, 0, Wl, Hl);
     return dibujadas;
   }
 
@@ -373,12 +411,24 @@
     dibujar();
   }
   function dibujar() {
-    if (!fotoNoche.complete || !fotoNoche.naturalWidth) return;
-    const W = lienzo.width, H = lienzo.height, est = M.estado(), sal = M.salidas();
+    const fotoN = fotoE();
+    if (!fotoN.complete || !fotoN.naturalWidth) return;
+    const WC = lienzo.width, HC = lienzo.height, MK = marco(WC, HC), est = M.estado(), sal = M.salidas();
+    let W = WC, H = HC;
+    OFF = [0, 0];
     const dia = est.vista === 'dia';
-    const foto = dia && fotoDia && fotoDia.complete && fotoDia.naturalWidth ? fotoDia : fotoNoche;
+    const foto = dia && encuadre === 'cerca' && fotoDia && fotoDia.complete && fotoDia.naturalWidth ? fotoDia : fotoN;
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    const diaSimulado = dia && foto === fotoN;
+    // Día simulado: la toma nocturna con luz de día (más clara, neutra, menos contraste) + cielo celeste. Rotulado en pantalla.
+    if (diaSimulado) ctx.filter = 'brightness(1.38) contrast(0.86) saturate(0.78) sepia(0.06)';
     ctx.drawImage(foto, 0, 0, foto.naturalWidth, foto.naturalHeight, 0, 0, W, H);   // foto entera, proporción intacta
+    ctx.filter = 'none';
+    if (diaSimulado) {
+      ctx.globalCompositeOperation = 'soft-light'; ctx.fillStyle = 'rgba(170,200,235,0.35)'; ctx.fillRect(0, 0, W, H);   // luz fría de cielo
+      ctx.globalCompositeOperation = 'source-over';
+      if (cieloE().complete && cieloE().naturalWidth) ctx.drawImage(cieloDeDia(W, H), 0, 0);
+    }
 
     // contenido de pantallas primero: su color medio alimenta el derrame de luz sobre la fachada
     const extra = { pantallas: [], zonas: sal.zonas, reloj: { nivel: sal.reloj.nivel, color: rgbDe(sal.reloj.rgbw).map((v) => Math.round(v * 255)) } };
@@ -400,24 +450,28 @@
       sctx.drawImage(foto, 0, 0, foto.naturalWidth, foto.naturalHeight, 0, 0, W, H);
       sctx.globalCompositeOperation = 'multiply'; sctx.drawImage(capaTinte, 0, 0, W, H);
       ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(capaSuma, 0, 0);
+      W = MK.W; H = MK.H; ctx.setTransform(1, 0, 0, 1, MK.ox, MK.oy);   // de acá en adelante: coordenadas de la foto base
       // equilibrio de temperatura: la franja baja (farolas de sodio en la foto) se neutraliza levemente
       ctx.save(); ctx.beginPath(); ctx.moveTo(SILUETA[0][0] * W, SILUETA[0][1] * H);
       for (const [x, y] of SILUETA.slice(1)) ctx.lineTo(x * W, y * H);
       ctx.closePath(); ctx.clip();
       const wb = ctx.createLinearGradient(0, 0.6 * H, 0, H); wb.addColorStop(0, 'rgb(255,255,255)'); wb.addColorStop(1, 'rgb(236,244,255)');
-      ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = wb; ctx.fillRect(0, 0.6 * H, W, 0.4 * H); ctx.restore();
+      ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = wb; ctx.fillRect(0, 0.6 * H, W, 0.75 * H); ctx.restore();
       // 2a'. lectura del relieve: el detalle fino de la foto en 'soft-light', solo sobre la fachada del TRUST.
+      const relieve = relieveE();
       if (relieve.complete && relieve.naturalWidth) {
         ctx.save(); ctx.beginPath(); ctx.moveTo(SILUETA[0][0] * W, SILUETA[0][1] * H);
         for (const [x, y] of SILUETA.slice(1)) ctx.lineTo(x * W, y * H);
         ctx.closePath(); ctx.clip();
         ctx.globalCompositeOperation = 'soft-light'; ctx.globalAlpha = 0.55;
-        ctx.drawImage(relieve, 0, 0, W, H); ctx.restore();
+        ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(relieve, 0, 0, WC, HC); ctx.restore();   // el relieve es del encuadre completo
       }
     }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = dia ? 0.06 : 0.6;   // 2b. la fuente (punto contenido)
-    ctx.drawImage(capaLuz, 0, 0, W, H);
+    ctx.drawImage(capaLuz, 0, 0, WC, HC);
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+    W = MK.W; H = MK.H; ctx.setTransform(1, 0, 0, 1, MK.ox, MK.oy); OFF = [MK.ox, MK.oy];   // reloj y pantallas: coordenadas de la foto base
 
     // 3. reloj
     const rq = aPx(G.reloj.quad, W, H);
@@ -464,7 +518,8 @@
       for (let k = qs.length - 1; k >= 0; k--) ctx.lineTo(qs[k][3][0], qs[k][3][1]);          // borde inferior
       ctx.closePath(); ctx.stroke(); ctx.restore();
     }
-    ultimaInfo = { lucesDibujadas: n, foto: foto === fotoNoche ? 'noche' : 'dia', W, H };
+    ctx.setTransform(1, 0, 0, 1, 0, 0); OFF = [0, 0];
+    ultimaInfo = { lucesDibujadas: n, foto: foto === fotoN ? 'noche' : 'dia', W: WC, H: HC, encuadre };
     actualizarUI(est, sal);
   }
 
@@ -567,7 +622,7 @@
     if (!zonaSel) { caja.innerHTML = ''; return; }
     const col = M.estado().luces.zonaColor[zonaSel];
     const v = col || { r: 0, g: 0, b: 0, w: 0 };
-    caja.innerHTML = `<div class="zcab"><b>Color · ${NOMBRE_ZONA[zonaSel]}</b><small>${col ? 'override de zona' : 'sigue la escena'}</small><button class="b" id="zc-escena">Color de escena</button><button class="b" id="zc-cerrar" title="Cerrar">✕</button></div>
+    caja.innerHTML = `<div class="zcab"><b>Color · ${NOMBRE_ZONA[zonaSel]}</b><small>${col ? 'color propio' : 'usa el color de la escena'}</small><button class="b" id="zc-escena">Color de escena</button><button class="b" id="zc-cerrar" title="Cerrar">✕</button></div>
       <div class="muestras m5" role="group" aria-label="Paleta comercial">${PALETA_ZONA.map((m, i) => `<button class="muestra" data-i="${i}" title="${m.n}" style="--m:${m.css}"></button>`).join('')}</div>
       ${['r', 'g', 'b', 'w'].map((k) => `<div class="fila"><label for="zc-${k}">${{ r: 'R', g: 'G', b: 'B', w: 'W' }[k]}</label><input type="range" class="${{ r: 'r-rojo', g: 'r-verde', b: 'r-azul2', w: 'r-blanco' }[k]}" id="zc-${k}" min="0" max="100" value="${Math.round(v[k] * 100)}" style="--p:${Math.round(v[k] * 100)}%"><span class="valor" id="zc-${k}-v">${Math.round(v[k] * 100)}%</span></div>`).join('')}`;
     const leer = () => { const c = {}; for (const q of ['r', 'g', 'b', 'w']) c[q] = +$('zc-' + q).value / 100; return c; };
@@ -584,7 +639,7 @@
   (function armarEscenas() {
     for (const [k, e] of Object.entries(M.ESCENAS)) {
       const b = document.createElement('button'); b.className = 'b' + (e.diagnostico ? ' tec' : ''); b.dataset.e = k;
-      b.innerHTML = `<small>${e.clave}</small>${e.nombre}`; b.title = e.diagnostico ? 'Escena técnica (no comercial)' : 'Preset comercial';
+      b.textContent = e.nombre; b.title = e.clave + (e.diagnostico ? ' · escena técnica, no comercial' : '');
       b.addEventListener('click', () => M.setEscena(k));
       $(['blanco', 'libre', 'cierre'].includes(k) ? 'escenas-tec' : 'escenas').appendChild(b);
     }
@@ -661,20 +716,20 @@
   function ubicarEtiquetas() {
     const c = cajaLienzo();
     for (const [d, qd] of ETQ) {
-      const x = (qd[0][0] + qd[1][0]) / 2, y = Math.min(qd[0][1], qd[1][1]);
+      const [x, y] = aLienzo((qd[0][0] + qd[1][0]) / 2, Math.min(qd[0][1], qd[1][1]));
       d.style.left = (c.x + x * c.w) + 'px'; d.style.top = (c.y + y * c.h - 6) + 'px';
     }
   }
 
   // guion de la presentación
   const PASOS = [
-    { t: 'Portada TRUST Control × McDonald\'s', f: () => { $('portada').classList.remove('fuera'); } },
-    { t: 'Vista del TRUST de día', f: () => { $('portada').classList.add('fuera'); M.setEscena('arquitectonica'); M.setVista('dia'); } },
-    { t: 'Cambio a modo noche', f: () => { M.setVista('noche'); } },
-    { t: 'Dimmers independientes: pantallas al 40 % (las luces no cambian) y Superior 01 al 20 % (las otras 45 no cambian)', f: () => { M.setPantalla('master', 40); M.setFixture('SUP-01', 20); seleccionar('SUP-01'); } },
-    { t: "Un prompt → «Generar minishow (simulado)»: carga la plantilla McDonald's 15 s (Normal → Brand reveal → Full takeover → Signature → Exit; el prompt no se interpreta)", f: () => { M.restaurarNiveles(); generarMinishow(); } },
-    { t: 'Ejecutar la secuencia sincronizada: pantallas + luces + reloj', f: () => { M.seek(0); M.play(); } },
-    { t: 'Volver a la escena arquitectónica', f: () => { M.setEscena('arquitectonica'); } },
+    { t: 'Portada', f: () => { $('portada').classList.remove('fuera'); } },
+    { t: 'El TRUST de día: de día mandan las pantallas', f: () => { $('portada').classList.add('fuera'); M.setEscena('arquitectonica'); M.setVista('dia'); } },
+    { t: 'De noche: la fachada iluminada en luz cálida', f: () => { M.setVista('noche'); } },
+    { t: 'Todo se controla por separado: bajamos las pantallas al 40 % y una sola luminaria al 20 %; el resto no cambia', f: () => { M.setPantalla('master', 40); M.setFixture('SUP-01', 20); seleccionar('SUP-01'); } },
+    { t: 'Escribimos la idea y apretamos «Generar show»: arma los 15 s y arranca', f: () => { M.restaurarNiveles(); generarMinishow(); } },
+    { t: 'El show completo: pantallas, fachada y reloj sincronizados', f: () => { M.seek(0); M.play(); } },
+    { t: 'Volvemos al edificio en luz cálida', f: () => { M.setEscena('arquitectonica'); } },
   ];
   let paso = 0, guionVisible = false;
   function irPaso(i) { paso = Math.max(0, Math.min(PASOS.length - 1, i)); PASOS[paso].f(); $('guion-txt').innerHTML = `<b>Paso ${paso + 1}/${PASOS.length}</b> · ${PASOS[paso].t}`; }
@@ -690,22 +745,50 @@
   $('cargar').addEventListener('click', () => M.cargarShow());
   // Director de show (SIMULADO): siempre carga la plantilla McDonald's 15 s; el prompt no se interpreta ni sale del navegador.
   const PLAN = {
-    normal: 'fachada cálida 38 % · pantallas en noche institucional',
-    revelacion: 'una luz nace en Corrientes, cruza a Pellegrini y aterriza en la media · la cálida baja a 25 % y el rojo sube a 55 % en el mismo sentido',
-    takeover: 'las 3 pantallas como una pieza, máxima presencia · rojo 70 % · oro 40 % · cálido 20 % · arquitectura −8 % (soporte)',
-    firma: 'onda dorada como firma · sube oro y cálido, baja el rojo · la fachada recupera elegancia',
-    salida: 'fundido suave a ARCHITECTURAL_WARM',
+    normal: 'el edificio en su luz cálida; las pantallas con la imagen del TRUST',
+    revelacion: 'la campaña entra en Corrientes y pasa a Pellegrini; la fachada acompaña con rojo',
+    takeover: 'las 3 pantallas juntas al máximo; la fachada baja un poco para no competir',
+    firma: 'cierre de marca con dorados; la fachada vuelve a la calma',
+    salida: 'vuelta suave al edificio en luz cálida',
   };
   function plegarDirector(plegado) {
     $('t-director').classList.toggle('plegado', plegado);
     $('director-plegar').setAttribute('aria-expanded', String(!plegado));
   }
   $('director-plegar').addEventListener('click', () => plegarDirector(!$('t-director').classList.contains('plegado')));
+  // El prompt SÍ cambia el show: un intérprete con reglas (sin IA) busca palabras clave y elige creatividad, color e intensidad.
+  // Lo que entendió se muestra tal cual, para que el operador lo corrija con los botones si hace falta.
+  const REGLAS = [
+    { re: /lanzamiento|lanza|nuevo|nueva|estreno|cuenta regresiva|3.?2.?1|launch/, cre: 'F', txt: 'lanzamiento → cuenta regresiva 3-2-1 y revelación (F)' },
+    { re: /desayuno|caf[eé]|ma[nñ]ana|medialuna|breakfast|coffee/, cre: 'E', txt: 'desayuno → amanecer, café y medialuna (E)' },
+    { re: /papas|fritas|fries/, cre: 'D', txt: 'papas → lluvia de papas en las 3 pantallas (D)' },
+    { re: /hamburgues|burger|producto|combo|big ?mac|cuarto de libra|packshot/, cre: 'B', txt: 'producto → la hamburguesa protagonista (B)' },
+    { re: /logo|marca|nombre|brand|arcos/, cre: 'A', txt: 'marca → el nombre en grande cruzando las dos pantallas (A)' },
+    { re: /recorr|viaje|cruza|onda|ola|wave|de corrientes a pellegrini/, cre: 'C', txt: 'recorrido → una luz cruza de Corrientes a Pellegrini y baja a la media (C)' },
+  ];
+  function interpretar(texto) {
+    const p = (texto || '').toLowerCase(), entendi = [];
+    const r = REGLAS.find((x) => x.re.test(p));
+    const cre = r ? r.cre : 'C'; entendi.push(r ? r.txt : 'sin tema claro → recorrido de luz por las 3 pantallas (C)');
+    let estilo = 'rojo';
+    if (/dorad|oro|gold|amarill/.test(p)) { estilo = 'dorado'; entendi.push('dorado → luces con oro protagonista'); }
+    else if (/elegan|sobri|c[aá]lid|premium|sutil|tranquil/.test(p) || cre === 'E') { estilo = 'calido'; entendi.push('tono cálido → fachada más sobria, el rojo como acento'); }
+    else entendi.push('rojo de marca como acento principal en la fachada');
+    let int = 1;
+    if (/sutil|suave|tranquil|discret/.test(p)) { int = 0.88; entendi.push('intensidad suave'); }
+    else if (/impact|intens|fuerte|explos|potente|m[aá]xim/.test(p)) { int = 1.12; entendi.push('intensidad alta'); }
+    const seg = p.match(/(\d{1,3})\s*(s\b|seg)/); if (seg && +seg[1] !== 15) entendi.push(`duración pedida ${seg[1]} s → por ahora el show dura 15 s`);
+    if (/reloj/.test(p)) entendi.push('reloj → acento dorado durante el takeover (próxima fase)');
+    return { cre, estilo, int, entendi };
+  }
   function generarMinishow() {
-    plegarDirector(false);   // en la demo se muestra el plan cargado
-    M.cargarShow(); M.seek(0);
+    plegarDirector(false);
+    const it = interpretar($('prompt').value);
+    M.setCreatividad(it.cre); M.setEstiloShow(it.estilo, it.int);
+    M.cargarShow(); M.seek(0); M.play();
+    $('plan-cab').innerHTML = `<b>Show de 15 s armado desde tu pedido</b> · interpretado por reglas (no es generación por IA): base preprogramada, ajustada a lo que pediste.`;
+    $('plan-entendi').innerHTML = it.entendi.map((x) => `<li>${x}</li>`).join('');
     const ol = $('plan-ol'); ol.innerHTML = '';
-    $('plan-cab').textContent = "Plantilla cargada: McDonald's Takeover 15 s (preprogramada, no es generación por IA)";
     for (const b of M.BLOQUES) {
       const li = document.createElement('li');
       li.innerHTML = `<b>${b.desde}–${b.hasta} s · ${b.nombre}</b> — ${PLAN[b.id] || ''}`;
@@ -713,6 +796,7 @@
     }
     $('plan').hidden = false;
     if (window.CONTENIDO) window.CONTENIDO.setMedia(null);
+    return it;
   }
   // AI Content Studio: con material READY arma el concepto (estudio.js); sin material, IDEA FIRST = plantilla preprogramada.
   $('generar').addEventListener('click', () => {
@@ -734,10 +818,10 @@
 
   // clic en la foto: seleccionar luminaria o (editor) ubicarla
   lienzo.addEventListener('click', (e) => {
-    const r = lienzo.getBoundingClientRect(), nx = (e.clientX - r.left) / r.width, ny = (e.clientY - r.top) / r.height;
+    const r = lienzo.getBoundingClientRect(), [nx, ny] = deLienzo((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height);
     if (editor) { puntos[seleccion] = [+nx.toFixed(4), +ny.toFixed(4)]; exportarEditor(); siguienteEquipo(); pedirCuadro(); return; }
     let mejor = null, md = 22;
-    for (const [id, p] of Object.entries(puntos)) { const d = Math.hypot((p[0] - nx) * r.width, (p[1] - ny) * r.height); if (d < md) { md = d; mejor = id; } }
+    for (const [id, p] of Object.entries(puntos)) { const [ax, ay] = aLienzo(p[0], p[1]), [bx, by] = aLienzo(nx, ny), d = Math.hypot((ax - bx) * r.width, (ay - by) * r.height); if (d < md) { md = d; mejor = id; } }
     if (mejor) seleccionar(mejor);
   });
   function siguienteEquipo() { const ids = M.estado().luces.fixtures.map((f) => f.id); seleccionar(ids[(ids.indexOf(seleccion) + 1) % ids.length]); }
@@ -750,10 +834,14 @@
   $('ed-exportar').addEventListener('click', () => { exportarEditor(); $('ed-salida').select(); });
 
   // teclado
+  // Mientras se escribe (prompt, campos de texto) el teclado es del texto: ningún atajo se dispara.
+  const escribiendo = (el) => !!el && (el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable || (el.tagName === 'INPUT' && !['range', 'checkbox', 'button'].includes(el.type)));
+  // Espacio sobre un botón con foco: el navegador lo "clickea" al soltar la tecla; lo anulamos para que Play/Pausa no se pisen.
+  document.addEventListener('keyup', (e) => { if (e.key === ' ' && !escribiendo(e.target) && e.target.tagName === 'BUTTON') e.preventDefault(); });
   document.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+    if (escribiendo(e.target) || e.ctrlKey || e.metaKey || e.altKey || !$('visor').hidden) return;
     const k = e.key.toLowerCase();
-    if (k === ' ') { e.preventDefault(); const s = M.estado().show; s.reproduciendo ? M.pausa() : M.play(); }
+    if (k === ' ') { e.preventDefault(); if (e.target.blur) e.target.blur(); const s = M.estado().show; s.reproduciendo ? M.pausa() : M.play(); }
     else if (k === 'r') M.resetShow();
     else if (k === 'd') M.setVista('dia');
     else if (k === 'n') M.setVista('noche');
@@ -774,7 +862,7 @@
     refrescos.forEach((f) => f());
     $('v-dia').classList.toggle('on', est.vista === 'dia'); $('v-dia').setAttribute('aria-pressed', est.vista === 'dia');
     $('v-noche').classList.toggle('on', est.vista === 'noche'); $('v-noche').setAttribute('aria-pressed', est.vista === 'noche');
-    const nombreEscena = est.show.cargado ? "MCD_TAKEOVER · show 15 s" : M.ESCENAS[est.escena].clave + ' · ' + M.ESCENAS[est.escena].nombre;
+    const nombreEscena = est.show.cargado ? "Show McDonald's · 15 s" : M.ESCENAS[est.escena].nombre;
     $('diag').hidden = !sal.diagnostico;
     document.querySelectorAll('#transicion button').forEach((b) => b.classList.toggle('on', +b.dataset.s === est.transicion));
     document.querySelectorAll('#creatividad button').forEach((b) => b.classList.toggle('on', b.dataset.v === est.creatividad));
@@ -793,7 +881,7 @@
     $('blackout').classList.toggle('activo', est.blackout);
     // timeline
     $('tl-t').textContent = fmt(est.show.t);
-    $('tl-bloque').textContent = est.show.cargado ? 'Bloque: ' + M.bloque(est.show.t).nombre + (est.show.reproduciendo ? ' · reproduciendo' : est.show.t >= M.DUR ? ' · fin' : ' · en pausa') : 'Sin show cargado';
+    $('tl-bloque').textContent = est.show.cargado ? 'Momento: ' + M.bloque(est.show.t).nombre + (est.show.reproduciendo ? ' · reproduciendo' : est.show.t >= M.DUR ? ' · fin' : ' · en pausa') : 'Sin show cargado';
     $('cabezal').style.left = (est.show.t / M.DUR * 100) + '%';
     $('vacio-tl').style.display = est.show.cargado ? 'none' : 'flex';
     // chips
@@ -811,19 +899,19 @@
       $('d-nivel-v').textContent = f.nivel + '%';
       const ap = $('d-ap'); if (document.activeElement !== ap) ap.value = f.apertura; ap.style.setProperty('--p', ((ap.value - 10) / 80 * 100) + '%'); $('d-ap-v').textContent = f.apertura + '°';
       const so = sal.luces.find((x) => x.id === seleccion);
-      $('d-pos').textContent = `salida ${Math.round(so.nivel * 100)}%` + (f.color ? ' · color propio' : ' · color de escena') + (puntos[f.id] ? '' : ' · fuera de cuadro en esta foto');
+      $('d-pos').textContent = `salida ${Math.round(so.nivel * 100)}%` + (f.color ? ' · color propio' : ' · color de escena') + (puntos[f.id] ? '' : ' · sin posición');
       for (const k of ['r', 'g', 'b', 'w']) { const el = $('d-' + k); el.style.setProperty('--p', el.value + '%'); $('d-' + k + '-v').textContent = el.value + '%'; }
     }
     // marcador de la luminaria seleccionada
     const ms = $('marca-sel'), p = puntos[seleccion];
-    if (p) { const c = cajaLienzo(); ms.style.display = 'block'; ms.style.left = (c.x + p[0] * c.w) + 'px'; ms.style.top = (c.y + p[1] * c.h) + 'px'; } else ms.style.display = 'none';
+    if (p) { const c = cajaLienzo(), [px, py] = aLienzo(p[0], p[1]); ms.style.display = 'block'; ms.style.left = (c.x + px * c.w) + 'px'; ms.style.top = (c.y + py * c.h) + 'px'; } else ms.style.display = 'none';
     // chip de estado y avisos honestos
     $('chip-modo').innerHTML = est.vista === 'dia'
-      ? '<b>Modo Día</b><span>Pantallas visibles · iluminación arquitectónica casi imperceptible</span>'
-      : '<b>Modo Noche</b><span>Pantallas + luminarias arquitectónicas</span>';
+      ? '<b>Día</b><span>De día mandan las pantallas; la luz del edificio casi no se nota</span>'
+      : '<b>Noche</b><span>Pantallas y fachada iluminada</span>';
     const avisos = [];
     if (avisoTmp) avisos.push(avisoTmp);
-    if (est.vista === 'dia' && ultimaInfo.foto !== 'dia') avisos.push('Foto diurna pendiente: falta la toma de día desde el mismo punto. Se muestra la nocturna; los niveles no cambian.');
+    if (est.vista === 'dia' && ultimaInfo.foto !== 'dia') avisos.push('Día simulado sobre la foto de noche (cielo y luz recreados). Con la foto de día real se verá exacto.');
     const fuera = new Set(((L && L.calibracion && L.calibracion.fuera_de_cuadro) || []));
     const faltan = est.luces.fixtures.filter((f) => !puntos[f.id] && !fuera.has(f.grupo)).length;
     if (faltan) avisos.push(`Posiciones de luminarias: faltan ${faltan} por calibrar sobre esta foto. Se controlan igual, pero su luz no se dibuja.`);
@@ -836,8 +924,15 @@
   new ResizeObserver(ajustarTamano).observe($('escenario'));
   window.addEventListener('resize', ajustarTamano);
   fotoNoche.addEventListener('load', ajustarTamano);
+  function setEncuadre(e) {
+    if (!ENC[e]) return;
+    encuadre = e; capaAmb.dataset.listo = ''; capaCielo.dataset.listo = '';
+    document.querySelectorAll('#encuadre button').forEach((b) => b.classList.toggle('on', b.dataset.e === e));
+    const f = fotoE(); if (f.complete && f.naturalWidth) ajustarTamano(); else f.addEventListener('load', ajustarTamano, { once: true });
+  }
+  document.querySelectorAll('#encuadre button').forEach((b) => b.addEventListener('click', () => setEncuadre(b.dataset.e)));
+  setEncuadre(encuadre);
   if (fotoDia) fotoDia.addEventListener('load', pedirCuadro);
-  relieve.addEventListener('load', pedirCuadro);
   armarDetalle();
 
   // API para las pruebas automatizadas (no cambia el comportamiento de la demo).
@@ -845,7 +940,15 @@
     motor: M,
     info: () => Object.assign({ posiciones: Object.keys(puntos).length, cssW: lienzo.getBoundingClientRect().width, cssH: lienzo.getBoundingClientRect().height }, ultimaInfo),
     dibujarYa: () => dibujar(),
-    pixel: (nx, ny) => { dibujar(); const d = ctx.getImageData(Math.floor(nx * lienzo.width), Math.floor(ny * lienzo.height), 1, 1).data; return [d[0], d[1], d[2], d[3]]; },
+    // coordenadas de la FOTO BASE (las de geometria.js / luminarias.js), en cualquier encuadre
+    pixel: (nx, ny) => { dibujar(); const [x, y] = aLienzo(nx, ny); const d = ctx.getImageData(Math.floor(x * lienzo.width), Math.floor(y * lienzo.height), 1, 1).data; return [d[0], d[1], d[2], d[3]]; },
+    pixelFoto: (nx, ny) => {   // la foto tal cual (sin luces ni día simulado), escalada igual que el lienzo
+      const c = document.createElement('canvas'); c.width = lienzo.width; c.height = lienzo.height; const k = c.getContext('2d');
+      const f = fotoE(); k.drawImage(f, 0, 0, f.naturalWidth, f.naturalHeight, 0, 0, c.width, c.height);
+      const [x, y] = aLienzo(nx, ny); const d = k.getImageData(Math.floor(x * c.width), Math.floor(y * c.height), 1, 1).data; return [d[0], d[1], d[2], d[3]];
+    },
+    pixelLienzo: (x, y) => { dibujar(); const d = ctx.getImageData(Math.floor(x * lienzo.width), Math.floor(y * lienzo.height), 1, 1).data; return [d[0], d[1], d[2], d[3]]; },
+    setEncuadre: (e) => setEncuadre(e), encuadre: () => encuadre, aLienzo,
     usarPuntosDePrueba: (obj) => { for (const k of Object.keys(puntos)) delete puntos[k]; Object.assign(puntos, obj); puntosDePrueba = true; pedirCuadro(); },
     seleccionar,
     variacion: (id) => Object.assign({}, variacionDe(id)),

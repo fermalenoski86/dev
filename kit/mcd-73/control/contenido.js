@@ -296,8 +296,107 @@
     cinta(c, Math.max(0, s - 0.16), s, t, 0.8 * nace);
     orbe(c, p[0], p[1], 15, nace);
   }
+  // ---------- piezas de las creatividades D · E · F (ilustración genérica, sin envases ni logos de la marca) ----------
+  function papa(c, x, y, largo, ang) {   // bastón de papa frita dorado, con puntas más tostadas y brillo
+    c.save(); c.translate(x, y); c.rotate(ang);
+    const g = c.createLinearGradient(-largo / 2, 0, largo / 2, 0);
+    g.addColorStop(0, '#c9781a'); g.addColorStop(0.12, '#f5c24c'); g.addColorStop(0.5, '#ffd968'); g.addColorStop(0.88, '#f2b840'); g.addColorStop(1, '#c47216');
+    c.fillStyle = g; c.beginPath(); c.roundRect ? c.roundRect(-largo / 2, -7, largo, 14, 4) : c.rect(-largo / 2, -7, largo, 14); c.fill();
+    c.fillStyle = 'rgba(255,248,210,0.55)'; c.fillRect(-largo * 0.42, -5, largo * 0.84, 3);
+    c.restore();
+  }
+  function lluviaPapas(c, vn, t) {   // caen en el MISMO espacio: una papa que cruza una pantalla superior aparece después en la media
+    for (let i = 0; i < 220; i++) {
+      const ts = 4.6 + azar(i + 1) * 5, dt = t - ts; if (dt < 0) continue;
+      const v = 170 + 230 * azar(i + 2), x = 280 + azar(i) * 1840 + dt * 40 * (azar(i + 3) - 0.5), y = 400 + 140 * azar(i + 7) + dt * v + 40 * dt * dt;
+      if (y > 1700) continue;
+      const largo = 70 + 50 * azar(i + 4);
+      if (x < vn.x0 - largo || x > vn.x1 + largo || y < vn.y0 - largo || y > vn.y1 + largo) continue;
+      papa(c, x, y, largo, azar(i + 5) * Math.PI + dt * (azar(i + 6) - 0.5) * 3);
+    }
+  }
+  function medialuna(c, x, y, a) {   // medialuna dorada (desayuno argentino), forma genérica
+    c.save(); c.translate(x, y);
+    const g = c.createLinearGradient(0, -a * 0.3, 0, a * 0.3); g.addColorStop(0, '#f3b45a'); g.addColorStop(1, '#9a5214');
+    c.fillStyle = g; c.beginPath(); c.arc(0, a * 0.35, a * 0.62, Math.PI * 1.12, Math.PI * 1.88); c.arc(0, a * 0.62, a * 0.5, Math.PI * 1.8, Math.PI * 1.2, true); c.closePath(); c.fill();
+    c.strokeStyle = 'rgba(110,50,10,0.55)'; c.lineWidth = a * 0.02;
+    for (let k = -2; k <= 2; k++) { c.beginPath(); c.moveTo(k * a * 0.12, -a * 0.2); c.quadraticCurveTo(k * a * 0.15, 0, k * a * 0.13, a * 0.08); c.stroke(); }
+    c.restore();
+  }
+  function taza(c, x, y, a, t) {   // taza de café con plato y vapor (genérica)
+    c.save();
+    c.fillStyle = 'rgba(0,0,0,0.35)'; c.beginPath(); c.ellipse(x, y + a * 0.05, a * 0.62, a * 0.09, 0, 0, Math.PI * 2); c.fill();
+    let g = c.createLinearGradient(x - a * 0.6, 0, x + a * 0.6, 0); g.addColorStop(0, '#d9d2c6'); g.addColorStop(0.45, '#ffffff'); g.addColorStop(1, '#bfb6a8');
+    c.fillStyle = g; c.beginPath(); c.ellipse(x, y, a * 0.6, a * 0.08, 0, 0, Math.PI * 2); c.fill();                 // plato
+    c.beginPath(); c.moveTo(x - a * 0.36, y - a * 0.62); c.lineTo(x + a * 0.36, y - a * 0.62); c.lineTo(x + a * 0.28, y - a * 0.06); c.quadraticCurveTo(x, y + a * 0.02, x - a * 0.28, y - a * 0.06); c.closePath(); c.fill();   // taza
+    c.strokeStyle = '#e8e1d6'; c.lineWidth = a * 0.06; c.beginPath(); c.arc(x + a * 0.4, y - a * 0.36, a * 0.13, -Math.PI / 2, Math.PI / 2); c.stroke();   // asa
+    g = c.createRadialGradient(x, y - a * 0.62, 0, x, y - a * 0.62, a * 0.36); g.addColorStop(0, '#c8955e'); g.addColorStop(0.7, '#5a2c10'); g.addColorStop(1, '#3a1a08');
+    c.fillStyle = g; c.beginPath(); c.ellipse(x, y - a * 0.62, a * 0.34, a * 0.06, 0, 0, Math.PI * 2); c.fill();        // café con crema
+    c.globalCompositeOperation = 'lighter';
+    for (let k = 0; k < 3; k++) {
+      c.strokeStyle = `rgba(255,240,225,${0.16 + 0.06 * Math.sin(t * 1.2 + k)})`; c.lineWidth = a * 0.035; c.beginPath();
+      for (let j = 0; j <= 14; j++) { const yy = y - a * 0.7 - j * a * 0.06, xx = x + (k - 1) * a * 0.12 + Math.sin(j * 0.6 + t * 1.4 + k * 2) * a * 0.05; j ? c.lineTo(xx, yy) : c.moveTo(xx, yy); }
+      c.stroke();
+    }
+    c.restore();
+  }
+  function fondoAmanecer(c, vn, t) {   // desayuno: amanecer cálido, crema y café (sin rojo dominante)
+    const g = c.createLinearGradient(0, 380, 0, 1650);
+    g.addColorStop(0, '#2a1208'); g.addColorStop(0.18, '#a8521a'); g.addColorStop(0.3, '#f0a042'); g.addColorStop(0.42, '#ffe2b0'); g.addColorStop(0.62, '#7a3a14'); g.addColorStop(1, '#2a1208');
+    c.fillStyle = g; c.fillRect(vn.x0 - 4, vn.y0 - 4, vn.x1 - vn.x0 + 8, vn.y1 - vn.y0 + 8);
+    const sy = 760 - (t - 5) * 18, sol = c.createRadialGradient(1250, sy, 0, 1250, sy, 520);
+    sol.addColorStop(0, 'rgba(255,246,214,0.9)'); sol.addColorStop(0.25, 'rgba(255,214,140,0.5)'); sol.addColorStop(1, 'rgba(255,170,80,0)');
+    c.save(); c.globalCompositeOperation = 'lighter'; c.fillStyle = sol; c.fillRect(vn.x0 - 4, vn.y0 - 4, vn.x1 - vn.x0 + 8, vn.y1 - vn.y0 + 8); c.restore();
+    vineta(c, vn, 0.4);
+  }
+  function digito(c, txt, x, y, tam, a, esc) {   // número de la cuenta regresiva, con aro de luz detrás
+    if (a <= 0) return;
+    c.save(); c.globalAlpha = cl(a, 0, 1);
+    c.globalCompositeOperation = 'lighter'; c.strokeStyle = 'rgba(255,200,110,0.55)'; c.lineWidth = tam * 0.06;
+    c.beginPath(); c.arc(x, y, tam * (0.55 + 0.25 * esc), 0, Math.PI * 2); c.stroke();
+    c.globalCompositeOperation = 'source-over';
+    c.translate(x, y); c.scale(0.8 + 0.2 * esc, 0.8 + 0.2 * esc);
+    c.font = `800 ${tam}px ${FUENTE}`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    const g = c.createLinearGradient(0, -tam / 2, 0, tam / 2); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#ffc72c');
+    c.fillStyle = g; c.fillText(txt, 0, tam * 0.04);
+    c.restore();
+  }
   function takeover(c, id, vn, t, cr) {   // 5–10 s: máxima presencia de pantallas
     const k = sv((t - 5) / 0.6);
+    if (cr === 'D') {   // PAPAS: lluvia de papas doradas que atraviesa las 3 pantallas como un solo espacio
+      fondoRojo(c, vn, t, 0.12);
+      lluviaPapas(c, vn, t);
+      if (id === 'media') marca(c, YM.cx, YM.cy, 66, sv((t - 6.2) / 0.8), cl((t - 7) / 1.6, 0, 1));
+      return;
+    }
+    if (cr === 'E') {   // DESAYUNO: amanecer cálido, café y medialuna; la marca entra suave
+      fondoAmanecer(c, vn, t);
+      particulas(c, vn, t, 0.35, 50);
+      const pa = sv((t - 5.2) / 1);
+      if (id === 'pellegrini') taza(c, 1648, 690 + 20 * (1 - pa), 190, t);
+      if (id === 'corrientes') medialuna(c, 835, 610 + 15 * (1 - pa), 230 * (0.95 + 0.05 * pa));
+      if (id === 'media') marca(c, YM.cx, YM.cy, 62, sv((t - 5.8) / 1));
+      return;
+    }
+    if (cr === 'F') {   // LANZAMIENTO: cuenta regresiva que salta de pantalla en pantalla, destello y revelación del producto
+      fondoRojo(c, vn, t, 0.05);
+      c.fillStyle = `rgba(0,0,0,${0.55 * (1 - sv((t - 7.1) / 0.3))})`; c.fillRect(vn.x0 - 4, vn.y0 - 4, vn.x1 - vn.x0 + 8, vn.y1 - vn.y0 + 8);
+      const paso = (desde, hasta) => sv((t - desde) / 0.15) * (1 - sv((t - hasta + 0.15) / 0.15));
+      if (id === 'corrientes') digito(c, '3', 835, 600, 150, paso(5, 5.7), cl((t - 5) / 0.7, 0, 1));
+      if (id === 'pellegrini') digito(c, '2', 1648, 588, 160, paso(5.7, 6.4), cl((t - 5.7) / 0.7, 0, 1));
+      if (id === 'media') digito(c, '1', YM.cx, YM.cy, 80, paso(6.4, 7.1), cl((t - 6.4) / 0.7, 0, 1));
+      if (t >= 7.1) {
+        particulas(c, vn, t, 0.8, 110);
+        anillos(c, 7.1, t, 1240, 560);
+        const pa = sv((t - 7.2) / 0.8);
+        if (id === 'pellegrini') hamburguesa(c, 1648, 668 + 25 * (1 - pa), 290 * (0.9 + 0.1 * pa), t);
+        if (id === 'corrientes') columnasLuz(c, t, 0.7);
+        if (id === 'media') marca(c, YM.cx, YM.cy, 66, sv((t - 7.4) / 0.6), cl((t - 8) / 1.5, 0, 1));
+        const fl = 1 - sv((t - 7.1) / 0.45);   // destello
+        if (fl > 0) { c.save(); c.globalCompositeOperation = 'lighter'; c.fillStyle = `rgba(255,236,200,${0.85 * fl})`; c.fillRect(vn.x0 - 4, vn.y0 - 4, vn.x1 - vn.x0 + 8, vn.y1 - vn.y0 + 8); c.restore(); }
+      }
+      return;
+    }
     if (cr === 'B') {   // PRODUCT HERO: fondo oscuro cálido, el producto manda
       fondoRojo(c, vn, t, 0.0);
       c.fillStyle = 'rgba(10,0,0,0.42)'; c.fillRect(vn.x0 - 4, vn.y0 - 4, vn.x1 - vn.x0 + 8, vn.y1 - vn.y0 + 8);

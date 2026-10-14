@@ -11,12 +11,13 @@
 //   extremos y la distribución dibujada y se re-muestrearon a 16 equipos por índice. A VALIDAR con Fer.
 // AMARILLO · nivel medio (16): sobre el borde superior de la pantalla media (marquesina), con sus mismas 3 anclas:
 //   amarilla 1 (101 → 0,101) · punto más alto (620 → 0,4473) · amarilla 16 (955 → 0,722, antes de la torre blanca).
-// VERDE · nivel inferior (14): sobre los locales de planta baja. Esa franja queda FUERA DE CUADRO en esta foto (corta un piso
-//   debajo de la marquesina): se controlan igual en el panel y el timeline, pero no se dibujan. No se inventa su lugar.
+// VERDE · nivel inferior (14): sobre los locales de planta baja. Fuera de esta foto (y > 1): se ubican con la foto COMPLETA de
+//   Fer (misma toma, encuadres.js), sobre la cornisa de los locales (y ≈ 1,17 en coordenadas de esta foto), con la misma
+//   distribución a lo largo de la fachada que la fila media. PRELIMINAR, a validar con Fer.
 // Ubicaciones PRELIMINARES de presentación: no son plano de montaje ni verificación física.
 window.LUMINARIAS = {
   foto_sha256: '8ac8a62f0ee6de8348f59061e385ae024a2f6bd1de87daa030d21abf1d87aeee',
-  calibracion: { por: 'Claude, sobre la imagen anotada de Fer', fecha: '2026-10-14', referencia: 'imagen anotada 1024×1536', fuera_de_cuadro: ['inferior'] },
+  calibracion: { por: 'Claude, sobre la imagen anotada de Fer', fecha: '2026-10-14', referencia: 'imagen anotada 1024×1536', preliminar: ['inferior'] },
   puntos: {
     'SUP-01': [0.1293, 0.6624],
     'SUP-02': [0.1632, 0.6562],
@@ -50,5 +51,19 @@ window.LUMINARIAS = {
     'MED-14': [0.6408, 0.8237],
     'MED-15': [0.6818, 0.8304],
     'MED-16': [0.722, 0.8364],
+    'INF-01': [0.1180, 1.1792],
+    'INF-02': [0.1645, 1.1784],
+    'INF-03': [0.2109, 1.1770],
+    'INF-04': [0.2574, 1.1750],
+    'INF-05': [0.3038, 1.1724],
+    'INF-06': [0.3503, 1.1696],
+    'INF-07': [0.3968, 1.1673],
+    'INF-08': [0.4432, 1.1661],
+    'INF-09': [0.4897, 1.1663],
+    'INF-10': [0.5362, 1.1679],
+    'INF-11': [0.5826, 1.1704],
+    'INF-12': [0.6291, 1.1731],
+    'INF-13': [0.6755, 1.1756],
+    'INF-14': [0.7220, 1.1775],
   },
 };

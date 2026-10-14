@@ -1,7 +1,7 @@
 """Ensayo del flujo de demo de punta a punta (#73, encargo «AI Show Director», punto 5), en Chromium SIN red.
 Uso (desde la raíz del repo): python3 -I kit/mcd-73/control/ensayo_demo.py <dir_capturas>
 Todo se opera con CLICS reales sobre la interfaz, como lo haría Fer en la reunión; el motor solo se LEE para verificar:
-  abrir index.html offline → Comenzar → Generar minishow (simulado) → Play → Pausa a mitad del show →
+  abrir index.html offline → Comenzar → Generar show (arranca solo) → Play → Pausa a mitad del show →
   ajustar UNA sola luminaria (SUP-05 al 20 %) → Reanudar → fin del show → Restaurar niveles + escena arquitectónica.
 Deja ENSAYO_DEMO.txt con la salida real y 4 capturas del recorrido."""
 import sys, os, asyncio, time
@@ -42,7 +42,7 @@ async def main(out):
         # 2. Director: generar minishow (simulado)
         await pg.click('#generar')
         sh = await ev(f'{M}.estado().show')
-        ok(sh['cargado'] and sh['t'] == 0 and not sh['reproduciendo'], '2. «Generar minishow (simulado)» carga la plantilla en t=0, en pausa')
+        ok(sh['cargado'] and sh['t'] < 1.5 and sh['reproduciendo'], '2. «Generar show» arma el show y arranca desde 0')
         ok('no es generación por IA' in await ev('document.getElementById("plan").innerText'), '2. el plan en pantalla se rotula como plantilla, no IA')
         await pg.screenshot(path=os.path.join(out, 'ensayo-1-generado.png'))
 
@@ -51,8 +51,8 @@ async def main(out):
         await pg.wait_for_function(f'{M}.estado().show.t >= 6', timeout=12000)
         await pg.click('#pausa')
         sh = await ev(f'{M}.estado().show')
-        ok(not sh['reproduciendo'] and 6 <= sh['t'] < 8.5, f'3. Play avanza y Pausa lo frena a mitad del show (t={sh["t"]:.2f} s, momento «Full takeover»)')
-        ok('Full takeover' in await ev('document.getElementById("tl-bloque").innerText'), '3. el timeline muestra el momento en curso')
+        ok(not sh['reproduciendo'] and 6 <= sh['t'] < 8.5, f'3. Play avanza y Pausa lo frena a mitad del show (t={sh["t"]:.2f} s, momento «Takeover»)')
+        ok('Takeover' in await ev('document.getElementById("tl-bloque").innerText'), '3. el timeline muestra el momento en curso')
         t1 = sh['t']; await pg.wait_for_timeout(600)
         ok(await ev(f'{M}.estado().show.t') == t1, '4. en pausa el tiempo no avanza')
 
@@ -88,7 +88,7 @@ async def main(out):
         e = await ev(f'{M}.estado()'); sr = await ev(f'{M}.salidas()')
         ok(all(f['nivel'] == 100 and f['on'] and f['color'] is None for f in e['luces']['fixtures']), '6. «Restaurar niveles»: las 46 vuelven a 100 %, ON y color de escena')
         ok(not e['show']['cargado'] and e['escena'] == 'arquitectonica', '6. escena arquitectónica: el show queda descargado')
-        ok(sr == base, '6. salidas idénticas a las del arranque (pantallas, 46 luces y reloj): sin restos del show')
+        ok(all(sr[k] == base[k] for k in ('luces', 'zonas', 'pantallas', 'reloj')), '6. salidas idénticas a las del arranque (pantallas, 46 luces, zonas y reloj): sin restos del show')
         await pg.screenshot(path=os.path.join(out, 'ensayo-4-restaurado.png'))
 
         externos = [u for u in reqs if not u.startswith(('file://', 'blob:', 'data:'))]

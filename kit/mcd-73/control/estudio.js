@@ -324,7 +324,7 @@
       pistas.corrientes.push({ desde: 5, hasta: 10, fuente: vid.id, modo: 'paleta', paleta, estrategias: ['USE_AS_REFERENCE', 'GENERATE_VARIATION'], descripcion: 'contenido generado con la paleta y el ritmo del video (referencia)' });
       pistas.pellegrini.push({ desde: 5, hasta: 10, fuente: vid.id, modo: 'paleta', paleta, estrategias: ['USE_AS_REFERENCE', 'GENERATE_VARIATION'], descripcion: 'continuación de la variación generada' });
       pistas.media.push({ desde: 4.6, hasta: 10, fuente: vid.id, modo: 'paleta', paleta, estrategias: ['USE_AS_REFERENCE', 'GENERATE_VARIATION'], descripcion: 'motion background con la paleta del video' });
-      notas.push(`«${vid.filename}» está marcado solo como REFERENCIA: se usan su paleta y su ritmo, no sus cuadros. Marcá «Usar en el takeover final» para usar el clip.`);
+      notas.push(`«${vid.filename}» está marcado solo como REFERENCIA: se usan su paleta y su ritmo, no sus cuadros. Marcá «Usar en el show final» para usar el clip.`);
       fx.push({ fx: 'LIGHT WAVE', desde: 2, hasta: 5, sobre: 'luces' });
     }
     if (prod && prod.uso.final && !(vid && usaVid)) {
@@ -333,9 +333,9 @@
     } else if (prod && !prod.uso.final) notas.push(`«${prod.filename}» (producto) está como referencia: no se publica.`);
     if (logo && logo.uso.final) {
       pistas.media.push({ desde: 10, hasta: 12.9, fuente: logo.id, modo: 'logo', paleta, estrategias: ['USE_AS_IS', 'COMBINE_WITH_GENERATED_CONTENT'], descripcion: `logo «${logo.filename}» solo en Signature` });
-    } else if (logo) notas.push(`«${logo.filename}» (logo) está como referencia: la firma usa el nombre en tipografía hasta marcarlo como final.`);
+    } else if (logo) notas.push(`«${logo.filename}» (logo) está como referencia: el cierre usa el nombre en letras hasta que lo marques para el show final.`);
     fx.push({ fx: 'SIGNATURE GLOW', desde: 10, hasta: 13, sobre: 'luces + reloj', nota: 'oro y cálido suben; el rojo baja' });
-    if (!listos.length) notas.push('Sin material READY: IDEA FIRST → se usa la plantilla generada del show.');
+    if (!listos.length) notas.push('Sin material listo: se usa la base del show.');
     if (!vid) faltantes.push({ para: 'screen_a + screen_b (5–10 s)', pedido: 'Video de campaña o de producto 16:9, ≥ 1920×1080, 8–15 s, sin textos legales incrustados.', promptGenerativo: `Premium hero shot of the product on deep red (#DA291C) background, volumetric warm light, slow push-in, 2592×576 safe framing, no text.` });
     if (!logo || !logo.uso.final) faltantes.push({ para: 'horizontal · Signature (10–13 s)', pedido: 'Logo oficial en PNG con transparencia (archivo de la agencia).', promptGenerativo: null });
     if (!prod && quiere.producto) faltantes.push({ para: 'screen_b · Product Hero', pedido: 'Packshot del producto con fondo limpio o transparente.', promptGenerativo: 'Clean packshot of the product, centered, transparent background, soft rim light.' });
@@ -366,7 +366,7 @@
       flujo: !listos.length ? 'IDEA FIRST' : (prompt || '').trim() ? 'MEDIA + PROMPT' : 'MEDIA FIRST', duracionS: M.DUR,
       upperMode,
       fuentes: listos.map((a) => ({ id: a.id, filename: a.filename, assetId: a.assetId, uso: a.uso.final ? 'CAMPAIGN ASSET (pendiente de validación)' : 'REFERENCE MEDIA', roles: a.roles, rango: a.rango, derechos: a.derechos })),
-      momentos, pistas, fx, derivadas, faltantes, notas: ['No se estira nada: crop, reframe, pan, máscara o extensión de fondo según el formato.', ...notas] };
+      momentos, pistas, fx, derivadas, faltantes, notas: ['Nada se estira: cada pantalla recorta o reencuadra el material a su medida.', ...notas] };
   }
 
   // ---------- preview sobre las 3 pantallas del simulador ----------
@@ -398,12 +398,13 @@
 
   // ---------- interfaz ----------
   const ICONO = { video: '▶', image: '▣', desconocido: '?' };
+  const ESTADO_TXT = { UPLOADING: 'Subiendo', ANALYZING: 'Analizando', READY: 'Listo', REJECTED: 'Rechazado' };
   function pintar() {
     const ul = $('adj-lista'); if (!ul) return;
     ul.innerHTML = adjuntos.map((a) => `<li class="adj ${a.status.toLowerCase()}" data-id="${a.id}">
       <button class="adj-ver" data-id="${a.id}" title="Ver análisis y opciones">${a.thumbnail ? `<img src="${a.thumbnail}" alt="">` : `<span class="ic">${ICONO[a.type] || '?'}</span>`}
-        <span class="adj-txt"><b>${esc(a.filename)}</b><small>${a.status === 'READY' ? (a.type === 'video' ? `${fmtT(a.durationMs / 1000)} · ${a.width}×${a.height}` : `${a.width}×${a.height}`) + ' · ' + (a.uso.final ? 'final' : 'referencia') + (a.roles.length ? ' · ' + a.roles.join(', ') : '') : a.status === 'REJECTED' ? esc(a.motivo) : a.status === 'ANALYZING' ? 'analizando…' : 'subiendo…'}</small></span>
-        <em class="estado-adj">${a.status}</em></button>
+        <span class="adj-txt"><b>${esc(a.filename)}</b><small>${a.status === 'READY' ? (a.type === 'video' ? `${fmtT(a.durationMs / 1000)} · ${a.width}×${a.height}` : `${a.width}×${a.height}`) + ' · ' + (a.uso.final ? 'va al show' : 'referencia') + (a.roles.length ? ' · ' + a.roles.join(', ') : '') : a.status === 'REJECTED' ? esc(a.motivo) : a.status === 'ANALYZING' ? 'analizando…' : 'cargando…'}</small></span>
+        <em class="estado-adj">${ESTADO_TXT[a.status]}</em></button>
       <button class="adj-quitar" data-id="${a.id}" title="Quitar">remove</button></li>`).join('');
     ul.querySelectorAll('.adj-ver').forEach((b) => b.addEventListener('click', () => abrirVisor(b.dataset.id)));
     ul.querySelectorAll('.adj-quitar').forEach((b) => b.addEventListener('click', () => quitar(b.dataset.id)));
@@ -411,14 +412,14 @@
     const c = $('concepto');
     if (!concepto) { c.hidden = true; return; }
     c.hidden = false;
-    c.innerHTML = `<p class="cab">Concepto · ${esc(concepto.flujo)} · ${esc(concepto.proveedor)}</p>
-      <p class="sub">Storyboard</p>
+    c.innerHTML = `<p class="cab">Plan del show · armado con reglas a partir de tu material${(concepto.prompt || '').trim() ? ' y tu pedido' : ''} (sin IA)</p>
+      <p class="sub">Qué se ve en cada momento</p>
       <div class="story">${concepto.momentos.map((m) => `<div class="mom"><b>${m.desde}–${m.hasta} s · ${esc(m.nombre)}</b>${m.fx.length ? `<span class="fx">${m.fx.join(' · ')}</span>` : ''}
-        ${[['screen_a', 'A'], ['screen_b', 'B'], ['horizontal', 'H']].map(([s, k]) => `<div class="ln"><i>${k}</i>${esc(m.pantallas[s])}</div>`).join('')}</div>`).join('')}</div>
-      ${concepto.derivadas.length ? `<p class="sub">Rendered campaign assets · upperMode ${concepto.upperMode} (el original no se toca)</p><ul class="lista-chica">${concepto.derivadas.map((d) => `<li><b>${esc(d.nombre)}</b> ← ${esc(d.fuente)} · ${esc(d.transformacion)} · ${esc(d.formatoDestino)} · <i>${esc(d.estado)}</i></li>`).join('')}</ul>` : ''}
-      ${concepto.faltantes.length ? `<p class="sub">Material faltante</p><ul class="lista-chica">${concepto.faltantes.map((f) => `<li><b>${esc(f.para)}:</b> ${esc(f.pedido)}${f.promptGenerativo ? `<br><code>${esc(f.promptGenerativo)}</code>` : ''}</li>`).join('')}</ul>` : ''}
+        ${[['screen_a', 'Corrientes'], ['screen_b', 'Pellegrini'], ['horizontal', 'Abajo']].map(([s, k]) => `<div class="ln" title="${esc(m.pantallas[s])}"><i>${k}</i>${esc(m.pantallas[s].split(' · ').slice(1).join(' · ') || m.pantallas[s])}</div>`).join('')}</div>`).join('')}</div>
+      ${concepto.derivadas.length ? `<p class="sub">Archivos finales a producir (el original no se toca)</p><ul class="lista-chica">${concepto.derivadas.map((d) => `<li title="${esc(d.transformacion)}"><b>${esc(d.nombre)}</b> · ${esc(d.formatoDestino)} · sale de ${esc(d.fuente)} · <i>pendiente de render y validación</i></li>`).join('')}</ul>` : ''}
+      ${concepto.faltantes.length ? `<p class="sub">Falta</p><ul class="lista-chica">${concepto.faltantes.map((f) => `<li><b>${esc(f.para)}:</b> ${esc(f.pedido)}${f.promptGenerativo ? `<br><code>${esc(f.promptGenerativo)}</code>` : ''}</li>`).join('')}</ul>` : ''}
       <ul class="lista-chica notas">${concepto.notas.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>
-      <div class="botonera"><button class="b oro" id="c-aplicar">${aplicado ? 'Preview aplicado ✓' : 'Aplicar al preview'}</button><button class="b" id="c-quitar" ${aplicado ? '' : 'disabled'}>Quitar media del preview</button><button class="b" id="c-exportar">Exportar plan (JSON)</button></div>`;
+      <div class="botonera"><button class="b oro" id="c-aplicar">${aplicado ? 'Viéndolo en el edificio ✓' : 'Ver en el edificio'}</button><button class="b" id="c-quitar" ${aplicado ? '' : 'disabled'}>Quitar el material</button><button class="b" id="c-exportar">Descargar plan</button></div>`;
     $('c-aplicar').addEventListener('click', aplicarAlPreview);
     $('c-quitar').addEventListener('click', quitarDelPreview);
     $('c-exportar').addEventListener('click', exportarPlan);
@@ -439,8 +440,8 @@
 
   // visor (preview del adjunto)
   const ATAJOS = [
-    ['producto', 'USE THIS PRODUCT', 'image'], ['logo', 'USE THIS LOGO', 'image'], ['estilo', 'USE THIS VIDEO STYLE', 'video'],
-    ['paleta', 'USE THIS COLOR PALETTE', null], ['clip', 'USE THIS CLIP', 'video'],
+    ['producto', 'Es el producto', 'image'], ['logo', 'Es el logo', 'image'], ['estilo', 'Tomar su estilo', 'video'],
+    ['paleta', 'Tomar sus colores', null], ['clip', 'Usar este clip', 'video'],
   ];
   function abrirVisor(id) {
     const a = adjuntos.find((x) => x.id === id); if (!a) return;
@@ -454,27 +455,27 @@
       <div class="vis-cuerpo">
         <div class="vis-izq">${medio}
           ${a.keyframes.length > 1 ? `<div class="kf">${a.keyframes.map((k) => `<figure><img src="${k.img}" alt=""><figcaption>${k.t.toFixed(2)} s</figcaption></figure>`).join('')}</div>` : ''}
-          ${a.type === 'video' && a.status === 'READY' ? `<div class="rango"><p class="sub">SOURCE TIMELINE · usar para el takeover</p>
+          ${a.type === 'video' && a.status === 'READY' ? `<div class="rango"><p class="sub">Qué parte del video usar</p>
             <div class="rango-barra"><span id="rg-sel"></span>${(vis.cortes || []).map((c) => `<i style="left:${c / (a.durationMs / 1000) * 100}%"></i>`).join('')}</div>
             <div class="fila"><label for="rg-a">Desde</label><input type="range" id="rg-a" min="0" max="${a.durationMs}" step="40" value="${Math.round(a.rango[0] * 1000)}"><span class="valor" id="rg-a-v"></span></div>
             <div class="fila"><label for="rg-b">Hasta</label><input type="range" id="rg-b" min="0" max="${a.durationMs}" step="40" value="${Math.round(a.rango[1] * 1000)}"><span class="valor" id="rg-b-v"></span></div>
-            <p class="uso-rango" id="rg-txt"></p><button class="b" id="rg-sug">Usar rango sugerido (${fmtT(a.rangoSugerido[0])} → ${fmtT(a.rangoSugerido[1])})</button></div>` : ''}
+            <p class="uso-rango" id="rg-txt"></p><button class="b" id="rg-sug">Usar la parte sugerida (${fmtT(a.rangoSugerido[0])} → ${fmtT(a.rangoSugerido[1])})</button></div>` : ''}
         </div>
         <div class="vis-der">
-          <p class="sub">Metadata técnica</p>
+          <p class="sub">Datos del archivo</p>
           <table class="meta">${Object.entries(tec).map(([k, x]) => `<tr><th>${esc(k)}</th><td>${esc(x)}</td></tr>`).join('')}${a.sha256 ? `<tr><th>SHA-256 (local)</th><td class="mono">${a.sha256.slice(0, 24)}…</td></tr>` : ''}</table>
-          ${a.analisis ? `<p class="sub">AI NOTES <span class="gen">análisis generado · heurístico local, no IA · no es metadata técnica</span></p>
+          ${a.analisis ? `<p class="sub">Lo que vimos en el material <span class="gen">análisis automático por reglas · no es IA · puede fallar</span></p>
           <ul class="notas-ia">${a.analisis.notasIA.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>
           <div class="paleta">${vis.colores.map((c) => `<span style="background:${c.hex}" title="${c.nombre} · ${Math.round(c.peso * 100)} %"></span>`).join('')}</div>` : ''}
-          <p class="sub">Uso</p>
-          <label class="chk"><input type="checkbox" id="u-ref" ${a.uso.referencia ? 'checked' : ''}> Use as reference</label>
-          <label class="chk"><input type="checkbox" id="u-fin" ${a.uso.final ? 'checked' : ''} ${a.status !== 'READY' ? 'disabled' : ''}> Use in final takeover <small>(pasa a CAMPAIGN ASSET: requiere render + validación M3A)</small></label>
+          <p class="sub">Para qué se usa</p>
+          <label class="chk"><input type="checkbox" id="u-ref" ${a.uso.referencia ? 'checked' : ''}> Solo como referencia (no sale al aire)</label>
+          <label class="chk"><input type="checkbox" id="u-fin" ${a.uso.final ? 'checked' : ''} ${a.status !== 'READY' ? 'disabled' : ''}> Usar en el show final <small>(antes de salir al aire se renderiza y se valida)</small></label>
           <p class="sub">Derechos (opcional)</p>
-          <label class="chk"><input type="checkbox" id="d-rc" ${a.derechos.rightsConfirmed ? 'checked' : ''}> rightsConfirmed</label>
-          <input class="txt" id="d-own" placeholder="sourceOwner (agencia / marca)" value="${esc(a.derechos.sourceOwner)}">
-          <input class="txt" id="d-not" placeholder="usageNotes" value="${esc(a.derechos.usageNotes)}">
-          ${a.status === 'READY' ? `<p class="sub">Prompt builder</p><div class="atajos">${ATAJOS.filter(([, , t]) => !t || t === a.type).map(([r, txt]) => `<button class="b ${a.roles.includes(r) ? 'on' : ''}" data-r="${r}">${txt}</button>`).join('')}
-            ${a.type === 'video' ? '<button class="b oro" id="build15">BUILD 15s TAKEOVER FROM THIS VIDEO</button>' : ''}</div>` : ''}
+          <label class="chk"><input type="checkbox" id="d-rc" ${a.derechos.rightsConfirmed ? 'checked' : ''}> Derechos de uso confirmados</label>
+          <input class="txt" id="d-own" placeholder="Dueño del material (agencia / marca)" value="${esc(a.derechos.sourceOwner)}">
+          <input class="txt" id="d-not" placeholder="Notas de uso" value="${esc(a.derechos.usageNotes)}">
+          ${a.status === 'READY' ? `<p class="sub">Atajos para tu pedido</p><div class="atajos">${ATAJOS.filter(([, , t]) => !t || t === a.type).map(([r, txt]) => `<button class="b ${a.roles.includes(r) ? 'on' : ''}" data-r="${r}">${txt}</button>`).join('')}
+            ${a.type === 'video' ? '<button class="b oro" id="build15">Armar el show de 15 s con este video</button>' : ''}</div>` : ''}
         </div>
       </div>`;
     $('vis-cerrar').addEventListener('click', cerrarVisor);
@@ -490,7 +491,7 @@
     }));
     if ($('build15')) $('build15').addEventListener('click', () => {
       if (!a.roles.includes('clip')) a.roles.push('clip');
-      $('prompt').value = `Create a 15-second premium MASTER OF TRUST takeover using the attached video «${a.filename}» as the main source material (${fmtT(a.rango[0])} → ${fmtT(a.rango[1])}). Prioritize the product, carry one light gesture from Corrientes to Pellegrini and into the horizontal screen, and keep the logo for the Signature moment.`;
+      $('prompt').value = `Show de 15 s con el video «${a.filename}» como material principal (${fmtT(a.rango[0])} → ${fmtT(a.rango[1])}). El producto protagonista, que la imagen arranque en Corrientes, pase a Pellegrini y baje a la pantalla de abajo; el logo solo en el cierre.`;
       plegar(false); abrirVisor(a.id); pintar();
     });
     if (a.type === 'video' && a.status === 'READY') {
@@ -502,7 +503,7 @@
         $('rg-a-v').textContent = x.toFixed(1) + 's'; $('rg-b-v').textContent = y.toFixed(1) + 's';
         ra.style.setProperty('--p', (x / dur * 100) + '%'); rb.style.setProperty('--p', (y / dur * 100) + '%');
         $('rg-sel').style.left = (x / dur * 100) + '%'; $('rg-sel').style.width = ((y - x) / dur * 100) + '%';
-        $('rg-txt').innerHTML = `USE: <b>${fmtT(a.rango[0])} → ${fmtT(a.rango[1])}</b> · ${(y - x).toFixed(2)} s${y - x < 15 ? ' (menos de 15 s: LOOP / combinación)' : ''}`;
+        $('rg-txt').innerHTML = `Se usa: <b>${fmtT(a.rango[0])} → ${fmtT(a.rango[1])}</b> · ${(y - x).toFixed(2)} s${y - x < 15 ? ' (menos de 15 s: LOOP / combinación)' : ''}`;
         pintar();
       };
       ra.addEventListener('input', act); rb.addEventListener('input', act);

@@ -31,6 +31,9 @@ FILES = [
      "Takeover McDonald's 15 s, creatividad A · Brand dominance: un solo nombre gigante entre las dos pantallas superiores + pilastras de luz. SIMULACIÓN."),
     ('video/07-trust-mcd-takeover-15s-B-product-hero.mp4', 'trust-mcd-takeover-15s-B-producto.mp4',
      "Takeover McDonald's 15 s, creatividad B · Product hero: producto genérico grande + macro del mismo producto. SIMULACIÓN."),
+    ('video/08-trust-mcd-takeover-15s-D-papas.mp4', 'trust-mcd-takeover-15s-D-papas.mp4', "Takeover 15 s, creatividad D · Papas: lluvia de papas doradas en las 3 pantallas. SIMULACIÓN."),
+    ('video/09-trust-mcd-takeover-15s-E-desayuno.mp4', 'trust-mcd-takeover-15s-E-desayuno.mp4', "Takeover 15 s, creatividad E · Desayuno: amanecer, café y medialuna. SIMULACIÓN."),
+    ('video/10-trust-mcd-takeover-15s-F-lanzamiento.mp4', 'trust-mcd-takeover-15s-F-lanzamiento.mp4', "Takeover 15 s, creatividad F · Lanzamiento: cuenta regresiva 3-2-1 y revelación. SIMULACIÓN."),
     ('pdf/01-deck-ejecutivo.pdf', 'trust-mcd-deck-v0.pdf', 'Deck ejecutivo, 8 diapositivas: HOY FUNCIONA / SE IMPLEMENTARÁ.'),
     ('pdf/02-propuesta-una-pagina.pdf', 'trust-mcd-propuesta-v0.pdf', 'Propuesta comercial de una página (sin precios).'),
     ('pdf/03-guion-reunion.pdf', 'trust-mcd-guion-v0.pdf', 'Guion de reunión de 30 min (uso interno, no entregar a la marca).'),
@@ -48,7 +51,7 @@ FILES.append(('consola/base-trust-noche.jpg', 'consola/base-trust-noche.jpg', 'F
 # TRUST Control: presentación interactiva offline (SIMULACIÓN, no conectada a equipos). Abre con doble clic.
 FILES.insert(0, ('control/index.html', 'control/index.html',
                  "TRUST Control — presentación interactiva offline: foto real, Día/Noche, pantallas y 46 luminarias con dimmers independientes, show McDonald's 15 s. SIMULACIÓN."))
-for f in ('estilo.css', 'fuentes.css', 'app.js', 'motor.js', 'contenido.js', 'estudio.js', 'AI_CONTENT_STUDIO.md', 'PRESETS_RGBW.md', 'geometria.js', 'luminarias.js', 'LICENCIA-Inter.txt', 'fotos/trust-noche.jpg', 'fotos/trust-relieve.jpg', 'fotos/trust-dia.jpg'):
+for f in ('estilo.css', 'fuentes.css', 'app.js', 'motor.js', 'contenido.js', 'estudio.js', 'AI_CONTENT_STUDIO.md', 'PRESETS_RGBW.md', 'geometria.js', 'encuadres.js', 'luminarias.js', 'LICENCIA-Inter.txt', 'fotos/trust-noche.jpg', 'fotos/trust-relieve.jpg', 'fotos/trust-cielo.png', 'fotos/trust-noche-completa.jpg', 'fotos/trust-relieve-completa.jpg', 'fotos/trust-cielo-completa.png', 'fotos/trust-dia.jpg'):
     if os.path.isfile(os.path.join(K, 'control', f)):
         FILES.append((f'control/{f}', f'control/{f}', 'Archivo de TRUST Control.'))
 FILES.insert(0, ('ABRIR-PRESENTACION.txt', 'ABRIR-PRESENTACION.txt', 'Cómo abrir y operar la presentación (empezar por acá).'))
@@ -80,7 +83,7 @@ FILES.insert(2, (WEBM, None, 'Video principal en 720p VP9/WebM, para navegadores
 FILES.insert(4, (WEBM_DEMO, None, 'Grabación de TRUST CONTROL en 720p VP9/WebM, para navegadores sin H.264.'))
 FILES.insert(6, (WEBM_SHOW, None, "Respaldo del show McDonald's 15 s en TRUST Control, 720p VP9/WebM, para navegadores sin H.264."))
 FB = {}
-for n, v in (('05', 'C-iconic'), ('06', 'A-brand'), ('07', 'B-producto')):
+for n, v in (('05', 'C-iconic'), ('06', 'A-brand'), ('07', 'B-producto'), ('08', 'D-papas'), ('09', 'E-desayuno'), ('10', 'F-lanzamiento')):
     w = f'video/{n}b-trust-mcd-takeover-15s-{v}-720p.webm'; webm(f'trust-mcd-takeover-15s-{v}.mp4', w)
     FB[next(d for d, s_, _ in FILES if s_ == f'trust-mcd-takeover-15s-{v}.mp4')] = w
     FILES.append((w, None, 'Mismo takeover en VP9/WebM, para navegadores sin H.264.'))

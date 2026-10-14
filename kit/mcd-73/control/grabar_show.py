@@ -24,7 +24,7 @@ async def main(trabajo, salida, creatividad, cliente):
     n = 0
     async with async_playwright() as p:
         b = await p.chromium.launch()
-        ctx = await b.new_context(offline=True, viewport={'width': 1920, 'height': 1080})
+        ctx = await b.new_context(offline=True, viewport={'width': 1920, 'height': 1080}, device_scale_factor=2 if cliente else 1)
         pg = await ctx.new_page()
         reqs, errs = [], []
         pg.on('request', lambda r: reqs.append(r.url) if not r.url.startswith('file://') else None)
@@ -59,7 +59,8 @@ async def main(trabajo, salida, creatividad, cliente):
             await pg.click('#escenas button[data-e="arquitectonica"]')
             await grabar(2000)
         await b.close()
-    filtro = ['-vf', f'crop={caja[2] // 2 * 2}:{caja[3] // 2 * 2}:{caja[0]}:{caja[1]}'] if caja else []
+    k = 2 if cliente else 1   # en modo cliente se graba a doble densidad (más nitidez para presentar)
+    filtro = ['-vf', f'crop={caja[2] * k // 2 * 2}:{caja[3] * k // 2 * 2}:{caja[0] * k}:{caja[1] * k}'] if caja else []
     subprocess.run(['ffmpeg', '-v', 'error', '-y', '-framerate', str(FPS), '-i', os.path.join(cuadros, '%05d.png'), *filtro,
                     '-c:v', 'libx264', '-preset', 'slow', '-crf', '18', '-pix_fmt', 'yuv420p', '-movflags', '+faststart',
                     salida], check=True)

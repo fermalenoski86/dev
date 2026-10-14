@@ -10,8 +10,8 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 SIN_T = 'TRUST.motor.setTransicion && TRUST.motor.setTransicion(0); '
 PARES = [
     ('par-1-arquitectonica', 'Arquitectónica cálida', "TRUST.motor.setEscena('arquitectonica')", "TRUST.motor.setEscena('arquitectonica')"),
-    ('par-2-takeover', "McDonald's · full takeover", 'TRUST.motor.cargarShow(); TRUST.motor.seek(8.3)', 'TRUST.motor.cargarShow(); TRUST.motor.seek(7.6)'),
-    ('par-3-firma', "McDonald's · signature / cierre", 'TRUST.motor.cargarShow(); TRUST.motor.seek(12.4)', 'TRUST.motor.cargarShow(); TRUST.motor.seek(11.6)'),
+    ('par-2-takeover', "McDonald's · takeover", 'TRUST.motor.cargarShow(); TRUST.motor.seek(8.3)', 'TRUST.motor.cargarShow(); TRUST.motor.seek(7.6)'),
+    ('par-3-firma', "McDonald's · cierre de marca", 'TRUST.motor.cargarShow(); TRUST.motor.seek(12.4)', 'TRUST.motor.cargarShow(); TRUST.motor.seek(11.6)'),
     ('par-4-noche-idle', 'Noche sin campaña', "TRUST.motor.setEscena('arquitectonica')", "TRUST.motor.setEscena('nocheIdle')"),
 ]
 try: F = ImageFont.truetype('/usr/share/fonts/opentype/inter/Inter-SemiBold.otf', 28)
@@ -29,7 +29,8 @@ async def tomar(pg, ctl, accion, recorte=True, previo=''):
     if not recorte: return im
     # mismo encuadre en ambas versiones: se recorta a la FOTO (el lienzo), sin interfaz, y se lleva a un tamaño común
     r = await pg.evaluate('(() => { const b = document.getElementById("lienzo").getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom].map(Math.round); })()')
-    return im.crop(tuple(r)).resize((1280, round(1280 * 1733 / 2560)), Image.LANCZOS)
+    c = im.crop(tuple(r)); h = 866; w = round(c.width * h / c.height)   # mismo alto, sin deformar (los encuadres tienen proporciones distintas)
+    c = c.resize((w, h), Image.LANCZOS); lienzo_ = Image.new('RGB', (1280, h), (5, 9, 19)); lienzo_.paste(c, ((1280 - w) // 2, 0)); return lienzo_
 
 async def main(out, antes):
     os.makedirs(out, exist_ok=True)

@@ -8,7 +8,7 @@ SIMULACIÓN CONCEPTUAL, no conectada a equipos. Los valores son **intensidades v
 | Fachada superior | SUP-01…16 | intensidad 0–100 % + RGBW |
 | Fachada media | MED-01…16 | intensidad 0–100 % + RGBW |
 | Fachada inferior | INF-01…14 (fuera de cuadro en esta foto) | intensidad 0–100 % + RGBW |
-| Esquina / ochava | SUP-07…11 · MED-09…12 · INF-06…09 (13) | intensidad + RGBW; manda sobre la fila |
+| Esquina / ochava | SUP-07…11 · MED-09…12 · INF-07…10 (13) | intensidad + RGBW; manda sobre la fila |
 | Cúpula | baño de la cúpula (zona `dome` de composition.ts) | intensidad + RGBW |
 | Cornisas | **PROPUESTA**: lineales adicionales, fuera de las 46 | intensidad + RGBW |
 | **Master iluminación** | todas | escala la intensidad; **no** cambia la mezcla RGBW |
@@ -50,3 +50,24 @@ Transición entre presets: 0,5 / 1 / 2 / 3 / 5 s (default 2 s), parte de lo que 
 | 13–15 | EXIT | a ARCHITECTURAL_WARM | vuelve la noche institucional |
 
 Marca: nombre en tipografía y colores de campaña; el logo oficial lo aporta la agencia. Producto: hamburguesa genérica ilustrada.
+
+## Creatividades de pantallas (las 3 como una sola pieza)
+| | Nombre | Qué se ve |
+|---|---|---|
+| A | Marca | el nombre en grande cruzando las dos pantallas de arriba + columnas de luz |
+| B | Producto | hamburguesa protagonista en Pellegrini y primer plano en Corrientes |
+| C | Recorrido | una luz nace en Corrientes, cruza a Pellegrini y aterriza en la de abajo (default) |
+| D | Papas | lluvia de papas doradas en el mismo espacio de las 3 pantallas |
+| E | Desayuno | amanecer cálido, café y medialuna |
+| F | Lanzamiento | cuenta regresiva 3 → 2 → 1 de pantalla en pantalla, destello y producto |
+
+Ilustraciones genéricas (sin envases ni logos oficiales). La marca va en letras; el logo y los spots oficiales se cargan con «Subir video o imagen».
+
+## Estilo del show (lo elige el pedido escrito)
+| Estilo | Takeover (5–10 s) | Cierre (10–13 s) |
+|---|---|---|
+| rojo (default) | rojo 72 · oro 42 · cálido 22 % | oro 50 · cálido 45 · rojo 30 % |
+| dorado | oro 62 · rojo 66 · cálido 24 % | oro 58 · cálido 45 · oro 40 % |
+| cálido (sobrio) | cálido 50 · oro 42 · rojo 55 % | cálido 48 · oro 42 · cálido 48 % |
+
+Intensidad: suave ×0,88 · normal ×1 · fuerte ×1,12 (entre 2 y 13 s). Palabras clave: lanzamiento/nuevo → F · desayuno/café → E · papas → D · producto/hamburguesa → B · logo/marca → A · recorrido/onda → C · dorado · elegante/sutil · impacto/fuerte.

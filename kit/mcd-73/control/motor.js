@@ -36,9 +36,10 @@
     { id: 'ochava', nombre: 'Esquina / ochava' },
   ];
   // Ochava: los equipos frente a la esquina curva (posiciones del plano de Fer; inferior por simetría, fuera de cuadro).
-  const OCHAVA = ['SUP-07', 'SUP-08', 'SUP-09', 'SUP-10', 'SUP-11', 'MED-09', 'MED-10', 'MED-11', 'MED-12', 'INF-06', 'INF-07', 'INF-08', 'INF-09'];
+  const OCHAVA = ['SUP-07', 'SUP-08', 'SUP-09', 'SUP-10', 'SUP-11', 'MED-09', 'MED-10', 'MED-11', 'MED-12', 'INF-07', 'INF-08', 'INF-09', 'INF-10'];
   const enOchava = new Set(OCHAVA);
   const TRANSICIONES = [0.5, 1, 2, 3, 5];
+  const CREATIVIDADES = ['A', 'B', 'C', 'D', 'E', 'F'];
   // Apertura visual del haz (°), configurable por luminaria. Valor de SIMULACIÓN: la real depende de la óptica del equipo.
   const APERTURA = { superior: 40, medio: 50, inferior: 50 };
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -73,15 +74,15 @@
   const ESCENAS = {
     arquitectonica: { clave: 'ARCHITECTURAL_WARM', nombre: 'Arquitectónica cálida', comercial: true, f: calida(0.40, 0.46),
       zonas: { cupula: L_(0.5, C.calido), cornisas: L_(0.35, C.calido) }, reloj: L_(0.85, C.neutro), pantallas: 'reposo' },
-    nocheIdle: { clave: 'NIGHT_IDLE', nombre: 'Noche institucional', comercial: true, f: calida(0.37, 0.42),
+    nocheIdle: { clave: 'NIGHT_IDLE', nombre: 'Noche sin campaña', comercial: true, f: calida(0.37, 0.42),
       zonas: { cupula: L_(0.45, C.calido), cornisas: L_(0.32, C.calido) }, reloj: L_(0.9, C.calido), pantallas: 'institucional' },
     mcd: { clave: 'MCD_TAKEOVER', nombre: "McDonald's takeover", comercial: true, f: (g, i) => sector(PAT_MCD, g, i),
       zonas: { cupula: L_(0.4, C.oro), cornisas: L_(0.22, C.calido) }, reloj: L_(1, C.oro), pantallas: 'marca' },
-    firma: { clave: 'MCD_SIGNATURE', nombre: "McDonald's firma", comercial: true, f: (g, i) => sector(PAT_FIRMA, g, i),
+    firma: { clave: 'MCD_SIGNATURE', nombre: "McDonald's cierre", comercial: true, f: (g, i) => sector(PAT_FIRMA, g, i),
       zonas: { cupula: L_(0.55, C.oro), cornisas: L_(0.4, C.calido) }, reloj: L_(1, C.oro), pantallas: 'firma' },
     blanco: { clave: 'ARCH_WHITE', nombre: 'Blanco arquitectónico', comercial: true, f: () => L_(0.42, C.blancoArq),
       zonas: { cupula: L_(0.45, C.blancoArq), cornisas: L_(0.32, C.blancoArq) }, reloj: L_(0.85, C.neutro), pantallas: 'reposo' },
-    diagnostico: { clave: 'RGB_DIAGNOSTIC', nombre: 'Diagnóstico RGB', diagnostico: true, f: (g, i, n, id) => L_(0.45, DIAG[id] || C.blancoArq),
+    diagnostico: { clave: 'RGB_DIAGNOSTIC', nombre: 'Prueba de colores', diagnostico: true, f: (g, i, n, id) => L_(0.45, DIAG[id] || C.blancoArq),
       zonas: { cupula: L_(0.3, C.neutro), cornisas: L_(0.25, C.neutro) }, reloj: L_(0.85, C.neutro), pantallas: 'diagnostico' },
     // RGBW libre (técnico): base W neutra; cada luminaria, zona o nivel toma el color que elija el operador.
     libre: { clave: 'RGBW_FREE', nombre: 'RGBW libre (técnico)', diagnostico: true, f: () => L_(0.45, C.blancoArq),
@@ -96,10 +97,10 @@
   // NORMAL → BRAND REVEAL → FULL TAKEOVER → SIGNATURE → EXIT, con fundidos de 1 s entre momentos (sin saltos).
   const BLOQUES = [
     { desde: 0, hasta: 2, id: 'normal', nombre: 'Normal' },
-    { desde: 2, hasta: 5, id: 'revelacion', nombre: 'Brand reveal' },
-    { desde: 5, hasta: 10, id: 'takeover', nombre: 'Full takeover' },
-    { desde: 10, hasta: 13, id: 'firma', nombre: 'Signature' },
-    { desde: 13, hasta: 15, id: 'salida', nombre: 'Exit' },
+    { desde: 2, hasta: 5, id: 'revelacion', nombre: 'Entrada de marca' },
+    { desde: 5, hasta: 10, id: 'takeover', nombre: 'Takeover' },
+    { desde: 10, hasta: 13, id: 'firma', nombre: 'Cierre de marca' },
+    { desde: 13, hasta: 15, id: 'salida', nombre: 'Salida' },
   ];
   // Jerarquía: con las pantallas a máxima presencia la arquitectura baja un poco (soporte, no competencia).
   const presencia = (t) => suave((t - 4.5) / 1) * (1 - suave((t - 10) / 1));
@@ -115,10 +116,10 @@
     } },
     { desde: 5, luz: (g, i, n, id, t) => {      // persecución lenta de sectores de 3: rojo · oro · cálido (brief: 65–75 · 35–45 · 15–25 %)
       const p = (t - 5) / 1.25, paso = Math.floor(p), k = suave((p - paso) / 0.4), b = Math.floor(i / 3) + desfaseDe(g);
-      const est = (s) => [L_(0.72, C.rojo), L_(0.42, C.oro), L_(0.22, C.calido)][((b + s) % 3 + 3) % 3];   // con jerarquía −8 %: 66 · 39 · 20 %
+      const est = (s) => PALETA_TAKEOVER[OPC.estilo][((b + s) % 3 + 3) % 3];   // con jerarquía −8 %: 66 · 39 · 20 %
       return mezclar(est(paso - 1), est(paso), k);
     } },
-    { desde: 10, luz: (g, i) => [L_(0.50, C.oro), L_(0.45, C.calido), L_(0.30, C.rojo)][(Math.floor(i / 3) + 0) % 3] },
+    { desde: 10, luz: (g, i) => PALETA_FIRMA[OPC.estilo][Math.floor(i / 3) % 3] },
     { desde: 13, luz: (g, i, n, id) => ESCENAS.arquitectonica.f(g, i, n, id) },
   ];
   const ZONAS_MOMENTO = [
@@ -137,9 +138,21 @@
     }
     return v;
   }
+  // Estilo del show (lo elige el prompt o el operador): rojo (default) · dorado · cálido (sobrio). Intensidad 0,85–1,15.
+  const PALETA_TAKEOVER = {
+    rojo: [L_(0.72, C.rojo), L_(0.42, C.oro), L_(0.22, C.calido)],
+    dorado: [L_(0.62, C.oro), L_(0.66, C.rojo), L_(0.24, C.calido)],
+    calido: [L_(0.50, C.calido), L_(0.42, C.oro), L_(0.55, C.rojo)],
+  };
+  const PALETA_FIRMA = {
+    rojo: [L_(0.50, C.oro), L_(0.45, C.calido), L_(0.30, C.rojo)],
+    dorado: [L_(0.58, C.oro), L_(0.45, C.calido), L_(0.40, C.oro)],
+    calido: [L_(0.48, C.calido), L_(0.42, C.oro), L_(0.48, C.calido)],
+  };
+  const OPC = { estilo: 'rojo', intensidad: 1 };
   function showLuz(g, i, n, id, t) {
     const v = encadenar(t, (k) => MOMENTOS[k].luz(g, i, n, id, t));
-    return L_(v.nivel * (1 - JERARQUIA * presencia(t)), v.rgbw);
+    return L_(Math.min(1, v.nivel * (1 - JERARQUIA * presencia(t)) * (t >= 2 && t < 13 ? OPC.intensidad : 1)), v.rgbw);
   }
   function showZona(z, t) { const v = encadenar(t, (k) => ZONAS_MOMENTO[k][z]); return L_(v.nivel * (1 - JERARQUIA * presencia(t)), v.rgbw); }
   function showReloj(t) {   // CLOCK ACCENT (próxima fase): realce dorado durante takeover y firma
@@ -164,7 +177,8 @@
       escena: 'arquitectonica',
       transicion: 2,           // s (default comercial)
       fundido: null,           // transición en curso entre presets: { t, dur, desde }
-      creatividad: 'C',        // A brand dominance · B product hero · C iconic moment
+      creatividad: 'C',        // A marca · B producto · C recorrido · D papas · E desayuno · F lanzamiento
+      showEstilo: 'rojo', showIntensidad: 1,
       show: { cargado: false, t: 0, reproduciendo: false },
     };
   }
@@ -222,7 +236,7 @@
 
   // ---------- acciones ----------
   const api = {
-    DUR, GRUPOS, PANTALLAS, ESCENAS, BLOQUES, APERTURA, ZONAS, OCHAVA, TRANSICIONES, COLORES: C,
+    DUR, GRUPOS, PANTALLAS, ESCENAS, BLOQUES, APERTURA, ZONAS, OCHAVA, TRANSICIONES, CREATIVIDADES, COLORES: C,
     estado: () => JSON.parse(JSON.stringify(S)),
     salidas,
     bloque,
@@ -245,7 +259,12 @@
     setReloj(v) { S.reloj.nivel = pct(v); return avisar(); },
     setBlackout(b) { S.blackout = !!b; return avisar(); },
     setTransicion(s) { s = +s; if (s !== 0 && !TRANSICIONES.includes(s)) throw new Error('transición ' + s); S.transicion = s; if (!s) S.fundido = null; return avisar(); },
-    setCreatividad(v) { if (!['A', 'B', 'C'].includes(v)) throw new Error('creatividad ' + v); S.creatividad = v; return avisar(); },
+    setCreatividad(v) { if (!CREATIVIDADES.includes(v)) throw new Error('creatividad ' + v); S.creatividad = v; return avisar(); },
+    setEstiloShow(estilo, intensidad) {
+      if (!(estilo in PALETA_TAKEOVER)) throw new Error('estilo ' + estilo);
+      S.showEstilo = OPC.estilo = estilo; S.showIntensidad = OPC.intensidad = clamp(+intensidad || 1, 0.85, 1.15);
+      return avisar();
+    },
     setEscena(e) {
       if (!(e in ESCENAS)) throw new Error('escena ' + e);
       iniciarFundido();   // la transición parte de lo que se ve ahora (preset, show o fundido en curso)
@@ -281,7 +300,7 @@
       S.luces.master = 100; S.reloj.nivel = 100; S.blackout = false;
       return api.volverAEscena();
     },
-    reiniciarTodo() { S = nuevoEstado(); return avisar(); },
+    reiniciarTodo() { S = nuevoEstado(); OPC.estilo = 'rojo'; OPC.intensidad = 1; return avisar(); },
     // Escenas guardadas como archivo local (sin servicio ni red).
     exportarEscena() {
       return JSON.stringify({ formato: 'trust-escena-v1', simulacion: true, escena: S.escena, transicion: S.transicion, creatividad: S.creatividad,
@@ -304,7 +323,7 @@
       S.pantallas = nuevo.pantallas; S.luces = nuevo.luces; S.reloj = nuevo.reloj;
       if (d.escena in ESCENAS) { iniciarFundido(); S.escena = d.escena; S.show = { cargado: false, t: 0, reproduciendo: false }; }
       if (TRANSICIONES.includes(d.transicion)) S.transicion = d.transicion;
-      if (['A', 'B', 'C'].includes(d.creatividad)) S.creatividad = d.creatividad;
+      if (CREATIVIDADES.includes(d.creatividad)) S.creatividad = d.creatividad;
       return avisar();
     },
   };
