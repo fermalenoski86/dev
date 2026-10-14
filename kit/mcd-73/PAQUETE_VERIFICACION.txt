@@ -155,3 +155,46 @@ $ python3 -I kit/mcd-73/prueba_navegador.py <dir>/TRUST-McDonalds-kit-offline/in
 no-file requests: []
 ABRIR-PRESENTACION en el paquete menciona video/04: 1
 sha256 del video 04 en el paquete = repo: 0c375c5c06d8d51a / 0c375c5c06d8d51a
+
+## Paquete en dos partes tras guion de reunión v1 (bloque 7–12 con TRUST Control + Director simulado, respaldo video/04) y paso 5 de ABRIR-PRESENTACION — 2026-10-14 11:32 UTC (turno programado)
+$ python3 -I kit/mcd-73/paquete.py <dir> && python3 -I kit/mcd-73/partir.py <dir>
+TRUST-McDonalds-kit-offline-parte1-videos-consola.zip  18936024 bytes, sha256 bd6b7bd8b1c905e6…
+TRUST-McDonalds-kit-offline-parte2-pdf-imagenes.zip  20463052 bytes, sha256 68939b5b97535115…
+$ kit/mcd-73/verificar_paquete.sh <parte1.zip> <parte2.zip>
+== ZIP: TRUST-McDonalds-kit-offline-parte1-videos-consola.zip 18936024 bytes, sha256 bd6b7bd8b1c905e6…
+== ZIP: TRUST-McDonalds-kit-offline-parte2-pdf-imagenes.zip 20463052 bytes, sha256 68939b5b97535115…
+== integridad
+SHA256SUMS: 29 archivos OK
+== videos (decodificación completa, sin errores)
+OK video/01-trust-mcd-video-principal-1080p.mp4  h264,High,1920,1080 37.000000 
+OK video/02-trust-mcd-video-alternativo-720p.mp4  h264,Main,1280,720 37.000000 
+OK video/03-trust-control-grabacion-real-1080p.mp4  h264,High,1920,1080 57.960000 
+OK video/04-trust-control-show-mcd-15s-1080p.mp4  h264,High,1920,1080 19.080000 
+OK video/02b-trust-mcd-video-alternativo-720p.webm  vp9,Profile 0,1280,720 37.000000 
+OK video/03b-trust-control-grabacion-real-720p.webm  vp9,Profile 0,1280,720 57.960000 
+OK video/04b-trust-control-show-mcd-15s-720p.webm  vp9,Profile 0,1280,720 19.080000 
+== PDFs
+OK pdf/01-deck-ejecutivo.pdf  8 pág. 1440x810 pt 
+OK pdf/02-propuesta-una-pagina.pdf  1 pág. 595.92x842.88 pt 
+OK pdf/03-guion-reunion.pdf  1 pág. 595.92x842.88 pt 
+== imágenes
+OK imagenes/01-obelisco-noche.png  1920,1080
+OK imagenes/02-takeover.png  1920,1080
+OK imagenes/03-firma-sincronizada.png  1920,1080
+OK imagenes/04-brand-reveal.png  1920,1080
+== index.html sin recursos de red
+OK: 27 referencias locales, todas existen
+== consola DMX virtual sin red
+OK: consola sin red; 2 referencias locales existen; rótulo: 1
+== TRUST Control sin red
+OK: TRUST Control sin red; 6 referencias locales existen; rótulo: 2
+== rótulo
+index.html:2
+LEEME.txt:6
+RESULTADO: paquete offline verificado
+exit=0
+$ python3 -I kit/mcd-73/prueba_navegador.py <dir>/TRUST-McDonalds-kit-offline/index.html
+{'out': [[None, 4, 1.48, 1280, None, '02b-trust-mcd-video-alternativo-720p.webm'], [None, 4, 1.48, 1280, None, '02b-trust-mcd-video-alternativo-720p.webm'], [None, 4, 1.46, 1280, None, '03b-trust-control-grabacion-real-720p.webm'], [None, 4, 1.48, 1280, None, '04b-trust-control-show-mcd-15s-720p.webm']], 'imgs': [['imagenes/01-obelisco-noche.png', 1920], ['imagenes/02-takeover.png', 1920], ['imagenes/03-firma-sincronizada.png', 1920], ['imagenes/04-brand-reveal.png', 1920]]}
+no-file requests: []
+guion (pdf/03) en el paquete = repo: 875012b6ee813429, 1 página
+ABRIR-PRESENTACION en el paquete con «Generar minishow (simulado)»: 1

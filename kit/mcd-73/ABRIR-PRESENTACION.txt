@@ -12,7 +12,8 @@ GUION (botón "Comenzar" o "Guion de demo"; flechas ← → para avanzar)
   2. Vista de día
   3. Cambio a noche
   4. Dimmers independientes: pantallas al 40 % (las luces no cambian) y Superior 01 al 20 % (las otras 45 no cambian)
-  5. Cargar «McDonald's Takeover 15 s» (vuelve todo a 100 %)
+  5. Un prompt → «Generar minishow (simulado)»: carga la plantilla McDonald's 15 s
+     (vuelve todo a 100 %; el prompt no se interpreta, no es IA)
   6. Play: pantallas + luminarias + reloj sincronizados
   7. Volver a la escena arquitectónica
 

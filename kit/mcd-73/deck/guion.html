@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><title>TRUST × McDonald's — guion de reunión v0</title>
+<html lang="es"><head><meta charset="utf-8"><title>TRUST × McDonald's — guion de reunión v1</title>
 <style>
 @page{size:A4;margin:0}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Inter,sans-serif;color:#141414;font-size:10.5pt;line-height:1.42}
+body{font-family:Inter,sans-serif;color:#141414;font-size:10pt;line-height:1.36}
 h1{font-size:19pt;font-weight:800}
 .sub{color:#666;margin:3px 0 12px;font-size:9.5pt}
 h2{font-size:11.5pt;font-weight:800;margin:12px 0 4px;color:#DA291C}
@@ -19,7 +19,7 @@ li{margin:2px 0}
 .foot{margin-top:12px;color:#777;font-size:8.5pt}
 </style></head><body>
 <h1>Guion de reunión · TRUST × McDonald's</h1>
-<div class="sub">v0 para ensayo interno · 30 minutos · uso interno, no se entrega a la marca</div>
+<div class="sub">v1 para ensayo interno · 30 minutos · uso interno, no se entrega a la marca</div>
 
 <h2>Objetivo de la reunión</h2>
 <p>Que la marca vea el momento (takeover de 15 s frente al Obelisco), entienda qué controla hoy TRUST CONTROL y qué se implementará, y salga con un próximo paso concreto: elegir esquema y ventana tentativa, y compartir su brand kit.</p>
@@ -29,7 +29,7 @@ li{margin:2px 0}
 <tr><th>Min</th><th>Bloque</th><th>Qué se muestra y qué se dice</th></tr>
 <tr><td class="t">0–3</td><td class="q">Apertura</td><td>Presentación y objetivo. Deck diap. 1–2: el edificio, las dos pantallas sobre Corrientes y Pellegrini, la fachada y el reloj. Sin cifras de audiencia.</td></tr>
 <tr><td class="t">3–7</td><td class="q">El momento</td><td>Video del kit (37 s) a pantalla completa, sin sonido. Después, diap. 3: "las dos pantallas pasan a la marca al mismo tiempo, como una sola pieza". Aclarar: <b>es una simulación conceptual sobre foto real</b>.</td></tr>
-<tr><td class="t">7–12</td><td class="q">Un show, tres sistemas</td><td>Diap. 4–5: pantallas + iluminación de fachada + reloj contando la misma historia. Si hay tiempo, abrir la <b>consola DMX virtual</b> (paquete offline, <code>consola/consola.html</code>): presets 1–4, master, Play. Decir siempre que es <b>simulación, no conectada a equipos</b>. Fachada y reloj: <b>simulación y roadmap</b>. Las 46 ubicaciones de luz son preliminares, no un plano de montaje.</td></tr>
+<tr><td class="t">7–12</td><td class="q">Un prompt, un show</td><td>Diap. 4–5: pantallas + iluminación de fachada + reloj contando la misma historia. Abrir <b>TRUST Control</b> (paquete offline, <code>control/index.html</code>, F11): «Comenzar» → <b>«Generar minishow (simulado)»</b> → Play → Pausa a mitad del show → clic en una luminaria de la grilla y bajarla al 20 % (solo cambia esa) → Play hasta el final → «Restaurar niveles» + escena arquitectónica. Decir siempre: el show es una <b>plantilla preprogramada, el prompt no se interpreta</b>; es <b>simulación, no conectada a equipos</b>. Fachada y reloj: <b>simulación y roadmap</b>. Las 46 ubicaciones de luz son preliminares, no un plano de montaje.</td></tr>
 <tr><td class="t">12–18</td><td class="q">Cómo se controla</td><td>Grabación real de TRUST CONTROL (58 s): un operador sube las piezas, el servidor las valida y genera una versión con hash; <b>otra persona</b> aprueba ese hash exacto; lo aprobado no cambia aunque se siga editando. Diap. 6: HOY FUNCIONA / SE IMPLEMENTARÁ.</td></tr>
 <tr><td class="t">18–24</td><td class="q">Esquemas</td><td>Diap. 7: exclusivo o compartido. Escuchar qué buscan (fechas, frecuencia, producto a lanzar). <b>Sin precios en esta reunión.</b> <span class="pend">Pendiente de Fer: confirmar los dos esquemas.</span></td></tr>
 <tr><td class="t">24–30</td><td class="q">Próximos pasos</td><td>Diap. 8 y propuesta de una página. Pedir: brand kit y piezas, contacto de aprobación, ventana tentativa. Acordar fecha del siguiente contacto.</td></tr>
@@ -40,6 +40,7 @@ li{margin:2px 0}
 <li><b>¿Ya está funcionando la sincronía entre pantallas, luces y reloj?</b> No. Hoy funciona la gestión y aprobación del contenido; la sincronía se medirá en sitio cuando estén integrados los equipos.</li>
 <li><b>¿Cuánta gente pasa por ahí?</b> En esta versión no mostramos números: solo vamos a compartir datos con fuente y fecha verificables.</li>
 <li><b>¿Cuánto cuesta?</b> Depende del esquema, el período y la producción; se arma una propuesta después de esta reunión.</li>
+<li><b>¿El show lo generó una IA?</b> No. Hoy el botón carga una plantilla preprogramada; el texto del prompt no se envía a ningún modelo. Generarlo con IA, como plan validado y aprobado por dos personas, es roadmap.</li>
 <li><b>¿Pueden usar nuestro logo ya?</b> Solo con autorización escrita de la marca. Lo del kit es un mockup ilustrativo, no para publicar.</li>
 <li><b>¿Qué pasa si sale al aire algo que no aprobamos?</b> El sistema exige aprobación de dos personas sobre la versión exacta (hash) y registra quién aprobó qué. El envío a las pantallas físicas todavía es roadmap.</li>
 </ul>
@@ -48,7 +49,7 @@ li{margin:2px 0}
 
 <h2>Material para llevar (offline)</h2>
 <ul>
-<li>Video del kit (MP4) y grabación de TRUST CONTROL (MP4), copiados en la laptop y en un pendrive.</li>
+<li>Paquete offline descomprimido (las dos partes en la misma carpeta) en la laptop y en un pendrive: TRUST Control (<code>control/index.html</code>), video del kit, grabación de TRUST CONTROL y <b>respaldo grabado del show</b> (<code>video/04-…</code>, por si el navegador falla).</li>
 <li>Deck en PDF y propuesta de una página en PDF.</li>
 <li>Plan B sin internet: todo se reproduce desde archivos locales.</li>
 </ul>
