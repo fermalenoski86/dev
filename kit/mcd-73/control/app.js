@@ -242,6 +242,17 @@
     for (const [x, y] of SILUETA.slice(1)) tctx.lineTo(x * W, y * H);
     tctx.closePath(); tctx.fill();
     lctx.globalCompositeOperation = 'lighter'; tctx.globalCompositeOperation = 'lighter';
+    // Baño general: con la fachada iluminada, la piedra rebota luz y TODO el edificio se ve encendido (referencia de Fer,
+    // 14/10). Proporcional al nivel y color promedio de las 46 salidas: con todo apagado vuelve al ambiente mínimo.
+    let sr = 0, sg = 0, sb = 0, sk = 0;
+    for (const s of sal.luces) { const c = rgbDe(s.rgbw); sr += c[0] * s.nivel; sg += c[1] * s.nivel; sb += c[2] * s.nivel; sk += s.nivel; }
+    if (sk > 0.01) {
+      const n = sal.luces.length, kprom = sk / n, col = [sr / sk, sg / sk, sb / sk].map((v) => Math.round(v * 255));
+      const gf = tctx.createLinearGradient(0, H, 0, 0);
+      gf.addColorStop(0, `rgba(${col.join(',')},${0.85 * kprom})`); gf.addColorStop(0.55, `rgba(${col.join(',')},${0.85 * kprom})`);
+      gf.addColorStop(1, `rgba(${col.join(',')},${0.82 * kprom})`);   // parejo hasta la cúpula: se luce el edificio entero
+      tctx.fillStyle = gf; tctx.fillRect(0, 0, W, H);
+    }
     let dibujadas = 0;
     for (const s of sal.luces) {
       const p = puntos[s.id];
@@ -251,7 +262,7 @@
       // en el mapa: haz fuerte + baño suave alrededor (la piedra rebota luz entre haces)
       cono(tctx, x, y, sp, ALTO_HAZ[s.grupo], col, Math.min(1, k * 1.35));
       const ba = tctx.createRadialGradient(x, y - sp * 1.2, 0, x, y - sp * 1.2, sp * 1.9);
-      ba.addColorStop(0, `rgba(${col.join(',')},${0.45 * k})`); ba.addColorStop(1, `rgba(${col.join(',')},0)`);
+      ba.addColorStop(0, `rgba(${col.join(',')},${0.55 * k})`); ba.addColorStop(1, `rgba(${col.join(',')},0)`);
       tctx.fillStyle = ba; tctx.beginPath(); tctx.ellipse(x, y - sp * 1.2, sp * 1.3, sp * 1.9, 0, 0, Math.PI * 2); tctx.fill();
       // en el brillo: el haz suma un poco de destello encima (bloom)
       cono(lctx, x, y, sp, ALTO_HAZ[s.grupo], col, k);
@@ -292,7 +303,7 @@
       ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = 1; ctx.filter = suaveFiltro;
       ctx.drawImage(capaTinte, 0, 0); ctx.filter = 'none';
     }
-    ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = dia ? 0.06 : 0.55;   // 2b. destello del haz
+    ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = dia ? 0.06 : 0.8;   // 2b. destello del haz
     ctx.filter = suaveFiltro;
     ctx.drawImage(capaLuz, 0, 0);
     ctx.filter = 'none';
