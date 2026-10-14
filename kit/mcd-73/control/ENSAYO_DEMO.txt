@@ -1,0 +1,21 @@
+Ensayo real del flujo de demo en Chromium offline, solo con clics (python3 -I kit/mcd-73/control/ensayo_demo.py <dir>).
+OK    1. index.html abre sin red y muestra la portada con «Comenzar»
+OK    1. «Comenzar» deja ver la consola
+OK    2. «Generar minishow (simulado)» carga la plantilla en t=0, en pausa
+OK    2. el plan en pantalla se rotula como plantilla, no IA
+OK    3. Play avanza y Pausa lo frena a mitad del show (t=5.03 s, bloque «Ola roja»)
+OK    3. el timeline muestra el bloque en curso
+OK    4. en pausa el tiempo no avanza
+OK    4. clic en la grilla abre el detalle de SUP-05
+OK    4. SUP-05 al 20 % en pausa: cambia solo SUP-05, las otras 45 iguales (['SUP-05'])
+OK    4. pantallas y reloj no se mueven al tocar la luminaria
+OK    4. salida de SUP-05 = show × 20 % (1.000 → 0.200)
+OK    5. Play reanuda desde donde se pausó
+OK    5. el show llega a 15 s y se detiene solo (16.7 s de reloj, incluida la pausa)
+OK    5. el ajuste de SUP-05 se mantuvo durante el resto del show (cierre: 0.170 vs SUP-04 0.850)
+OK    6. «Restaurar niveles»: las 46 vuelven a 100 %, ON y color de escena
+OK    6. escena arquitectónica: el show queda descargado
+OK    6. salidas idénticas a las del arranque (pantallas, 46 luces y reloj): sin restos del show
+OK    0 pedidos de red fuera de file:// (8 pedidos locales)
+OK    0 errores de consola ([])
+Resultado: TODO OK
