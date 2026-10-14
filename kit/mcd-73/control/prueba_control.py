@@ -180,12 +180,24 @@ async def main(out):
         await ev(apagar); sin = await ev(f'{json.dumps(muestras)}.map(([x,y])=>TRUST.pixel(x,y))')
         dif = sum(1 for a, c in zip(con, sin) if a != c)
         ok(dif == 0, f'ningún halo sobre el contenido LED: {len(muestras)} píxeles dentro de las 3 pantallas idénticos con luces 100 % y 0 % (difieren {dif})')
-        afuera = [[x, y + 0.03] for x, y in list(sint.values())[:5]]
-        await ev(prender); con = await ev(f'{json.dumps(afuera)}.map(([x,y])=>TRUST.pixel(x,y))')
-        await ev(apagar); sin = await ev(f'{json.dumps(afuera)}.map(([x,y])=>TRUST.pixel(x,y))')
-        ok(any(a != c for a, c in zip(con, sin)), 'control: fuera de las pantallas la luz sí aclara la fachada')
-        oscurece = any(any(cc < ss for cc, ss in zip(a[:3], c[:3])) for a, c in zip(con, sin))
-        ok(not oscurece, 'la luz solo aclara la foto (ningún canal se oscurece)')
+        # Noche = el edificio NO tiene luz propia (Fer, 14/10): solo lo ilumina lo que está encendido.
+        await ev(f'{M}.reiniciarTodo()'); await pg.reload(); await pg.wait_for_function('window.TRUST && TRUST.info().W > 0')
+        lum_ = lambda px: 0.2126 * px[0] + 0.7152 * px[1] + 0.0722 * px[2]
+        fachada = [[0.30, 0.50], [0.45, 0.70], [0.60, 0.45], [0.25, 0.75], [0.55, 0.62]]   # fachada del TRUST, fuera de pantallas
+        externos_ = [[0.05, 0.62], [0.78, 0.55], [0.90, 0.15]]                         # vecino, torre blanca, cielo
+        await ev(f'{M}.setVista("dia")'); foto = await ev(f'{json.dumps(fachada + externos_)}.map(([x,y])=>TRUST.pixel(x,y))')
+        await ev(f'{M}.setVista("noche"); {M}.setLucesMaster(0)'); apag = await ev(f'{json.dumps(fachada + externos_)}.map(([x,y])=>TRUST.pixel(x,y))')
+        n_f = len(fachada)
+        rel = sum(lum_(a) for a in apag[:n_f]) / max(1, sum(lum_(f) for f in foto[:n_f]))
+        ok(rel < 0.3, f'noche con luces apagadas: la fachada queda oscura ({rel:.0%} del brillo de la foto)')
+        ok(apag[n_f:] == foto[n_f:], 'vecino, torre blanca y cielo no cambian (quedan como en la foto)')
+        sup5 = (await ev('LUMINARIAS'))['puntos']['SUP-05']
+        en_haz = [[sup5[0], sup5[1] - 0.02]]
+        await ev(f'{M}.setLucesMaster(100)'); prend = await ev(f'{json.dumps(en_haz)}.map(([x,y])=>TRUST.pixel(x,y))')
+        await ev(f'{M}.setLucesMaster(0)'); apg = await ev(f'{json.dumps(en_haz)}.map(([x,y])=>TRUST.pixel(x,y))')
+        ok(lum_(prend[0]) > 2.5 * lum_(apg[0]), f'un haz encendido revela la fachada (brillo ×{lum_(prend[0]) / max(1, lum_(apg[0])):.1f} sobre apagado)')
+        await ev(f'{M}.setLucesMaster(100); {M}.setEscena("mcd")'); rojo = await ev(f'TRUST.pixel({sup5[0]},{sup5[1] - 0.02})')
+        ok(rojo[0] > 1.6 * max(rojo[1], rojo[2]), f'luz roja: la fachada se ve roja ({rojo[:3]})')
         # pantallas al 0 %: el contenido queda negro sin tocar la foto de alrededor
         await ev(f'{M}.setPantalla("corrientes", 0)')
         cen = [sum(p[0] for p in q['corrientes']['quads'][0]) / 4, sum(p[1] for p in q['corrientes']['quads'][0]) / 4]

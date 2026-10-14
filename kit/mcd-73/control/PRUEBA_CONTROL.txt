@@ -29,14 +29,16 @@ OK    «Restaurar niveles» deja todo en 100 % y color de escena
 OK    blackout: pantallas, luces y reloj en 0
 OK    soltar blackout recupera los niveles
 OK    show determinista: el mismo t da exactamente la misma salida
-OK    Play avanza el reloj del show (t=1.18 s tras 1,2 s)
+OK    Play avanza el reloj del show (t=1.12 s tras 1,2 s)
 OK    Pausa congela el show
 OK    el show termina en 15 s y se detiene
 OK    a los 4 s la ola roja avanzó desde Corrientes (izquierda) hacia Pellegrini
 OK    ningún halo sobre el contenido LED: 72 píxeles dentro de las 3 pantallas idénticos con luces 100 % y 0 % (difieren 0)
-OK    control: fuera de las pantallas la luz sí aclara la fachada
-OK    la luz solo aclara la foto (ningún canal se oscurece)
+OK    noche con luces apagadas: la fachada queda oscura (15% del brillo de la foto)
+OK    vecino, torre blanca y cielo no cambian (quedan como en la foto)
+OK    un haz encendido revela la fachada (brillo ×19.3 sobre apagado)
+OK    luz roja: la fachada se ve roja ([165, 18, 11])
 OK    Corrientes al 0 %: panel en negro ([0, 0, 0])
-OK    0 pedidos de red fuera de file:// (24 pedidos locales)
+OK    0 pedidos de red fuera de file:// (32 pedidos locales)
 OK    0 errores de consola ([])
 Resultado: TODO OK

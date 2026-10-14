@@ -29,7 +29,6 @@
   const lienzo = $('lienzo'), ctx = lienzo.getContext('2d');
   const capaLuz = document.createElement('canvas'), lctx = capaLuz.getContext('2d');
   const capaTinte = document.createElement('canvas'), tctx = capaTinte.getContext('2d');
-  let ultimaInfoTinte = 0;
   const CONT = {
     corrientes: mk(576, 288),
     pellegrini: mk(720, 288),
@@ -191,7 +190,12 @@
   }
   // Silueta de la fachada sobre ESTA foto (bordes medidos con grilla de 0,02): la luz no puede salir del edificio.
   // El borde derecho es la UNIÓN con la torre blanca (bajada pluvial ≈ 0,727): esa torre es otro edificio (corrección de Fer, 14/10).
-  const SILUETA = [[0.124, 0.30], [0.730, 0.30], [0.730, 1.0], [0.117, 1.0], [0.117, 0.66], [0.124, 0.60]];
+  // Silueta COMPLETA del TRUST (cúpula y pisos altos incluidos), siguiendo el perfil de la azotea. Afuera queda el
+  // vecino de la izquierda y la torre blanca: no se tocan.
+  const SILUETA = [[0.117, 1.0], [0.117, 0.66], [0.124, 0.60], [0.124, 0.303], [0.168, 0.303], [0.168, 0.202], [0.349, 0.175],
+    [0.349, 0.069], [0.47, 0.069], [0.49, 0.03], [0.505, 0.069], [0.663, 0.09], [0.663, 0.23], [0.730, 0.23], [0.730, 1.0]];   // perfil de azotea medido
+  // De noche el edificio NO tiene luz propia (Fer, 14/10): solo lo iluminan las luminarias encendidas. Ambiente de calle mínimo.
+  const AMBIENTE = [36, 38, 50];
   // Haz de bañador ("wall grazer") hacia arriba: nace angosto y brillante en el equipo y se abre barriendo la fachada.
   function cono(c, x, y, sep, alto, col, k, soloHaz) {
     const b = sep * 0.2, t = sep * 0.82, h = sep * alto;
@@ -231,25 +235,32 @@
   function dibujarLuces(sal, W, H) {
     for (const c of [lctx, tctx]) { c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1; c.filter = 'none'; c.clearRect(0, 0, W, H); }
     const sep = separacion(W);
-    lctx.globalCompositeOperation = 'lighter';
-    let dibujadas = 0, conTinte = 0;
+    // Mapa de luz (tctx): ambiente dentro de la silueta + cada haz con su color. Se MULTIPLICA con la foto:
+    // donde no llega un haz, la fachada queda oscura; donde llega, aparece con el color de esa luz.
+    tctx.fillStyle = `rgb(${AMBIENTE.join(',')})`;
+    tctx.beginPath(); tctx.moveTo(SILUETA[0][0] * W, SILUETA[0][1] * H);
+    for (const [x, y] of SILUETA.slice(1)) tctx.lineTo(x * W, y * H);
+    tctx.closePath(); tctx.fill();
+    lctx.globalCompositeOperation = 'lighter'; tctx.globalCompositeOperation = 'lighter';
+    let dibujadas = 0;
     for (const s of sal.luces) {
       const p = puntos[s.id];
       if (!p || s.nivel <= 0.002) continue;
       const rgb = rgbDe(s.rgbw), col = rgb.map((v) => Math.round(v * 255));
-      cono(lctx, p[0] * W, p[1] * H, sep[s.grupo], ALTO_HAZ[s.grupo], col, s.nivel);
-      // Tinte: con luz de color la fachada TOMA ese color (si no, el rojo sumado a una fachada ya clara se ve lavado).
-      const mx = Math.max(...rgb), sat = mx > 0 ? 1 - Math.min(...rgb) / mx : 0;
-      if (sat > 0.25) {
-        const tin = rgb.map((v) => Math.round(255 * (0.08 + 0.92 * v / mx)));
-        cono(tctx, p[0] * W, p[1] * H, sep[s.grupo], ALTO_HAZ[s.grupo], tin, s.nivel * sat * 0.95, true);
-        conTinte++;
-      }
+      const x = p[0] * W, y = p[1] * H, sp = sep[s.grupo], k = s.nivel;
+      // en el mapa: haz fuerte + baño suave alrededor (la piedra rebota luz entre haces)
+      cono(tctx, x, y, sp, ALTO_HAZ[s.grupo], col, Math.min(1, k * 1.35));
+      const ba = tctx.createRadialGradient(x, y - sp * 1.2, 0, x, y - sp * 1.2, sp * 1.9);
+      ba.addColorStop(0, `rgba(${col.join(',')},${0.45 * k})`); ba.addColorStop(1, `rgba(${col.join(',')},0)`);
+      tctx.fillStyle = ba; tctx.beginPath(); tctx.ellipse(x, y - sp * 1.2, sp * 1.3, sp * 1.9, 0, 0, Math.PI * 2); tctx.fill();
+      // en el brillo: el haz suma un poco de destello encima (bloom)
+      cono(lctx, x, y, sp, ALTO_HAZ[s.grupo], col, k);
       dibujadas++;
     }
     enmascarar(lctx, W, H);
-    if (conTinte) enmascarar(tctx, W, H);
-    ultimaInfoTinte = conTinte;
+    enmascarar(tctx, W, H);
+    // fuera de la silueta, pantallas y reloj: el mapa vale blanco (la foto queda igual)
+    tctx.globalCompositeOperation = 'destination-over'; tctx.fillStyle = '#fff'; tctx.fillRect(0, 0, W, H);
     return dibujadas;
   }
 
@@ -277,11 +288,11 @@
     // 2. luces
     const n = dibujarLuces(sal, W, H);
     const suaveFiltro = `blur(${Math.max(0.8, W / 900).toFixed(2)}px)`;   // bordes de haz suaves, como en la realidad
-    if (!dia && ultimaInfoTinte) {   // 2a. tinte de color (multiplicar): la fachada toma el color del haz
+    if (!dia) {   // 2a. NOCHE: el edificio solo se ve donde lo ilumina una luminaria encendida
       ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = 1; ctx.filter = suaveFiltro;
       ctx.drawImage(capaTinte, 0, 0); ctx.filter = 'none';
     }
-    ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = dia ? 0.06 : 1;   // 2b. brillo del haz (solo aclara)
+    ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = dia ? 0.06 : 0.55;   // 2b. destello del haz
     ctx.filter = suaveFiltro;
     ctx.drawImage(capaLuz, 0, 0);
     ctx.filter = 'none';
