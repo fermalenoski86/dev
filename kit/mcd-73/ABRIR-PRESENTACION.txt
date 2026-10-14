@@ -1,0 +1,38 @@
+TRUST Control × McDonald's — cómo abrir y operar la presentación
+SIMULACIÓN CONCEPTUAL — NO CONECTADA A EQUIPOS REALES
+
+ABRIR (sin internet, sin instalar nada)
+1. Descomprimí las dos partes del ZIP en la MISMA carpeta (queda una sola carpeta "TRUST-McDonalds-kit-offline").
+2. Entrá a la carpeta "control" y hacé doble clic en "index.html". Si se abre con otro programa:
+   clic derecho → Abrir con → Google Chrome (o Microsoft Edge).
+3. Pantalla completa: F11 (para salir, F11 otra vez). Ideal: notebook conectada a la pantalla grande en 1920×1080.
+
+GUION (botón "Comenzar" o "Guion de demo"; flechas ← → para avanzar)
+  1. Portada TRUST Control × McDonald's
+  2. Vista de día
+  3. Cambio a noche
+  4. Dimmers independientes: pantallas al 40 % (las luces no cambian) y Superior 01 al 20 % (las otras 45 no cambian)
+  5. Cargar «McDonald's Takeover 15 s» (vuelve todo a 100 %)
+  6. Play: pantallas + luminarias + reloj sincronizados
+  7. Volver a la escena arquitectónica
+
+CONTROLES
+  Día / Noche (arriba a la izquierda de la foto): solo cambia la vista; no toca ningún nivel.
+  Pantallas: master + Corrientes + Pellegrini + media. Iluminación: master + 3 niveles (16/16/14) + cada una de las 46.
+  Clic en una luminaria de la grilla: ON/OFF, dimmer 0–100 %, color RGBW o "color de escena".
+  Abajo: Cargar show McDonald's · Play · Pausa · Reset · Blackout (rojo) · escenas fijas.
+  Teclado: espacio = Play/Pausa · R = reset del show · D/N = día/noche · B = blackout · L = ocultar rótulos.
+  En el timeline podés hacer clic o arrastrar para ir a cualquier segundo.
+
+QUÉ DECIR (y qué no)
+  - Es una previsualización sobre la FOTO REAL del edificio; la posición de las pantallas es la fijada por nosotros sobre esa foto.
+  - El show de 15 s es una PLANTILLA preprogramada: no es generación por IA todavía.
+  - No está conectada a pantallas, luminarias ni reloj: no hay sincronía física medida.
+  - El contenido de pantallas es conceptual: las piezas finales y el uso de marca los aprueba McDonald's / Arcos Dorados.
+
+RESPALDO SI EL NAVEGADOR FALLA
+  - Video principal: video/01-trust-mcd-video-principal-1080p.mp4 (mejor con VLC).
+  - Si el proyector o la TV no lo reproducen: video/02-trust-mcd-video-alternativo-720p.mp4.
+  - Grabación real de TRUST CONTROL (aprobación por dos personas): video/03-…
+  - Deck en PDF: pdf/01-deck-ejecutivo.pdf. Imágenes sueltas: carpeta imagenes/.
+  - Antes de la reunión: abrí todo una vez SIN wifi para confirmar que anda.

@@ -2,7 +2,7 @@
 
 Uso (después de paquete.py):  python3 -I kit/mcd-73/partir.py <dir_salida>
 Lee <dir_salida>/TRUST-McDonalds-kit-offline/ y escribe al lado:
-  TRUST-McDonalds-kit-offline-parte1-videos-consola.zip  (video/, consola/, index.html, LEEME.txt, SHA256SUMS.txt)
+  TRUST-McDonalds-kit-offline-parte1-videos-consola.zip  (video/, consola/, control/, index.html, ABRIR-PRESENTACION.txt, LEEME.txt, SHA256SUMS.txt)
   TRUST-McDonalds-kit-offline-parte2-pdf-imagenes.zip    (pdf/, imagenes/, LEEME.txt, SHA256SUMS.txt)
 Las dos partes usan la misma carpeta raíz: descomprimidas en el mismo lugar reconstruyen el paquete completo.
 Verificar con:  kit/mcd-73/verificar_paquete.sh <parte1.zip> <parte2.zip>
@@ -17,7 +17,7 @@ assert os.path.isdir(P), f'falta {P}: correr antes paquete.py'
 
 COMUNES = ['LEEME.txt', 'SHA256SUMS.txt']
 PARTES = [
-    ('parte1-videos-consola', ['video', 'consola', 'index.html'] + COMUNES),
+    ('parte1-videos-consola', ['video', 'consola', 'control', 'index.html', 'ABRIR-PRESENTACION.txt'] + COMUNES),
     ('parte2-pdf-imagenes', ['pdf', 'imagenes'] + COMUNES),
 ]
 

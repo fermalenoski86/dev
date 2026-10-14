@@ -1,0 +1,37 @@
+Prueba real de TRUST Control en Chromium offline (python3 -I kit/mcd-73/control/prueba_control.py <dir>).
+OK    código sin APIs de red ni recursos externos (ninguno)
+OK    código sin sockets, puertos Art-Net (6454) / sACN (5568), serie ni USB (ninguno)
+OK    rótulo «SIMULACIÓN CONCEPTUAL — NO CONECTADA A EQUIPOS REALES» visible
+OK    no dice «Sistema Online», «Enviar show» ni control.trust.local
+OK    estado del header: «Simulación offline»
+OK    geometría atada a la foto exacta (sha256 8ac8a62f0ee6…)
+OK    foto sin deformar: proporción en pantalla 1.4763 vs original 1.4772
+OK    pantallas y reloj = geometría aprobada en composition.ts (216 coordenadas idénticas)
+OK    Corrientes a la izquierda, Pellegrini a la derecha
+OK    pantalla media: 24 tramos de la curva de la ochava
+OK    pantallas al 20 %: luminarias y reloj sin cambios
+OK    pantallas al 20 %: salida de Corrientes 0,20
+OK    luces al 0 %: pantallas sin cambios
+OK    luces al 0 %: las 46 salidas en 0
+OK    master 0 → 100 restaura el ajuste individual (MED-07 35 %)
+OK    SUP-01 al 20 %: cambia solo SUP-01, las otras 45 iguales (['SUP-01'])
+OK    SUP-01 al 20 %: salida = escena 85 % × 20 %
+OK    nivel medio al 50 %: cambian solo sus 16
+OK    46 luminarias 16/16/14 → {'superior': 16, 'medio': 16, 'inferior': 14}
+OK    Día ↔ Noche: niveles, colores y salidas idénticos
+OK    preset → show → cierre: el ajuste individual de SUP-01 (20 %) se conserva
+OK    «Restaurar niveles» deja todo en 100 % y color de escena
+OK    blackout: pantallas, luces y reloj en 0
+OK    soltar blackout recupera los niveles
+OK    show determinista: el mismo t da exactamente la misma salida
+OK    Play avanza el reloj del show (t=1.18 s tras 1,2 s)
+OK    Pausa congela el show
+OK    el show termina en 15 s y se detiene
+OK    a los 4 s la ola roja avanzó desde Corrientes (izquierda) hacia Pellegrini
+OK    ningún halo sobre el contenido LED: 72 píxeles dentro de las 3 pantallas idénticos con luces 100 % y 0 % (difieren 0)
+OK    control: fuera de las pantallas la luz sí aclara la fachada
+OK    la luz solo aclara la foto (ningún canal se oscurece)
+OK    Corrientes al 0 %: panel en negro ([0, 0, 0])
+OK    0 pedidos de red fuera de file:// (24 pedidos locales)
+OK    0 errores de consola ([])
+Resultado: TODO OK

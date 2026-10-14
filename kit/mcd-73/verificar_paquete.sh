@@ -32,5 +32,10 @@ echo "== consola DMX virtual sin red"
 if grep -Eio '(src|href)="(https?:)?//[^"]*|(fetch|WebSocket|XMLHttpRequest)\(' consola/consola.html consola/luminarias.js; then echo "FALLA: la consola usa red"; exit 1; fi
 for ref in $(grep -Eo '(src|href)="[^"#]+"' consola/consola.html | cut -d'"' -f2 | sort -u); do [ -f "consola/$ref" ] || { echo "FALTA consola/$ref"; exit 1; }; done
 echo "OK: consola sin red; $(grep -Eo '(src|href)="[^"#]+"' consola/consola.html | cut -d'"' -f2 | sort -u | wc -l) referencias locales existen; rótulo: $(grep -c 'NO CONECTADO A EQUIPOS REALES' consola/consola.html)"
+echo "== TRUST Control sin red"
+if grep -Eio '(src|href)="(https?:)?//[^"]*|\b(fetch|WebSocket|XMLHttpRequest|EventSource|RTCPeerConnection)\(' control/index.html control/*.js control/estilo.css; then echo "FALLA: TRUST Control usa red"; exit 1; fi
+for ref in $(grep -Eo '(src|href)="[^"#]+"' control/index.html | cut -d'"' -f2 | sort -u); do [ -f "control/$ref" ] || { echo "FALTA control/$ref"; exit 1; }; done
+[ -f control/fotos/trust-noche.jpg ] || { echo "FALTA control/fotos/trust-noche.jpg"; exit 1; }
+echo "OK: TRUST Control sin red; $(grep -Eo '(src|href)="[^"#]+"' control/index.html | cut -d'"' -f2 | sort -u | wc -l) referencias locales existen; rótulo: $(grep -c 'NO CONECTADA A EQUIPOS REALES' control/index.html)"
 echo "== rótulo"; grep -c "SIMULACIÓN CONCEPTUAL" index.html LEEME.txt
 echo "RESULTADO: paquete offline verificado"

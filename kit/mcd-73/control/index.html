@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TRUST Control · McDonald's — Simulación offline</title>
+<link rel="stylesheet" href="fuentes.css">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<div class="portada" id="portada">
+  <div class="logo">TRUST <span>Control</span></div>
+  <div class="x">×</div>
+  <div class="cliente">McDonald's · Takeover 15 s</div>
+  <p>EL TRUST · Corrientes y Carlos Pellegrini · frente al Obelisco</p>
+  <div class="rot">SIMULACIÓN CONCEPTUAL — NO CONECTADA A EQUIPOS REALES</div>
+  <button id="comenzar">Comenzar</button>
+</div>
+
+<div class="app">
+  <header>
+    <div class="marca">
+      <div class="isotipo" aria-hidden="true"></div>
+      <div><h1>TRUST <span>Control</span></h1><small>Pantallas LED · Iluminación arquitectónica · Shows sincronizados</small></div>
+    </div>
+    <div class="sep"></div>
+    <div class="dato"><b>Proyecto</b><span>EL TRUST</span></div>
+    <div class="sep"></div>
+    <div class="dato"><b>Escena</b><span class="oro" id="h-escena">Arquitectónica cálida</span></div>
+    <div class="espacio"></div>
+    <button class="btn-guion" id="btn-guion" title="Guion de la demo (flechas ← →)">Guion de demo</button>
+    <div class="estado" title="No hay equipos conectados: todo lo que se ve es una previsualización local.">
+      <i></i><div><b>Simulación offline</b><small>Sin equipos conectados · sin red</small></div>
+    </div>
+  </header>
+
+  <div class="rotulo">SIMULACIÓN CONCEPTUAL — NO CONECTADA A EQUIPOS REALES <em>· no emite DMX, Art-Net, sACN ni comandos a NovaStar · contenido de pantallas conceptual</em></div>
+
+  <main>
+    <section class="escenario" id="escenario">
+      <canvas id="lienzo" aria-label="Fotografía real del edificio EL TRUST con pantallas e iluminación simuladas"></canvas>
+      <div class="capa" id="capa">
+        <div class="marca-sel" id="marca-sel"></div>
+      </div>
+      <div class="vista-toggle" role="group" aria-label="Vista de previsualización">
+        <button id="v-dia" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>Día</button>
+        <button id="v-noche" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>Noche</button>
+      </div>
+      <div class="guion" id="guion"><span id="guion-txt"></span><button class="b" id="g-ant">◀</button><button class="b" id="g-sig">Siguiente ▶</button><button class="b" id="g-cerrar">✕</button></div>
+      <div class="chip-modo" id="chip-modo"></div>
+      <div class="aviso" id="aviso"></div>
+    </section>
+
+    <aside id="panel">
+      <div class="tarjeta" id="t-pantallas">
+        <header><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#9cbcff" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div>
+          <div><h2>Pantallas</h2><p>Dimmer de pantallas LED · independiente de la iluminación</p></div></header>
+        <div class="fila master"><label for="p-master">Master pantallas</label><input type="range" id="p-master" min="0" max="100"><span class="valor" id="p-master-v"></span></div>
+        <div class="fila"><label for="p-corrientes">Corrientes</label><input type="range" class="r-rojo" id="p-corrientes" min="0" max="100"><span class="valor" id="p-corrientes-v"></span></div>
+        <div class="fila"><label for="p-pellegrini">Pellegrini</label><input type="range" class="r-azul2" id="p-pellegrini" min="0" max="100"><span class="valor" id="p-pellegrini-v"></span></div>
+        <div class="fila"><label for="p-media">Pantalla media</label><input type="range" class="r-mag" id="p-media" min="0" max="100"><span class="valor" id="p-media-v"></span></div>
+      </div>
+
+      <div class="tarjeta" id="t-luces">
+        <header><div class="ico oro"><svg viewBox="0 0 24 24" fill="none" stroke="#E8B65B" stroke-width="2"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V17h5.2v-1.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg></div>
+          <div><h2>Iluminación RGBW</h2><p>46 luminarias · control individual · independiente de pantallas</p></div></header>
+        <div class="fila master"><label for="l-master">Master luces</label><input type="range" class="r-oro" id="l-master" min="0" max="100"><span class="valor" id="l-master-v"></span></div>
+        <div class="fila"><label for="g-superior">Nivel superior (16)</label><input type="range" class="r-oro" id="g-superior" min="0" max="100"><span class="valor" id="g-superior-v"></span></div>
+        <div class="fila"><label for="g-medio">Nivel medio (16)</label><input type="range" class="r-oro" id="g-medio" min="0" max="100"><span class="valor" id="g-medio-v"></span></div>
+        <div class="fila"><label for="g-inferior">Nivel inferior (14)</label><input type="range" class="r-oro" id="g-inferior" min="0" max="100"><span class="valor" id="g-inferior-v"></span></div>
+        <div id="equipos"></div>
+        <div class="detalle" id="detalle"></div>
+        <p class="nota">Salida = escena × ajuste individual × nivel × master. Cargar una escena o el show <b>no borra</b> tus ajustes individuales (punto dorado); «Restaurar niveles» los vuelve a 100 %.</p>
+        <div class="botonera" style="margin-top:8px"><button class="b" id="restaurar">Restaurar niveles</button><button class="b" id="guardar">Guardar escena (archivo)</button><button class="b" id="abrir">Abrir escena…</button><input type="file" id="archivo" accept="application/json,.json" hidden></div>
+      </div>
+
+      <div class="tarjeta" id="t-reloj">
+        <header><div class="ico oro"><svg viewBox="0 0 24 24" fill="none" stroke="#E8B65B" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <div><h2>Reloj</h2><p>Pista propia · simulado hasta la ingeniería real</p></div></header>
+        <div class="fila"><label for="r-nivel">Iluminación reloj</label><input type="range" class="r-blanco" id="r-nivel" min="0" max="100"><span class="valor" id="r-nivel-v"></span></div>
+      </div>
+
+      <div class="tarjeta editor-panel" id="t-editor">
+        <header><div><h2>Editor de posiciones</h2><p>Clic en la foto = ubica la luminaria seleccionada. Solo para calibrar contra la imagen anotada.</p></div></header>
+        <div class="botonera"><button class="b" id="ed-sig">Siguiente equipo</button><button class="b" id="ed-borrar">Borrar posición</button><button class="b" id="ed-exportar">Exportar</button></div>
+        <textarea id="ed-salida" readonly></textarea>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <div class="timeline">
+      <div class="tl-cab"><h2>Línea de tiempo del show · 15 s</h2><span class="t" id="tl-t">00:00.00</span><span class="bloque" id="tl-bloque"></span><span class="esp"></span><span class="bloque">Plantilla preprogramada · no es generación por IA</span></div>
+      <div class="pistas" id="pistas"></div>
+    </div>
+    <div class="mandos">
+      <button class="cargar" id="cargar"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span>Cargar show McDonald's</span></button>
+      <button class="mando play" id="play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>Play</button>
+      <button class="mando" id="pausa"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>Pausa</button>
+      <button class="mando" id="reset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v5h5"/></svg>Reset</button>
+      <button class="mando blackout" id="blackout"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>Blackout</button>
+      <div class="escenas" id="escenas"></div>
+    </div>
+  </footer>
+</div>
+
+<script src="geometria.js"></script>
+<script src="luminarias.js"></script>
+<script src="motor.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

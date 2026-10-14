@@ -12,7 +12,7 @@ NAME = 'TRUST-McDonalds-kit-offline'
 P = os.path.join(OUT, NAME)
 if os.path.exists(P):
     shutil.rmtree(P)
-for d in ('video', 'pdf', 'imagenes', 'consola'):
+for d in ('video', 'pdf', 'imagenes', 'consola', 'control', 'control/fotos'):
     os.makedirs(os.path.join(P, d))
 
 LABEL = 'SIMULACIÓN CONCEPTUAL — gemelo preliminar · mockup ilustrativo, no publicar'
@@ -36,6 +36,14 @@ FILES.append(('consola/consola.html', 'consola/consola.html',
               'Consola DMX virtual offline (SIMULACIÓN, no conectada a equipos reales): presets, master/zonas, timeline 15 s, 46 equipos RGBW.'))
 FILES.append(('consola/luminarias.js', 'consola/luminarias.js', 'Posiciones de las 46 luminarias (ubicaciones preliminares; vacías hasta la imagen anotada).'))
 FILES.append(('consola/base-trust-noche.jpg', 'consola/base-trust-noche.jpg', 'Foto base de la consola (capa inmutable).'))
+
+# TRUST Control: presentación interactiva offline (SIMULACIÓN, no conectada a equipos). Abre con doble clic.
+FILES.insert(0, ('control/index.html', 'control/index.html',
+                 "TRUST Control — presentación interactiva offline: foto real, Día/Noche, pantallas y 46 luminarias con dimmers independientes, show McDonald's 15 s. SIMULACIÓN."))
+for f in ('estilo.css', 'fuentes.css', 'app.js', 'motor.js', 'geometria.js', 'luminarias.js', 'LICENCIA-Inter.txt', 'fotos/trust-noche.jpg', 'fotos/trust-dia.jpg'):
+    if os.path.isfile(os.path.join(K, 'control', f)):
+        FILES.append((f'control/{f}', f'control/{f}', 'Archivo de TRUST Control.'))
+FILES.insert(0, ('ABRIR-PRESENTACION.txt', 'ABRIR-PRESENTACION.txt', 'Cómo abrir y operar la presentación (empezar por acá).'))
 
 for dst, src, _ in FILES:
     s = os.path.join(K, src)
@@ -79,7 +87,10 @@ video,img{{width:100%;margin:8px 0 20px}}.r{{background:#5a1010;padding:10px;bor
 <p class="r"><b>{html.escape(LABEL)}.</b> Fachada RGBW, reloj y sincronía entre sistemas son <b>simulación</b>: no están integrados ni medidos.
 La grabación de TRUST CONTROL es software real en entorno de prueba local, sin pantallas ni equipos conectados.</p>
 <p>Abrí este archivo con doble clic; todo funciona sin internet. Si un video no reproduce en el navegador, abrilo con VLC o el reproductor del sistema; el alternativo 720p es el más compatible.</p>
-<h2>Consola DMX virtual</h2><p><a href="consola/consola.html">Abrir la consola DMX virtual</a> (offline; teclas 1–4 presets, espacio Play/Pausa, R reset).
+<h2 style="font-size:28px">▶ <a href="control/index.html">Abrir TRUST Control — presentación interactiva</a></h2>
+<p>Doble clic acá o en <code>control/index.html</code>; en Chrome o Edge, pantalla completa con <b>F11</b>. Guía: <a href="ABRIR-PRESENTACION.txt">ABRIR-PRESENTACION.txt</a>.
+<b>Simulación conceptual: no está conectada a equipos reales y no envía DMX, Art-Net, sACN ni comandos a NovaStar.</b></p>
+<h2>Consola DMX virtual (versión anterior)</h2><p><a href="consola/consola.html">Abrir la consola DMX virtual</a> (offline; teclas 1–4 presets, espacio Play/Pausa, R reset).
 <b>Simulación: no está conectada a equipos reales y no envía Art-Net, sACN ni DMX.</b></p>
 <table>{rows}</table><h2>Videos</h2>{videos}<h2>Imágenes</h2>{imgs}</body></html>'''
 open(os.path.join(P, 'index.html'), 'w', encoding='utf-8').write(INDEX)
@@ -89,6 +100,7 @@ LEEME = f'''TRUST × McDonald's — kit offline (#73)
 {LABEL}.
 Fachada RGBW, reloj y sincronía: SIMULACIÓN, no integrados ni medidos.
 TRUST CONTROL: software real grabado en entorno de prueba local; sin pantallas ni equipos conectados.
+TRUST Control (control/index.html): presentación interactiva, SIMULACIÓN CONCEPTUAL — NO CONECTADA A EQUIPOS REALES. Empezar por ABRIR-PRESENTACION.txt.
 Consola DMX virtual (consola/consola.html): SIMULACIÓN offline, no conectada a equipos reales; no envía Art-Net/sACN/DMX.
 Sin precios ni datos de audiencia. El guion (pdf/03) es de uso interno.
 
