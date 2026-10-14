@@ -3,7 +3,8 @@
 #   - `retries` de Playwright siempre 0 (#26, DECISIONES 2026-10-09): en las configs, por suite
 #     en e2e/ y e2e-platform/, y `--retries` en workflows o package.json;
 #   - timeouts de Playwright (config y por test/aserción en e2e/, e2e-platform/; solo literales
-#     numéricos, una expresión o constante se rechaza) y
+#     numéricos, una expresión o constante se rechaza), `--timeout N` de Playwright por CLI en
+#     workflows y package.json (literal; Codex #75 sobre 4aa2205) y
 #     `timeout-minutes` de gates.yml iguales a la foto en
 #     scripts/ci/umbrales.txt: cambiarlos exige decisión y auditoría explícitas, con la
 #     foto regenerada en el mismo PR (`generar`) y la decisión citada en el PR;
@@ -33,6 +34,23 @@ foto() {
     grep -rHoE --include='*.ts' -e '\.set(Default)?(Navigation)?Timeout\([^)]*\)' -e "$Q?\b([a-z]+T|t)imeout$Q?[[:space:]]*:[[:space:]]*[A-Za-z0-9_.]+" "$d" 2>/dev/null \
       | grep -v node_modules | sed -E "s/^([^:]+):$Q?/\\1 /;s/$Q?[[:space:]]*:[[:space:]]*/: /" | LC_ALL=C sort | uniq -c | sed -E 's/^[[:space:]]*([0-9]+) (.*)$/\2 ×\1/'
   done
+  # `--timeout N` de Playwright por CLI (workflows y package.json): pisa el timeout por test de la
+  # config, y 0 lo desactiva (Codex #75 sobre 4aa2205). Archivo y valor, cuenta, sin números de línea.
+  cli_timeout | awk '$3 == "ok" { print $1 " --timeout=" $4 }' | LC_ALL=C sort | uniq -c | sed -E 's/^[[:space:]]*([0-9]+) (.*)$/\2 ×\1/'
+}
+# cada `--timeout` (forma `=N` o ` N`, con o sin comillas) en workflows y package.json:
+# `archivo línea ok valor` si el valor es un literal numérico, `archivo línea nolit texto` si no.
+cli_timeout() {
+  for f in .github/workflows/*.yml package.json; do [ -f "$f" ] || continue
+    awk -v f="$f" '{
+      s = $0
+      while (match(s, /(^|[^A-Za-z0-9_-])--timeout([^A-Za-z0-9_-]|$)/)) {
+        r = substr(s, RSTART); r = substr(r, index(r, "--timeout") + 9)
+        if (match(r, /^(=|[ \t]+)["'"'"']?[0-9][0-9_]*["'"'"']?([ \t;\\]|$)/)) { v = substr(r, 1, RLENGTH); gsub(/[^0-9_]/, "", v); print f, FNR, "ok", v }
+        else print f, FNR, "nolit", $0
+        s = r
+      }
+    }' "$f"; done
 }
 case "${1:-check}" in
   generar) foto > "$FOTO"; echo "politica-fallas: foto escrita en $FOTO"; exit 0 ;;
@@ -92,6 +110,10 @@ NOLIT=$( { for f in $PW; do echo "$f"; done; for d in e2e e2e-platform; do [ -d 
     }
   }' "$f"; done | sed 's/^/politica-fallas: timeout no literal — /;s/$/ — tiene que ser un número literal (la foto no ve expresiones)/')
 [ -z "$NOLIT" ] || { echo "$NOLIT"; fallos=1; }
+# 2c. `--timeout` por CLI en workflows/package.json: literal numérico (va a la foto); una variable,
+#     una expresión o el valor en la línea siguiente la dejaría igual con el umbral cambiado.
+NOLITCLI=$(cli_timeout | awk '$3 == "nolit" { f = $1; l = $2; $1 = $2 = $3 = ""; sub(/^ +/, ""); print "politica-fallas: --timeout no literal — " f ":" l ": " $0 " — tiene que ser un número literal (la foto no ve expresiones)" }')
+[ -z "$NOLITCLI" ] || { echo "$NOLITCLI"; fallos=1; }
 # 3. .only y skips en E2E. Skips/slow/fail por cualquier receptor (test, describe, testInfo,
 #    test.info(), un alias…): `.slow()` triplica el timeout sin tocar la foto y `.fail()` vuelve
 #    verde un test roto (Codex #75 sobre ecb774f).

@@ -516,3 +516,49 @@ run.test: 157 OK, 4 fallos
 run.test: 161 OK, 0 fallos
 == scripts/ci/politica-fallas.sh check
 politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+
+== ronda 8 (Codex sobre 4aa2205) — 2026-10-14T04:31:18Z
+== reproducción: --timeout=999999 en gates.yml, politica-fallas.sh de 4aa2205
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+exit=0
+== mismo cambio, politica-fallas.sh corregido
+--- /tmp/tmp.GplFhDpM3m/scripts/ci/umbrales.txt	2026-10-14 04:31:18.914790197 +0000
++++ /dev/fd/63	2026-10-14 04:31:19.024574348 +0000
+@@ -25,3 +25,4 @@
++.github/workflows/gates.yml --timeout=999999 ×1
+politica-fallas: timeouts/timeout-minutes distintos de la foto — subirlos o bajarlos exige decisión y auditoría explícitas (regenerar con 'generar' en el mismo PR y citar la decisión)
+exit=1
+== bash scripts/ci/run.test.sh (politica-fallas.sh de 4aa2205)
+  ✗ 4.34 --timeout=999999 en el workflow → cambia la foto → rojo (Codex #75)
+  ✗ 4.34 --timeout 0 en el workflow → cambia la foto → rojo (Codex #75)
+  ✗ 4.34 --timeout="0" en el workflow → cambia la foto → rojo (Codex #75)
+  ✗ 4.34 --timeout '999_999' en el workflow → cambia la foto → rojo (Codex #75)
+  ✗ 4.34b --timeout=$T (variable/expresión/otra línea) → --timeout no literal → rojo
+  ✗ 4.34b --timeout "${PW_T}" (variable/expresión/otra línea) → --timeout no literal → rojo
+  ✗ 4.34b --timeout 40_000*10 (variable/expresión/otra línea) → --timeout no literal → rojo
+  ✗ 4.34b --timeout \\ (variable/expresión/otra línea) → --timeout no literal → rojo
+  ✗ 4.34c --timeout=0 en package.json → rojo
+run.test: 163 OK, 9 fallos
+== bash scripts/ci/run.test.sh (corregido)
+  ✓ 4.34 --timeout=999999 en el workflow → cambia la foto → rojo (Codex #75)
+  ✓ 4.34 --timeout 0 en el workflow → cambia la foto → rojo (Codex #75)
+  ✓ 4.34 --timeout="0" en el workflow → cambia la foto → rojo (Codex #75)
+  ✓ 4.34 --timeout '999_999' en el workflow → cambia la foto → rojo (Codex #75)
+  ✓ 4.34b --timeout=$T (variable/expresión/otra línea) → --timeout no literal → rojo
+  ✓ 4.34b --timeout "${PW_T}" (variable/expresión/otra línea) → --timeout no literal → rojo
+  ✓ 4.34b --timeout 40_000*10 (variable/expresión/otra línea) → --timeout no literal → rojo
+  ✓ 4.34b --timeout \\ (variable/expresión/otra línea) → --timeout no literal → rojo
+  ✓ 4.34c --timeout=0 en package.json → rojo
+  ✓ 4.34d --global-timeout, --timeoutx, timeout-minutes no son --timeout → OK
+  ✓ 4.34e limpio otra vez → OK
+run.test: 172 OK, 0 fallos
+== scripts/ci/politica-fallas.sh check (repo real)
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+== foto sin cambios
+umbrales.txt idéntico tras generar
+== bash -n scripts/ci/*.sh y git diff --check
+OK
+== node scripts/collab/progress.mjs check
+GATE progreso (P-02): manifiesto válido (33 entradas), docs/collab/PROGRESO.md al día
+== node scripts/acceptance/cli.mjs check
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día

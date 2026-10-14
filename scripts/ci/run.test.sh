@@ -209,6 +209,15 @@ check "4.33e 'actionTimeout' citada en la config raíz → rojo" 'O=$(PF check);
 cp "$RAIZ/playwright.config.ts" "$R/"; printf "%s\n" "test.use({ 'navigationTimeout': LARGO, \"timeout\": 40_000 * 10 });" > "$R/e2e/q.spec.ts"
 check "4.33f clave citada con constante o expresión → timeout no literal → rojo" 'O=$(PF check); [ $? = 1 ] && [ "$(printf "%s" "$O" | grep -c "timeout no literal — e2e/q.spec.ts:1:")" = 2 ]'; rm "$R/e2e/q.spec.ts"
 check "4.33g limpio otra vez → OK" 'PF check | grep -q "^politica-fallas: OK"'
+# Codex #75 sobre 4aa2205: `--timeout` de Playwright por CLI pisa el timeout de la config (0 lo desactiva)
+cp "$R/.github/workflows/gates.yml" "$T/gates.yml.bak"
+for v in "=999999" " 0" '="0"' " '999_999'"; do sed -i "s#e2e/builder.spec.ts --reporter=line#e2e/builder.spec.ts --timeout$v --reporter=line#" "$R/.github/workflows/gates.yml"; W=$(printf "%s" "$v" | tr -cd '0-9_'); check "4.34 --timeout$v en el workflow → cambia la foto → rojo (Codex #75)" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "^+.github/workflows/gates.yml --timeout=$W ×1$"'; cp "$T/gates.yml.bak" "$R/.github/workflows/gates.yml"; done
+for v in '=$T' ' "${PW_T}"' ' 40_000*10' ' \\'; do sed -i "s#e2e/builder.spec.ts --reporter=line#e2e/builder.spec.ts --timeout$v --reporter=line#" "$R/.github/workflows/gates.yml"; check "4.34b --timeout$v (variable/expresión/otra línea) → --timeout no literal → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "^politica-fallas: --timeout no literal — .github/workflows/gates.yml:"'; cp "$T/gates.yml.bak" "$R/.github/workflows/gates.yml"; done
+printf '{ "scripts": { "e2e": "playwright test --timeout=0" } }\n' > "$R/package.json"
+check "4.34c --timeout=0 en package.json → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "^+package.json --timeout=0 ×1$"'
+printf '{ "scripts": { "x": "playwright test --global-timeout=60000 --timeoutx", "y": "echo timeout-minutes --no-timeout" } }\n' > "$R/package.json"
+check "4.34d --global-timeout, --timeoutx, timeout-minutes no son --timeout → OK" 'PF check | grep -q "^politica-fallas: OK"'; rm "$R/package.json"
+check "4.34e limpio otra vez → OK" 'PF check | grep -q "^politica-fallas: OK"'
 check "4.13 el repo real cumple la política (retries 0, foto al día, sin .only)" 'bash "$AQUI/politica-fallas.sh" check | grep -q "^politica-fallas: OK"'
 
 echo "5. gates.yml (estático)"
