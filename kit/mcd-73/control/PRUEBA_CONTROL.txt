@@ -6,6 +6,10 @@ OK    no dice «Sistema Online», «Enviar show» ni control.trust.local
 OK    estado del header: «Simulación offline»
 OK    geometría atada a la foto exacta (sha256 8ac8a62f0ee6…)
 OK    foto sin deformar: proporción en pantalla 1.4763 vs original 1.4772
+OK    Director: prompt de ejemplo «McDonald's 15 s» precargado
+OK    Director: «Generar minishow (simulado)» carga la plantilla en t=0, en pausa
+OK    Director: el plan muestra 4 bloques y se rotula como plantilla, no IA
+OK    Director: la nota aclara que el prompt no se interpreta (hoy en demo / futuro)
 OK    pantallas y reloj = geometría aprobada en composition.ts (216 coordenadas idénticas)
 OK    Corrientes a la izquierda, Pellegrini a la derecha
 OK    pantalla media: 24 tramos de la curva de la ochava
@@ -29,7 +33,7 @@ OK    «Restaurar niveles» deja todo en 100 % y color de escena
 OK    blackout: pantallas, luces y reloj en 0
 OK    soltar blackout recupera los niveles
 OK    show determinista: el mismo t da exactamente la misma salida
-OK    Play avanza el reloj del show (t=1.17 s tras 1,2 s)
+OK    Play avanza el reloj del show (t=1.15 s tras 1,2 s)
 OK    Pausa congela el show
 OK    el show termina en 15 s y se detiene
 OK    a los 4 s la ola roja avanzó desde Corrientes (izquierda) hacia Pellegrini

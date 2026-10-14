@@ -479,7 +479,7 @@
     { t: 'Vista del TRUST de día', f: () => { $('portada').classList.add('fuera'); M.setEscena('arquitectonica'); M.setVista('dia'); } },
     { t: 'Cambio a modo noche', f: () => { M.setVista('noche'); } },
     { t: 'Dimmers independientes: pantallas al 40 % (las luces no cambian) y Superior 01 al 20 % (las otras 45 no cambian)', f: () => { M.setPantalla('master', 40); M.setFixture('SUP-01', 20); seleccionar('SUP-01'); } },
-    { t: "Cargar «McDonald's Takeover 15 s» (niveles restaurados al 100 %)", f: () => { M.restaurarNiveles(); M.cargarShow(); } },
+    { t: "Un prompt → «Generar minishow (simulado)»: carga la plantilla McDonald's 15 s (niveles restaurados al 100 %; el prompt no se interpreta)", f: () => { M.restaurarNiveles(); generarMinishow(); } },
     { t: 'Ejecutar la secuencia sincronizada: pantallas + luces + reloj', f: () => { M.seek(0); M.play(); } },
     { t: 'Volver a la escena arquitectónica', f: () => { M.setEscena('arquitectonica'); } },
   ];
@@ -495,6 +495,25 @@
   $('v-dia').addEventListener('click', () => M.setVista('dia'));
   $('v-noche').addEventListener('click', () => M.setVista('noche'));
   $('cargar').addEventListener('click', () => M.cargarShow());
+  // Director de show (SIMULADO): siempre carga la plantilla McDonald's 15 s; el prompt no se interpreta ni sale del navegador.
+  const PLAN = {
+    apertura: 'pantallas oscuras con marca conceptual · fachada cálida baja · reloj neutro',
+    ola: 'producto y mensaje en pantallas · ola roja Corrientes → Pellegrini',
+    takeover: 'takeover conjunto de las 3 pantallas · acentos RGBW · reloj dorado',
+    cierre: 'cierre de marca · fundido a arquitectónica cálida · reloj neutro',
+  };
+  function generarMinishow() {
+    M.cargarShow(); M.seek(0);
+    const ol = $('plan-ol'); ol.innerHTML = '';
+    $('plan-cab').textContent = "Plantilla cargada: McDonald's Takeover 15 s (preprogramada, no es generación por IA)";
+    for (const b of M.BLOQUES) {
+      const li = document.createElement('li');
+      li.innerHTML = `<b>${b.desde}–${b.hasta} s · ${b.nombre}</b> — ${PLAN[b.id] || ''}`;
+      ol.appendChild(li);
+    }
+    $('plan').hidden = false;
+  }
+  $('generar').addEventListener('click', generarMinishow);
   $('play').addEventListener('click', () => M.play());
   $('pausa').addEventListener('click', () => M.pausa());
   $('reset').addEventListener('click', () => M.resetShow());

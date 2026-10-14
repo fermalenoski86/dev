@@ -209,3 +209,14 @@ footer { padding: 12px 14px 14px; display: grid; grid-template-columns: minmax(0
 .escenario.editor ~ aside .editor-panel { display: block; }
 textarea { width: 100%; height: 90px; background: var(--panel-2); color: var(--texto); border: 1px solid var(--borde); border-radius: 8px; font: 11px ui-monospace, Menlo, Consolas, monospace; }
 :focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; }
+
+/* Director de show (simulado) */
+#t-director .sim { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--texto-3); border: 1px solid var(--borde); border-radius: 6px; padding: 1px 6px; margin-left: 6px; vertical-align: middle; }
+#t-director .lbl { display: block; color: var(--texto-2); font-size: 11.5px; margin-bottom: 4px; }
+#t-director textarea.prompt { height: auto; min-height: 104px; font-size: 12.5px; line-height: 1.4; font-family: inherit; padding: 8px; resize: vertical; }
+.plan { margin: 10px 0 0; font-size: 12px; color: var(--texto-2); }
+.plan ol { margin: 4px 0 0; padding-left: 18px; }
+.plan li { margin: 3px 0; }
+.plan .cab { margin: 0; color: var(--oro); font-weight: 600; }
+.b.oro { border-color: var(--oro); color: var(--oro); font-weight: 600; }
+.b.oro:hover { background: rgba(232, 182, 91, .12); }

@@ -61,6 +61,18 @@ async def main(out):
         ok(abs(inf['cssH'] - inf['cssW'] * 1733 / 2560) <= 0.5, f'foto sin deformar: proporción en pantalla {ar:.4f} vs original {2560/1733:.4f}')
         await ev('document.getElementById("portada").classList.add("fuera")')
 
+        # --- Director de show (simulado): prompt precargado, carga la plantilla, sin red, rotulado
+        ok(await ev('document.getElementById("prompt").value.includes("McDonald")'), 'Director: prompt de ejemplo «McDonald\'s 15 s» precargado')
+        await ev('TRUST.motor.setEscena("arquitectonica")')
+        await ev('document.getElementById("prompt").value = "otro texto cualquiera"')
+        await pg.click('#generar')
+        est_g = await ev('TRUST.motor.estado().show')
+        plan = await ev('document.getElementById("plan").innerText')
+        ok(est_g['cargado'] and est_g['t'] == 0 and not est_g['reproduciendo'], 'Director: «Generar minishow (simulado)» carga la plantilla en t=0, en pausa')
+        ok('preprogramada' in plan and 'no es generación por IA' in plan and plan.count(' s · ') == 4, 'Director: el plan muestra 4 bloques y se rotula como plantilla, no IA')
+        ok('no se interpreta' in await ev('document.getElementById("director-nota").innerText'), 'Director: la nota aclara que el prompt no se interpreta (hoy en demo / futuro)')
+        await ev('TRUST.motor.setEscena("arquitectonica")')
+
         # --- superficies LED
         q = g['superficies']; nums_pub = []
         for s in ('corrientes', 'pellegrini'): nums_pub += [v for pt in q[s]['quads'][0] for v in pt]
@@ -213,6 +225,8 @@ async def main(out):
         await ev(f'{M}.cargarShow(); {M}.seek(8.2)'); await pg.wait_for_timeout(200); await pg.screenshot(path=os.path.join(out, '03-takeover.png'))
         await ev(f'{M}.pausa(); {M}.setFixture("SUP-01", 20); TRUST.seleccionar("SUP-01")'); await pg.wait_for_timeout(200)
         await pg.screenshot(path=os.path.join(out, '04-luminaria-20.png'))
+        await ev(f'{M}.restaurarNiveles()'); await pg.click('#generar'); await ev(f'{M}.seek(5)'); await pg.wait_for_timeout(200)
+        await pg.screenshot(path=os.path.join(out, '05-director-simulado.png'))
         await ev(f'{M}.setEscena("arquitectonica"); {M}.restaurarNiveles()')
         await pg.goto('file://' + os.path.join(AQUI, 'index.html')); await pg.wait_for_timeout(500)
         await pg.screenshot(path=os.path.join(out, '00-portada.png'))

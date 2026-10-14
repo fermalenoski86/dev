@@ -52,6 +52,15 @@
     </section>
 
     <aside id="panel">
+      <div class="tarjeta" id="t-director">
+        <header><div class="ico oro"><svg viewBox="0 0 24 24" fill="none" stroke="#E8B65B" stroke-width="2"><path d="M4 20l7-7M14 4l1.5 3L19 8.5 15.5 10 14 13l-1.5-3L9 8.5 12.5 7z"/></svg></div>
+          <div><h2>Director de show <span class="sim">simulado</span></h2><p>Un prompt, una coreografía: pantallas + 46 luces + reloj</p></div></header>
+        <label class="lbl" for="prompt">Prompt de ejemplo (editable)</label>
+        <textarea id="prompt" class="prompt" rows="5">Armá un takeover premium de 15 s para McDonald's: comienzo negro con arcos dorados discretos, luego producto y mensaje de campaña en las pantallas, una ola roja por las luces de Corrientes a Pellegrini, realce dorado del reloj y cierre cálido sin destellos bruscos.</textarea>
+        <div class="botonera" style="margin-top:8px"><button class="b oro" id="generar">Generar minishow (simulado)</button></div>
+        <div class="plan" id="plan" hidden><p class="cab" id="plan-cab"></p><ol id="plan-ol"></ol></div>
+        <p class="nota" id="director-nota"><b>Hoy en demo:</b> el botón carga una <b>plantilla preprogramada</b>; el texto del prompt <b>no se interpreta</b> ni se envía a ningún modelo. <b>Futuro:</b> generación con modelo IA como plan estructurado, validado y aprobado por dos personas.</p>
+      </div>
       <div class="tarjeta" id="t-pantallas">
         <header><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#9cbcff" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div>
           <div><h2>Pantallas</h2><p>Dimmer de pantallas LED · independiente de la iluminación</p></div></header>
