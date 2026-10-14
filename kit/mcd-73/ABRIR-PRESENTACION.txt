@@ -34,5 +34,7 @@ RESPALDO SI EL NAVEGADOR FALLA
   - Video principal: video/01-trust-mcd-video-principal-1080p.mp4 (mejor con VLC).
   - Si el proyector o la TV no lo reproducen: video/02-trust-mcd-video-alternativo-720p.mp4.
   - Grabación real de TRUST CONTROL (aprobación por dos personas): video/03-…
+  - Si TRUST Control no abre: video/04-trust-control-show-mcd-15s-1080p.mp4 es el mismo show
+    McDonald's 15 s grabado en TRUST Control (vista Noche, 19 s, plantilla preprogramada, simulación).
   - Deck en PDF: pdf/01-deck-ejecutivo.pdf. Imágenes sueltas: carpeta imagenes/.
   - Antes de la reunión: abrí todo una vez SIN wifi para confirmar que anda.

@@ -1,0 +1,13 @@
+# Respaldo grabado del show McDonald's 15 s en TRUST Control — 2026-10-14 10:52 UTC, rama kit/73-mcd sobre f6584dd (motor de iluminación realista), turno programado
+# python3 -I kit/mcd-73/control/grabar_show.py <dir_trabajo> kit/mcd-73/trust-control-show-15s.mp4
+cuadros=477 fps=25 t_final_show=15.00 red_externa=0 errores=0
+# Recorrido con clics reales: Comenzar → Noche → Generar minishow (simulado) (1,5 s en t=0) → Play (15 s + 0,6 s de fin) → Restaurar niveles + Arquitectónica (2 s).
+# Tiempo virtual: requestAnimationFrame reemplazado por init script SOLO en la grabación; 40 ms exactos por cuadro.
+# Verificación del archivo:
+stream|codec_name=h264|profile=High|width=1920|height=1080|pix_fmt=yuv420p|r_frame_rate=25/1
+format|duration=19.080000|size=2588591
+decodificación completa sin errores: OK
+# Muestreo de tiempos del show en la grabación (lectura del reloj del timeline en cuadros 80/170/270/370): 00:01.72 · 00:05.32 · 00:09.31 · 00:13.31 → avanza 1 s cada 25 cuadros (40 ms/cuadro).
+# 1ª pasada descartada: con page.clock de Playwright el show saltaba ~0,25 s por cuadro (llegaba a 15 s en ~2 s de video). Se reemplazó por el rAF virtual; revisado en hoja de contacto.
+
+# Regrabado tras f6584dd (sesión interactiva con Fer, 10:40 UTC): la 1ª versión de este turno mostraba el motor de luz anterior.

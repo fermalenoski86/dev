@@ -23,6 +23,8 @@ FILES = [
      'Video principal 37 s (1920×1080): apertura → takeover 15 s → un show, tres sistemas → cierre. Simulación conceptual.'),
     ('video/03-trust-control-grabacion-real-1080p.mp4', 'trust-control-demo.mp4',
      'Grabación real de TRUST CONTROL (58 s): entorno de prueba local, datos de prueba, sin pantallas ni equipos conectados.'),
+    ('video/04-trust-control-show-mcd-15s-1080p.mp4', 'trust-control-show-15s.mp4',
+     "Respaldo grabado de TRUST Control (19 s): Generar minishow (simulado) → show McDonald's 15 s en vista Noche → Restaurar + Arquitectónica. Plantilla preprogramada, SIMULACIÓN."),
     ('pdf/01-deck-ejecutivo.pdf', 'trust-mcd-deck-v0.pdf', 'Deck ejecutivo, 8 diapositivas: HOY FUNCIONA / SE IMPLEMENTARÁ.'),
     ('pdf/02-propuesta-una-pagina.pdf', 'trust-mcd-propuesta-v0.pdf', 'Propuesta comercial de una página (sin precios).'),
     ('pdf/03-guion-reunion.pdf', 'trust-mcd-guion-v0.pdf', 'Guion de reunión de 30 min (uso interno, no entregar a la marca).'),
@@ -65,15 +67,19 @@ def webm(src, dst):
 WEBM = 'video/02b-trust-mcd-video-alternativo-720p.webm'
 WEBM_DEMO = 'video/03b-trust-control-grabacion-real-720p.webm'
 webm('trust-mcd-kit-corte1.mp4', WEBM)
+WEBM_SHOW = 'video/04b-trust-control-show-mcd-15s-720p.webm'
 webm('trust-control-demo.mp4', WEBM_DEMO)
+webm('trust-control-show-15s.mp4', WEBM_SHOW)
 FILES.insert(2, (WEBM, None, 'Video principal en 720p VP9/WebM, para navegadores sin H.264.'))
 FILES.insert(4, (WEBM_DEMO, None, 'Grabación de TRUST CONTROL en 720p VP9/WebM, para navegadores sin H.264.'))
+FILES.insert(6, (WEBM_SHOW, None, "Respaldo del show McDonald's 15 s en TRUST Control, 720p VP9/WebM, para navegadores sin H.264."))
 
 rows = ''.join(
     f'<tr><td><a href="{html.escape(d)}">{html.escape(d)}</a></td><td>{html.escape(t)}</td></tr>' for d, _, t in FILES)
 def player(d):
     srcs = f'<source src="{html.escape(d)}" type="video/mp4">'
-    fb = WEBM_DEMO if 'trust-control' in d else WEBM  # respaldo WebM si el navegador no tiene H.264
+    # respaldo WebM del MISMO video si el navegador no tiene H.264
+    fb = WEBM_SHOW if 'trust-control-show' in d else WEBM_DEMO if 'trust-control' in d else WEBM
     srcs += f'<source src="{html.escape(fb)}" type="video/webm">'
     return f'<h3>{html.escape(d)}</h3><video controls preload="metadata">{srcs}</video>'
 videos = ''.join(player(d) for d, _, _ in FILES if d.endswith('.mp4'))
