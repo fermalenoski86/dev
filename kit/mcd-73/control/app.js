@@ -28,6 +28,8 @@
   // ---------- lienzos ----------
   const lienzo = $('lienzo'), ctx = lienzo.getContext('2d');
   const capaLuz = document.createElement('canvas'), lctx = capaLuz.getContext('2d');
+  const capaTinte = document.createElement('canvas'), tctx = capaTinte.getContext('2d');
+  let ultimaInfoTinte = 0;
   const CONT = {
     corrientes: mk(576, 288),
     pellegrini: mk(720, 288),
@@ -43,7 +45,7 @@
     lienzo.style.width = cssW + 'px'; lienzo.style.height = cssH + 'px';
     const pw = Math.round(cssW * dpr), ph = Math.round(cssH * dpr);
     if (lienzo.width !== pw || lienzo.height !== ph) {
-      lienzo.width = pw; lienzo.height = ph; capaLuz.width = pw; capaLuz.height = ph;
+      lienzo.width = pw; lienzo.height = ph; capaLuz.width = pw; capaLuz.height = ph; capaTinte.width = pw; capaTinte.height = ph;
     }
     ubicarEtiquetas();
     pedirCuadro();
@@ -188,9 +190,10 @@
     return out;
   }
   // Silueta de la fachada sobre ESTA foto (bordes medidos con grilla de 0,02): la luz no puede salir del edificio.
-  const SILUETA = [[0.124, 0.30], [0.843, 0.30], [0.868, 0.40], [0.843, 0.42], [0.837, 1.0], [0.117, 1.0], [0.117, 0.66], [0.124, 0.60]];
+  // El borde derecho es la UNIÓN con la torre blanca (bajada pluvial ≈ 0,727): esa torre es otro edificio (corrección de Fer, 14/10).
+  const SILUETA = [[0.124, 0.30], [0.730, 0.30], [0.730, 1.0], [0.117, 1.0], [0.117, 0.66], [0.124, 0.60]];
   // Haz de bañador ("wall grazer") hacia arriba: nace angosto y brillante en el equipo y se abre barriendo la fachada.
-  function cono(c, x, y, sep, alto, col, k) {
+  function cono(c, x, y, sep, alto, col, k, soloHaz) {
     const b = sep * 0.2, t = sep * 0.82, h = sep * alto;
     const [r, g, bl] = col;
     const tramo = (ancho0, ancho1, a0, a1, a2) => {
@@ -202,6 +205,7 @@
       c.quadraticCurveTo(x, y - h * 1.07, x + ancho1 / 2, y - h); c.lineTo(x + ancho0 / 2, y); c.closePath(); c.fill();
     };
     tramo(b, t, 0.95, 0.72, 0.3);               // haz
+    if (soloHaz) return;
     tramo(b * 0.45, t * 0.34, 0.9, 0.6, 0.18);  // núcleo más intenso
     const sp = c.createRadialGradient(x, y, 0, x, y, sep * 0.22);   // derrame corto sobre la cornisa
     sp.addColorStop(0, `rgba(${r},${g},${bl},${0.55 * k})`); sp.addColorStop(1, `rgba(${r},${g},${bl},0)`);
@@ -211,30 +215,41 @@
     c.fillStyle = hs; c.beginPath(); c.arc(x, y, sep * 0.08, 0, Math.PI * 2); c.fill();
   }
   const ALTO_HAZ = { superior: 3.4, medio: 3.0, inferior: 3.0 };
+  function enmascarar(c, W, H) {
+    // La luz queda DENTRO de la silueta del edificio (no se derrama al cielo, al vecino ni a la torre blanca)…
+    c.globalCompositeOperation = 'destination-in'; c.fillStyle = '#000';
+    c.beginPath(); c.moveTo(SILUETA[0][0] * W, SILUETA[0][1] * H);
+    for (const [x, y] of SILUETA.slice(1)) c.lineTo(x * W, y * H);
+    c.closePath(); c.fill();
+    // …y NUNCA cae sobre los píxeles LED ni sobre la esfera del reloj (máscara de oclusión).
+    c.globalCompositeOperation = 'destination-out';
+    c.beginPath();
+    for (const sup of Object.values(G.superficies)) for (const qd of sup.quads) trazarQuad(c, aPx(qd, W, H));
+    trazarQuad(c, aPx(G.reloj.quad, W, H));
+    c.fill();
+  }
   function dibujarLuces(sal, W, H) {
-    lctx.setTransform(1, 0, 0, 1, 0, 0); lctx.globalCompositeOperation = 'source-over'; lctx.globalAlpha = 1; lctx.filter = 'none';
-    lctx.clearRect(0, 0, W, H);
+    for (const c of [lctx, tctx]) { c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1; c.filter = 'none'; c.clearRect(0, 0, W, H); }
     const sep = separacion(W);
     lctx.globalCompositeOperation = 'lighter';
-    let dibujadas = 0;
+    let dibujadas = 0, conTinte = 0;
     for (const s of sal.luces) {
       const p = puntos[s.id];
       if (!p || s.nivel <= 0.002) continue;
-      const col = rgbDe(s.rgbw).map((v) => Math.round(v * 255));
+      const rgb = rgbDe(s.rgbw), col = rgb.map((v) => Math.round(v * 255));
       cono(lctx, p[0] * W, p[1] * H, sep[s.grupo], ALTO_HAZ[s.grupo], col, s.nivel);
+      // Tinte: con luz de color la fachada TOMA ese color (si no, el rojo sumado a una fachada ya clara se ve lavado).
+      const mx = Math.max(...rgb), sat = mx > 0 ? 1 - Math.min(...rgb) / mx : 0;
+      if (sat > 0.25) {
+        const tin = rgb.map((v) => Math.round(255 * (0.08 + 0.92 * v / mx)));
+        cono(tctx, p[0] * W, p[1] * H, sep[s.grupo], ALTO_HAZ[s.grupo], tin, s.nivel * sat * 0.95, true);
+        conTinte++;
+      }
       dibujadas++;
     }
-    // La luz queda DENTRO de la silueta del edificio (no se derrama al cielo ni al vecino)…
-    lctx.globalCompositeOperation = 'destination-in'; lctx.fillStyle = '#000';
-    lctx.beginPath(); lctx.moveTo(SILUETA[0][0] * W, SILUETA[0][1] * H);
-    for (const [x, y] of SILUETA.slice(1)) lctx.lineTo(x * W, y * H);
-    lctx.closePath(); lctx.fill();
-    // …y NUNCA cae sobre los píxeles LED ni sobre la esfera del reloj (máscara de oclusión).
-    lctx.globalCompositeOperation = 'destination-out';
-    lctx.beginPath();
-    for (const sup of Object.values(G.superficies)) for (const qd of sup.quads) trazarQuad(lctx, aPx(qd, W, H));
-    trazarQuad(lctx, aPx(G.reloj.quad, W, H));
-    lctx.fill();
+    enmascarar(lctx, W, H);
+    if (conTinte) enmascarar(tctx, W, H);
+    ultimaInfoTinte = conTinte;
     return dibujadas;
   }
 
@@ -261,8 +276,13 @@
 
     // 2. luces
     const n = dibujarLuces(sal, W, H);
-    ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = dia ? 0.06 : 1;
-    ctx.filter = `blur(${Math.max(0.8, W / 900).toFixed(2)}px)`;   // bordes de haz suaves, como en la realidad
+    const suaveFiltro = `blur(${Math.max(0.8, W / 900).toFixed(2)}px)`;   // bordes de haz suaves, como en la realidad
+    if (!dia && ultimaInfoTinte) {   // 2a. tinte de color (multiplicar): la fachada toma el color del haz
+      ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = 1; ctx.filter = suaveFiltro;
+      ctx.drawImage(capaTinte, 0, 0); ctx.filter = 'none';
+    }
+    ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = dia ? 0.06 : 1;   // 2b. brillo del haz (solo aclara)
+    ctx.filter = suaveFiltro;
     ctx.drawImage(capaLuz, 0, 0);
     ctx.filter = 'none';
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
