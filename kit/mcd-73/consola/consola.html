@@ -55,7 +55,7 @@ select{background:#22252d;color:var(--txt);border:1px solid var(--line);border-r
       <div class="sello">Foto base inmutable · capa de luz aditiva · ubicaciones preliminares</div>
       <div class="aviso oculto" id="aviso"></div>
     </div>
-    <p class="pie">La foto no se modifica: la luz es una capa aditiva encima (solo puede aclarar). Las 46 luminarias (14 superior · 16 media · 16 inferior) son ubicaciones preliminares para presentación, no plano de montaje. Mapa real de universos/canales, fotometría y compensación de latencias: trabajo futuro sujeto a inventario de hardware.</p>
+    <p class="pie">La foto no se modifica: la luz es una capa aditiva encima (solo puede aclarar). Las 46 luminarias (16 superior · 16 media · 14 inferior) son ubicaciones preliminares para presentación, no plano de montaje. Mapa real de universos/canales, fotometría y compensación de latencias: trabajo futuro sujeto a inventario de hardware.</p>
   </div>
   <div class="panel">
     <div>
@@ -89,7 +89,7 @@ select{background:#22252d;color:var(--txt);border:1px solid var(--line);border-r
     <details id="editorBox">
       <summary>Editor de posiciones (cargar la imagen anotada)</summary>
       <p class="pie">Marcá cada punto sobre la foto siguiendo la imagen anotada, en orden de izquierda a derecha. No se inventan puntos: sin las 46 marcas la consola no dibuja luces.</p>
-      <div class="fila"><select id="edLinea"><option value="roja">Roja · superior (14)</option><option value="amarilla">Amarilla · media (16)</option><option value="verde">Verde · inferior (16)</option></select><button id="edDeshacer">Deshacer</button></div>
+      <div class="fila"><select id="edLinea"><option value="roja">Roja · superior (16)</option><option value="amarilla">Amarilla · media (16)</option><option value="verde">Verde · inferior (14)</option></select><button id="edDeshacer">Deshacer</button></div>
       <div class="fila" style="margin-top:6px"><button id="edExportar">Exportar</button><label class="pie"><input type="file" id="edImportar" accept=".json,application/json"> Importar JSON</label></div>
       <textarea id="edJson" placeholder="JSON de posiciones"></textarea>
     </details>
@@ -200,7 +200,7 @@ function armarTimeline(){
   tl.addEventListener('click',ev=>{const r=tl.getBoundingClientRect();api.seek((ev.clientX-r.left)/r.width*DUR)});
 }
 function armarZonas(){
-  const z=$('zonas'); const nom={roja:'Superior (14)',amarilla:'Media (16)',verde:'Inferior (16)'};
+  const z=$('zonas'); const nom={roja:'Superior (16)',amarilla:'Media (16)',verde:'Inferior (14)'};
   for(const l of LINEAS){const f=document.createElement('div');f.className='fila';
     f.innerHTML=`<label for="z_${l}">${nom[l]}</label><input type="range" id="z_${l}" min="0" max="100" value="100"><span id="z_${l}v">100%</span>`;
     z.appendChild(f); f.querySelector('input').addEventListener('input',ev=>api.setZona(l,ev.target.value/100));}

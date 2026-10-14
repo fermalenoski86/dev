@@ -32,7 +32,7 @@ async def main(out):
         alfa = await ev('(()=>{const c=document.getElementById("luz");const d=c.getContext("2d").getImageData(0,0,c.width,c.height).data;let s=0;for(let i=3;i<d.length;i+=4)s+=d[i];return s})()')
         ok(alfa == 0, f'sin posiciones la capa de luz queda vacía (suma alfa={alfa})')
         n = await ev('Object.values(consola.snapshot().equipos).map(a=>a.length)')
-        ok(n == [14, 16, 16], f'46 equipos virtuales 14/16/16 → {n}')
+        ok(n == [16, 16, 14], f'46 equipos virtuales 16/16/14 (leyenda de la imagen anotada) → {n}')
         await pg.screenshot(path=os.path.join(out, '00-sin-posiciones.png'))
 
         ini = await ev('consola.reset()')
@@ -66,9 +66,9 @@ async def main(out):
 
         # Posiciones SINTÉTICAS solo para probar el render (no se guardan ni representan la fachada).
         sint = {'fuente': 'PRUEBA SINTÉTICA', 'lineas': {
-            'roja': {'puntos': [[0.2 + i * 0.045, 0.30] for i in range(14)]},
+            'roja': {'puntos': [[0.2 + i * 0.04, 0.30] for i in range(16)]},
             'amarilla': {'puntos': [[0.2 + i * 0.04, 0.55] for i in range(16)]},
-            'verde': {'puntos': [[0.2 + i * 0.04, 0.80] for i in range(16)]}}}
+            'verde': {'puntos': [[0.2 + i * 0.045, 0.80] for i in range(14)]}}}
         await ev(f'consola.setPosiciones({json.dumps(sint)})')
         ok(await ev('consola.posicionesCompletas() && document.getElementById("aviso").classList.contains("oculto")'), 'con 46 marcas se oculta el aviso')
         esc = pg.locator('#escena')
