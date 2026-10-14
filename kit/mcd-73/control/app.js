@@ -197,10 +197,10 @@
       const p = puntos[s.id];
       if (!p || s.nivel <= 0.002) continue;
       const [r, g, b] = rgbDe(s.rgbw).map((v) => Math.round(v * 255));
-      const x = p[0] * W, y = p[1] * H, rx = sep[s.grupo] * 0.95, ry = rx * 1.75, k = s.nivel;
+      const x = p[0] * W, y = p[1] * H, rx = sep[s.grupo] * 1.3, ry = rx * 2.1, k = s.nivel;   // bañador hacia arriba: más alto que ancho
       lctx.save(); lctx.translate(x, y - ry * 0.45); lctx.scale(1, ry / rx);
       const gr = lctx.createRadialGradient(0, 0, 0, 0, 0, rx);
-      gr.addColorStop(0, `rgba(${r},${g},${b},${0.5 * k})`); gr.addColorStop(0.45, `rgba(${r},${g},${b},${0.22 * k})`); gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+      gr.addColorStop(0, `rgba(${r},${g},${b},${0.66 * k})`); gr.addColorStop(0.45, `rgba(${r},${g},${b},${0.3 * k})`); gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
       lctx.fillStyle = gr; lctx.beginPath(); lctx.arc(0, 0, rx, 0, Math.PI * 2); lctx.fill(); lctx.restore();
       const hs = lctx.createRadialGradient(x, y, 0, x, y, rx * 0.22);
       hs.addColorStop(0, `rgba(255,255,255,${0.85 * k})`); hs.addColorStop(0.35, `rgba(${r},${g},${b},${0.8 * k})`); hs.addColorStop(1, `rgba(${r},${g},${b},0)`);
@@ -509,7 +509,7 @@
       const dn = $('d-nivel'); if (document.activeElement !== dn) dn.value = f.nivel; dn.style.setProperty('--p', dn.value + '%');
       $('d-nivel-v').textContent = f.nivel + '%';
       const so = sal.luces.find((x) => x.id === seleccion);
-      $('d-pos').textContent = `salida ${Math.round(so.nivel * 100)}%` + (f.color ? ' · color propio' : ' · color de escena');
+      $('d-pos').textContent = `salida ${Math.round(so.nivel * 100)}%` + (f.color ? ' · color propio' : ' · color de escena') + (puntos[f.id] ? '' : ' · fuera de cuadro en esta foto');
       for (const k of ['r', 'g', 'b', 'w']) { const el = $('d-' + k); el.style.setProperty('--p', el.value + '%'); $('d-' + k + '-v').textContent = el.value + '%'; }
     }
     // marcador de la luminaria seleccionada
@@ -522,8 +522,9 @@
     const avisos = [];
     if (avisoTmp) avisos.push(avisoTmp);
     if (est.vista === 'dia' && ultimaInfo.foto !== 'dia') avisos.push('Foto diurna pendiente: falta la toma de día desde el mismo punto. Se muestra la nocturna; los niveles no cambian.');
-    const conPos = Object.keys(puntos).length;
-    if (conPos < 46) avisos.push(`Posiciones de luminarias: ${conPos}/46 calibradas sobre esta foto. Las que faltan se controlan igual, pero su luz no se dibuja.`);
+    const fuera = new Set(((L && L.calibracion && L.calibracion.fuera_de_cuadro) || []));
+    const faltan = est.luces.fixtures.filter((f) => !puntos[f.id] && !fuera.has(f.grupo)).length;
+    if (faltan) avisos.push(`Posiciones de luminarias: faltan ${faltan} por calibrar sobre esta foto. Se controlan igual, pero su luz no se dibuja.`);
     if (puntosDePrueba) avisos.push('Posiciones SINTÉTICAS de prueba (no son las reales).');
     if (est.blackout) avisos.push('BLACKOUT activo: salida en negro. Los niveles guardados se recuperan al soltarlo.');
     $('aviso').innerHTML = avisos.join('<br>');

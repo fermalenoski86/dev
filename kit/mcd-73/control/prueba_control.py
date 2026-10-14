@@ -71,6 +71,26 @@ async def main(out):
         ok(cx(q['corrientes']['quads'][0]) < cx(q['pellegrini']['quads'][0]), 'Corrientes a la izquierda, Pellegrini a la derecha')
         ok(len(q['media']['quads']) == 24, 'pantalla media: 24 tramos de la curva de la ochava')
 
+        # --- posiciones reales de luminarias (transferidas desde la imagen anotada de Fer)
+        lum = await ev('LUMINARIAS')
+        pts = lum['puntos']
+        ok(lum['foto_sha256'] == sha_foto, 'luminarias.js calibrado sobre esta misma foto (sha256)')
+        ok(sum(k.startswith('SUP') for k in pts) == 16 and sum(k.startswith('MED') for k in pts) == 16 and not any(k.startswith('INF') for k in pts),
+           'posiciones: 16 superior + 16 medio; las 14 inferiores no se dibujan (fuera de cuadro en esta foto)')
+        def dentro(pt, qd):
+            s = 0
+            for i in range(4):
+                (x1, y1), (x2, y2) = qd[i], qd[(i + 1) % 4]
+                c = (x2 - x1) * (pt[1] - y1) - (y2 - y1) * (pt[0] - x1)
+                s += 1 if c > 0 else -1 if c < 0 else 0
+            return abs(s) == 4
+        pisa = [k for k, pt in pts.items() for sid in ('corrientes', 'pellegrini', 'media') for qd in q[sid]['quads'] if dentro(pt, qd)]
+        ok(all(0 < v < 1 for pt in pts.values() for v in pt) and not pisa, f'ninguna luminaria cae sobre una pantalla ({pisa or "ninguna"})')
+        sx = [pts[f'SUP-{i:02d}'][0] for i in range(1, 17)]; mx = [pts[f'MED-{i:02d}'][0] for i in range(1, 17)]
+        ok(sx == sorted(sx) and mx == sorted(mx), 'numeración de izquierda (Corrientes) a derecha (Pellegrini), como en la imagen anotada')
+        inf2 = await ev('TRUST.info()')
+        ok(inf2['lucesDibujadas'] == 32, f'escena arquitectónica: se dibujan las 32 luminarias en cuadro ({inf2["lucesDibujadas"]})')
+
         # --- independencia y niveles (motor)
         M = 'TRUST.motor'
         await ev(f'{M}.reiniciarTodo()')
