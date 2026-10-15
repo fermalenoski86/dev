@@ -47,10 +47,8 @@ vf=("color=c=black:s=1920x1080:r=25:d=6,"
 run(['-f','lavfi','-i',vf.split(',',1)[0],'-vf',vf.split(',',1)[1]]+enc+[f'{T}/s4.mp4'])
 open(f'{T}/list.txt','w').write(''.join(f"file 's{i}.mp4'\n" for i in range(1,5)))
 run(['-f','concat','-safe','0','-i',f'{T}/list.txt','-c','copy','-movflags','+faststart',f'{O}/trust-mcd-kit-corte1.mp4'])
-# visuales (b)
-vis=[('apps/control/public/experience/obelisco-wide.jpg','01-obelisco-noche',"scale=1920:-2,crop=1920:1080"),
-     ('docs/screenshots/hero-16x9-takeover.png','02-takeover',"scale=1920:1080"),
-     ('docs/screenshots/hero-16x9-signature.png','03-firma-sincronizada',"scale=1920:1080"),
-     ('docs/screenshots/03-brand-reveal.png','04-brand-reveal',"scale=1920:1080")]
+# visuales (b): 01 sale de la foto real desde el Obelisco; 02–04 se sacan de TRUST Control (geometría aprobada +
+# iluminación arquitectónica) con control/visuales.py desde el 15/10 (los hero-16x9 del 13/10 usaban la geometría vieja)
+vis=[('apps/control/public/experience/obelisco-wide.jpg','01-obelisco-noche',"scale=1920:-2,crop=1920:1080")]
 for src,name,sc in vis:
     run(['-i',f'{R}/{src}','-vf',sc+','+stamp(),'-frames:v','1',f'{O}/{name}.png'])

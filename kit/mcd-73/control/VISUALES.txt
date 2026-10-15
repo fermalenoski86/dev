@@ -1,0 +1,5 @@
+Salida real de visuales.py (creatividad C)
+04-brand-reveal.png: boton=takeover +4000 ms show.t=3.9600000000000026 cargado=True toma=2340x2616 px -> 966x1080 en el visual
+02-takeover.png: boton=takeover +8000 ms show.t=7.960000000000006 cargado=True toma=2340x2616 px -> 966x1080 en el visual
+03-firma-sincronizada.png: boton=firma +3000 ms show.t=0 cargado=False toma=2340x2616 px -> 966x1080 en el visual
+pedidos de red no-file: 0 · errores de página: 0 []

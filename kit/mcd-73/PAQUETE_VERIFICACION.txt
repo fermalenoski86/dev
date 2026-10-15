@@ -260,3 +260,24 @@ Códigos de salida reales: ZIP único exit=0, partes 1+2+3 exit=0, partes 1+2 ex
 # Chromium OFFLINE sobre las 3 partes descomprimidas juntas: prueba_navegador.py
 {'out': [[None, 4, 1.46, 1280, None, '02b-trust-mcd-video-alternativo-720p.webm'], [None, 4, 1.48, 1280, None, '02b-trust-mcd-video-alternativo-720p.webm'], [None, 4, 1.47, 1280, None, '03b-trust-control-grabacion-real-720p.webm'], [None, 4, 1.46, 1280, None, '04b-trust-control-show-mcd-15s-720p.webm'], [None, 4, 1.45, 1280, None, '05b-trust-mcd-takeover-15s-C-iconic-720p.webm'], [None, 4, 1.4, 1280, None, '06b-trust-mcd-takeover-15s-A-brand-720p.webm'], [None, 4, 1.47, 1280, None, '07b-trust-mcd-takeover-15s-B-producto-720p.webm'], [None, 4, 1.45, 1280, None, '08b-trust-mcd-takeover-15s-D-papas-720p.webm'], [None, 4, 1.46, 1280, None, '09b-trust-mcd-takeover-15s-E-desayuno-720p.webm'], [None, 4, 1.46, 1280, None, '10b-trust-mcd-takeover-15s-F-lanzamiento-720p.webm']], 'imgs': [['imagenes/01-obelisco-noche.png', 1920], ['imagenes/02-takeover.png', 1920], ['imagenes/03-firma-sincronizada.png', 1920], ['imagenes/04-brand-reveal.png', 1920], ['control/fotos/trust-cielo.png', 2560], ['control/fotos/trust-cielo-completa.png', 2570]]}
 no-file requests: []
+
+# Reverificación 2026-10-15 ~11:55 UTC (visuales 02–04 nuevos desde TRUST Control, deck re-renderizado)
+# paquete.py + partir.py + verificar_paquete.sh (ZIP único y 3 partes); salida real (cola):
+20263707 TRUST-McDonalds-kit-offline-parte1-presentacion.zip
+28119637 TRUST-McDonalds-kit-offline-parte2-videos.zip
+20434731 TRUST-McDonalds-kit-offline-parte3-videos.zip
+68808017 TRUST-McDonalds-kit-offline.zip
+-- ZIP único:
+== TRUST Control sin red
+OK: TRUST Control sin red; 9 referencias locales existen; rótulo: 2
+== rótulo
+index.html:2
+LEEME.txt:6
+RESULTADO: paquete offline verificado
+-- partes 1+2+3:
+== TRUST Control sin red
+OK: TRUST Control sin red; 9 referencias locales existen; rótulo: 2
+== rótulo
+index.html:2
+LEEME.txt:6
+RESULTADO: paquete offline verificado
