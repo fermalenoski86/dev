@@ -29,6 +29,7 @@ J = cv2.warpAffine(orig, M, (orig.shape[1], orig.shape[0]), flags=cv2.INTER_LANC
 # recorte: desde un poco de cielo sobre el edificio hasta la senda peatonal
 y0, y1 = 570, 1900
 C = J[y0:y1]
+cv2.imwrite(os.path.join(F, 'trust-noche-completa-alineada.jpg'), C, [cv2.IMWRITE_JPEG_QUALITY, 95])
 cv2.imwrite(os.path.join(F, 'trust-noche-completa.jpg'), C, [cv2.IMWRITE_JPEG_QUALITY, 92])
 H, W = C.shape[:2]
 rect = [t[0] / W, (t[1] - y0) / H, base.shape[1] * s / W, base.shape[0] * s / H]
@@ -36,6 +37,7 @@ sha = hashlib.sha256(open(os.path.join(F, 'trust-noche-completa.jpg'), 'rb').rea
 ENC = {
   'completo': { 'nombre': 'Edificio completo', 'archivo': 'fotos/trust-noche-completa.jpg', 'ancho': W, 'alto': H, 'sha256': sha,
     'relieve': 'fotos/trust-relieve-completa.jpg', 'cielo': 'fotos/trust-cielo-completa.png', 'rect': [round(v, 6) for v in rect],
+    'farolas_x': [[0.4728, 1], [0.6537, -1]],   # postes de las dos farolas frente a la fachada (x normalizada en el encuadre)
     'calibracion': { 'metodo': 'SIFT + RANSAC (similaridad) contra la foto base', 'puntos': int(inl.sum()), 'error_px_mediana': round(float(np.median(err)), 2),
       'rotacion_corregida_grados': round(rot, 3), 'escala': round(s, 5), 'nota': 'misma toma que la foto base; la foto base ocupa el rectángulo rect' } },
   'cerca': { 'nombre': 'Fachada (encuadre original)', 'archivo': 'fotos/trust-noche.jpg', 'ancho': base.shape[1], 'alto': base.shape[0],

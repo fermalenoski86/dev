@@ -170,7 +170,39 @@
   // ---------- contenido de pantallas: UNA composición sobre las 3 superficies (contenido.js), determinista por t ----------
   const suave = (k) => { k = Math.min(1, Math.max(0, k)); return k * k * (3 - 2 * k); };
   window.CONTENIDO.preparar(G);
-  function dibujarContenido(id, cont) { window.CONTENIDO.dibujar(CONT[id], id, cont); }
+  // Cómo se ve un LED de verdad en una foto de noche (integración con la fachada):
+  //  · la óptica de la cámara suaviza: el contenido pasa por un desenfoque mínimo (no queda "pegado" y nítido de más);
+  //  · el negro de un LED no es negro puro (piso de luz de los módulos y reflejos de la calle);
+  //  · se ven los gabinetes (módulos de 0,5 m) como una retícula muy tenue y un leve oscurecimiento en los bordes;
+  //  · las pantallas superiores tienen espesor: se ve la panza del gabinete desde la vereda.
+  const CONTB = { corrientes: mk(576, 288), pellegrini: mk(720, 288), media: mk(960, 206) };
+  function dibujarContenido(id, cont) {
+    window.CONTENIDO.dibujar(CONT[id], id, cont);
+    const b = CONTB[id].getContext('2d'); b.setTransform(1, 0, 0, 1, 0, 0); b.globalCompositeOperation = 'source-over'; b.filter = 'blur(0.55px)';
+    b.clearRect(0, 0, CONTB[id].width, CONTB[id].height); b.drawImage(CONT[id], 0, 0); b.filter = 'none';
+    b.globalCompositeOperation = 'lighten'; b.fillStyle = 'rgb(17,17,21)'; b.fillRect(0, 0, CONTB[id].width, CONTB[id].height);   // piso de negro del LED
+    b.globalCompositeOperation = 'multiply'; b.drawImage(texturaLED(id), 0, 0); b.globalCompositeOperation = 'source-over';
+  }
+  // módulos de 0,5 m: Corrientes 7,68 × 3,84 m · Pellegrini 9,60 × 3,84 m · horizontal ≈ 0,5 m de alto en cada tramo (building.ts)
+  const MODULOS = { corrientes: [15, 8], pellegrini: [19, 8], media: [96, 2] };
+  const TEXT_LED = {};
+  function texturaLED(id) {
+    if (TEXT_LED[id]) return TEXT_LED[id];
+    const cv = CONT[id], t = mk(cv.width, cv.height), c = t.getContext('2d'), [nx, ny] = MODULOS[id];
+    c.fillStyle = '#fff'; c.fillRect(0, 0, t.width, t.height);
+    for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) {   // pequeña diferencia de brillo entre gabinetes (calibración real ±2 %)
+      const v = 247 + Math.round(8 * (Math.sin(i * 12.9898 + j * 78.233) * 43758.5453 % 1 + 1) % 1);
+      c.fillStyle = `rgb(${v},${v},${v})`; c.fillRect(i * t.width / nx, j * t.height / ny, t.width / nx + 1, t.height / ny + 1);
+    }
+    c.strokeStyle = 'rgba(0,0,0,0.16)'; c.lineWidth = 1;
+    for (let i = 1; i < nx; i++) { const x = Math.round(i * t.width / nx) + 0.5; c.beginPath(); c.moveTo(x, 0); c.lineTo(x, t.height); c.stroke(); }
+    for (let j = 1; j < ny; j++) { const y = Math.round(j * t.height / ny) + 0.5; c.beginPath(); c.moveTo(0, y); c.lineTo(t.width, y); c.stroke(); }
+    const vg = c.createLinearGradient(0, 0, 0, t.height);   // borde superior e inferior apenas más oscuros
+    vg.addColorStop(0, 'rgba(0,0,0,0.14)'); vg.addColorStop(0.08, 'rgba(0,0,0,0)'); vg.addColorStop(0.92, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.18)');
+    c.fillStyle = vg; c.fillRect(0, 0, t.width, t.height);
+    if (id !== 'media') { const hg = c.createLinearGradient(0, 0, t.width, 0); hg.addColorStop(0, 'rgba(0,0,0,0.12)'); hg.addColorStop(0.05, 'rgba(0,0,0,0)'); hg.addColorStop(0.95, 'rgba(0,0,0,0)'); hg.addColorStop(1, 'rgba(0,0,0,0.12)'); c.fillStyle = hg; c.fillRect(0, 0, t.width, t.height); }
+    TEXT_LED[id] = t; return t;
+  }
 
   // ---------- luces ----------
   // Canal W = el LED blanco FIJO del equipo (Fer, 14/10: no asumir blanco cálido regulable). Previsualización ≈ 4000 K;
@@ -463,7 +495,7 @@
         ctx.save(); ctx.beginPath(); ctx.moveTo(SILUETA[0][0] * W, SILUETA[0][1] * H);
         for (const [x, y] of SILUETA.slice(1)) ctx.lineTo(x * W, y * H);
         ctx.closePath(); ctx.clip();
-        ctx.globalCompositeOperation = 'soft-light'; ctx.globalAlpha = 0.55;
+        ctx.globalCompositeOperation = 'soft-light'; ctx.globalAlpha = 0.72;   // detalles de molduras más marcados
         ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(relieve, 0, 0, WC, HC); ctx.restore();   // el relieve es del encuadre completo
       }
     }
@@ -492,15 +524,26 @@
     for (const id of ['corrientes', 'pellegrini']) {
       const qd = aPx(G.superficies[id].quads[0], W, H), e = extra.pantallas.find((x) => x.quads === G.superficies[id].quads);
       if (id === 'corrientes') ctx.drawImage(sombrasContacto(W, H), 0, 0);   // las dos sombras, en una capa cacheada
+      // panza del gabinete (se ve desde abajo): franja oscura bajo el borde inferior, con un filo de luz del propio LED
+      const prof = H * 0.0075, bi = [qd[3], qd[2]];
+      const gp = ctx.createLinearGradient(0, bi[0][1], 0, bi[0][1] + prof); gp.addColorStop(0, '#2a2a2e'); gp.addColorStop(1, '#0d0d10');
+      ctx.fillStyle = gp; ctx.beginPath(); ctx.moveTo(bi[0][0], bi[0][1]); ctx.lineTo(bi[1][0], bi[1][1]); ctx.lineTo(bi[1][0], bi[1][1] + prof); ctx.lineTo(bi[0][0], bi[0][1] + prof); ctx.closePath(); ctx.fill();
       if (!dia && e && e.nivel > 0.01) {
-        ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = 0.22 * e.nivel;
-        ctx.filter = `blur(${Math.max(6, W / 110).toFixed(0)}px)`; ctx.fillStyle = `rgb(${e.color.join(',')})`;
+        ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = 0.3 * e.nivel;
+        ctx.filter = `blur(${Math.max(8, W / 80).toFixed(0)}px)`; ctx.fillStyle = `rgb(${e.color.join(',')})`;
         ctx.beginPath(); trazarQuad(ctx, qd); ctx.fill(); ctx.restore();
       }
     }
+    // 3c. la marquesina también emite: halo suave sobre la piedra de arriba y de abajo (nunca sobre el LED: se pinta antes)
+    const em = extra.pantallas.find((x) => x.quads === G.superficies.media.quads);
+    if (!dia && em && em.nivel > 0.01) {
+      ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = 0.26 * em.nivel;
+      ctx.filter = `blur(${Math.max(8, W / 90).toFixed(0)}px)`; ctx.fillStyle = `rgb(${em.color.join(',')})`;
+      ctx.beginPath(); for (const qd of G.superficies.media.quads) trazarQuad(ctx, aPx(qd, W, H)); ctx.fill(); ctx.restore();
+    }
     // 4. pantallas (opacas, encima de todo)
     for (const id of M.PANTALLAS) {
-      const sup = G.superficies[id], src = CONT[id], nq = sup.quads.length, nivel = sal.pantallas[id];
+      const sup = G.superficies[id], src = CONTB[id], nq = sup.quads.length, nivel = sal.pantallas[id];
       sup.quads.forEach((qd, k) => {
         const qpx = aPx(qd, W, H);
         pintarQuad(ctx, src, src.width * k / nq, 0, src.width / nq, src.height, qpx, nq > 1 ? 2 : 12, nq > 1 ? 1 : 4);
@@ -512,11 +555,15 @@
       }
       // borde físico del gabinete LED: una línea oscura fina (la pantalla se lee como superficie instalada, no como pegote)
       const qs = sup.quads.map((qd) => aPx(qd, W, H));
-      ctx.save(); ctx.strokeStyle = 'rgba(10,10,12,0.6)'; ctx.lineWidth = Math.max(1, W / 1000); ctx.lineJoin = 'round'; ctx.beginPath();
+      ctx.save(); ctx.strokeStyle = 'rgba(12,12,14,0.85)'; ctx.lineWidth = Math.max(1.2, W / 650); ctx.lineJoin = 'round'; ctx.beginPath();
       ctx.moveTo(qs[0][0][0], qs[0][0][1]); for (const q of qs) ctx.lineTo(q[1][0], q[1][1]);   // borde superior
       ctx.lineTo(qs[qs.length - 1][2][0], qs[qs.length - 1][2][1]);                             // esquina inferior derecha
       for (let k = qs.length - 1; k >= 0; k--) ctx.lineTo(qs[k][3][0], qs[k][3][1]);          // borde inferior
       ctx.closePath(); ctx.stroke(); ctx.restore();
+      if (id !== 'media') {   // filo de luz en el borde superior del gabinete (lo toca la luz de la calle)
+        ctx.save(); ctx.strokeStyle = 'rgba(255,240,225,0.14)'; ctx.lineWidth = Math.max(1, W / 1400);
+        ctx.beginPath(); ctx.moveTo(qs[0][0][0], qs[0][0][1] - W / 1500); ctx.lineTo(qs[0][1][0], qs[0][1][1] - W / 1500); ctx.stroke(); ctx.restore();
+      }
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0); OFF = [0, 0];
     ultimaInfo = { lucesDibujadas: n, foto: foto === fotoN ? 'noche' : 'dia', W: WC, H: HC, encuadre };

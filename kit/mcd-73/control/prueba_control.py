@@ -277,7 +277,7 @@ async def main(out):
         await ev(f'{M}.cargarShow(); {M}.seek(3.0)'); r1 = [await ev(f'TRUST.pixel({x},{y})') for x, y in (cq('corrientes'), cq('pellegrini'), cm_)]
         await ev(f'{M}.seek(3.9)'); r2 = [await ev(f'TRUST.pixel({x},{y})') for x, y in (cq('corrientes'), cq('pellegrini'), cm_)]
         await ev(f'{M}.seek(7.5)'); r3 = [await ev(f'TRUST.pixel({x},{y})') for x, y in (cq('corrientes'), cq('pellegrini'), cm_)]
-        ok(lum3(r1[0]) > 40 and lum3(r1[1]) < 25 and lum3(r1[2]) < 25 and lum3(r2[1]) > 40 and lum3(r2[2]) < 25 and all(lum3(c) > 40 for c in r3),
+        ok(lum3(r1[0]) > 80 and lum3(r1[1]) < 45 and lum3(r1[2]) < 45 and lum3(r2[1]) > 80 and lum3(r2[2]) < 45 and all(lum3(c) > 80 for c in r3),
            f'una sola composición: 3,0 s solo Corrientes · 3,9 s Corrientes + Pellegrini · 7,5 s las tres ({[lum3(c) for c in r1]} → {[lum3(c) for c in r2]} → {[lum3(c) for c in r3]})')
         src = open(os.path.join(AQUI, 'contenido.js'), encoding='utf-8').read() + open(os.path.join(AQUI, 'app.js'), encoding='utf-8').read()
         ok(all(x not in src for x in ['TAKEOVER 15 s', 'UN MOMENTO SINCRONIZADO', 'FRENTE AL OBELISCO']), 'contenido sin textos de demo («TAKEOVER 15 s», «UN MOMENTO SINCRONIZADO»…)')

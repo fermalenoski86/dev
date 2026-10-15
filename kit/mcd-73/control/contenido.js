@@ -167,7 +167,26 @@
     }
     c.restore();
   }
-  function hamburguesa(c, x, y, a, t) {   // producto genérico ilustrado, con luz de borde y vapor (base en y)
+  // Producto con VOLUMEN: se dibuja aparte y se le aplica luz principal (arriba a la izquierda) y sombra propia,
+  // así no queda como un dibujo plano pegado sobre la pantalla.
+  const HB = document.createElement('canvas');
+  function hamburguesa(c, x, y, a, t) {
+    const s = 2, w = Math.ceil(a * 1.3 * s), h = Math.ceil(a * 1.15 * s);
+    if (HB.width !== w || HB.height !== h) { HB.width = w; HB.height = h; }
+    const k = HB.getContext('2d'); k.setTransform(1, 0, 0, 1, 0, 0); k.globalCompositeOperation = 'source-over'; k.clearRect(0, 0, w, h);
+    k.setTransform(s, 0, 0, s, 0, 0);
+    const ox = a * 0.65, oy = a * 0.9;   // base del producto dentro del lienzo auxiliar
+    hamburguesaPlana(k, ox, oy, a, t);
+    k.setTransform(1, 0, 0, 1, 0, 0); k.globalCompositeOperation = 'source-atop';
+    let g = k.createRadialGradient(w * 0.32, h * 0.25, 0, w * 0.32, h * 0.25, w * 0.75);
+    g.addColorStop(0, 'rgba(255,244,220,0.28)'); g.addColorStop(0.5, 'rgba(255,244,220,0)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    k.fillStyle = g; k.fillRect(0, 0, w, h);
+    g = k.createLinearGradient(0, h * 0.3, w * 0.4, h); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(20,6,0,0.42)');
+    k.fillStyle = g; k.fillRect(0, 0, w, h);
+    k.globalCompositeOperation = 'source-over';
+    c.drawImage(HB, x - ox, y - oy, w / s, h / s);
+  }
+  function hamburguesaPlana(c, x, y, a, t) {   // producto genérico ilustrado, con luz de borde y vapor (base en y)
     c.save();
     const h = a * 0.62;
     // sombra / reflejo en el piso
@@ -403,7 +422,7 @@
       particulas(c, vn, t, 0.5, 60);
       const pa = sv((t - 5.1) / 0.9);
       if (id === 'pellegrini') hamburguesa(c, 1648, 665 + 30 * (1 - pa), 300 * (0.92 + 0.08 * pa), t);
-      if (id === 'corrientes') { const z = 2.4 + 0.3 * (t - 5) / 5, an = 300 * z; hamburguesa(c, 800 + 50 * (t - 5) / 5, 640 + 0.4 * an, an, t); }   // macro del mismo producto: la cúpula del pan llena el panel   // macro del mismo producto
+      if (id === 'corrientes') { const z = 1.05 + 0.12 * (t - 5) / 5, an = 300 * z; hamburguesa(c, 835, 600 + 0.3 * an, an, t); }   // el mismo producto, más cerca (empuje lento)   // macro del mismo producto: la cúpula del pan llena el panel   // macro del mismo producto
       if (id === 'media') { ondasFirma(c, vn, t, 0.35 * k); marca(c, YM.cx, YM.cy, 66, sv((t - 5.4) / 0.8), cl((t - 6.2) / 1.6, 0, 1)); }
     } else if (cr === 'A') {   // BRAND DOMINANCE: un solo nombre gigante que abarca ambas pantallas + pilastras de luz
       fondoRojo(c, vn, t, 0.1);

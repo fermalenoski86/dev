@@ -4,9 +4,9 @@ window.ENCUADRES = {
  "completo": {
   "nombre": "Edificio completo",
   "archivo": "fotos/trust-noche-completa.jpg",
-  "ancho": 1190,
-  "alto": 1330,
-  "sha256": "9e316afc773a92ca044dc7a3273e9a3d47ceda0c047da3503f0b312a5f18a970",
+  "ancho": 2570,
+  "alto": 2872,
+  "sha256": "71ba348cf2c96f185feda4231f7eaff62a1db3fd72563f198f2cb0159b05ba27",
   "relieve": "fotos/trust-relieve-completa.jpg",
   "cielo": "fotos/trust-cielo-completa.png",
   "rect": [
@@ -15,6 +15,16 @@ window.ENCUADRES = {
    0.996171,
    0.603376
   ],
+  "farolas_x": [
+   [
+    0.4728,
+    1
+   ],
+   [
+    0.6537,
+    -1
+   ]
+  ],
   "calibracion": {
    "metodo": "SIFT + RANSAC (similaridad) contra la foto base",
    "puntos": 279,
@@ -22,7 +32,8 @@ window.ENCUADRES = {
    "rotacion_corregida_grados": 0.055,
    "escala": 0.46306,
    "nota": "misma toma que la foto base; la foto base ocupa el rectángulo rect"
-  }
+  },
+  "composicion": "foto base retocada (2560 px) + toma entera ampliada ×2.160 y con color igualado; farolas quitadas"
  },
  "cerca": {
   "nombre": "Fachada (encuadre original)",
