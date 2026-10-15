@@ -2,7 +2,7 @@ TRUST Control × McDonald's — cómo abrir y operar la presentación
 SIMULACIÓN CONCEPTUAL — NO CONECTADA A EQUIPOS REALES
 
 ABRIR (sin internet, sin instalar nada)
-1. Descomprimí las dos partes del ZIP en la MISMA carpeta (queda una sola carpeta "TRUST-McDonalds-kit-offline").
+1. Descomprimí TODAS las partes del ZIP (parte1, parte2, parte3…) en la MISMA carpeta (queda una sola carpeta "TRUST-McDonalds-kit-offline").
 2. Entrá a la carpeta "control" y hacé doble clic en "index.html". Si se abre con otro programa:
    clic derecho → Abrir con → Google Chrome (o Microsoft Edge).
 3. Pantalla completa: F11 (para salir, F11 otra vez). Ideal: notebook conectada a la pantalla grande en 1920×1080.

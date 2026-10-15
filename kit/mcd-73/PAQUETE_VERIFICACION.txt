@@ -1,7 +1,208 @@
-# Verificación del paquete offline #73 — 2026-10-15 06:40 UTC, rama kit/73-mcd sobre f50684c + textos del pedido por reglas (turno programado)
+# Verificación del paquete offline #73 — 2026-10-13 19:31 UTC, rama kit/73-mcd (v2: + consola DMX virtual, diapositiva 4 nueva)
 # python3 -I kit/mcd-73/paquete.py <dir> && bash kit/mcd-73/verificar_paquete.sh <dir>/TRUST-McDonalds-kit-offline.zip
 
-== ZIP: TRUST-McDonalds-kit-offline.zip 73429959 bytes, sha256 2987707f49aac32c…
+== ZIP: TRUST-McDonalds-kit-offline.zip 35031942 bytes, sha256 f071a2b2df6103cd…
+== integridad
+SHA256SUMS: 17 archivos OK
+== videos (decodificación completa, sin errores)
+OK video/01-trust-mcd-video-principal-1080p.mp4  h264,High,1920,1080 37.000000 
+OK video/02-trust-mcd-video-alternativo-720p.mp4  h264,Main,1280,720 37.000000 
+OK video/03-trust-control-grabacion-real-1080p.mp4  h264,High,1920,1080 57.960000 
+OK video/02b-trust-mcd-video-alternativo-720p.webm  vp9,Profile 0,1280,720 37.000000 
+OK video/03b-trust-control-grabacion-real-720p.webm  vp9,Profile 0,1280,720 57.960000 
+== PDFs
+OK pdf/01-deck-ejecutivo.pdf  8 pág. 1440x810 pt 
+OK pdf/02-propuesta-una-pagina.pdf  1 pág. 595.92x842.88 pt 
+OK pdf/03-guion-reunion.pdf  1 pág. 595.92x842.88 pt 
+== imágenes
+OK imagenes/01-obelisco-noche.png  1920,1080
+OK imagenes/02-takeover.png  1920,1080
+OK imagenes/03-firma-sincronizada.png  1920,1080
+OK imagenes/04-brand-reveal.png  1920,1080
+== index.html sin recursos de red
+OK: 15 referencias locales, todas existen
+== consola DMX virtual sin red
+OK: consola sin red; 2 referencias locales existen; rótulo: 1
+== rótulo
+index.html:2
+LEEME.txt:5
+RESULTADO: paquete offline verificado
+
+# Chromium OFFLINE sobre el ZIP descomprimido: prueba_navegador.py + abrir la consola desde index.html
+{'out': [[None, 4, 1.48, 1280, None, '02b-trust-mcd-video-alternativo-720p.webm'], [None, 4, 1.49, 1280, None, '02b-trust-mcd-video-alternativo-720p.webm'], [None, 4, 1.49, 1280, None, '03b-trust-control-grabacion-real-720p.webm']], 'imgs': [['imagenes/01-obelisco-noche.png', 1920], ['imagenes/02-takeover.png', 1920], ['imagenes/03-firma-sincronizada.png', 1920], ['imagenes/04-brand-reveal.png', 1920]]}
+no-file requests: []
+consola desde index.html: preset mcd | pantallas {'corrientes': 'Marca (mockup)', 'pellegrini': 'Marca (mockup)'} | equipos [14, 16, 16]
+rótulo: True
+pedidos fuera de file://: [] | errores: []
+
+## Paquete en dos partes (< 30 MiB c/u) — 2026-10-13 20:31 UTC
+$ python3 -I kit/mcd-73/partir.py <dir>
+TRUST-McDonalds-kit-offline-parte1-videos-consola.zip  14600738 bytes (13.9 MiB)
+TRUST-McDonalds-kit-offline-parte2-pdf-imagenes.zip  20433645 bytes (19.5 MiB)
+OK: 18 archivos repartidos en 2 partes, cada una < 30 MiB
+$ kit/mcd-73/verificar_paquete.sh <parte1.zip> <parte2.zip>
+== ZIP: TRUST-McDonalds-kit-offline-parte1-videos-consola.zip 14600738 bytes, sha256 98469cc4379bd833…
+== ZIP: TRUST-McDonalds-kit-offline-parte2-pdf-imagenes.zip 20433645 bytes, sha256 f10d7392ba8029f6…
+== integridad
+SHA256SUMS: 17 archivos OK
+== videos (decodificación completa, sin errores)
+OK video/01-trust-mcd-video-principal-1080p.mp4  h264,High,1920,1080 37.000000 
+OK video/02-trust-mcd-video-alternativo-720p.mp4  h264,Main,1280,720 37.000000 
+OK video/03-trust-control-grabacion-real-1080p.mp4  h264,High,1920,1080 57.960000 
+OK video/02b-trust-mcd-video-alternativo-720p.webm  vp9,Profile 0,1280,720 37.000000 
+OK video/03b-trust-control-grabacion-real-720p.webm  vp9,Profile 0,1280,720 57.960000 
+== PDFs
+OK pdf/01-deck-ejecutivo.pdf  8 pág. 1440x810 pt 
+OK pdf/02-propuesta-una-pagina.pdf  1 pág. 595.92x842.88 pt 
+OK pdf/03-guion-reunion.pdf  1 pág. 595.92x842.88 pt 
+== imágenes
+OK imagenes/01-obelisco-noche.png  1920,1080
+OK imagenes/02-takeover.png  1920,1080
+OK imagenes/03-firma-sincronizada.png  1920,1080
+OK imagenes/04-brand-reveal.png  1920,1080
+== index.html sin recursos de red
+OK: 15 referencias locales, todas existen
+== consola DMX virtual sin red
+OK: consola sin red; 2 referencias locales existen; rótulo: 1
+== rótulo
+index.html:2
+LEEME.txt:5
+RESULTADO: paquete offline verificado
+$ verificar_paquete.sh <parte1.zip>   # sola: debe fallar
+FALLA: SHA256SUMS (archivo faltante o alterado)
+$ verificar_paquete.sh <parte2.zip>   # sola: debe fallar
+FALLA: SHA256SUMS (archivo faltante o alterado)
+Códigos de salida reales: parte1 sola exit=1, parte2 sola exit=1, partes 1+2 exit=0.
+Nota: antes de este cambio, un archivo faltante en SHA256SUMS no cortaba la verificación (`cmd && echo` bajo set -e); corregido.
+
+## Paquete en dos partes tras «Director de show (simulado)» y diapositiva 4 nueva — 2026-10-14 08:34 UTC (turno programado)
+$ python3 -I kit/mcd-73/paquete.py <dir> && python3 -I kit/mcd-73/partir.py <dir>
+TRUST-McDonalds-kit-offline-parte1-videos-consola.zip  15421465 bytes (14.7 MiB)
+TRUST-McDonalds-kit-offline-parte2-pdf-imagenes.zip  20455512 bytes (19.5 MiB)
+OK: 28 archivos repartidos en 2 partes, cada una < 30 MiB
+$ kit/mcd-73/verificar_paquete.sh <parte1.zip> <parte2.zip>
+== ZIP: TRUST-McDonalds-kit-offline-parte1-videos-consola.zip 15421465 bytes, sha256 546ae353047b8420…
+== ZIP: TRUST-McDonalds-kit-offline-parte2-pdf-imagenes.zip 20455512 bytes, sha256 0c57241210f9289d…
+== integridad
+SHA256SUMS: 27 archivos OK
+== videos (decodificación completa, sin errores)
+OK video/01-trust-mcd-video-principal-1080p.mp4  h264,High,1920,1080 37.000000 
+OK video/02-trust-mcd-video-alternativo-720p.mp4  h264,Main,1280,720 37.000000 
+OK video/03-trust-control-grabacion-real-1080p.mp4  h264,High,1920,1080 57.960000 
+OK video/02b-trust-mcd-video-alternativo-720p.webm  vp9,Profile 0,1280,720 37.000000 
+OK video/03b-trust-control-grabacion-real-720p.webm  vp9,Profile 0,1280,720 57.960000 
+== PDFs
+OK pdf/01-deck-ejecutivo.pdf  8 pág. 1440x810 pt 
+OK pdf/02-propuesta-una-pagina.pdf  1 pág. 595.92x842.88 pt 
+OK pdf/03-guion-reunion.pdf  1 pág. 595.92x842.88 pt 
+== imágenes
+OK imagenes/01-obelisco-noche.png  1920,1080
+OK imagenes/02-takeover.png  1920,1080
+OK imagenes/03-firma-sincronizada.png  1920,1080
+OK imagenes/04-brand-reveal.png  1920,1080
+== index.html sin recursos de red
+OK: 25 referencias locales, todas existen
+== consola DMX virtual sin red
+OK: consola sin red; 2 referencias locales existen; rótulo: 1
+== TRUST Control sin red
+OK: TRUST Control sin red; 6 referencias locales existen; rótulo: 2
+== rótulo
+index.html:2
+LEEME.txt:6
+RESULTADO: paquete offline verificado
+exit=0
+
+## Paquete en dos partes + respaldo grabado del show McDonald's 15 s en TRUST Control (video/04 + 04b WebM; sobre f6584dd, motor de luz realista) — 2026-10-14 10:55 UTC (turno programado)
+$ python3 -I kit/mcd-73/paquete.py <dir> && python3 -I kit/mcd-73/partir.py <dir>
+TRUST-McDonalds-kit-offline-parte1-videos-consola.zip  18935976 bytes (18.1 MiB)
+TRUST-McDonalds-kit-offline-parte2-pdf-imagenes.zip  20455719 bytes (19.5 MiB)
+OK: 30 archivos repartidos en 2 partes, cada una < 30 MiB
+$ kit/mcd-73/verificar_paquete.sh <parte1.zip> <parte2.zip>
+== ZIP: TRUST-McDonalds-kit-offline-parte1-videos-consola.zip 18935976 bytes, sha256 de5d8ddcbee7d656…
+== ZIP: TRUST-McDonalds-kit-offline-parte2-pdf-imagenes.zip 20455719 bytes, sha256 a33d56d3b0cb5afa…
+== integridad
+SHA256SUMS: 29 archivos OK
+== videos (decodificación completa, sin errores)
+OK video/01-trust-mcd-video-principal-1080p.mp4  h264,High,1920,1080 37.000000 
+OK video/02-trust-mcd-video-alternativo-720p.mp4  h264,Main,1280,720 37.000000 
+OK video/03-trust-control-grabacion-real-1080p.mp4  h264,High,1920,1080 57.960000 
+OK video/04-trust-control-show-mcd-15s-1080p.mp4  h264,High,1920,1080 19.080000 
+OK video/02b-trust-mcd-video-alternativo-720p.webm  vp9,Profile 0,1280,720 37.000000 
+OK video/03b-trust-control-grabacion-real-720p.webm  vp9,Profile 0,1280,720 57.960000 
+OK video/04b-trust-control-show-mcd-15s-720p.webm  vp9,Profile 0,1280,720 19.080000 
+== PDFs
+OK pdf/01-deck-ejecutivo.pdf  8 pág. 1440x810 pt 
+OK pdf/02-propuesta-una-pagina.pdf  1 pág. 595.92x842.88 pt 
+OK pdf/03-guion-reunion.pdf  1 pág. 595.92x842.88 pt 
+== imágenes
+OK imagenes/01-obelisco-noche.png  1920,1080
+OK imagenes/02-takeover.png  1920,1080
+OK imagenes/03-firma-sincronizada.png  1920,1080
+OK imagenes/04-brand-reveal.png  1920,1080
+== index.html sin recursos de red
+OK: 27 referencias locales, todas existen
+== consola DMX virtual sin red
+OK: consola sin red; 2 referencias locales existen; rótulo: 1
+== TRUST Control sin red
+OK: TRUST Control sin red; 6 referencias locales existen; rótulo: 2
+== rótulo
+index.html:2
+LEEME.txt:6
+RESULTADO: paquete offline verificado
+exit=0
+$ python3 -I kit/mcd-73/prueba_navegador.py <dir>/TRUST-McDonalds-kit-offline/index.html   # Chromium offline: cada reproductor avanza con el WebM del MISMO video
+{'out': [[None, 4, 1.49, 1280, None, '02b-trust-mcd-video-alternativo-720p.webm'], [None, 4, 1.49, 1280, None, '02b-trust-mcd-video-alternativo-720p.webm'], [None, 4, 1.48, 1280, None, '03b-trust-control-grabacion-real-720p.webm'], [None, 4, 1.46, 1280, None, '04b-trust-control-show-mcd-15s-720p.webm']], 'imgs': [['imagenes/01-obelisco-noche.png', 1920], ['imagenes/02-takeover.png', 1920], ['imagenes/03-firma-sincronizada.png', 1920], ['imagenes/04-brand-reveal.png', 1920]]}
+no-file requests: []
+ABRIR-PRESENTACION en el paquete menciona video/04: 1
+sha256 del video 04 en el paquete = repo: 0c375c5c06d8d51a / 0c375c5c06d8d51a
+
+## Paquete en dos partes tras guion de reunión v1 (bloque 7–12 con TRUST Control + Director simulado, respaldo video/04) y paso 5 de ABRIR-PRESENTACION — 2026-10-14 11:32 UTC (turno programado)
+$ python3 -I kit/mcd-73/paquete.py <dir> && python3 -I kit/mcd-73/partir.py <dir>
+TRUST-McDonalds-kit-offline-parte1-videos-consola.zip  18936024 bytes, sha256 bd6b7bd8b1c905e6…
+TRUST-McDonalds-kit-offline-parte2-pdf-imagenes.zip  20463052 bytes, sha256 68939b5b97535115…
+$ kit/mcd-73/verificar_paquete.sh <parte1.zip> <parte2.zip>
+== ZIP: TRUST-McDonalds-kit-offline-parte1-videos-consola.zip 18936024 bytes, sha256 bd6b7bd8b1c905e6…
+== ZIP: TRUST-McDonalds-kit-offline-parte2-pdf-imagenes.zip 20463052 bytes, sha256 68939b5b97535115…
+== integridad
+SHA256SUMS: 29 archivos OK
+== videos (decodificación completa, sin errores)
+OK video/01-trust-mcd-video-principal-1080p.mp4  h264,High,1920,1080 37.000000 
+OK video/02-trust-mcd-video-alternativo-720p.mp4  h264,Main,1280,720 37.000000 
+OK video/03-trust-control-grabacion-real-1080p.mp4  h264,High,1920,1080 57.960000 
+OK video/04-trust-control-show-mcd-15s-1080p.mp4  h264,High,1920,1080 19.080000 
+OK video/02b-trust-mcd-video-alternativo-720p.webm  vp9,Profile 0,1280,720 37.000000 
+OK video/03b-trust-control-grabacion-real-720p.webm  vp9,Profile 0,1280,720 57.960000 
+OK video/04b-trust-control-show-mcd-15s-720p.webm  vp9,Profile 0,1280,720 19.080000 
+== PDFs
+OK pdf/01-deck-ejecutivo.pdf  8 pág. 1440x810 pt 
+OK pdf/02-propuesta-una-pagina.pdf  1 pág. 595.92x842.88 pt 
+OK pdf/03-guion-reunion.pdf  1 pág. 595.92x842.88 pt 
+== imágenes
+OK imagenes/01-obelisco-noche.png  1920,1080
+OK imagenes/02-takeover.png  1920,1080
+OK imagenes/03-firma-sincronizada.png  1920,1080
+OK imagenes/04-brand-reveal.png  1920,1080
+== index.html sin recursos de red
+OK: 27 referencias locales, todas existen
+== consola DMX virtual sin red
+OK: consola sin red; 2 referencias locales existen; rótulo: 1
+== TRUST Control sin red
+OK: TRUST Control sin red; 6 referencias locales existen; rótulo: 2
+== rótulo
+index.html:2
+LEEME.txt:6
+RESULTADO: paquete offline verificado
+exit=0
+$ python3 -I kit/mcd-73/prueba_navegador.py <dir>/TRUST-McDonalds-kit-offline/index.html
+{'out': [[None, 4, 1.48, 1280, None, '02b-trust-mcd-video-alternativo-720p.webm'], [None, 4, 1.48, 1280, None, '02b-trust-mcd-video-alternativo-720p.webm'], [None, 4, 1.46, 1280, None, '03b-trust-control-grabacion-real-720p.webm'], [None, 4, 1.48, 1280, None, '04b-trust-control-show-mcd-15s-720p.webm']], 'imgs': [['imagenes/01-obelisco-noche.png', 1920], ['imagenes/02-takeover.png', 1920], ['imagenes/03-firma-sincronizada.png', 1920], ['imagenes/04-brand-reveal.png', 1920]]}
+no-file requests: []
+guion (pdf/03) en el paquete = repo: 875012b6ee813429, 1 página
+ABRIR-PRESENTACION en el paquete con «Generar minishow (simulado)»: 1
+
+## Paquete tras las 6 creatividades y el pedido leído por reglas — 2026-10-15 06:50 UTC (turno programado, kit/73-mcd sobre f6f4a57)
+# El ZIP pasó de ~35 a ~73 MB: ya no entra en dos partes < 30 MiB. partir.py ahora reparte los videos por tamaño (3 partes).
+$ python3 -I kit/mcd-73/paquete.py <dir> && bash kit/mcd-73/verificar_paquete.sh <dir>/TRUST-McDonalds-kit-offline.zip
+== ZIP: TRUST-McDonalds-kit-offline.zip 73429945 bytes, sha256 b49ceb209633c7e2…
 == integridad
 SHA256SUMS: 51 archivos OK
 == videos (decodificación completa, sin errores)
@@ -43,3 +244,19 @@ OK: TRUST Control sin red; 9 referencias locales existen; rótulo: 2
 index.html:2
 LEEME.txt:6
 RESULTADO: paquete offline verificado
+$ python3 -I kit/mcd-73/partir.py <dir>
+TRUST-McDonalds-kit-offline-parte1-presentacion.zip  24885635 bytes (23.7 MiB)
+TRUST-McDonalds-kit-offline-parte2-videos.zip  28119636 bytes (26.8 MiB)
+TRUST-McDonalds-kit-offline-parte3-videos.zip  20434730 bytes (19.5 MiB)
+OK: 52 archivos repartidos en 3 partes, cada una < 30 MiB
+$ verificar_paquete.sh <parte1> <parte2> <parte3>
+== ZIP: TRUST-McDonalds-kit-offline-parte1-presentacion.zip 24885635 bytes, sha256 e5519e44382dec84…
+== ZIP: TRUST-McDonalds-kit-offline-parte2-videos.zip 28119636 bytes, sha256 da20b9b77dae698e…
+== ZIP: TRUST-McDonalds-kit-offline-parte3-videos.zip 20434730 bytes, sha256 e088ca64f17d07f2…
+RESULTADO: paquete offline verificado
+$ verificar_paquete.sh <parte1> <parte2>   # falta parte3: debe fallar
+FALLA: SHA256SUMS (archivo faltante o alterado)
+Códigos de salida reales: ZIP único exit=0, partes 1+2+3 exit=0, partes 1+2 exit=1.
+# Chromium OFFLINE sobre las 3 partes descomprimidas juntas: prueba_navegador.py
+{'out': [[None, 4, 1.46, 1280, None, '02b-trust-mcd-video-alternativo-720p.webm'], [None, 4, 1.48, 1280, None, '02b-trust-mcd-video-alternativo-720p.webm'], [None, 4, 1.47, 1280, None, '03b-trust-control-grabacion-real-720p.webm'], [None, 4, 1.46, 1280, None, '04b-trust-control-show-mcd-15s-720p.webm'], [None, 4, 1.45, 1280, None, '05b-trust-mcd-takeover-15s-C-iconic-720p.webm'], [None, 4, 1.4, 1280, None, '06b-trust-mcd-takeover-15s-A-brand-720p.webm'], [None, 4, 1.47, 1280, None, '07b-trust-mcd-takeover-15s-B-producto-720p.webm'], [None, 4, 1.45, 1280, None, '08b-trust-mcd-takeover-15s-D-papas-720p.webm'], [None, 4, 1.46, 1280, None, '09b-trust-mcd-takeover-15s-E-desayuno-720p.webm'], [None, 4, 1.46, 1280, None, '10b-trust-mcd-takeover-15s-F-lanzamiento-720p.webm']], 'imgs': [['imagenes/01-obelisco-noche.png', 1920], ['imagenes/02-takeover.png', 1920], ['imagenes/03-firma-sincronizada.png', 1920], ['imagenes/04-brand-reveal.png', 1920], ['control/fotos/trust-cielo.png', 2560], ['control/fotos/trust-cielo-completa.png', 2570]]}
+no-file requests: []

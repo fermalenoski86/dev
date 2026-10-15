@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Prueba de reproducción offline del ZIP del kit #73: descomprime en un directorio nuevo y verifica
 # integridad, decodificación completa de cada MP4, páginas de cada PDF, imágenes y que index.html no use red.
-# Acepta el ZIP único o las partes (parte1 + parte2): se descomprimen todas en el mismo directorio.
+# Acepta el ZIP único o todas las partes (parte1, parte2, …): se descomprimen todas en el mismo directorio.
 set -euo pipefail
 [ $# -ge 1 ] || { echo "uso: $0 <zip> [zip…]"; exit 2; }
 ZIPS=(); for a in "$@"; do ZIPS+=("$(cd "$(dirname "$a")" && pwd)/$(basename "$a")"); done
