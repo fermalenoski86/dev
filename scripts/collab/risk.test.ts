@@ -142,8 +142,18 @@ describe('P-03 · diff completo', () => {
     expect(nivel([m('packages/show-engine/src/e.test.ts', '-    ).resolves.toBe(1);')])).toBe('alto');
     // agregar `re.test(` no compensa casos quitados
     expect(nivel([m('packages/show-engine/src/e.test.ts', "-  it('a', () => {\n-  it('b', () => {\n+  ok = re.test(x);\n+  ok = re.test(y);")])).toBe('alto');
-    // mismo número de casos (renombrar un test) no reduce
-    expect(nivel([m('packages/show-engine/src/e.test.ts', "-  it('a', () => {\n+  it('b', () => {")])).toBe('medio');
+    // AUDIT: CAMBIOS sobre c424b9c (P1): cualquier modificación de un test existente es alto,
+    // también las que conservan los tokens (cortocircuito, condicional, wrapper) y un renombre
+    const corto = "@@ -1 +1 @@\n-it('transporta', () => { expect(true).toBe(true) })\n+false && it('transporta', () => { expect(true).toBe(true) })";
+    expect(nivel([m('packages/timeline/src/transport.test.ts', corto)])).toBe('alto');
+    expect(nivel([m('packages/timeline/src/transport.test.ts', "-it('a', () => {\n+if (process.env.NUNCA) it('a', () => {")])).toBe('alto');
+    expect(nivel([m('packages/show-engine/src/e.test.ts', "-  it('a', () => {\n+  it('b', () => {")])).toBe('alto');
+    // un archivo de tests NUEVO sin salteos sigue medio; con salteo, alto
+    expect(nivel([{ ruta: 'packages/show-engine/src/nuevo.test.ts', estado: 'A', parche: "+it('x', () => { expect(1).toBe(1) })" }])).toBe('medio');
+    expect(nivel([{ ruta: 'packages/show-engine/src/nuevo.test.ts', estado: 'A', parche: "+it.skip('x', () => {})" }])).toBe('alto');
+    // directorios convencionales y Python (Codex #82, ronda 8)
+    expect(nivel([{ ruta: 'packages/x/tests/api.ts', estado: 'D' }])).toBe('alto');
+    expect(nivel([m('tools/test_api.py', '-def test_a(): assert 1')])).toBe('alto');
   });
 
   it('symlink o submódulo, aunque esté en docs/ → alto', () => {

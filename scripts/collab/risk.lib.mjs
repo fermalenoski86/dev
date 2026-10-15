@@ -71,7 +71,7 @@ const BAJO = [
 ];
 
 const DOC = /^(docs\/|[^/]+\.md$)/;
-const TEST = /(^|\/)[^/]+\.(test|spec)\.[cm]?[jt]sx?$|(^|\/)(__tests__|e2e|e2e-platform)\//;
+const TEST = /(^|\/)[^/]+\.(test|spec)\.[cm]?[jt]sx?$|(^|\/)(__tests__|tests?|e2e|e2e-platform)\/|(^|\/)test_[^/]+\.py$|_test\.py$/;
 const CODIGO = /\.(c|m)?[jt]sx?$|\.(py|sh|sql|ya?ml)$/;
 
 /** Clasifica una ruta sola. → { nivel, motivo } */
@@ -129,6 +129,12 @@ export function motivosContenido(ruta, estado, parche, binario) {
     if ([...mas, ...menos].some((l) => PROCESO.test(l))) out.push('agrega, quita o cambia ejecución de procesos externos');
     if ([...mas, ...menos].some((l) => DDL.test(l) || DDL_GENERICO.test(l))) out.push('DDL o permisos SQL');
   }
+  // AUDIT: CAMBIOS sobre c424b9c (P1): contar tokens no detecta un test que deja de
+  // registrarse conservándolos (`false && it(...)`, un `if`, un wrapper). Sin análisis
+  // estructural fiable, MODIFICAR un archivo de tests existente es alto por defecto; los
+  // conteos de abajo quedan solo como detalle del motivo. Un archivo de tests NUEVO (A)
+  // sigue medio salvo que traiga skip/only/todo/fixme o retries.
+  if (TEST.test(ruta) && estado !== 'D' && estado !== 'A') out.push('modifica un archivo de tests existente (alto por defecto: sin análisis estructural, una desactivación puede conservar los tokens)');
   if (TEST.test(ruta) && estado !== 'D') {
     if (mas.some((l) => SALTEO.test(l))) out.push('agrega skip/only/todo/fixme o retries en tests');
     const quitados = contar(menos, CASO);
