@@ -3,22 +3,22 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** ChatGPT (auditor) — reauditar **P-04** (PR #75, issue #76).
-**En auditoría:** #75 @ 4aa2205e9070445bca3f2e17918ca5aaaa749d9d
+**Pelota en:** Claude (implementador) — corregir **P-04** en PR #75 (issue #76): 3 hallazgos del `AUDIT: CAMBIOS`, en una sola ronda.
+**En auditoría:** #75 @ e40c1156797cc84f66d60840da732e5269edb71c
 **Fase:** P-04 en reauditoría (ronda 7); después P-03 → PoC P-06 (orden confirmado por Fer). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
-**Estado:** Claude corrigió los 2 P2 del [AUDIT: CAMBIOS sobre `15f7c8a`](https://github.com/fermalenoski86/dev/pull/75#issuecomment-6159376633) en `e79fb97` y el P2 de Codex sobre `e79fb97` (copia del log no escribible dejaba el gate verde) en `4aa2205`. [Pedido de reauditoría](https://github.com/fermalenoski86/dev/issues/76#issuecomment-6160717387).
+**Estado:** `AUDIT: CAMBIOS` de ChatGPT sobre `e40c115` ([#75](https://github.com/fermalenoski86/dev/pull/75#issuecomment-6183575289)). El HEAD `e40c115` quedó por un push de Claude con la rama congelada (desvío reconocido en #76; `paralelo` exit 6). ChatGPT no pudo escribir `main` y autorizó este traspaso administrativo ([#76](https://github.com/fermalenoski86/dev/issues/76)). No mergear.
 
-## Entregado en `4aa2205`
-- `run.sh`: `tee` fallido (`e79fb97`, 3.23–3.23d) y copia `$P04_LOGS/<título>.log` no escribible (`4aa2205`, 3.23e–3.23h) → exit ≠ 0 con comando verde, título `log no escrito`.
-- Claves de timeout entre comillas en la foto y en `timeout no literal` (`e79fb97`, 4.33–4.33g).
-- CI [38506688709](https://github.com/fermalenoski86/dev/actions/runs/38506688709) sobre `4aa2205`: 7/7 verdes; `e2e-m2c` en el 2.º intento (falla de #77).
+## Hallazgos a corregir (una sola ronda)
+1. **[P1] `gates.yml`:** el setup (`pnpm install`, `apt-get`, `pg-up.sh`, Playwright) corre fuera del plazo de `plazo.sh`; si se cuelga, GitHub cancela y se pierde la evidencia. Watchdog/plazo que la preserve.
+2. **[P2] `gates.yml`:** el fallback depende del checkout (`scripts/ci/entorno.sh` no existe si falla); fallback autocontenido sin secretos.
+3. **[P2] `politica-fallas.sh`:** `retries\n: 2` evade la regla `retries=0`; test adversarial rojo antes y verde después.
 
 ## Aviso
-- `e2e-m2c` (`experience.spec.ts:14`, READY TO PRESENT queda en LOADING): 3 apariciones (`main` @ `bb42e26`, `886d2e4`, `4aa2205`), siempre verde al re-correr. Causa no determinada (en investigación) → #77. No es de P-04.
+- `e2e-m2c` intermitente (`experience.spec.ts:14`) → #77, causa no determinada; documentar el intento real, sin reintentos extra.
 
 ## Próximo paso
-- ChatGPT: reauditar el delta `15f7c8a..4aa2205` (2 P2 del dictamen + P2 de Codex); si pasa, `AUDIT: APROBADO` → Claude mergea, cierra #76 y arranca P-03 → PoC P-06.
-- Claude: no empujar sobre `4aa2205` mientras esté en auditoría.
+- Claude: corregir los 3 juntos, regresiones + 7 gates + `paralelo` verde sobre el SHA final, actualizar `En auditoría` a ese SHA y devolver la pelota. Sin Codex por commit.
+- ChatGPT: reauditar ese SHA.
 
 ## Reglas
 - Con la pelota en Claude puede avanzar el HEAD; al pedir reauditoría, actualizar `En auditoría` al SHA final y congelarlo.
@@ -27,7 +27,7 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-04 diagnóstico de fallas | PR #75 / #76 | reauditoría sobre `4aa2205` |
+| P-04 diagnóstico de fallas | PR #75 / #76 | `AUDIT: CAMBIOS` sobre `e40c115`; corrige Claude |
 | P-03 → PoC P-06 | #53 / #54 | siguientes, en serie |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 / PR #74 | brief en PR; paralelo condicionado al HANDOFF vigente |

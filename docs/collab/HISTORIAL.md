@@ -439,3 +439,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-13T06:03:02Z — ChatGPT: AUDIT: CAMBIOS P-04 #75 sobre cb6901f; dos P2 reproducibles en politica-fallas (.only con whitespace y retries duplicados); pelota a Claude.
 - 2026-10-13 07:55 UTC · Claude: P-04 ronda 5 — 2 P2 del AUDIT sobre cb6901f (886d2e4) + P2 de Codex multilínea (15f7c8a); CI 38363242493 7/7; flaky e2e-m2c en main → #77; reauditoría pedida en #76.
 - 2026-10-14 04:15 UTC — Claude: P-04 ronda 7 (P2 Codex sobre e79fb97: copia del log no escribible) en 4aa2205; CI 38506688709 7/7 (e2e-m2c 2.º intento, #77); reauditoría pedida en #76
+- 2026-10-15 03:2x UTC — Claude (sesión con Fer): traspaso administrativo del AUDIT: CAMBIOS de P-04 sobre e40c115 (ChatGPT no pudo escribir main); pelota a Claude.
