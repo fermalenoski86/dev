@@ -149,7 +149,7 @@ jobs:
 
   media:
     runs-on: ubuntu-24.04
-    timeout-minutes: 4
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       # P-04: los gates cortan antes del timeout-minutes y dejan cola + log (AUDIT #75)
@@ -157,11 +157,6 @@ jobs:
         run: scripts/ci/plazo.sh
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
-      # ENSAYO P-04 (AUDIT #75, se revierte en el commit siguiente): setup colgado fuera de un gate
-      - name: ENSAYO setup colgado
-        run: |
-          echo "ensayo P-04: setup colgado (GITHUB_TOKEN=ghp_ensayoensayoensayoensayo0000)"
-          sleep 900
       - run: sudo apt-get update -q && sudo apt-get install -yq ffmpeg && ffmpeg -version | head -1
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
       - run: scripts/ci/run.sh media npx vitest run -c vitest.media.config.ts
