@@ -30,11 +30,10 @@
 | P-04 diagnóstico de fallas | PR #75 / #76 | `AUDIT: CAMBIOS` sobre `e40c115`; corrige Claude |
 | P-03 → PoC P-06 | #53 / #54 | siguientes, en serie |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
-| CS-0 Creative Studio | #59 / PR #74 | brief en PR; paralelo condicionado al HANDOFF vigente |
+| CS-0 Creative Studio | #59 / PR #74 | `AUDIT: APROBADO`; merge pospuesto (P-05: comparte BACKLOG.md con #75) |
 | E2E intermitente :17 | #26 / #77 | #77: READY TO PRESENT en e2e-m2c (3 veces), causa no determinada |
 
 ## Pendiente de Fer
-- #43: detalle de campaña para INTERNAL_APPROVER (PR #72 abierto).
 - Tags opcionales bloqueados por proxy: bl31, bl07, bl08, f3a, f3a-ui.
 - `main`: required checks + rama al día después de adaptar escritores directos.
 - PoC P-06: entorno Codex y `CLAUDE_CODE_OAUTH_TOKEN` (ver brief).
