@@ -442,3 +442,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-15 03:2x UTC — Claude (sesión con Fer): traspaso administrativo del AUDIT: CAMBIOS de P-04 sobre e40c115 (ChatGPT no pudo escribir main); pelota a Claude.
 - 2026-10-15 03:3x UTC — Claude: #72 mergeado en bf21484 (AUDIT: APROBADO, cierra #43); #74 aprobado, merge pospuesto (paralelo exit 7, BACKLOG.md compartido con #75).
 - 2026-10-15 04:33 UTC — Claude: P-04 ronda 9 (3 hallazgos del AUDIT: CAMBIOS sobre e40c115 en aba796f; ensayo de setup colgado run 38677813259 revertido; fix 3.24 en CI en 8bd04c5), CI 7/7 run 38678673033; reauditoría pedida (#75 @ 8bd04c5)
+- 2026-10-15 14:3x UTC — Claude (sesión con Fer, merge autorizado): #75 P-04 squash en 3a8e4fc tras AUDIT: APROBADO sobre 8bd04c5; #76 cerrado; P-04 al manifiesto; arranca P-03.
