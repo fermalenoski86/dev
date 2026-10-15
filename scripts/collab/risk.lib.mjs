@@ -45,13 +45,13 @@ export function raicesWorkspace(yaml) {
 // Familias ALTO que P-03 suma a GATES_RE (por ruta).
 const ALTO_EXTRA = [
   [/^\.github\//, 'configuración de GitHub (workflows, CODEOWNERS, acciones)'],
-  [/^(AGENTS|CLAUDE)\.md$/, 'reglas de los agentes (AGENTS.md / CLAUDE.md)'],
+  [/(^|\/)(AGENTS|CLAUDE)\.md$/, 'reglas de los agentes (AGENTS.md / CLAUDE.md, a cualquier profundidad)'],
   [/^docs\/collab\/(HANDOFF|DECISIONES)\.md$/, 'transferencia de pelota o decisiones de Fer'],
   [/^docs\/ai-workflow\//, 'prompt y fundamento del auditor'],
   [/^\.gitattributes$|(^|\/)\.gitattributes$/, '.gitattributes (puede ocultar diffs o cambiar cómo se ve el contenido)'],
   [/(^|[/_.-])(hardware|dmx|art-?net|novastar|sacn|ltc|tb60|reloj)([/_.-]|$)/i, 'hardware / control físico'],
   [/^edge\//, 'edge (corre en el edificio)'],
-  [/(^|\/)\.env(\.|$)/, 'archivo de entorno'],
+  [/(^|\/)\.env[^/]*$/, 'archivo de entorno (.env*, también .envrc)'],
 ];
 
 // MEDIO: producto y documentos que fijan criterio de auditoría.
@@ -179,7 +179,8 @@ export function tieneAdversarias(cuerpo) {
     if (/^#{1,6}\s/.test(l)) break;
     if (/^([-*]|\d+\.)\s+\S.{8,}/.test(l)) return true; // ítem de lista con contenido
     if (/^\|\s*:?-{3,}/.test(l)) { separador = true; continue; }
-    if (separador && /^\|.*\S.*\|$/.test(l)) return true; // fila de tabla después del encabezado
+    // fila de tabla después del encabezado con al menos una celda no vacía (`| | |` no cuenta; Codex #82, P2)
+    if (separador && /^\|.*\|$/.test(l) && l.slice(1, -1).split('|').some((c) => c.trim() !== '')) return true;
   }
   return false;
 }

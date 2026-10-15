@@ -45,6 +45,9 @@ describe('P-03 · rutas', () => {
     ['docs/hardware/novastar.md', 'alto'],
     ['.gitattributes', 'alto'],
     ['.env', 'alto'],
+    ['apps/platform-web/.envrc', 'alto'], // Codex #82, P2
+    ['apps/platform-web/AGENTS.md', 'alto'], // reglas anidadas (Codex #82, P2)
+    ['packages/x/CLAUDE.md', 'alto'],
     ['vitest.platform.config.ts', 'alto'],
     ['pnpm-lock.yaml', 'alto'],
     ['raro/archivo.bin', 'alto'], // sin regla → alto por defecto
@@ -166,6 +169,7 @@ describe('P-03 · declarado vs calculado', () => {
   it('la sección acepta tabla con al menos una fila', () => {
     expect(tieneAdversarias('### Pruebas adversarias\n| eje | caso |\n|---|---|\n| concurrencia | dos escritores |')).toBe(true);
     expect(tieneAdversarias('### Pruebas adversarias\n| eje | caso |\n|---|---|\n')).toBe(false);
+    expect(tieneAdversarias('### Pruebas adversarias\n| eje | caso |\n|---|---|\n| | |')).toBe(false); // Codex #82, P2
   });
 });
 
