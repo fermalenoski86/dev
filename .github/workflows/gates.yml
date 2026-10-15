@@ -17,6 +17,17 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   # P-04: en pull_request el checkout es el merge sintético; el HEAD auditado va en cada anotación
   P04_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  # P-04 · paso final de cada job (falla o cancelación): autocontenido, no depende del checkout
+  # (AUDIT #75 sobre e40c115): si scripts/ci/ no está, deja igual una anotación y
+  # test-results/ci/entorno.txt con lo que da el runner (sin secretos: solo variables de GitHub).
+  # La marca p04-final avisa a vigia.sh que el job ya está en su cierre.
+  P04_FINAL: |
+    touch "$RUNNER_TEMP/p04-final"
+    [ -e "$RUNNER_TEMP/p04-anotado" ] && exit 0
+    [ -x scripts/ci/entorno.sh ] && exec scripts/ci/entorno.sh --error "$GITHUB_JOB: falló fuera de un gate (ver el paso rojo)"
+    L="sha=n/d head=$P04_HEAD_SHA ref=$GITHUB_SHA run=$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT job=$GITHUB_JOB ImageOS=${ImageOS:-n/d} ImageVersion=${ImageVersion:-n/d} checkout=ausente"
+    echo "::error title=$GITHUB_JOB: falló sin checkout (scripts/ci ausente; ver el paso rojo)::$L"
+    mkdir -p test-results/ci && printf '%s\n%s\n' "$GITHUB_JOB: falló sin checkout" "$L" > test-results/ci/entorno.txt
 jobs:
   verify-build:
     runs-on: ubuntu-24.04
@@ -62,7 +73,7 @@ jobs:
       # `|| cancelled()` en todos los jobs: el timeout-minutes cancela (no falla) el job; sin esto se perdía la evidencia
       - name: Entorno (falla fuera de un gate)
         if: failure() || cancelled()
-        run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "verify-build: falló fuera de un gate (ver el paso rojo)"'
+        run: bash -c "$P04_FINAL"
       - uses: actions/upload-artifact@v4
         if: failure() || cancelled()
         with:
@@ -98,7 +109,7 @@ jobs:
       # P-04: la falla fuera de un gate (setup) igual deja el entorno anotado; test-results/ sube siempre que falla
       - name: Entorno (falla fuera de un gate)
         if: failure() || cancelled()
-        run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "postgres: falló fuera de un gate (ver el paso rojo)"'
+        run: bash -c "$P04_FINAL"
       - uses: actions/upload-artifact@v4
         if: failure() || cancelled()
         with:
@@ -127,7 +138,7 @@ jobs:
       # P-04: la falla fuera de un gate (setup) igual deja el entorno anotado; test-results/ sube siempre que falla
       - name: Entorno (falla fuera de un gate)
         if: failure() || cancelled()
-        run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "compose-smoke: falló fuera de un gate (ver el paso rojo)"'
+        run: bash -c "$P04_FINAL"
       - uses: actions/upload-artifact@v4
         if: failure() || cancelled()
         with:
@@ -152,7 +163,7 @@ jobs:
       # P-04: la falla fuera de un gate (setup) igual deja el entorno anotado; test-results/ sube siempre que falla
       - name: Entorno (falla fuera de un gate)
         if: failure() || cancelled()
-        run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "media: falló fuera de un gate (ver el paso rojo)"'
+        run: bash -c "$P04_FINAL"
       - uses: actions/upload-artifact@v4
         if: failure() || cancelled()
         with:
@@ -192,7 +203,7 @@ jobs:
       # sin esto se tira. El job sigue en rojo: upload-artifact no cambia el exit.
       - name: Entorno (falla fuera de un gate)
         if: failure() || cancelled()
-        run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "e2e-m2c: falló fuera de un gate (ver el paso rojo)"'
+        run: bash -c "$P04_FINAL"
       - uses: actions/upload-artifact@v4
         if: failure() || cancelled()
         with:
@@ -266,7 +277,7 @@ jobs:
           if-no-files-found: error
       - name: Entorno (falla fuera de un gate)
         if: failure() || cancelled()
-        run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "e2e-platform: falló fuera de un gate (ver el paso rojo)"'
+        run: bash -c "$P04_FINAL"
       # P-04: test-results/ entero (trazas, logs, e2e-platform-results.json que leen acceptance y el
       # manifiesto, test-results/ci/ con los logs de los gates ya sanitizados). Las trazas de Playwright
       # (zip) no se reescriben: solo contienen sesiones de la instancia de test que muere con el runner
@@ -303,7 +314,7 @@ jobs:
       # P-04: la falla fuera de un gate (setup) igual deja el entorno anotado; test-results/ sube siempre que falla
       - name: Entorno (falla fuera de un gate)
         if: failure() || cancelled()
-        run: '[ -e "$RUNNER_TEMP/p04-anotado" ] || scripts/ci/entorno.sh --error "mutations: falló fuera de un gate (ver el paso rojo)"'
+        run: bash -c "$P04_FINAL"
       - uses: actions/upload-artifact@v4
         if: failure() || cancelled()
         with:

@@ -94,6 +94,30 @@ check "3.23f P04_LOGS es un archivo (no directorio) + comando verde → exit != 
 check "3.23g copia no escribible + comando rojo → conserva el exit del comando (3)" 'O=$(P04_LOGS=/proc/p04-prohibido "$AQUI/run.sh" "sincopia2" bash -c "exit 3" 2>&1); [ $? = 3 ] && printf "%s" "$O" | grep -q "^::error title=sincopia2 falló (exit 3%2C log no escrito)::"'
 check "3.23h tee y copia fallan juntos → un solo 'log no escrito' en el título y las dos notas" 'O=$(PATH=$T/mkt:$PATH P04_LOGS=/proc/p04-prohibido "$AQUI/run.sh" "ambos" true 2>&1); [ $? != 0 ] && [ "$(printf "%s" "$O" | grep "^::error" | grep -o "log no escrito" | wc -l)" = 1 ] && printf "%s" "$O" | grep "^::error" | grep -q "tee exit.*%0Arun.sh: no se pudo escribir la copia"' 
 
+# AUDIT #75 sobre e40c115 (P1): el setup y las acciones `uses:` no pasan por run.sh; vigia.sh corta el paso colgado
+check "3.24 plazo.sh fuera de CI (sin Runner.Worker): no lanza vigía" 'GE=$T/genv; : > "$GE"; O=$(GITHUB_JOB=media GITHUB_ENV=$GE "$AQUI/plazo.sh"); printf "%s" "$O" | grep -q "sin vigía (fuera de CI)"'
+O=$(P04_VIGIA_RAIZ=$$ GITHUB_JOB=media GITHUB_ENV=$T/genv "$AQUI/plazo.sh"); VP=$(printf "%s" "$O" | sed -nE 's/^plazo: vigía ([0-9]+) .*/\1/p')
+check "3.25 plazo.sh con Runner.Worker (P04_VIGIA_RAIZ) lanza el vigía en segundo plano y no espera" '[ -n "$VP" ] && kill -0 "$VP" 2>/dev/null && tr "\0" " " < /proc/$VP/cmdline | grep -q "vigia.sh [0-9]* 180 "'
+[ -z "$VP" ] || kill -- "-$VP" 2>/dev/null   # setsid: el vigía encabeza su grupo (con su sleep)
+printf '%s\n' "bash -c ': GITHUB_TOKEN=ghp_abcdefghijklmnopqrstuvwxyz0123; sleep 1000; :'" 'echo "rc=$?" > "$1"' > "$T/worker.sh"
+rm -f "$RUNNER_TEMP/p04-final" "$RUNNER_TEMP/p04-anotado" "$P04_LOGS/plazo-vencido.txt" "$T/paso-rc"
+bash "$T/worker.sh" "$T/paso-rc" & W=$!; sleep 0.5; INI=$(date +%s)
+P04_VIGIA_RAIZ=$W "$AQUI/vigia.sh" "$INI" 3; DUR=$(( $(date +%s) - INI )); sleep 0.3
+check "3.26 vigía: al plazo + gracia corta el paso colgado (el worker sigue y ve el paso fallado), hijos incluidos" '[ "$DUR" -lt 15 ] && grep -qx "rc=143" "$T/paso-rc" && ! ps -eo args | grep -q "^sleep 1000$" && ! kill -0 "$W" 2>/dev/null'
+check "3.27 vigía: deja \$P04_LOGS/plazo-vencido.txt con motivo, entorno y procesos del paso, sanitizado" 'head -1 "$P04_LOGS/plazo-vencido.txt" | grep -q "^plazo del job vencido fuera de un gate: el vigía cortó el paso activo" && grep -q "^entorno: sha=" "$P04_LOGS/plazo-vencido.txt" && grep -q "sleep 1000" "$P04_LOGS/plazo-vencido.txt" && grep -q "GITHUB_TOKEN=\[oculto\]" "$P04_LOGS/plazo-vencido.txt" && ! grep -q ghp_ "$P04_LOGS/plazo-vencido.txt"'
+for c in $(ps -o pid= --ppid "$W"); do pkill -P "$c"; kill "$c"; done 2>/dev/null; kill "$W" 2>/dev/null; wait "$W" 2>/dev/null   # sin vigía (scripts viejos) el paso sigue colgado
+O=$("$AQUI/entorno.sh" --error "media: falló fuera de un gate (ver el paso rojo)")
+check "3.28 entorno.sh --error con plazo-vencido.txt: la anotación lo lleva (título y procesos)" 'printf "%s" "$O" | grep "^::error title=media: falló fuera de un gate (ver el paso rojo) — plazo del job vencido (vigía)::sha=" | grep -q "%0Aplazo del job vencido.*%0Aprocesos del paso cortado:%0A.*sleep 1000" && ! printf "%s" "$O" | grep -q ghp_'
+rm -f "$P04_LOGS/plazo-vencido.txt"
+for m in p04-final p04-anotado; do
+  rm -f "$RUNNER_TEMP/p04-final" "$RUNNER_TEMP/p04-anotado" "$T/paso-rc"; touch "$RUNNER_TEMP/$m"
+  bash "$T/worker.sh" "$T/paso-rc" & W=$!; sleep 0.5
+  P04_VIGIA_RAIZ=$W "$AQUI/vigia.sh" "$(date +%s)" 3
+  check "3.29 vigía con la marca $m (el job ya está en su cierre): no corta nada ni escribe evidencia" 'kill -0 "$W" 2>/dev/null && [ ! -e "$P04_LOGS/plazo-vencido.txt" ]'
+  for c in $(ps -o pid= --ppid "$W"); do pkill -P "$c"; kill "$c"; done 2>/dev/null; wait "$W" 2>/dev/null
+done
+rm -f "$RUNNER_TEMP/p04-final" "$RUNNER_TEMP/p04-anotado"
+
 echo "4. politica-fallas.sh"
 R=$T/repo; mkdir -p "$R/scripts/ci" "$R/.github/workflows" "$R/e2e" "$R/e2e-platform" "$R/packages/x/src"
 cp "$RAIZ"/playwright*.config.ts "$R/"; cp -r "$RAIZ/e2e" "$RAIZ/e2e-platform" "$R/"; cp "$RAIZ/.github/workflows/gates.yml" "$R/.github/workflows/"; cp "$AQUI/politica-fallas.sh" "$R/scripts/ci/"
@@ -218,6 +242,19 @@ check "4.34c --timeout=0 en package.json → rojo" 'O=$(PF check); [ $? = 1 ] &&
 printf '{ "scripts": { "x": "playwright test --global-timeout=60000 --timeoutx", "y": "echo timeout-minutes --no-timeout" } }\n' > "$R/package.json"
 check "4.34d --global-timeout, --timeoutx, timeout-minutes no son --timeout → OK" 'PF check | grep -q "^politica-fallas: OK"'; rm "$R/package.json"
 check "4.34e limpio otra vez → OK" 'PF check | grep -q "^politica-fallas: OK"'
+# AUDIT #75 sobre e40c115: clave partida por salto de línea o comentario (los chequeos leen por línea)
+for c in 'test.describe.configure({ retries
+: 2 });' 'test.describe.configure({ "retries"
+  : 2 });' 'test.describe.configure({ retries /* x */ : 2 });' 'test.describe.configure({ retries // x
+: 2 });' 'test.use({ actionTimeout
+: 999_999 });' "test('x', async () => { await expect(a).toBeVisible({ timeout
+  : 999_999 }); });"; do printf "x;\n%s\n" "$c" > "$R/e2e/p.spec.ts"; check "4.35 $(printf %s "$c" | tr '\n' ' ') → rojo, clave partida en la línea 2 (AUDIT #75)" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "^politica-fallas: clave partida — e2e/p.spec.ts:2: "'; done; rm "$R/e2e/p.spec.ts"
+sed -i 's/^  retries: 0,/  retries\n    : 2,/' "$R/playwright.config.ts"
+check "4.35b retries partido en la config raíz → rojo" 'O=$(PF check); [ $? = 1 ] && printf "%s" "$O" | grep -q "^politica-fallas: clave partida — playwright.config.ts:"'
+cp "$RAIZ/playwright.config.ts" "$R/"
+printf "%s\n" "// sin retries: el timeout lo da la config" "test('x', async () => { const o = { retries: 0, timeout: 40_000 }; await page.waitForTimeout(10); expect(o.retries).toBe(0); });" > "$R/e2e/p.spec.ts"
+check "4.35c la palabra retries/timeout en comentarios o sin \`:\` partido → no es clave partida" 'O=$(PF check); ! printf "%s" "$O" | grep -q "clave partida"'; rm "$R/e2e/p.spec.ts"
+check "4.35d limpio otra vez → OK" 'PF check | grep -q "^politica-fallas: OK"'
 check "4.13 el repo real cumple la política (retries 0, foto al día, sin .only)" 'bash "$AQUI/politica-fallas.sh" check | grep -q "^politica-fallas: OK"'
 
 echo "5. gates.yml (estático)"
@@ -227,7 +264,7 @@ bloque() { awk -v j="$1" '/^  [a-z0-9-]+:$/{en=($0=="  "j":")} en' "$G"; }
 check "5.1 siete jobs" '[ "$(printf "%s\n" $JOBS | wc -l)" = 7 ]'
 for j in $JOBS; do
   B=$(bloque "$j")
-  check "5.2 $j: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y la marca p04-anotado" 'printf "%s" "$B" | grep -A2 "name: Entorno (falla fuera de un gate)" | grep -q "if: failure() || cancelled()$" && printf "%s" "$B" | grep -q "p04-anotado.*entorno.sh --error \"$j: falló fuera de un gate"'
+  check "5.2 $j: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y el script autocontenido P04_FINAL" 'printf "%s" "$B" | grep -A2 "name: Entorno (falla fuera de un gate)" | grep -q "if: failure() || cancelled()$" && printf "%s" "$B" | grep -A2 "name: Entorno (falla fuera de un gate)" | grep -q "run: bash -c \"\$P04_FINAL\"$"'
   check "5.3 $j: upload-artifact if: failure() || cancelled() con test-results/ y retención" 'printf "%s" "$B" | grep -B1 -A6 "uses: actions/upload-artifact@v4" | grep -q "if: failure() || cancelled()$" && printf "%s" "$B" | grep -A8 "if: failure() || cancelled()" | grep -qE "^\s+(- )?(path: test-results/|test-results/ci/)$" && printf "%s" "$B" | grep -q "retention-days:"'
   check "5.11 $j: primer paso después del checkout = plazo.sh (AUDIT #75)" 'printf "%s" "$B" | grep -A4 "uses: actions/checkout@v4" | grep -m1 "run:" | grep -q "run: scripts/ci/plazo.sh$"'
   check "5.4 $j: al menos un gate pasa por scripts/ci/run.sh" 'printf "%s" "$B" | grep -q "scripts/ci/run.sh "'
@@ -238,6 +275,19 @@ check "5.7 verify-build corre run.test.sh y politica-fallas.sh check" 'grep -q "
 check "5.8 e2e-m2c publica el entorno antes del gate (entorno.sh)" 'bloque e2e-m2c | grep -q "run: scripts/ci/entorno.sh$"'
 check "5.10 e2e-platform sube test-results/ entero (incluye e2e-platform-results.json)" 'bloque e2e-platform | grep -A6 "name: trazas de fallos" | grep -qE "^\s+path: test-results/$"'
 check "5.9 retries: 0 en los dos playwright configs (acceptación P-04)" '[ "$(grep -h "retries:" "$RAIZ"/playwright.config.ts "$RAIZ"/playwright.platform.config.ts | grep -vc "retries: 0")" = 0 ] && [ "$(grep -hc "retries:" "$RAIZ"/playwright.config.ts "$RAIZ"/playwright.platform.config.ts | paste -sd+ | bc)" = 2 ]'
+
+# AUDIT #75 sobre e40c115 (P2): el paso final no depende del checkout
+FINAL=$(awk '/^  P04_FINAL: \|$/{en=1; next} en && /^    /{sub(/^    /,""); print; next} en{exit}' "$G")
+mkdir -p "$T/vacio"; rm -f "$RUNNER_TEMP/p04-final" "$RUNNER_TEMP/p04-anotado"
+O=$(cd "$T/vacio" && env -u P04_LOGS GITHUB_JOB=media GITHUB_SHA=f00 P04_HEAD_SHA=abc GITHUB_RUN_ID=9 GITHUB_RUN_ATTEMPT=1 ImageOS=ubuntu24 ImageVersion=2026.1 bash -c "$FINAL"); RC=$?
+check "5.12 P04_FINAL sin checkout (sin scripts/ci): exit 0, ::error con lo que da el runner, test-results/ci/entorno.txt y marca p04-final" '[ -n "$FINAL" ] && [ "$RC" = 0 ] && printf "%s" "$O" | grep -qx "::error title=media: falló sin checkout (scripts/ci ausente; ver el paso rojo)::sha=n/d head=abc ref=f00 run=9/1 job=media ImageOS=ubuntu24 ImageVersion=2026.1 checkout=ausente" && sed -n 2p "$T/vacio/test-results/ci/entorno.txt" | grep -q "^sha=n/d head=abc .*checkout=ausente$" && [ -e "$RUNNER_TEMP/p04-final" ]'
+rm -f "$RUNNER_TEMP/p04-final"
+O=$(cd "$RAIZ" && GITHUB_JOB=media bash -c "$FINAL"); RC=$?
+check "5.13 P04_FINAL con checkout: delega en entorno.sh --error (entorno completo)" '[ "$RC" = 0 ] && printf "%s" "$O" | grep -q "^::error title=media: falló fuera de un gate (ver el paso rojo)::sha=$(git -C "$RAIZ" rev-parse HEAD) "'
+touch "$RUNNER_TEMP/p04-anotado"
+check "5.14 P04_FINAL con p04-anotado (un gate ya anotó): no duplica" 'O=$(cd "$T/vacio" && GITHUB_JOB=media bash -c "$FINAL"); [ $? = 0 ] && [ -z "$O" ]'
+rm -f "$RUNNER_TEMP/p04-final" "$RUNNER_TEMP/p04-anotado"
+check "5.15 vigia.sh y plazo.sh ejecutables (plazo.sh lo lanza)" '[ -x "$AQUI/vigia.sh" ] && grep -q "vigia.sh" "$AQUI/plazo.sh"'
 
 echo
 echo "run.test: $ok OK, $fallos fallos"

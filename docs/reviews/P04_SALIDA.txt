@@ -562,3 +562,87 @@ OK
 GATE progreso (P-02): manifiesto válido (33 entradas), docs/collab/PROGRESO.md al día
 == node scripts/acceptance/cli.mjs check
 GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día
+
+== Ronda 9 · AUDIT: CAMBIOS sobre e40c115 · 2026-10-15T03:34:56Z · Node v22.22.0, pnpm 10.28.0, perl v5.38.2
+== H3 reproducción con politica-fallas.sh de e40c115: retries partido por salto de línea en e2e/
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+exit=0
+== mismo cambio, politica-fallas.sh corregido
+politica-fallas: clave partida — e2e/zz-partido.spec.ts:1: retries separada de su `:` por un salto de línea o un comentario — escribir `retries: valor` en la misma línea (los chequeos leen por línea)
+exit=1
+== H2 reproducción: paso final de e40c115 sin checkout (directorio vacío, sin scripts/ci)
+bash: line 1: scripts/ci/entorno.sh: No such file or directory
+exit=127 test-results: ls: cannot access 'test-results': No such file or directory
+== mismo caso con P04_FINAL corregido
+::error title=media: falló sin checkout (scripts/ci ausente; ver el paso rojo)::sha=n/d head=head0 ref=merge0 run=1/1 job=media ImageOS=n/d ImageVersion=n/d checkout=ausente
+exit=0
+media: falló sin checkout
+sha=n/d head=head0 ref=merge0 run=1/1 job=media ImageOS=n/d ImageVersion=n/d checkout=ausente
+== bash scripts/ci/run.test.sh con los scripts de e40c115 (suite nueva)
+  ✗ 3.24 plazo.sh fuera de CI (sin Runner.Worker): no lanza vigía
+  ✗ 3.25 plazo.sh con Runner.Worker (P04_VIGIA_RAIZ) lanza el vigía en segundo plano y no espera
+  ✗ 3.26 vigía: al plazo + gracia corta el paso colgado (el worker sigue y ve el paso fallado), hijos incluidos
+  ✗ 3.27 vigía: deja $P04_LOGS/plazo-vencido.txt con motivo, entorno y procesos del paso, sanitizado
+  ✗ 3.28 entorno.sh --error con plazo-vencido.txt: la anotación lo lleva (título y procesos)
+  ✗ 4.35 test.describe.configure({ retries : 2 }); → rojo, clave partida en la línea 2 (AUDIT #75)
+  ✗ 4.35 test.describe.configure({ "retries"   : 2 }); → rojo, clave partida en la línea 2 (AUDIT #75)
+  ✗ 4.35 test.describe.configure({ retries /* x */ : 2 }); → rojo, clave partida en la línea 2 (AUDIT #75)
+  ✗ 4.35 test.describe.configure({ retries // x : 2 }); → rojo, clave partida en la línea 2 (AUDIT #75)
+  ✗ 4.35 test.use({ actionTimeout : 999_999 }); → rojo, clave partida en la línea 2 (AUDIT #75)
+  ✗ 4.35 test('x', async () => { await expect(a).toBeVisible({ timeout   : 999_999 }); }); → rojo, clave partida en la línea 2 (AUDIT #75)
+  ✗ 4.35b retries partido en la config raíz → rojo
+  ✗ 5.2 verify-build: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y el script autocontenido P04_FINAL
+  ✗ 5.2 postgres: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y el script autocontenido P04_FINAL
+  ✗ 5.2 compose-smoke: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y el script autocontenido P04_FINAL
+  ✗ 5.2 media: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y el script autocontenido P04_FINAL
+  ✗ 5.2 e2e-m2c: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y el script autocontenido P04_FINAL
+  ✗ 5.2 e2e-platform: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y el script autocontenido P04_FINAL
+  ✗ 5.2 mutations: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y el script autocontenido P04_FINAL
+  ✗ 5.12 P04_FINAL sin checkout (sin scripts/ci): exit 0, ::error con lo que da el runner, test-results/ci/entorno.txt y marca p04-final
+  ✗ 5.13 P04_FINAL con checkout: delega en entorno.sh --error (entorno completo)
+  ✗ 5.15 vigia.sh y plazo.sh ejecutables (plazo.sh lo lanza)
+run.test: 170 OK, 22 fallos
+== bash scripts/ci/run.test.sh (corregido)
+1. entorno.sh
+2. sanitizar.sh
+3. run.sh
+  ✓ 3.24 plazo.sh fuera de CI (sin Runner.Worker): no lanza vigía
+  ✓ 3.25 plazo.sh con Runner.Worker (P04_VIGIA_RAIZ) lanza el vigía en segundo plano y no espera
+  ✓ 3.26 vigía: al plazo + gracia corta el paso colgado (el worker sigue y ve el paso fallado), hijos incluidos
+  ✓ 3.27 vigía: deja $P04_LOGS/plazo-vencido.txt con motivo, entorno y procesos del paso, sanitizado
+  ✓ 3.28 entorno.sh --error con plazo-vencido.txt: la anotación lo lleva (título y procesos)
+  ✓ 3.29 vigía con la marca p04-final (el job ya está en su cierre): no corta nada ni escribe evidencia
+  ✓ 3.29 vigía con la marca p04-anotado (el job ya está en su cierre): no corta nada ni escribe evidencia
+4. politica-fallas.sh
+  ✓ 4.35 test.describe.configure({ retries : 2 }); → rojo, clave partida en la línea 2 (AUDIT #75)
+  ✓ 4.35 test.describe.configure({ "retries"   : 2 }); → rojo, clave partida en la línea 2 (AUDIT #75)
+  ✓ 4.35 test.describe.configure({ retries /* x */ : 2 }); → rojo, clave partida en la línea 2 (AUDIT #75)
+  ✓ 4.35 test.describe.configure({ retries // x : 2 }); → rojo, clave partida en la línea 2 (AUDIT #75)
+  ✓ 4.35 test.use({ actionTimeout : 999_999 }); → rojo, clave partida en la línea 2 (AUDIT #75)
+  ✓ 4.35 test('x', async () => { await expect(a).toBeVisible({ timeout   : 999_999 }); }); → rojo, clave partida en la línea 2 (AUDIT #75)
+  ✓ 4.35b retries partido en la config raíz → rojo
+  ✓ 4.35c la palabra retries/timeout en comentarios o sin `:` partido → no es clave partida
+  ✓ 4.35d limpio otra vez → OK
+5. gates.yml (estático)
+  ✓ 5.2 verify-build: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y el script autocontenido P04_FINAL
+  ✓ 5.2 postgres: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y el script autocontenido P04_FINAL
+  ✓ 5.2 compose-smoke: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y el script autocontenido P04_FINAL
+  ✓ 5.2 media: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y el script autocontenido P04_FINAL
+  ✓ 5.2 e2e-m2c: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y el script autocontenido P04_FINAL
+  ✓ 5.2 e2e-platform: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y el script autocontenido P04_FINAL
+  ✓ 5.2 mutations: paso 'Entorno (falla fuera de un gate)' con if: failure() || cancelled() (timeout) y el script autocontenido P04_FINAL
+  ✓ 5.12 P04_FINAL sin checkout (sin scripts/ci): exit 0, ::error con lo que da el runner, test-results/ci/entorno.txt y marca p04-final
+  ✓ 5.13 P04_FINAL con checkout: delega en entorno.sh --error (entorno completo)
+  ✓ 5.14 P04_FINAL con p04-anotado (un gate ya anotó): no duplica
+  ✓ 5.15 vigia.sh y plazo.sh ejecutables (plazo.sh lo lanza)
+run.test: 192 OK, 0 fallos
+== scripts/ci/politica-fallas.sh check (repo real)
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+== foto sin cambios
+(sin diff = idéntica)
+== bash -n scripts/ci/*.sh y git diff --check
+OK
+== node scripts/collab/progress.mjs check
+GATE progreso (P-02): manifiesto válido (33 entradas), docs/collab/PROGRESO.md al día
+== node scripts/acceptance/cli.mjs check
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día

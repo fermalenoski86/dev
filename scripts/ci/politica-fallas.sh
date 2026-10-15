@@ -8,6 +8,8 @@
 #     `timeout-minutes` de gates.yml iguales a la foto en
 #     scripts/ci/umbrales.txt: cambiarlos exige decisión y auditoría explícitas, con la
 #     foto regenerada en el mismo PR (`generar`) y la decisión citada en el PR;
+#   - ninguna clave de retries/timeout separada de su `:` por salto de línea o comentario (los
+#     chequeos leen por línea; AUDIT #75 sobre e40c115);
 #   - ningún `.only(` (con o sin espacio, o `["only"]`) en tests; ningún `.skip(`/`.fixme(` en las E2E que gates.yml corre
 #     directamente (e2e/, e2e-platform/): un test que no corre no es un test verde.
 #   uso: scripts/ci/politica-fallas.sh check     → exit 1 si algo no cumple
@@ -83,6 +85,18 @@ MAL=$( { { for f in $PW; do echo "$f"; done; for d in e2e e2e-platform; do [ -d 
     }' "$f"; done; } \
   | sed 's/^/politica-fallas: retries — /;s/$/ — retries tiene que ser 0 (literal)/')
 [ -z "$MAL" ] || { echo "$MAL"; fallos=1; }
+# 1c. clave partida (AUDIT #75 sobre e40c115): `retries\n: 2`, `timeout /* x */ : 999` o con un
+#     comentario `//` antes de los dos puntos son TS válido, pero los chequeos 1, 2 y 2b leen línea por
+#     línea y no los verían. Se analiza el archivo entero (configs y E2E de gate) y se rechaza toda
+#     clave de retries/timeout separada de su `:` por un salto de línea o un comentario: se escribe
+#     `clave: valor` en la misma línea. Línea informada = donde empieza la clave.
+PARTIDA=$( { for f in $PW; do echo "$f"; done; for d in e2e e2e-platform; do [ -d "$d" ] && grep -rlE --include='*.ts' 'retries|[Tt]imeout' "$d" | grep -v node_modules; done; } | sort -u | tr '\n' '\0' \
+  | xargs -0 -r perl -0777 -ne '
+    while (/(?<![\w\$])(retries|[a-z]+Timeout|timeout)["\x27`]?(?=[ \t]*(?:\r?\n|\/\*|\/\/))(?:\s|\/\*.*?\*\/|\/\/[^\n]*\n)+:/gs) {
+      my $l = 1 + (substr($_, 0, $-[0]) =~ tr/\n//);
+      print "politica-fallas: clave partida — $ARGV:$l: $1 separada de su `:` por un salto de línea o un comentario — escribir `$1: valor` en la misma línea (los chequeos leen por línea)\n";
+    }')
+[ -z "$PARTIDA" ] || { echo "$PARTIDA"; fallos=1; }
 # 2. timeouts y timeout-minutes = foto
 [ -s "$FOTO" ] || { echo "politica-fallas: falta $FOTO (correr 'generar' con decisión)"; fallos=1; }
 if [ -s "$FOTO" ] && ! diff -u "$FOTO" <(foto) > /tmp/politica-fallas.diff 2>&1; then

@@ -5,7 +5,8 @@
 #        scripts/ci/entorno.sh --notice <tít>  → además ::notice con esa línea
 #        scripts/ci/entorno.sh --error  <tít>  → además ::error (falla fuera de un gate) y deja
 #                                               $P04_LOGS/entorno.txt (default test-results/ci/) para
-#                                               que el artifact exista aunque ningún gate haya corrido
+#                                               que el artifact exista aunque ningún gate haya corrido;
+#                                               con $P04_LOGS/plazo-vencido.txt (vigia.sh) lo agrega
 # Herramientas ausentes → n/d; nunca falla.
 AQUI=$(cd "$(dirname "$0")" && pwd)
 v() { command -v "$1" >/dev/null 2>&1 && "$@" 2>/dev/null | head -1 | tr -d '\r' || echo n/d; }
@@ -24,8 +25,12 @@ LINEA=$(printf '%s' "$LINEA" | "$AQUI/sanitizar.sh")
 echo "$LINEA"
 case "$1" in
   --notice) echo "::notice title=$2::$LINEA" ;;
-  --error)  echo "::error title=$2::$LINEA"
-            DIR=${P04_LOGS:-test-results/ci}
+  --error)  DIR=${P04_LOGS:-test-results/ci}
+            # si vigia.sh cortó un paso colgado (plazo del job vencido fuera de un gate), su evidencia
+            # va en la misma anotación: qué procesos estaban corriendo (AUDIT #75 sobre e40c115)
+            if [ -s "$DIR/plazo-vencido.txt" ]; then
+              echo "::error title=$2 — plazo del job vencido (vigía)::$LINEA%0A$(head -40 "$DIR/plazo-vencido.txt" | "$AQUI/sanitizar.sh" | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')"
+            else echo "::error title=$2::$LINEA"; fi
             { mkdir -p "$DIR" && printf '%s\n%s\n' "$2" "$LINEA" > "$DIR/entorno.txt"; } 2>/dev/null || true ;;
 esac
 exit 0

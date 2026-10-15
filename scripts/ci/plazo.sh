@@ -7,6 +7,9 @@
 # entorno y el upload del artifact. No cambia ningún umbral: el plazo sale del mismo
 # `timeout-minutes` de gates.yml (la foto de politica-fallas.sh) y siempre es menor.
 #   margen = min(P04_MARGEN [180 s], un cuarto del timeout del job)
+# Los pasos que no pasan por run.sh (setup, acciones `uses:`) los cubre vigia.sh: si hay un
+# Runner.Worker entre los ancestros (en CI siempre; P04_VIGIA_RAIZ lo fuerza en la prueba), queda
+# en segundo plano y corta el paso que siga colgado en P04_PLAZO_FIN + gracia (AUDIT #75 sobre e40c115).
 #   uso: scripts/ci/plazo.sh   (en CI: GITHUB_JOB y GITHUB_ENV del runner)
 set -uo pipefail
 AQUI=$(cd "$(dirname "$0")" && pwd)
@@ -19,3 +22,17 @@ TOTAL=$((MIN * 60)); MARGEN=${P04_MARGEN:-180}
 FIN=$(( $(date +%s) + TOTAL - MARGEN ))
 if [ -n "${GITHUB_ENV:-}" ]; then echo "P04_PLAZO_FIN=$FIN" >> "$GITHUB_ENV"; else echo "P04_PLAZO_FIN=$FIN"; fi
 echo "plazo: $JOB timeout-minutes=$MIN margen=${MARGEN}s → los gates cortan a las $(date -u -d "@$FIN" +%H:%M:%SZ)"
+RAIZ=${P04_VIGIA_RAIZ:-}
+if [ -z "$RAIZ" ]; then
+  p=$$
+  while [ -n "$p" ] && [ "$p" -gt 1 ]; do
+    [ "$(cat "/proc/$p/comm" 2>/dev/null)" = Runner.Worker ] && { RAIZ=$p; break; }
+    p=$(awk '/^PPid:/{print $2}' "/proc/$p/status" 2>/dev/null)
+  done
+fi
+if [ -n "$RAIZ" ]; then
+  P04_VIGIA_RAIZ=$RAIZ setsid nohup "$AQUI/vigia.sh" "$FIN" "$MARGEN" > /dev/null 2>&1 < /dev/null &
+  echo "plazo: vigía $! sobre el paso activo (hijos de $RAIZ) para lo que no pasa por run.sh"
+else
+  echo "plazo: sin Runner.Worker entre los ancestros: sin vigía (fuera de CI)"
+fi
