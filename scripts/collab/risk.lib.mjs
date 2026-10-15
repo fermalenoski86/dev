@@ -89,7 +89,7 @@ export function clasificarRuta(ruta, gatesRe) {
 // Contenido: patrones en líneas AGREGADAS o QUITADAS del parche (-U0).
 // tokens de proveedor conocidos + formas genéricas (Codex #82, P2): Bearer, JWT, sk_live/sk_test,
 // y asignación de un valor largo a un nombre de credencial (token/secret/password/api key)
-const SECRETO = /(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|xox[abprs]-[A-Za-z0-9-]{10,}|\bsk_(live|test)_[A-Za-z0-9]{10,}|\bBearer\s+[A-Za-z0-9._~+/=-]{20,}|\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.|\b[A-Za-z0-9_]*(token|secret|passw(or)?d|api[_-]?key|access[_-]?key)[A-Za-z0-9_]*["']?\s*[:=]\s*(["']?[A-Za-z0-9/+_.~=-]{16,}|["'][^"'\s]{16,}["']))/i; // entre comillas, cualquier puntuación (Codex #82, P2)
+const SECRETO = /(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|xox[abprs]-[A-Za-z0-9-]{10,}|\bsk_(live|test)_[A-Za-z0-9]{10,}|\bBearer\s+[A-Za-z0-9._~+/=-]{20,}|\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.|\b[A-Za-z0-9_]*(token|secret|passw(or)?d|api[_-]?key|access[_-]?key)[A-Za-z0-9_]*["']?\s*[:=]\s*(["']?[^\s"'`]{16,}|["'][^"'\s]{16,}["']))/i; // con o sin comillas, cualquier puntuación (Codex #82, P2 ×2)
 const SECRETS_CTX = /\$\{\{\s*secrets\.|GITHUB_TOKEN|pull_request_target|permissions\s*:/;
 const PROCESO = /\b(child_process|execFile(Sync)?|execSync|spawn(Sync)?|exec)\s*\(|from\s+['"](node:)?child_process['"]|require\(\s*['"](node:)?child_process['"]\s*\)|\b(shell|detached|argv0|uid|gid)\s*:\s*\S/;
 // opciones de un spawn/execFile multilínea (`shell: true`) cambian el borde sin tocar la línea de la llamada (Codex #82, P2)
@@ -175,7 +175,14 @@ export function clasificar(archivos, gatesRe) {
 /** Nivel declarado en el cuerpo del PR: `Riesgo: bajo|medio|alto` (una sola vez). */
 export function declarado(cuerpo) {
   const re = /^\s*[-*]?\s*(\*\*)?Riesgo(\*\*)?\s*:\s*(\*\*)?\s*`?(bajo|medio|alto)`?\s*(\*\*)?(\s|$|[.—(-])/gim;
-  const hallados = [...(cuerpo ?? '').matchAll(re)].map((m) => m[4].toLowerCase());
+  const ms = [...(cuerpo ?? '').matchAll(re)];
+  const hallados = ms.map((m) => m[4].toLowerCase());
+  // plantilla sin elegir (`Riesgo: bajo | medio | alto`): la línea nombra más de un nivel (Codex #82, P2)
+  for (const m of ms) {
+    const linea = (cuerpo.slice(m.index).split('\n')[0] ?? '').toLowerCase();
+    const niveles = new Set(linea.match(/\b(bajo|medio|alto)\b/g) ?? []);
+    if (niveles.size > 1) return { error: `la línea de riesgo nombra más de un nivel (${[...niveles].join(', ')}): elegí uno` };
+  }
   if (hallados.length === 0) return { error: 'el PR no declara `Riesgo: bajo|medio|alto`' };
   // exactamente UNA línea: dos iguales (plantilla duplicada) tampoco valen (Codex #82, P2)
   if (hallados.length > 1) return { error: `el PR declara riesgo más de una vez (${hallados.join(', ')}); tiene que haber una sola línea` };

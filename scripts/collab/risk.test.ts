@@ -106,6 +106,7 @@ describe('P-03 · diff completo', () => {
     expect(nivel([m('docs/reviews/X.md', '+cookie eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.x')])).toBe('alto');
     expect(nivel([m('docs/reviews/X.md', '+db_password: "' + 'c'.repeat(20) + '"')])).toBe('alto');
     expect(nivel([m('docs/reviews/X.md', '+API_TOKEN="abc:def:ghi:jklmnop"')])).toBe('alto'); // puntuación (Codex #82, P2)
+    expect(nivel([m('docs/reviews/X.md', '+API_TOKEN=abc:def:ghi:jklmnop')])).toBe('alto'); // sin comillas
     // texto que nombra credenciales sin valor sigue bajo
     expect(nivel([m('docs/reviews/X.md', '+ el token va en Secrets; `password` nunca en el repo')])).toBe('bajo');
   });
@@ -175,6 +176,9 @@ describe('P-03 · declarado vs calculado', () => {
     expect(declarado('sin nada').error).toMatch(/no declara/);
     expect(declarado('Riesgo: bajo\nRiesgo: alto').error).toMatch(/más de una vez/);
     expect(declarado('Riesgo: medio\nRiesgo: medio').error).toMatch(/más de una vez/); // Codex #82, P2
+    expect(declarado('Riesgo: bajo | medio | alto').error).toMatch(/más de un nivel/); // plantilla sin elegir
+    expect(declarado('**Riesgo:** alto — toca gates, no es bajo').error).toMatch(/más de un nivel/);
+    expect(declarado('**Riesgo:** alto — toca gates').nivel).toBe('alto');
     expect(declarado('Riesgo: bajísimo').error).toMatch(/no declara/);
   });
 
@@ -286,10 +290,12 @@ case "$2" in *'pulls?state=open'*) cat "$D/lista" 2>/dev/null; exit 0 ;; esac
 n=$(cat "$D/n" 2>/dev/null || echo 0); n=$((n+1)); echo $n > "$D/n"
 cuerpo=$(sed -n "\${n}p" "$D/cuerpos"); [ -n "$cuerpo" ] || cuerpo=$(tail -n1 "$D/cuerpos")
 [ "$cuerpo" != "__falla__" ] || { echo "HTTP 502" >&2; exit 1; }
-jq -n --arg h ${HEAD_PR} --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{ref:"main"}, body:$b}'
+h=${HEAD_PR}; if [ -f "$D/heads" ]; then hh=$(sed -n "\${n}p" "$D/heads"); [ -n "$hh" ] && h=$hh || h=$(tail -n1 "$D/heads"); fi
+jq -n --arg h "$h" --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{ref:"main"}, body:$b}'
 `,
     { mode: 0o755 },
   );
+  let ultimosShas: string[] = [];
   const correr = (cuerpos: string[], extra: { lista?: string; postfalla?: number; args?: string[]; sinMain?: boolean } = {}) => {
     writeFileSync(path.join(dir, 'lista'), extra.lista ?? `7 ${HEAD_PR}\n`);
     writeFileSync(path.join(dir, 'postfalla'), String(extra.postfalla ?? 0));
@@ -304,6 +310,7 @@ jq -n --arg h ${HEAD_PR} --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{
       rc = (e as { status: number }).status;
     }
     const checks = readFileSync(path.join(dir, 'checks.log'), 'utf8').trim().split('\n\n').map((j) => JSON.parse(j));
+    ultimosShas = checks.map((c: { head_sha: string }) => c.head_sha);
     return { rc, checks: checks.map((c: { status: string; conclusion?: string; output: { title: string } }) => c.conclusion ?? c.status) };
   };
 
@@ -344,6 +351,16 @@ jq -n --arg h ${HEAD_PR} --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{
     expect(r.rc).toBe(1);
     expect(r.checks).toContain('failure');
     expect(r.checks).not.toContain('success');
+  });
+  it('el PR avanza durante la evaluación → failure también sobre el HEAD nuevo (Codex #82, P1)', () => {
+    // fotos: previa y F1 con HEAD_PR; F2 con otro HEAD → failure en ambos
+    const otro = 'f'.repeat(40);
+    writeFileSync(path.join(dir, 'heads'), `${HEAD_PR}\n${HEAD_PR}\n${otro}\n`);
+    const r = correr(['Riesgo: bajo']);
+    rmSync(path.join(dir, 'heads'), { force: true });
+    expect(r.rc).toBe(1);
+    expect(r.checks).not.toContain('success');
+    expect(ultimosShas).toContain(otro);
   });
   it('sin declaración → failure', () => {
     expect(correr(['nada'])).toEqual({ rc: 1, checks: ['in_progress', 'in_progress', 'failure'] });

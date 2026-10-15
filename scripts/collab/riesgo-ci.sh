@@ -38,6 +38,14 @@ foto() { # $1 = PR → "head base base_sha body_sha256 state"; exit ≠ 0 si alg
 }
 # Nunca aborta (Codex #82, P1): si ls-remote falla devuelve un marcador que no coincide con
 # SCRIPTS_SHA, así la comparación publica `failure` en vez de dejar vivo un success.
+# Si el PR avanzó durante la evaluación, el HEAD NUEVO también se invalida: puede tener un
+# verde viejo (force-push a un commit ya evaluado; Codex #82, P1).
+invalidar_nuevo() { # $1 = foto nueva, $2 = HEAD evaluado
+  local hn; hn=${1%% *}
+  if [[ "$hn" =~ ^[0-9a-f]{40}$ ]] && [ "$hn" != "$2" ]; then
+    publicar "$hn" failure "riesgo: caducado (el PR avanzó durante la evaluación; el evento siguiente re-evalúa)" "$TMP/out" || true
+  fi
+}
 main_actual() { local m; m=$(git ls-remote origin refs/heads/main 2>/dev/null | cut -f1) || m=""; echo "${m:-__sin-main__}"; }
 publicar() { # $1 sha, $2 status|conclusion, $3 título, $4 archivo de resumen
   local cuerpo
@@ -99,14 +107,14 @@ for PR in "$@"; do
   F2=$(foto "$PR" 2>/dev/null || echo "__sin-foto__"); M2=$(main_actual)
   if [ "$F2" != "$F1" ] || [ "$M2" != "$SCRIPTS_SHA" ]; then
     printf 'caducado: el PR o main cambiaron durante la evaluación\nantes: %s · scripts %s\nahora: %s · main %s\n' "$F1" "$SCRIPTS_SHA" "$F2" "$M2" >> "$TMP/out"
-    publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out" || true; total=1; continue
+    publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out" || true; invalidar_nuevo "$F2" "$HEAD"; total=1; continue
   fi
   if [ "$RC" = 0 ]; then
     publicar "$HEAD" success "riesgo: OK" "$TMP/out" || total=1
     F3=$(foto "$PR" 2>/dev/null || echo "__sin-foto__"); M3=$(main_actual)
     if [ "$F3" != "$F1" ] || [ "$M3" != "$SCRIPTS_SHA" ]; then
       printf 'caducado tras publicar\nahora: %s · main %s\n' "$F3" "$M3" >> "$TMP/out"
-      publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out" || true; total=1
+      publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out" || true; invalidar_nuevo "$F3" "$HEAD"; total=1
     else
       VERDES+=("$PR|$HEAD|$F1")
     fi
@@ -142,7 +150,7 @@ for v in "${VERDES[@]}"; do
     printf 'caducado en la conciliación final del lote
 antes: %s · scripts %s
 ahora: %s · main %s\n' "$F1" "$SCRIPTS_SHA" "$FX" "$MX" > "$TMP/out"
-    publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out" || true; total=1
+    publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out" || true; invalidar_nuevo "$FX" "$HEAD"; total=1
   fi
 done
 exit "$total"

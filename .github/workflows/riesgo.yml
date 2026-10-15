@@ -78,7 +78,14 @@ jobs:
           RIESGO_GLOBAL: '1'
         run: |
           # número:HEAD, así un PR cuya foto falla igual recibe failure sobre su HEAD (Codex #82, P1)
-          PRS=$(gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&base=main&per_page=100" --paginate --jq '.[] | "\(.number):\(.head.sha)"')
+          # la lista inicial se reintenta: sin ella no se puede invalidar ningún HEAD (Codex #82, P1);
+          # si falla 3 veces el job termina en rojo y lo dice
+          PRS=""; OK=0
+          for i in 1 2 3; do
+            if PRS=$(gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&base=main&per_page=100" --paginate --jq '.[] | "\(.number):\(.head.sha)"'); then OK=1; break; fi
+            sleep "$((i * 5))"
+          done
+          if [ "$OK" != 1 ]; then echo "::error title=riesgo: sin lista de PR::la API no devolvió la lista de PR abiertos tras 3 intentos; no hay veredicto nuevo y los checks previos no se pudieron invalidar"; exit 1; fi
           # el PR del evento solo entra si el workflow cargado es el de main
           # el HEAD de la lista de la API manda: el del evento solo se agrega si ese número no
           # está listado (base ≠ main); un synchronize viejo no puede aportar un HEAD superado
