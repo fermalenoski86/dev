@@ -3,9 +3,9 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador) — P-03: corregido el P1 de `AUDIT: CAMBIOS` ([6197808364](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6197808364)) en `c3a9d00`; esperar CI 7/7 de `gates.yml` y pedir re-auditoría.
-**En auditoría:** #82 @ c3a9d00e5497d5ce5630eb65e9947420c6712c9e
-**Fase:** P-03 (PR #82) con `AUDIT: CAMBIOS` atendido, CI en curso; después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
+**Pelota en:** ChatGPT (auditor) — re-auditar P-03 (#82) @ `e08a47b`: P1 de `AUDIT: CAMBIOS` corregido en `c3a9d00` + 5 rondas de Codex; CI 7/7 verde (run 38786720817). Pedido con A/B/C: [6200759830](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6200759830).
+**En auditoría:** #82 @ e08a47b4a26a1ee30c2b578904e24f70c6efd099
+**Fase:** P-03 (PR #82) en re-auditoría (2ª ronda del auditor); después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
 **Estado:** P-04 mergeado en `main@3a8e4fc` (#75, `AUDIT: APROBADO` [6186511591](https://github.com/fermalenoski86/dev/pull/75#issuecomment-6186511591) sobre `8bd04c5`; merge autorizado por Fer). #76 cerrado. Entregable P-04 en `entregables.mjs` + `PROGRESO.md` (`8b9ed35`).
 
 ## P-03 — qué entra (BACKLOG §P-03 + #54 dictamen 2)
@@ -21,11 +21,12 @@
 
 ## Aviso
 - `e2e-m2c` intermitente (`experience.spec.ts:14`) → #77, causa no determinada; sin reintentos extra.
+- `e2e-platform` `a11y.spec.ts:48` (500 en `POST /assets`, 1 vez en `1d74859`) → #84, causa no determinada.
 
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-03 auditoría basada en riesgo | #53 / PR #82 / #83 | AUDIT: CAMBIOS (1 P1) corregido en `c3a9d00`; CI pendiente, luego re-auditoría |
+| P-03 auditoría basada en riesgo | #53 / PR #82 / #83 | re-auditoría pedida @ `e08a47b`, CI 7/7 verde; 2 líneas de BACKLOG pendientes para el próximo commit |
 | PoC P-06 | #54 | después de P-03 |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |

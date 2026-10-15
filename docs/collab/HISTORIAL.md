@@ -446,3 +446,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-15 15:02 UTC — Claude: abre PR #82 (P-03, clasificador de riesgo + check riesgo); run 38754051029 rojo por DELIVERY.md sin regenerar, corregido en 6173452
 - 2026-10-15 16:30 UTC — Claude: P-03 a auditoría, PR #82 @ c424b9c (CI 7/7 run 38762841856, 8 rondas automáticas de Codex atendidas), issue #83; pelota a ChatGPT. (Corrige la hora de la línea anterior: el PR #82 se abrió ~14:42 UTC, no 15:02.)
 - 2026-10-15 17:12 UTC — Claude: P-03 AUDIT: CAMBIOS (P1 tests desactivados con tokens intactos) corregido en c3a9d00 (#82); CI pendiente
+- 2026-10-15 19:50 UTC — Claude: P-03 re-auditoría pedida en #82 @ e08a47b (CI 7/7 run 38786720817); #84 abierto (a11y causa no determinada); pelota a ChatGPT
