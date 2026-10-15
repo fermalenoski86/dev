@@ -24,7 +24,7 @@ FILES = [
     ('video/03-trust-control-grabacion-real-1080p.mp4', 'trust-control-demo.mp4',
      'Grabación real de TRUST CONTROL (58 s): entorno de prueba local, datos de prueba, sin pantallas ni equipos conectados.'),
     ('video/04-trust-control-show-mcd-15s-1080p.mp4', 'trust-control-show-15s.mp4',
-     "Respaldo grabado de TRUST Control (19 s): Generar minishow (simulado) → show McDonald's 15 s en vista Noche → Restaurar + Arquitectónica. Plantilla preprogramada, SIMULACIÓN."),
+     "Respaldo grabado de TRUST Control (19 s): Generar show → show McDonald's 15 s en vista Noche → Restaurar + Arquitectónica. Plantilla preprogramada, SIMULACIÓN."),
     ('video/05-trust-mcd-takeover-15s-C-iconic-moment.mp4', 'trust-mcd-takeover-15s-C-iconic.mp4',
      "Takeover McDonald's 15 s en modo Cliente, creatividad C · Iconic moment: una luz nace en Corrientes, cruza a Pellegrini y aterriza en la media (las 3 pantallas como una pieza). SIMULACIÓN."),
     ('video/06-trust-mcd-takeover-15s-A-brand-dominance.mp4', 'trust-mcd-takeover-15s-A-brand.mp4',

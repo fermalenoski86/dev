@@ -12,13 +12,18 @@ GUION (botón "Comenzar" o "Guion de demo"; flechas ← → para avanzar)
   2. Vista de día
   3. Cambio a noche
   4. Dimmers independientes: pantallas al 40 % (las luces no cambian) y Superior 01 al 20 % (las otras 45 no cambian)
-  5. Un prompt → «Generar minishow (simulado)»: carga la plantilla McDonald's 15 s
-     (vuelve todo a 100 %; el prompt no se interpreta, no es IA)
+  5. Escribir el pedido → «Generar show»: muestra «Lo que entendí» y arranca solo
+     (vuelve todo a 100 %; el pedido se lee con reglas fijas por palabras clave, NO es IA:
+      elige una de 6 creatividades preprogramadas A–F, el color y la intensidad)
   6. Play: pantallas + luminarias + reloj sincronizados
   7. Volver a la escena arquitectónica
 
 CONTROLES
   Día / Noche (arriba a la izquierda de la foto): solo cambia la vista; no toca ningún nivel.
+  Encuadre: «Edificio completo» (con planta baja y calle, el de arranque) o «Fachada» (más cerca de las pantallas).
+  Arriba a la derecha: «Cliente» deja solo los momentos del show (NORMAL · TAKEOVER · SIGNATURE · ANTES/DESPUÉS);
+    «Operador» vuelve a la consola completa.
+  Creatividad del takeover (botones A–F): Marca · Producto · Recorrido · Papas · Desayuno · Lanzamiento.
   Pantallas: master + Corrientes + Pellegrini + media. Iluminación: master + 3 niveles (16/16/14) + cada una de las 46.
   Clic en una luminaria de la grilla: ON/OFF, dimmer 0–100 %, color RGBW o "color de escena".
   Abajo: Cargar show McDonald's · Play · Pausa · Reset · Blackout (rojo) · escenas fijas.
@@ -27,7 +32,8 @@ CONTROLES
 
 QUÉ DECIR (y qué no)
   - Es una previsualización sobre la FOTO REAL del edificio; la posición de las pantallas es la fijada por nosotros sobre esa foto.
-  - El show de 15 s es una PLANTILLA preprogramada: no es generación por IA todavía.
+  - El show de 15 s sale de 6 creatividades PREPROGRAMADAS; el pedido escrito solo elige cuál, el color y la intensidad
+    (reglas por palabras clave). No es generación por IA todavía.
   - No está conectada a pantallas, luminarias ni reloj: no hay sincronía física medida.
   - El contenido de pantallas es conceptual: las piezas finales y el uso de marca los aprueba McDonald's / Arcos Dorados.
 
