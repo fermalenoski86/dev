@@ -115,6 +115,13 @@ describe('P-03 · diff completo', () => {
     // quitar la llamada directa y pasar a un helper indirecto también es alto (Codex #82, P2)
     expect(nivel([m('packages/platform-assets/src/x.ts', "-  execFile('ffmpeg', safeArgs)\n+  runFfmpeg(userArgs)")])).toBe('alto');
     expect(nivel([m('packages/platform-campaigns/src/q.ts', '+  await db.query(`ALTER TABLE campaign ADD COLUMN x int`)')])).toBe('alto');
+    // DDL de cualquier objeto y opciones de proceso (Codex #82, P2)
+    for (const q of ['CREATE VIEW v AS SELECT 1', 'ALTER SEQUENCE s RESTART', 'DROP DATABASE trust', 'CREATE OR REPLACE VIEW v AS SELECT 1']) {
+      expect(nivel([m('packages/platform-campaigns/src/q.ts', `+  await db.query(\`${q}\`)`)])).toBe('alto');
+    }
+    expect(nivel([m('packages/show-engine/src/runner.ts', '-    shell: false,\n+    shell: true,')])).toBe('alto');
+    // código JS común no es DDL
+    expect(nivel([m('packages/show-engine/src/a.ts', '+  const drop = items.filter((x) => x.create);')])).toBe('medio');
     expect(nivel([m('apps/platform-web/src/a.ts', '+  token: ${{ secrets.X }}')])).toBe('alto');
   });
 
@@ -294,6 +301,10 @@ jq -n --arg h ${HEAD_PR} --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{
     sh('git commit -q --allow-empty -m otro && git push -q origin HEAD:main && git reset -q --hard HEAD~1', clon);
     expect(correr(['Riesgo: bajo'])).toEqual({ rc: 1, checks: ['in_progress', 'in_progress', 'failure'] });
     sh('git pull -q --ff-only origin main', clon);
+  });
+  it('un verde del lote que cambia antes de terminar el lote → la conciliación final lo pisa (Codex #82, P1)', () => {
+    // fotos: pasada previa, F1, F2, F3 iguales; la conciliación final ve el cuerpo editado
+    expect(correr(['Riesgo: bajo', 'Riesgo: bajo', 'Riesgo: bajo', 'Riesgo: medio'])).toEqual({ rc: 1, checks: ['in_progress', 'in_progress', 'success', 'failure'] });
   });
   it('sin declaración → failure', () => {
     expect(correr(['nada'])).toEqual({ rc: 1, checks: ['in_progress', 'in_progress', 'failure'] });

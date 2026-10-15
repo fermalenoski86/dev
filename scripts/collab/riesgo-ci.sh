@@ -41,6 +41,7 @@ publicar() { # $1 sha, $2 status|conclusion, $3 título, $4 archivo de resumen
 }
 
 total=0
+VERDES=()
 # Antes de evaluar ninguno, TODOS los HEAD de la foto pasan a en_progreso: en una
 # re-evaluación global (política endurecida en main) un PR que espera su turno no puede
 # conservar el verde de la política vieja (Codex #82, P2).
@@ -74,9 +75,24 @@ for PR in "$@"; do
     if [ "$F3" != "$F1" ] || [ "$M3" != "$SCRIPTS_SHA" ]; then
       printf 'caducado tras publicar\nahora: %s · main %s\n' "$F3" "$M3" >> "$TMP/out"
       publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out"; total=1
+    else
+      VERDES+=("$PR|$HEAD|$F1")
     fi
   else
     publicar "$HEAD" failure "riesgo: RECHAZADO o sin veredicto (exit $RC)" "$TMP/out"; total=1
+  fi
+done
+# Conciliación final (Codex #82, P1): mientras se evaluaban los PR siguientes, el cuerpo,
+# la base o main de uno ya verde pudieron cambiar. Se relee cada verde del lote y, si su
+# foto o main ya no coinciden, se pisa con `failure` "caducado".
+for v in "${VERDES[@]}"; do
+  IFS='|' read -r PR HEAD F1 <<< "$v"
+  FX=$(foto "$PR" 2>/dev/null || echo "__sin-foto__"); MX=$(main_actual)
+  if [ "$FX" != "$F1" ] || [ "$MX" != "$SCRIPTS_SHA" ]; then
+    printf 'caducado en la conciliación final del lote
+antes: %s · scripts %s
+ahora: %s · main %s\n' "$F1" "$SCRIPTS_SHA" "$FX" "$MX" > "$TMP/out"
+    publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out"; total=1
   fi
 done
 exit "$total"

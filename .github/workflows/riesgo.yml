@@ -51,8 +51,10 @@ jobs:
           echo "scripts de main=$(git rev-parse HEAD)"
       # El YAML cargado sale de la base del PR (o de la revisión del evento en un re-run):
       # checkout de main reemplaza los scripts, no la orquestación. Si el workflow cargado
-      # (workflow_sha) no es el de main actual, este run no publica nada (Codex #82, P1;
-      # mismo protocolo que paralelo.yml). Límite: un YAML hostil en otra rama base podría
+      # (workflow_sha) no es el de main actual, el veredicto del PR del evento se anula
+      # (no se evalúa ni se publica para él), pero la re-evaluación de todos los PR abiertos
+      # hacia main corre igual con los scripts de main: este run pudo desplazar al único
+      # pendiente del carril (Codex #82, P1 ×2; mismo protocolo que paralelo.yml). Límite: un YAML hostil en otra rama base podría
       # saltearse este paso; eso solo lo cierra la protección de rama (pendiente de Fer).
       - name: El workflow cargado tiene que ser el de main actual
         env:
@@ -62,9 +64,11 @@ jobs:
           CARGADO=$(git show "$WF_SHA:.github/workflows/riesgo.yml" 2>/dev/null || echo "__no-disponible__")
           ACTUAL=$(git show "origin/main:.github/workflows/riesgo.yml")
           if [ "$CARGADO" != "$ACTUAL" ]; then
-            echo "::error title=workflow desactualizado::el workflow cargado ($WF_SHA) no es el de main actual ($(git rev-parse origin/main)); no se publica ningún check riesgo: hace falta un evento nuevo"
-            exit 1
+            echo "::error title=workflow desactualizado::el workflow cargado ($WF_SHA) no es el de main actual ($(git rev-parse origin/main)); sin veredicto para el PR del evento (hace falta un evento nuevo); la re-evaluación de los PR hacia main corre igual"
+            echo "WF_VIEJO=1" >> "$GITHUB_ENV"
+            exit 0
           fi
+          echo "WF_VIEJO=0" >> "$GITHUB_ENV"
           echo "workflow cargado = main actual ($WF_SHA)"
       - name: Riesgo declarado vs calculado (P-03) — todos los PR abiertos hacia main + el del evento
         env:
@@ -72,7 +76,8 @@ jobs:
           PR_EVT: ${{ github.event.pull_request.number }}
         run: |
           PRS=$(gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&base=main&per_page=100" --paginate --jq '.[].number')
-          [ -z "$PR_EVT" ] || PRS=$(printf '%s\n%s\n' "$PRS" "$PR_EVT")
+          # el PR del evento solo entra si el workflow cargado es el de main
+          [ -z "$PR_EVT" ] || [ "${WF_VIEJO:-1}" != 0 ] || PRS=$(printf '%s\n%s\n' "$PRS" "$PR_EVT")
           PRS=$(printf '%s\n' "$PRS" | grep -E '^[0-9]+$' | sort -un | tr '\n' ' ')
           echo "PR a evaluar: ${PRS:-ninguno}"
           [ -n "$PRS" ] || exit 0
@@ -81,4 +86,5 @@ jobs:
           set -e
           ENC=$(tail -n 40 "$RUNNER_TEMP/riesgo.out" | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
           if [ "$RC" = 0 ]; then echo "::notice title=riesgo OK::$ENC"; else echo "::error title=riesgo: algún PR rechazado, caducado o sin veredicto::$ENC"; fi
+          [ "${WF_VIEJO:-1}" = 0 ] || RC=1
           exit "$RC"

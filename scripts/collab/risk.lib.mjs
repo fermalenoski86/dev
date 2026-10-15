@@ -91,8 +91,11 @@ export function clasificarRuta(ruta, gatesRe) {
 // y asignación de un valor largo a un nombre de credencial (token/secret/password/api key)
 const SECRETO = /(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|xox[abprs]-[A-Za-z0-9-]{10,}|\bsk_(live|test)_[A-Za-z0-9]{10,}|\bBearer\s+[A-Za-z0-9._~+/=-]{20,}|\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.|\b[A-Za-z0-9_]*(token|secret|passw(or)?d|api[_-]?key|access[_-]?key)[A-Za-z0-9_]*["']?\s*[:=]\s*["']?[A-Za-z0-9/+_.~=-]{16,})/i;
 const SECRETS_CTX = /\$\{\{\s*secrets\.|GITHUB_TOKEN|pull_request_target|permissions\s*:/;
-const PROCESO = /\b(child_process|execFile(Sync)?|execSync|spawn(Sync)?|exec)\s*\(|from\s+['"](node:)?child_process['"]|require\(\s*['"](node:)?child_process['"]\s*\)/;
+const PROCESO = /\b(child_process|execFile(Sync)?|execSync|spawn(Sync)?|exec)\s*\(|from\s+['"](node:)?child_process['"]|require\(\s*['"](node:)?child_process['"]\s*\)|\b(shell|detached|argv0|uid|gid)\s*:\s*\S/;
+// opciones de un spawn/execFile multilínea (`shell: true`) cambian el borde sin tocar la línea de la llamada (Codex #82, P2)
 const DDL = /\b(CREATE|ALTER|DROP|TRUNCATE)\s+(TABLE|INDEX|SCHEMA|TYPE|FUNCTION|TRIGGER|EXTENSION|ROLE|POLICY)\b|\bGRANT\b|\bREVOKE\b/i;
+// cualquier objeto: CREATE/ALTER/DROP <OBJETO> en mayúsculas, como se escribe SQL (VIEW, SEQUENCE, DATABASE…; Codex #82, P2)
+const DDL_GENERICO = /\b(CREATE|ALTER|DROP)\s+(OR\s+REPLACE\s+|IF\s+(NOT\s+)?EXISTS\s+|TEMP(ORARY)?\s+|UNIQUE\s+|MATERIALIZED\s+)*[A-Z]{3,}\b/;
 // también acceso por corchetes (`test['skip'](`, Codex #82, P2); una cadena partida en dos líneas
 // cae igual: con -U0 la línea `  .skip(` también matchea
 const SALTEO = /\.(skip|only|todo|fixme)\s*\(|\[\s*['"`](skip|only|todo|fixme)['"`]\s*\]|\b(xit|xdescribe|xtest)\s*\(|\bretries\s*:\s*[1-9]/;
@@ -124,7 +127,7 @@ export function motivosContenido(ruta, estado, parche, binario) {
     if (mas.some((l) => SECRETS_CTX.test(l)) || menos.some((l) => SECRETS_CTX.test(l))) out.push('toca secrets, GITHUB_TOKEN, permisos o pull_request_target');
     // agregadas Y quitadas: reemplazar `execFile(...)` por un helper indirecto también cambia el borde (Codex #82, P2)
     if ([...mas, ...menos].some((l) => PROCESO.test(l))) out.push('agrega, quita o cambia ejecución de procesos externos');
-    if (mas.some((l) => DDL.test(l)) || menos.some((l) => DDL.test(l))) out.push('DDL o permisos SQL');
+    if ([...mas, ...menos].some((l) => DDL.test(l) || DDL_GENERICO.test(l))) out.push('DDL o permisos SQL');
   }
   if (TEST.test(ruta) && estado !== 'D') {
     if (mas.some((l) => SALTEO.test(l))) out.push('agrega skip/only/todo/fixme o retries en tests');
