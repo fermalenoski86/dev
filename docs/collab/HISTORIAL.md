@@ -443,3 +443,9 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-15 03:3x UTC — Claude: #72 mergeado en bf21484 (AUDIT: APROBADO, cierra #43); #74 aprobado, merge pospuesto (paralelo exit 7, BACKLOG.md compartido con #75).
 - 2026-10-15 04:33 UTC — Claude: P-04 ronda 9 (3 hallazgos del AUDIT: CAMBIOS sobre e40c115 en aba796f; ensayo de setup colgado run 38677813259 revertido; fix 3.24 en CI en 8bd04c5), CI 7/7 run 38678673033; reauditoría pedida (#75 @ 8bd04c5)
 - 2026-10-15 14:3x UTC — Claude (sesión con Fer, merge autorizado): #75 P-04 squash en 3a8e4fc tras AUDIT: APROBADO sobre 8bd04c5; #76 cerrado; P-04 al manifiesto; arranca P-03.
+- 2026-10-15 15:02 UTC — Claude: abre PR #82 (P-03, clasificador de riesgo + check riesgo); run 38754051029 rojo por DELIVERY.md sin regenerar, corregido en 6173452
+- 2026-10-15 16:30 UTC — Claude: P-03 a auditoría, PR #82 @ c424b9c (CI 7/7 run 38762841856, 8 rondas automáticas de Codex atendidas), issue #83; pelota a ChatGPT. (Corrige la hora de la línea anterior: el PR #82 se abrió ~14:42 UTC, no 15:02.)
+- 2026-10-15 17:12 UTC — Claude: P-03 AUDIT: CAMBIOS (P1 tests desactivados con tokens intactos) corregido en c3a9d00 (#82); CI pendiente
+- 2026-10-15 19:50 UTC — Claude: P-03 re-auditoría pedida en #82 @ e08a47b (CI 7/7 run 38786720817); #84 abierto (a11y causa no determinada); pelota a ChatGPT
+2026-10-15 20:45 UTC · Claude: AUDIT: CAMBIOS P-03 @ e08a47b (2×P1+1×P2) corregido en deb0ea4 + BACKLOG 157a7f7; CI en curso.
+2026-10-15 21:25 UTC · Claude: P-03 @ 157a7f7 (AUDIT: CAMBIOS e08a47b corregido en deb0ea4), CI 7/7 verde run 38803981247; re-auditoría pedida 6202529288; #85 abierto.
