@@ -19,7 +19,10 @@ import { clasificar, gatesDesdeParalelo, informe, raicesWorkspace, verificar } f
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const RAIZ = path.resolve(AQUI, '../..');
 
-const git = (args, opts = {}) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, ...opts });
+// GIT_LITERAL_PATHSPECS=1: una ruta del diff que parece magia de pathspec (`:(exclude)x.md`)
+// se toma literal; si no, `git diff -- <ruta>` devolvería otro parche (o ninguno) y su
+// contenido no se analizaría (AUDIT: CAMBIOS @ e08a47b, P1).
+const git = (args, opts = {}) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, ...opts, env: { ...process.env, ...opts.env, GIT_LITERAL_PATHSPECS: '1' } });
 const fallo = (m) => { console.error(`risk: ${m}`); process.exit(1); };
 
 function reglas() {

@@ -87,3 +87,26 @@ NO EJECUTADO EN LOCAL (motivo): el Chromium de este entorno (/opt/pw-browsers) n
 los MP4 de la experiencia no cargan (mismo motivo documentado en gates.yml, que usa el Google
 Chrome del runner). Corre en el job `e2e-m2c` de gates.yml sobre el SHA final.
 (e2e-platform: mismo Chrome con codecs; compose-smoke: necesita el daemon de Docker; el cliente está instalado pero no hay daemon (`docker ps`: no such file /var/run/docker.sock). Ambos corren en sus jobs de gates.yml sobre el SHA final.)
+
+## Ronda AUDIT: CAMBIOS @ e08a47b (2×P1 + 1×P2) — salida real 2026-10-15T20:38:53Z, node v22.22.0, git 2.43.0
+
+$ node scripts/collab/risk.mjs calcular BASE HEAD   # :(exclude)leak.md
+riesgo calculado: alto
+  alto  :(exclude)leak.md — markdown de la raíz; parece un token o clave privada
+$ node scripts/collab/risk.mjs calcular BASE HEAD   # README.md con PASSWORD="…con espacios…"
+riesgo calculado: alto
+  alto  README.md — markdown de la raíz; parece un token o clave privada
+$ npx vitest run scripts/collab/risk.test.ts
+ Test Files  1 passed (1)
+      Tests  81 passed (81)
+$ pnpm verify (cola)
+ Test Files  54 passed | 1 skipped (55)
+      Tests  913 passed | 1 skipped (914)
+$ pnpm lint (cola)
+✖ 12 problems (0 errors, 12 warnings)
+$ pnpm -r typecheck (cola)
+apps/platform-api typecheck$ tsc --noEmit
+apps/platform-api typecheck: Done
+$ bash -n scripts/collab/riesgo-ci.sh
+ok
+(PostgreSQL, media, compose, mutaciones y E2E: los cubre gates.yml sobre el SHA final; esta ronda solo toca scripts/collab y docs/reviews)

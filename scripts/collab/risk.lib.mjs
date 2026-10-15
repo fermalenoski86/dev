@@ -89,7 +89,7 @@ export function clasificarRuta(ruta, gatesRe) {
 // Contenido: patrones en líneas AGREGADAS o QUITADAS del parche (-U0).
 // tokens de proveedor conocidos + formas genéricas (Codex #82, P2): Bearer, JWT, sk_live/sk_test,
 // y asignación de un valor largo a un nombre de credencial (token/secret/password/api key)
-const SECRETO = /(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|xox[abprs]-[A-Za-z0-9-]{10,}|\bsk_(live|test)_[A-Za-z0-9]{10,}|\bBearer\s+[A-Za-z0-9._~+/=-]{20,}|\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.|\b[A-Za-z0-9_]*(token|secret|passw(or)?d|api[_-]?key|access[_-]?key)[A-Za-z0-9_]*["']?\s*[:=]\s*(["']?[^\s"'`]{16,}|["'][^"'\s]{16,}["']))/i; // con o sin comillas, cualquier puntuación (Codex #82, P2 ×2)
+const SECRETO = /(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|xox[abprs]-[A-Za-z0-9-]{10,}|\bsk_(live|test)_[A-Za-z0-9]{10,}|\bBearer\s+[A-Za-z0-9._~+/=-]{20,}|\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.|\b[A-Za-z0-9_]*(token|secret|passw(or)?d|api[_-]?key|access[_-]?key)[A-Za-z0-9_]*["']?\s*[:=]\s*(["']?[^\s"'`]{16,}|["'][^"'\r\n]{16,}["']))/i; // con o sin comillas, cualquier puntuación; entre comillas también con espacios (Codex #82, P2 ×2; AUDIT: CAMBIOS @ e08a47b, P2)
 const SECRETS_CTX = /\$\{\{\s*secrets\.|GITHUB_TOKEN|pull_request_target|permissions\s*:/;
 const PROCESO = /\b(child_process|execFile(Sync)?|execSync|spawn(Sync)?|exec)\s*\(|from\s+['"](node:)?child_process['"]|require\(\s*['"](node:)?child_process['"]\s*\)|\b(shell|detached|argv0|uid|gid)\s*:\s*\S/;
 // opciones de un spawn/execFile multilínea (`shell: true`) cambian el borde sin tocar la línea de la llamada (Codex #82, P2)

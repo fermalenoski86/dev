@@ -255,6 +255,23 @@ describe('P-03 · CLI sobre un repo git real', () => {
     expect(cli('calcular', 'main', 'ln').out).toMatch(/riesgo calculado: alto[\s\S]*symlink/);
   });
 
+  it('ruta con magia de pathspec se toma literal y su contenido se analiza (AUDIT: CAMBIOS @ e08a47b, P1)', () => {
+    g('checkout', '-qb', 'magia', 'main');
+    escribir(':(exclude)leak.md', 'PASSWORD="correct horse battery staple"\n');
+    g('add', '-A');
+    g('commit', '-qm', 'magia');
+    const r = cli('calcular', 'main', 'magia');
+    expect(r.out).toMatch(/riesgo calculado: alto[\s\S]*token o clave privada/);
+  });
+
+  it('credencial entre comillas con espacios en README.md → alto (AUDIT: CAMBIOS @ e08a47b, P2)', () => {
+    g('checkout', '-qb', 'readme', 'main');
+    escribir('README.md', 'PASSWORD="correct horse battery staple"\n');
+    g('add', '-A');
+    g('commit', '-qm', 'readme');
+    expect(cli('calcular', 'main', 'readme').out).toMatch(/riesgo calculado: alto[\s\S]*token o clave privada/);
+  });
+
   it('verificar: rebaja → exit 2; declaración correcta → exit 0; base inexistente → exit 1 (sin veredicto)', () => {
     escribir(path.join('..', path.basename(dir) + '-bajo.md'), 'Riesgo: bajo\n');
     const cuerpoBajo = path.join(dir, '..', path.basename(dir) + '-bajo.md');
@@ -277,7 +294,7 @@ describe('P-03 · riesgo-ci.sh: pendiente → final → revalidación (Codex #82
   sh('git init -q --bare -b main remoto.git && git init -q -b main clon', dir);
   const clon = path.join(dir, 'clon');
   sh(`git config user.email t@t && git config user.name t && mkdir -p scripts/collab docs && cp ${ROOT}/scripts/collab/{risk.mjs,risk.lib.mjs,paralelo.sh,riesgo-ci.sh} scripts/collab/ && cp ${ROOT}/pnpm-workspace.yaml . && echo a > docs/a.md && git add -A && git commit -qm base && git remote add origin ../remoto.git && git push -q origin main`, clon);
-  sh('git checkout -qb pr && echo b >> docs/a.md && git commit -qam pr && git push -q origin pr:refs/pull/7/head && git checkout -q main', clon);
+  sh('git checkout -qb pr && echo b >> docs/a.md && git commit -qam pr && git push -q origin pr:refs/pull/7/head pr:refs/pull/8/head && git checkout -q main', clon);
   const HEAD_PR = sh('git rev-parse pr', clon).trim();
   // gh falso: cada `api repos/R/pulls/7` devuelve el cuerpo N de la secuencia; POST check-runs se registra
   mkdirSync(path.join(dir, 'bin'));
@@ -291,6 +308,8 @@ if [ "$1 $2" = "api -X" ]; then
   cat "$6" >> "$D/checks.log"; echo >> "$D/checks.log"; echo https://x/check; exit 0
 fi
 case "$2" in *'pulls?state=open'*) cat "$D/lista" 2>/dev/null; exit 0 ;; esac
+# cuerpo fijo por PR (dos PR con el mismo HEAD; AUDIT: CAMBIOS @ e08a47b, P1)
+pr=\${2##*/}; if [ -f "$D/cuerpo_$pr" ]; then jq -n --arg h "${HEAD_PR}" --rawfile b "$D/cuerpo_$pr" '{state:"open", head:{sha:$h}, base:{ref:"main"}, body:$b}'; exit 0; fi
 n=$(cat "$D/n" 2>/dev/null || echo 0); n=$((n+1)); echo $n > "$D/n"
 cuerpo=$(sed -n "\${n}p" "$D/cuerpos"); [ -n "$cuerpo" ] || cuerpo=$(tail -n1 "$D/cuerpos")
 [ "$cuerpo" != "__falla__" ] || { echo "HTTP 502" >&2; exit 1; }
@@ -373,6 +392,24 @@ jq -n --arg h "$h" --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{ref:"m
     expect(r.rc).toBe(1);
     expect(ultimosShas).toContain(nuevo);
     expect(r.checks).not.toContain('success');
+  });
+  for (const orden of [['7', '8'], ['8', '7']]) {
+    it(`dos PR con el mismo HEAD, uno rechazado (orden ${orden.join(',')}) → el último check del HEAD es failure (AUDIT: CAMBIOS @ e08a47b, P1)`, () => {
+      writeFileSync(path.join(dir, 'cuerpo_7'), 'nada\n');
+      writeFileSync(path.join(dir, 'cuerpo_8'), 'Riesgo: bajo\n');
+      const r = correr(['Riesgo: bajo'], { lista: `7 ${HEAD_PR}\n8 ${HEAD_PR}\n`, args: orden });
+      rmSync(path.join(dir, 'cuerpo_7'));
+      rmSync(path.join(dir, 'cuerpo_8'));
+      expect(r.rc).toBe(1);
+      expect(r.checks).toContain('success'); // #8 sí pasó…
+      expect(r.checks.at(-1)).toBe('failure'); // …pero el rechazo de #7 manda sobre el SHA
+      expect(ultimosShas.at(-1)).toBe(HEAD_PR);
+    });
+  }
+  it('PR que comparte HEAD con un verde pero no se evaluó en el lote → failure (AUDIT: CAMBIOS @ e08a47b, P1)', () => {
+    const r = correr(['Riesgo: bajo'], { lista: `7 ${HEAD_PR}\n8 ${HEAD_PR}\n` });
+    expect(r.rc).toBe(1);
+    expect(r.checks.at(-1)).toBe('failure');
   });
   it('sin declaración → failure', () => {
     expect(correr(['nada'])).toEqual({ rc: 1, checks: ['in_progress', 'in_progress', 'failure'] });
