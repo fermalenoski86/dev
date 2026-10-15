@@ -272,6 +272,39 @@ describe('P-03 · CLI sobre un repo git real', () => {
     expect(cli('calcular', 'main', 'readme').out).toMatch(/riesgo calculado: alto[\s\S]*token o clave privada/);
   });
 
+  it('alta o baja de package.json sin bloque "scripts" no es cambio de scripts; con bloque real sí (AUDIT: CAMBIOS @ 157a7f7, P2)', () => {
+    const det = (rama: string) => cli('calcular', 'main', rama).out;
+    g('checkout', '-qb', 'pkg-alta', 'main');
+    escribir('apps/foo/package.json', '{"name":"foo","private":true}\n');
+    g('add', '-A');
+    g('commit', '-qm', 'alta');
+    expect(det('pkg-alta')).not.toMatch(/bloque "scripts"/);
+    g('checkout', '-qb', 'pkg-base', 'main');
+    escribir('apps/bar/package.json', '{"name":"bar"}\n');
+    escribir('apps/con/package.json', '{"name":"con","scripts":{"test":"vitest"}}\n');
+    escribir('apps/mal/package.json', '{"name":"mal","scripts":{}}\n');
+    g('add', '-A');
+    g('commit', '-qm', 'base pkg');
+    g('checkout', '-qb', 'pkg-baja', 'pkg-base');
+    g('rm', '-q', 'apps/bar/package.json');
+    g('commit', '-qm', 'baja');
+    expect(cli('calcular', 'pkg-base', 'pkg-baja').out).not.toMatch(/bloque "scripts"/);
+    g('checkout', '-qb', 'pkg-baja-scripts', 'pkg-base');
+    g('rm', '-q', 'apps/con/package.json');
+    g('commit', '-qm', 'baja con scripts');
+    expect(cli('calcular', 'pkg-base', 'pkg-baja-scripts').out).toMatch(/riesgo calculado: alto[\s\S]*apps\/con\/package\.json[\s\S]*bloque "scripts"/);
+    g('checkout', '-qb', 'pkg-alta-scripts', 'main');
+    escribir('apps/foo/package.json', '{"name":"foo","scripts":{"build":"tsc"}}\n');
+    g('add', '-A');
+    g('commit', '-qm', 'alta con scripts');
+    expect(det('pkg-alta-scripts')).toMatch(/riesgo calculado: alto[\s\S]*bloque "scripts"/);
+    g('checkout', '-qb', 'pkg-roto', 'pkg-base');
+    escribir('apps/mal/package.json', '{"name":"mal",\n');
+    g('commit', '-qam', 'json roto');
+    expect(cli('calcular', 'pkg-base', 'pkg-roto').out).toMatch(/riesgo calculado: alto[\s\S]*bloque "scripts"/); // fail-closed
+    g('checkout', '-q', 'main');
+  });
+
   it('verificar: rebaja → exit 2; declaración correcta → exit 0; base inexistente → exit 1 (sin veredicto)', () => {
     escribir(path.join('..', path.basename(dir) + '-bajo.md'), 'Riesgo: bajo\n');
     const cuerpoBajo = path.join(dir, '..', path.basename(dir) + '-bajo.md');
@@ -307,7 +340,9 @@ if [ "$1 $2" = "api -X" ]; then
   f=$(cat "$D/postfalla" 2>/dev/null || echo 0); if [ "$f" -gt 0 ]; then echo $((f-1)) > "$D/postfalla"; exit 1; fi
   cat "$6" >> "$D/checks.log"; echo >> "$D/checks.log"; echo https://x/check; exit 0
 fi
-case "$2" in *'pulls?state=open'*) cat "$D/lista" 2>/dev/null; exit 0 ;; esac
+case "$2" in *'pulls?state=open'*)
+  f=$(cat "$D/listafalla" 2>/dev/null || echo 0); if [ "$f" -gt 0 ]; then echo $((f-1)) > "$D/listafalla"; echo "HTTP 502" >&2; exit 1; fi
+  cat "$D/lista" 2>/dev/null; exit 0 ;; esac
 # cuerpo fijo por PR (dos PR con el mismo HEAD; AUDIT: CAMBIOS @ e08a47b, P1)
 pr=\${2##*/}; if [ -f "$D/cuerpo_$pr" ]; then jq -n --arg h "${HEAD_PR}" --rawfile b "$D/cuerpo_$pr" '{state:"open", head:{sha:$h}, base:{ref:"main"}, body:$b}'; exit 0; fi
 n=$(cat "$D/n" 2>/dev/null || echo 0); n=$((n+1)); echo $n > "$D/n"
@@ -319,8 +354,9 @@ jq -n --arg h "$h" --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{ref:"m
     { mode: 0o755 },
   );
   let ultimosShas: string[] = [];
-  const correr = (cuerpos: string[], extra: { lista?: string; postfalla?: number; args?: string[]; sinMain?: boolean } = {}) => {
+  const correr = (cuerpos: string[], extra: { lista?: string; postfalla?: number; listafalla?: number; args?: string[]; sinMain?: boolean } = {}) => {
     writeFileSync(path.join(dir, 'lista'), extra.lista ?? `7 ${HEAD_PR}\n`);
+    writeFileSync(path.join(dir, 'listafalla'), String(extra.listafalla ?? 0));
     writeFileSync(path.join(dir, 'postfalla'), String(extra.postfalla ?? 0));
     // la primera foto la consume la pasada que pone TODOS los HEAD en en_progreso
     writeFileSync(path.join(dir, 'cuerpos'), [cuerpos[0], ...cuerpos].join('\n') + '\n');
@@ -410,6 +446,14 @@ jq -n --arg h "$h" --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{ref:"m
     const r = correr(['Riesgo: bajo'], { lista: `7 ${HEAD_PR}\n8 ${HEAD_PR}\n` });
     expect(r.rc).toBe(1);
     expect(r.checks.at(-1)).toBe('failure');
+  });
+  it('re-listado final que falla de forma transitoria se reintenta y el verde queda (AUDIT: CAMBIOS @ 157a7f7, P1)', () => {
+    expect(correr(['Riesgo: bajo'], { listafalla: 2 })).toEqual({ rc: 0, checks: ['in_progress', 'in_progress', 'success'] });
+  });
+  it('re-listado final que falla siempre (502) → el último check del HEAD es failure, rc 1 (AUDIT: CAMBIOS @ 157a7f7, P1)', () => {
+    const r = correr(['Riesgo: bajo'], { listafalla: 99 });
+    expect(r).toEqual({ rc: 1, checks: ['in_progress', 'in_progress', 'success', 'failure'] });
+    expect(ultimosShas.at(-1)).toBe(HEAD_PR);
   });
   it('sin declaración → failure', () => {
     expect(correr(['nada'])).toEqual({ rc: 1, checks: ['in_progress', 'in_progress', 'failure'] });

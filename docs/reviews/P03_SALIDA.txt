@@ -110,3 +110,24 @@ apps/platform-api typecheck: Done
 $ bash -n scripts/collab/riesgo-ci.sh
 ok
 (PostgreSQL, media, compose, mutaciones y E2E: los cubre gates.yml sobre el SHA final; esta ronda solo toca scripts/collab y docs/reviews)
+
+## Ronda AUDIT: CAMBIOS @ 157a7f7 (1×P1 + 2×P2) — salida real 2026-10-15T23:33:02Z, node v22.22.0, git version 2.43.0
+
+$ node scripts/collab/risk.mjs calcular BASE HEAD   # alta de apps/foo/package.json sin "scripts" (P2)
+riesgo calculado: medio
+  medio apps/foo/package.json — producto (app o paquete del workspace)
+$ npx vitest run scripts/collab/risk.test.ts
+ Test Files  1 passed (1)
+      Tests  84 passed (84)
+  (incluye: re-listado final con 502 permanente → último check del HEAD = failure, rc 1;
+   502 transitorio ×2 → reintento y success; alta/baja de package.json con y sin "scripts", JSON roto → alto.
+   Los 3 tests nuevos fallan con los scripts de 157a7f7: 3 failed | 81 passed.)
+$ pnpm verify (cola)
+ Test Files  54 passed | 1 skipped (55)
+      Tests  916 passed | 1 skipped (917)
+$ pnpm lint (cola)
+✖ 12 problems (0 errors, 12 warnings)
+$ bash -n scripts/collab/riesgo-ci.sh
+ok
+(P2 de clasificación: #85 reclasificado "intermitente; causa raíz no determinada" con etiqueta flaky.
+ PostgreSQL, media, compose, mutaciones y E2E: los cubre gates.yml sobre el SHA final.)

@@ -32,9 +32,24 @@ function reglas() {
   return gatesDesdeParalelo(par, raicesWorkspace(ws));
 }
 
+// Bloque "scripts" de un package.json en `rev`. Un archivo ausente (alta o baja) equivale a
+// no tener bloque: solo eleva si del otro lado hay un bloque `scripts` real distinto
+// (AUDIT: CAMBIOS @ 157a7f7, P2). Ilegible o JSON inválido → null (fail-closed: alto).
 function scriptsDe(rev, ruta) {
-  try { return JSON.stringify(JSON.parse(git(['show', `${rev}:${ruta}`], { stdio: ['ignore', 'pipe', 'ignore'] })).scripts ?? {}); }
-  catch { return '__sin-package-json__'; }
+  const quieto = { stdio: ['ignore', 'pipe', 'ignore'] };
+  try {
+    // ls-tree (no cat-file): un error de git no se confunde con "archivo ausente"
+    if (git(['ls-tree', '-z', rev, '--', ruta], quieto) === '') return '{}';
+    const pkg = JSON.parse(git(['show', `${rev}:${ruta}`], quieto));
+    if (pkg === null || typeof pkg !== 'object' || Array.isArray(pkg)) return null;
+    const s = pkg.scripts ?? {};
+    if (s === null || typeof s !== 'object' || Array.isArray(s)) return JSON.stringify(s);
+    return JSON.stringify(Object.fromEntries(Object.entries(s).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))));
+  } catch { return null; }
+}
+export function scriptsCambian(desde, hasta, ruta) {
+  const a = scriptsDe(desde, ruta), b = scriptsDe(hasta, ruta);
+  return a === null || b === null || a !== b;
 }
 
 export function archivosDelDiff(desde, hasta) {
@@ -53,7 +68,7 @@ export function archivosDelDiff(desde, hasta) {
     a.binario = bin.has(a.ruta);
     if (/[\n\r\0]/.test(a.ruta)) continue; // anómala: clasificarRuta la manda a alto
     a.parche = a.binario ? '' : git(['diff', '--no-renames', '-U0', desde, hasta, '--', a.ruta]);
-    if (/(^|\/)package\.json$/.test(a.ruta)) a.scriptsCambian = scriptsDe(desde, a.ruta) !== scriptsDe(hasta, a.ruta);
+    if (/(^|\/)package\.json$/.test(a.ruta)) a.scriptsCambian = scriptsCambian(desde, hasta, a.ruta);
   }
   return archivos;
 }

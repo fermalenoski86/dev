@@ -141,7 +141,14 @@ if [ "${RIESGO_GLOBAL:-0}" = 1 ]; then
   # por par PR:HEAD (AUDIT: CAMBIOS @ e08a47b, P1): un PR que comparte HEAD con un verde
   # pero no fue evaluado en este lote no hereda ese verde
   for v in "${VERDES[@]+"${VERDES[@]}"}"; do IFS='|' read -r pv hv _ <<< "$v"; VERDES_HEADS+="$pv:$hv "; done
-  if LISTA=$(gh api "repos/$REPO/pulls?state=open&base=main&per_page=100" --paginate --jq '.[] | "\(.number) \(.head.sha)"'); then
+  # re-listado con reintentos; si se agotan, ningún verde de este lote puede quedar último
+  # sobre su HEAD (AUDIT: CAMBIOS @ 157a7f7, P1): se pisan todos con `failure`
+  LISTA_OK=0
+  for i in 1 2 3; do
+    if LISTA=$(gh api "repos/$REPO/pulls?state=open&base=main&per_page=100" --paginate --jq '.[] | "\(.number) \(.head.sha)"'); then LISTA_OK=1; break; fi
+    [ "$i" = 3 ] || sleep "$i"
+  done
+  if [ "$LISTA_OK" = 1 ]; then
     while read -r N H; do
       [ -n "${N:-}" ] || continue
       case "$VERDES_HEADS" in *" $N:$H "*) continue ;; esac
@@ -151,7 +158,12 @@ if [ "${RIESGO_GLOBAL:-0}" = 1 ]; then
       total=1
     done <<< "$LISTA"
   else
-    echo "riesgo-ci: no se pudo volver a listar los PR hacia main" >&2; total=1
+    echo "riesgo-ci: no se pudo volver a listar los PR hacia main tras 3 intentos: los verdes de este lote quedan sin veredicto" | tee "$TMP/out" >&2; total=1
+    for v in "${VERDES[@]+"${VERDES[@]}"}"; do
+      IFS='|' read -r _ hv _ <<< "$v"
+      [ "${ULTIMO[$hv]:-}" = failure ] && continue
+      publicar "$hv" failure "riesgo: sin veredicto (no se pudo conciliar el lote)" "$TMP/out" || true
+    done
   fi
 fi
 # Conciliación final (Codex #82, P1), casi lo último que corre (solo la sigue la dominancia por HEAD) —después de la conciliación
