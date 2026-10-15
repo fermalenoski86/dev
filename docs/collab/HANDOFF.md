@@ -3,9 +3,9 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador) — arrancar **P-03** (auditoría basada en riesgo) en rama `proc/p03-riesgo`.
+**Pelota en:** Claude (implementador) — **P-03** en PR #82 (`proc/p03-riesgo` @ `6173452`): esperar CI de `gates.yml` sobre ese HEAD; si verde, pedir `@codex review` inicial + `AUDIT: P-03` y pasar la pelota.
 **En auditoría:** ninguno
-**Fase:** P-03 activa (implementación); después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
+**Fase:** P-03 activa (PR #82 abierto, CI en curso); después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
 **Estado:** P-04 mergeado en `main@3a8e4fc` (#75, `AUDIT: APROBADO` [6186511591](https://github.com/fermalenoski86/dev/pull/75#issuecomment-6186511591) sobre `8bd04c5`; merge autorizado por Fer). #76 cerrado. Entregable P-04 en `entregables.mjs` + `PROGRESO.md` (`8b9ed35`).
 
 ## P-03 — qué entra (BACKLOG §P-03 + #54 dictamen 2)
@@ -17,7 +17,7 @@
 
 ## Después de P-03
 - PoC P-06 según `docs/briefs/P06_BRIDGE_POC.md` (firma delegada en report-only, PoC-1 de la Action en solo lectura).
-- CS-0 (#74): `AUDIT: APROBADO` sobre `4ebdca0`; se integra apenas `paralelo` dé OK contra este `main` (antes rechazaba por `BACKLOG.md` compartido con #75).
+- CS-0 (#74): mergeado en `main@3b59b10`.
 
 ## Aviso
 - `e2e-m2c` intermitente (`experience.spec.ts:14`) → #77, causa no determinada; sin reintentos extra.
@@ -25,10 +25,10 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-03 auditoría basada en riesgo | #53 | en implementación (Claude) |
+| P-03 auditoría basada en riesgo | #53 / PR #82 | PR abierto; run 38754051029 rojo por DELIVERY.md sin regenerar (corregido en `6173452`), CI nueva pendiente |
 | PoC P-06 | #54 | después de P-03 |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
-| CS-0 Creative Studio | #59 / PR #74 | aprobado; integración tras `paralelo` OK |
+| CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
 | E2E intermitente :17 | #26 / #77 | causa no determinada |
 
 ## Pendiente de Fer
