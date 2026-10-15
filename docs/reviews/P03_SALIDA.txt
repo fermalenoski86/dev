@@ -1,4 +1,4 @@
-# P-03 · salida real (2026-10-15T17:21:13Z) — árbol de trabajo = HEAD c3a9d00 + el commit que agrega este archivo (P1 de AUDIT: CAMBIOS 6197808364 + 2 P1 de Codex sobre c3a9d00); node v22.22.0, git 2.43.0
+# P-03 · salida real (2026-10-15T17:21:13Z) — árbol de trabajo = HEAD c3a9d00 + el commit que agrega este archivo (P1 de AUDIT: CAMBIOS 6197808364 + 2 P1 de Codex sobre c3a9d00); node v22.22.0, git 2.43.0 + corrección de dedupe por número (Codex sobre fd7ac8a, P1)
 
 $ reproducción del auditor (AUDIT: CAMBIOS sobre c424b9c, P1): false && it(...) en packages/timeline/src/transport.test.ts
 alto — producto (app o paquete del workspace); modifica un archivo de tests existente (alto por defecto: sin análisis estructural, una desactivación puede conservar los tokens)
@@ -51,3 +51,39 @@ $ pnpm verify (cola)
  Test Files  54 passed | 1 skipped (55)
       Tests  902 passed | 1 skipped (903)
 exit=0
+
+## Gates obligatorios de AGENTS.md (salida real local, mismo árbol)
+
+$ NEXT_PUBLIC_TRUST_API_URL=https://api.trust.test:8443 pnpm build (cola)
+apps/platform-api build: Done
+apps/control build: Done
+rc=0
+
+$ bash scripts/dev/pg-up.sh
+pg_ctl: server is running (PID: 640)
+
+$ npx vitest run -c vitest.platform.config.ts   # PostgreSQL 16 real
+ Test Files  30 passed | 1 skipped (31)
+      Tests  342 passed | 6 skipped (348)
+rc=0
+
+$ bash packages/platform-db/scripts/bootstrap-smoke.sh (cola)
+ ✓ packages/platform-db/src/bootstrap.smoke.db.test.ts (6 tests) 360ms
+rc=0
+
+$ npx vitest run -c vitest.media.config.ts      # ffprobe/ffmpeg reales
+ Test Files  3 passed (3)
+      Tests  63 passed (63)
+rc=0
+
+$ python3 scripts/mutation-check.py
+NO COMPLETADO EN LOCAL (motivo): la suite completa corre en serie y en este entorno
+avanzó a ~1 regla por 45 s; tras ~20 min llevaba 26 reglas ATRAPADAS y 0 SOBREVIVE,
+y se cortó (SIGTERM; el árbol quedó limpio, `git status` sin mutaciones). La corrida
+completa es el job `mutations` de gates.yml sobre el SHA final (run citado en el pedido de auditoría).
+
+$ playwright test -c playwright.config.ts e2e/experience.spec.ts e2e/builder.spec.ts   # M2C congelado
+NO EJECUTADO EN LOCAL (motivo): el Chromium de este entorno (/opt/pw-browsers) no trae H.264,
+los MP4 de la experiencia no cargan (mismo motivo documentado en gates.yml, que usa el Google
+Chrome del runner). Corre en el job `e2e-m2c` de gates.yml sobre el SHA final.
+(e2e-platform: mismo Chrome con codecs; compose-smoke: necesita Docker, no disponible en este entorno. Ambos corren en sus jobs de gates.yml sobre el SHA final.)

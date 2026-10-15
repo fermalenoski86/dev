@@ -71,7 +71,8 @@ for arg in "$@"; do
   n=${arg%%:*}; h=""; [ "$n" = "$arg" ] || h=${arg#*:}
   [[ "$n" =~ ^[0-9]+$ ]] || { echo "riesgo-ci: PR inválido $arg" >&2; total=1; continue; }
   [[ -z "$h" || "$h" =~ ^[0-9a-f]{40}$ ]] || { echo "riesgo-ci: HEAD inválido $arg" >&2; total=1; continue; }
-  if [ -z "${LISTADO[$n]+x}" ]; then ARGS+=("$n"); LISTADO[$n]=$h; elif [ -z "${LISTADO[$n]}" ]; then LISTADO[$n]=$h; fi
+  # el primero manda (riesgo.yml pone primero la lista de la API); duplicados posteriores se ignoran
+  if [ -z "${LISTADO[$n]+x}" ]; then ARGS+=("$n"); LISTADO[$n]=$h; fi
 done
 set -- "${ARGS[@]+"${ARGS[@]}"}"
 sin_foto() { # $1 = PR: sin foto no hay veredicto; si se conoce el HEAD listado, se invalida
