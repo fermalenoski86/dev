@@ -92,7 +92,8 @@ const SECRETS_CTX = /\$\{\{\s*secrets\.|GITHUB_TOKEN|pull_request_target|permiss
 const PROCESO = /\b(child_process|execFile(Sync)?|execSync|spawn(Sync)?|exec)\s*\(|from\s+['"](node:)?child_process['"]|require\(\s*['"](node:)?child_process['"]\s*\)/;
 const DDL = /\b(CREATE|ALTER|DROP|TRUNCATE)\s+(TABLE|INDEX|SCHEMA|TYPE|FUNCTION|TRIGGER|EXTENSION|ROLE|POLICY)\b|\bGRANT\b|\bREVOKE\b/i;
 const SALTEO = /\.(skip|only|todo|fixme)\s*\(|\b(xit|xdescribe|xtest)\s*\(|\bretries\s*:\s*[1-9]/;
-const CASO = /\b(it|test)(\.each\([^)]*\))?\s*\(|\bexpect\s*\(|\bassert[.(]/g;
+// sin punto ni letra antes: `re.test(` o `x.expect(` no cuentan como caso
+const CASO = /(?<![.\w$])(it|test)(\.each\([^)]*\))?\s*\(|(?<![.\w$])expect\s*\(|(?<![.\w$])assert[.(]/g;
 
 function lineas(parche, signo) {
   const out = [];
@@ -143,6 +144,7 @@ export function clasificar(archivos, gatesRe) {
     const motivos = [r.motivo];
     let nivel = r.nivel;
     const extra = motivosContenido(a.ruta, a.estado, a.parche, a.binario);
+    if (a.modoEspecial) extra.push('symlink o submódulo (el contenido real no está en el diff)');
     if (a.scriptsCambian) extra.push('cambia el bloque "scripts" de un package.json (lo que ejecutan los gates)');
     if (extra.length) { nivel = 'alto'; motivos.push(...extra); }
     return { ruta: a.ruta, nivel, motivos };

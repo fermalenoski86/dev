@@ -35,13 +35,13 @@ function scriptsDe(rev, ruta) {
 }
 
 export function archivosDelDiff(desde, hasta) {
-  const ns = git(['diff', '--no-renames', '--name-status', '-z', desde, hasta, '--']).split('\0');
+  // --raw: modos de archivo además del estado (symlink 120000 y submódulo 160000 → alto)
+  const raw = git(['diff', '--no-renames', '--raw', '-z', desde, hasta, '--']).split('\0');
   const archivos = [];
-  for (let i = 0; i + 1 < ns.length; i += 2) {
-    const estado = ns[i];
-    const ruta = ns[i + 1];
-    if (!estado) break;
-    archivos.push({ ruta, estado: estado[0] });
+  for (let i = 0; i + 1 < raw.length; i += 2) {
+    const m = /^:(\d{6}) (\d{6}) \S+ \S+ ([A-Z])/.exec(raw[i]);
+    if (!m) break;
+    archivos.push({ ruta: raw[i + 1], estado: m[3], modoEspecial: [m[1], m[2]].some((x) => x === '120000' || x === '160000') });
   }
   const bin = new Set();
   const num = git(['diff', '--no-renames', '--numstat', '-z', desde, hasta, '--']).split('\0');

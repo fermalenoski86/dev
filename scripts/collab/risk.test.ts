@@ -115,8 +115,14 @@ describe('P-03 · diff completo', () => {
     expect(nivel([m('packages/show-engine/src/e.test.ts', "-  it('a', () => {\n-    expect(1).toBe(1);\n+  // nada")])).toBe('alto');
     expect(nivel([m('packages/show-engine/src/e.test.ts', "+  it.skip('a', () => {})")])).toBe('alto');
     expect(nivel([m('packages/show-engine/src/e.test.ts', '+  describe.' + 'only(() => {})' /* partido: politica-fallas.sh rechaza el literal en tests */)])).toBe('alto');
+    // agregar `re.test(` no compensa casos quitados
+    expect(nivel([m('packages/show-engine/src/e.test.ts', "-  it('a', () => {\n-  it('b', () => {\n+  ok = re.test(x);\n+  ok = re.test(y);")])).toBe('alto');
     // mismo número de casos (renombrar un test) no reduce
     expect(nivel([m('packages/show-engine/src/e.test.ts', "-  it('a', () => {\n+  it('b', () => {")])).toBe('medio');
+  });
+
+  it('symlink o submódulo, aunque esté en docs/ → alto', () => {
+    expect(nivel([{ ruta: 'docs/a.md', estado: 'A', modoEspecial: true }])).toBe('alto');
   });
 
   it('bloque "scripts" de un package.json cambiado → alto; binario fuera de docs → alto', () => {
@@ -194,6 +200,14 @@ describe('P-03 · CLI sobre un repo git real', () => {
     const r = cli('calcular', 'main', 'mv');
     expect(r.out).toMatch(/riesgo calculado: alto/);
     expect(r.out).toMatch(/\.github\/workflows\/ñ\.yml/);
+  });
+
+  it('symlink en docs/ → alto (modo 120000 por --raw)', () => {
+    g('checkout', '-qb', 'ln', 'main');
+    execFileSync('ln', ['-s', '../.github/workflows/ñ.yml', 'docs/l.md'], { cwd: dir });
+    g('add', '-A');
+    g('commit', '-qm', 'ln');
+    expect(cli('calcular', 'main', 'ln').out).toMatch(/riesgo calculado: alto[\s\S]*symlink/);
   });
 
   it('verificar: rebaja → exit 2; declaración correcta → exit 0; base inexistente → exit 1 (sin veredicto)', () => {
