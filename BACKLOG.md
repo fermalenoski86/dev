@@ -1,0 +1,1 @@
+- P-04: `politica-fallas.sh` detecta skips/retries por texto; accesos por índice (`test["skip"]`), reexportaciones o `retries: 0, retries: 2` en una línea lo evaden (hipotético; Codex #75).
