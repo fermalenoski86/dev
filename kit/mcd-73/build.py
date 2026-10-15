@@ -21,11 +21,22 @@ vf=(f"scale=3840:-2,crop=3840:2160:0:(ih-2160)/2,zoompan=z='1+0.06*on/{d*25}':x=
     +dt("Un edificio. Un momento. Una marca.",L,40,'120','h-160','white@0.9',":alpha='if(lt(t,2.2),0,min(1,(t-2.2)/0.6))'")+','
     +stamp()+','+fade(d))
 run(['-loop','1','-i',f'{R}/apps/control/public/experience/obelisco-wide.jpg','-t',str(d),'-vf',vf]+enc+[f'{T}/s1.mp4'])
-# 2 takeover 15s (material existente, ya rotulado)
-run(['-i',f'{R}/docs/screenshots/master-of-trust-mcd-demo-15s.mp4','-vf',stamp()+',fade=t=in:st=0:d=0.4,fade=t=out:st=14.6:d=0.4']+enc+[f'{T}/s2.mp4'])
-# 3 un show, tres sistemas 8s
+# 2 takeover 15s: grabación actual de TRUST Control en modo Cliente (creatividad C, geometría aprobada, luminarias y
+# reloj), desde trust-mcd-takeover-15s-C-iconic.mp4 (grabar_show.py … C cliente: 1,5 s normal → takeover en t=1,5 s).
+# Mismo encuadre que los visuales 02–04: foto a la derecha (966×1080) y texto a la izquierda. Desde el 15/10.
+d=15
+vf=("[0:v]trim=start=1.5:duration=15,setpts=PTS-STARTPTS,scale=966:1080,setsar=1[v];"
+    "color=c=0x0b0b0c:s=1920x1080:r=25:d=15[bg];[bg][v]overlay=954:0:shortest=1,"
+    +dt("Takeover · 15 s",B,64,'80','300','white',":alpha='if(lt(t,0.4),0,min(1,(t-0.4)/0.5))'")+','
+    +dt("Pantallas Corrientes, Pellegrini y franja media,",L,32,'80','420','white@0.9',":alpha='if(lt(t,1.0),0,min(1,(t-1.0)/0.5))'")+','
+    +dt("iluminación de fachada y reloj, en un mismo show",L,32,'80','466','white@0.9',":alpha='if(lt(t,1.0),0,min(1,(t-1.0)/0.5))'")+','
+    +dt("Grabado en TRUST Control, modo Cliente, sin red",L,26,'80','580','#FFC72C',":alpha='if(lt(t,2.0),0,min(1,(t-2.0)/0.5))'")+','
+    +dt("Luces y reloj: simulación — se implementará",L,24,'80','h-140','white@0.75')+','
+    +stamp()+',fade=t=in:st=0:d=0.4,fade=t=out:st=14.6:d=0.4')
+run(['-i',f'{R}/kit/mcd-73/trust-mcd-takeover-15s-C-iconic.mp4','-filter_complex',vf,'-t',str(d)]+enc+[f'{T}/s2.mp4'])
+# 3 un show, tres sistemas 8s (sobre el visual 03 de TRUST Control; texto en el panel izquierdo, la foto queda a la vista)
 d=8
-rows=[("Pantallas Corrientes + Pellegrini","Aprobación y versión vigente: funciona hoy en TRUST CONTROL",2.0),
+rows=[("Pantallas Corrientes, Pellegrini y franja media","Aprobación y versión vigente: funciona hoy en TRUST CONTROL",2.0),
       ("Fachada RGBW","Simulación — se implementará",3.0),
       ("Reloj","Simulación — se implementará",4.0)]
 vf=("scale=1920:1080,zoompan=z='1+0.04*on/200':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=200:s=1920x1080:fps=25,"
@@ -35,8 +46,8 @@ y=360
 for a,b,t0 in rows:
     al=f":alpha='if(lt(t,{t0}),0,min(1,(t-{t0})/0.5))'"
     vf+=','+dt(a,B,36,'80',str(y),'white',al)+','+dt(b,L,26,'80',str(y+50),'#FFC72C',al); y+=150
-vf+=','+dt("Sincronía entre sistemas: simulada, no medida",L,24,'80','h-140','white@0.75')+','+stamp()+','+fade(d)
-run(['-loop','1','-i',f'{R}/docs/screenshots/hero-16x9-signature.png','-t',str(d),'-vf',vf]+enc+[f'{T}/s3.mp4'])
+vf+=','+dt("Sincronía entre sistemas: simulada, no medida",L,24,'80','h-140','white@0.75')+','+fade(d)  # el visual 03 ya trae el rótulo
+run(['-loop','1','-i',f'{R}/kit/mcd-73/visuales/03-firma-sincronizada.png','-t',str(d),'-vf',vf]+enc+[f'{T}/s3.mp4'])
 # 4 cierre 6s
 d=6
 vf=("color=c=black:s=1920x1080:r=25:d=6,"

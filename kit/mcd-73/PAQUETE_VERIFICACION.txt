@@ -281,3 +281,30 @@ OK: TRUST Control sin red; 9 referencias locales existen; rótulo: 2
 index.html:2
 LEEME.txt:6
 RESULTADO: paquete offline verificado
+
+# Reverificación 2026-10-15 ~12:35 UTC (video principal corte1 v2: takeover grabado en TRUST Control modo Cliente, creatividad C; build.py)
+# paquete.py + partir.py + verificar_paquete.sh (ZIP único y 3 partes) + prueba_navegador.py; salida real (cola):
+20263703 TRUST-McDonalds-kit-offline-parte1-presentacion.zip
+28024223 TRUST-McDonalds-kit-offline-parte2-videos.zip
+21617263 TRUST-McDonalds-kit-offline-parte3-videos.zip
+69895135 TRUST-McDonalds-kit-offline.zip
+-- ZIP único:
+OK video/01-trust-mcd-video-principal-1080p.mp4  h264,High,1920,1080 37.000000 
+OK video/02-trust-mcd-video-alternativo-720p.mp4  h264,Main,1280,720 37.000000 
+OK video/02b-trust-mcd-video-alternativo-720p.webm  vp9,Profile 0,1280,720 37.000000 
+== TRUST Control sin red
+OK: TRUST Control sin red; 9 referencias locales existen; rótulo: 2
+== rótulo
+index.html:2
+LEEME.txt:6
+RESULTADO: paquete offline verificado
+-- partes 1+2+3:
+== TRUST Control sin red
+OK: TRUST Control sin red; 9 referencias locales existen; rótulo: 2
+== rótulo
+index.html:2
+LEEME.txt:6
+RESULTADO: paquete offline verificado
+Códigos de salida reales: ZIP único exit=0, partes 1+2+3 exit=0, partes 1+2 exit=1 (falta parte3).
+-- Chromium offline (3 partes juntas):
+no-file requests: []
