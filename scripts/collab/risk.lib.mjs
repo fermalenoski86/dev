@@ -87,11 +87,15 @@ export function clasificarRuta(ruta, gatesRe) {
 }
 
 // Contenido: patrones en líneas AGREGADAS o QUITADAS del parche (-U0).
-const SECRETO = /(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|xox[abprs]-[A-Za-z0-9-]{10,})/;
+// tokens de proveedor conocidos + formas genéricas (Codex #82, P2): Bearer, JWT, sk_live/sk_test,
+// y asignación de un valor largo a un nombre de credencial (token/secret/password/api key)
+const SECRETO = /(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|xox[abprs]-[A-Za-z0-9-]{10,}|\bsk_(live|test)_[A-Za-z0-9]{10,}|\bBearer\s+[A-Za-z0-9._~+/=-]{20,}|\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.|\b[A-Za-z0-9_]*(token|secret|passw(or)?d|api[_-]?key|access[_-]?key)[A-Za-z0-9_]*["']?\s*[:=]\s*["']?[A-Za-z0-9/+_.~=-]{16,})/i;
 const SECRETS_CTX = /\$\{\{\s*secrets\.|GITHUB_TOKEN|pull_request_target|permissions\s*:/;
 const PROCESO = /\b(child_process|execFile(Sync)?|execSync|spawn(Sync)?|exec)\s*\(|from\s+['"](node:)?child_process['"]|require\(\s*['"](node:)?child_process['"]\s*\)/;
 const DDL = /\b(CREATE|ALTER|DROP|TRUNCATE)\s+(TABLE|INDEX|SCHEMA|TYPE|FUNCTION|TRIGGER|EXTENSION|ROLE|POLICY)\b|\bGRANT\b|\bREVOKE\b/i;
-const SALTEO = /\.(skip|only|todo|fixme)\s*\(|\b(xit|xdescribe|xtest)\s*\(|\bretries\s*:\s*[1-9]/;
+// también acceso por corchetes (`test['skip'](`, Codex #82, P2); una cadena partida en dos líneas
+// cae igual: con -U0 la línea `  .skip(` también matchea
+const SALTEO = /\.(skip|only|todo|fixme)\s*\(|\[\s*['"`](skip|only|todo|fixme)['"`]\s*\]|\b(xit|xdescribe|xtest)\s*\(|\bretries\s*:\s*[1-9]/;
 // sin punto ni letra antes: `re.test(` o `x.expect(` no cuentan como caso
 const CASO = /(?<![.\w$])(it|test)(\.each\([^)]*\))?\s*\(|(?<![.\w$])expect\s*\(|(?<![.\w$])assert[.(]/g;
 // matchers: una aserción multilínea pierde solo su `.toX(...)` y `expect(v);` queda sin afirmar nada (Codex #82, P2)

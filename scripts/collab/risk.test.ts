@@ -100,6 +100,13 @@ describe('P-03 · diff completo', () => {
     expect(nivel([m('docs/reviews/X.md', '+token: ghp_' + 'a'.repeat(36))])).toBe('alto');
     expect(nivel([m('docs/reviews/X.md', '+-----BEGIN OPENSSH PRIVATE KEY-----')])).toBe('alto');
     expect(nivel([m('apps/platform-web/src/a.ts', '+const k = "AKIA' + 'A'.repeat(16) + '"')])).toBe('alto');
+    // formas genéricas en docs (Codex #82, P2)
+    expect(nivel([m('docs/reviews/X.md', '+API_TOKEN=sk_live_' + 'a'.repeat(24))])).toBe('alto');
+    expect(nivel([m('docs/reviews/X.md', '+Authorization: Bearer ' + 'b'.repeat(32))])).toBe('alto');
+    expect(nivel([m('docs/reviews/X.md', '+cookie eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.x')])).toBe('alto');
+    expect(nivel([m('docs/reviews/X.md', '+db_password: "' + 'c'.repeat(20) + '"')])).toBe('alto');
+    // texto que nombra credenciales sin valor sigue bajo
+    expect(nivel([m('docs/reviews/X.md', '+ el token va en Secrets; `password` nunca en el repo')])).toBe('bajo');
   });
 
   it('código de producto que agrega procesos externos, secrets o DDL → alto', () => {
@@ -119,6 +126,8 @@ describe('P-03 · diff completo', () => {
     expect(nivel([{ ruta: 'apps/platform-web/src/a.test.ts', estado: 'D' }])).toBe('alto');
     expect(nivel([m('packages/show-engine/src/e.test.ts', "-  it('a', () => {\n-    expect(1).toBe(1);\n+  // nada")])).toBe('alto');
     expect(nivel([m('packages/show-engine/src/e.test.ts', "+  it.skip('a', () => {})")])).toBe('alto');
+    expect(nivel([m('packages/show-engine/src/e.test.ts', "+  test['sk' + 'ip']('a', () => {})".replace("'sk' + 'ip'", "'skip'"))])).toBe('alto'); // corchetes (Codex #82, P2)
+    expect(nivel([m('packages/show-engine/src/e.test.ts', "+  it\n+    .skip('a', () => {})")])).toBe('alto'); // partida en dos líneas
     expect(nivel([m('packages/show-engine/src/e.test.ts', '+  describe.' + 'only(() => {})' /* partido: politica-fallas.sh rechaza el literal en tests */)])).toBe('alto');
     // aserción multilínea que pierde solo el matcher (Codex #82, P2)
     expect(nivel([m('apps/platform-web/src/components/views-bl31.test.ts', "-      .toContain('Solo lectura');\n+      ;")])).toBe('alto');
@@ -258,7 +267,8 @@ jq -n --arg h ${HEAD_PR} --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{
     { mode: 0o755 },
   );
   const correr = (cuerpos: string[]) => {
-    writeFileSync(path.join(dir, 'cuerpos'), cuerpos.join('\n') + '\n');
+    // la primera foto la consume la pasada que pone TODOS los HEAD en en_progreso
+    writeFileSync(path.join(dir, 'cuerpos'), [cuerpos[0], ...cuerpos].join('\n') + '\n');
     rmSync(path.join(dir, 'n'), { force: true });
     rmSync(path.join(dir, 'checks.log'), { force: true });
     let rc = 0;
@@ -272,20 +282,20 @@ jq -n --arg h ${HEAD_PR} --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{
   };
 
   it('estable y bien declarado → en_progreso y success', () => {
-    expect(correr(['Riesgo: bajo'])).toEqual({ rc: 0, checks: ['in_progress', 'success'] });
+    expect(correr(['Riesgo: bajo'])).toEqual({ rc: 0, checks: ['in_progress', 'in_progress', 'success'] });
   });
   it('cuerpo editado durante la evaluación → failure caducado (sin success)', () => {
-    expect(correr(['Riesgo: bajo', 'Riesgo: alto'])).toEqual({ rc: 1, checks: ['in_progress', 'failure'] });
+    expect(correr(['Riesgo: bajo', 'Riesgo: alto'])).toEqual({ rc: 1, checks: ['in_progress', 'in_progress', 'failure'] });
   });
   it('cuerpo editado justo después de publicar success → se pisa con failure', () => {
-    expect(correr(['Riesgo: bajo', 'Riesgo: bajo', 'Riesgo: medio'])).toEqual({ rc: 1, checks: ['in_progress', 'success', 'failure'] });
+    expect(correr(['Riesgo: bajo', 'Riesgo: bajo', 'Riesgo: medio'])).toEqual({ rc: 1, checks: ['in_progress', 'in_progress', 'success', 'failure'] });
   });
   it('main avanzó respecto de los scripts que corrieron → failure caducado', () => {
     sh('git commit -q --allow-empty -m otro && git push -q origin HEAD:main && git reset -q --hard HEAD~1', clon);
-    expect(correr(['Riesgo: bajo'])).toEqual({ rc: 1, checks: ['in_progress', 'failure'] });
+    expect(correr(['Riesgo: bajo'])).toEqual({ rc: 1, checks: ['in_progress', 'in_progress', 'failure'] });
     sh('git pull -q --ff-only origin main', clon);
   });
   it('sin declaración → failure', () => {
-    expect(correr(['nada'])).toEqual({ rc: 1, checks: ['in_progress', 'failure'] });
+    expect(correr(['nada'])).toEqual({ rc: 1, checks: ['in_progress', 'in_progress', 'failure'] });
   });
 });

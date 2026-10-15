@@ -41,6 +41,15 @@ publicar() { # $1 sha, $2 status|conclusion, $3 título, $4 archivo de resumen
 }
 
 total=0
+# Antes de evaluar ninguno, TODOS los HEAD de la foto pasan a en_progreso: en una
+# re-evaluación global (política endurecida en main) un PR que espera su turno no puede
+# conservar el verde de la política vieja (Codex #82, P2).
+for PR in "$@"; do
+  [[ "$PR" =~ ^[0-9]+$ ]] || continue
+  F0=$(foto "$PR") || { total=1; continue; }
+  read -r H0 _ _ _ E0 <<< "$F0"
+  [ "$E0" = open ] && publicar "$H0" en_progreso "riesgo: en cola de re-evaluación (scripts de main ${SCRIPTS_SHA:0:7})" /dev/null >/dev/null
+done
 for PR in "$@"; do
   [[ "$PR" =~ ^[0-9]+$ ]] || { echo "riesgo-ci: PR inválido $PR" >&2; total=1; continue; }
   F1=$(foto "$PR"); read -r HEAD BASE BASE_SHA _ ESTADO <<< "$F1"
