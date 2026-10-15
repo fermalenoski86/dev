@@ -3,7 +3,9 @@
 # (Codex #82, P1: un `edited`/retarget entre la foto y el POST no puede dejar un verde
 # viejo). Lo corre .github/workflows/riesgo.yml desde la revisión ACTUAL de main.
 #
-#   scripts/collab/riesgo-ci.sh <PR>...     (env: GH_TOKEN, GITHUB_REPOSITORY)
+#   scripts/collab/riesgo-ci.sh <PR[:HEAD]>...     (env: GH_TOKEN, GITHUB_REPOSITORY)
+# Con `N:HEAD` (lo que pasa riesgo.yml desde la lista) un PR cuya primera foto falla
+# recibe igual `failure` sobre el HEAD listado (Codex #82, P1).
 #
 # Por cada PR:
 #   1. foto = HEAD, base, sha de la base y sha256 del cuerpo, leídos por API; se publica
@@ -34,7 +36,9 @@ foto() { # $1 = PR → "head base base_sha body_sha256 state"; exit ≠ 0 si alg
   c=$(jq -r '.body // ""' "$TMP/pr.json" | sha256sum | cut -d' ' -f1) || return 1
   echo "$h $b ${s:-sin-base} $c $st"
 }
-main_actual() { git ls-remote origin refs/heads/main | cut -f1; }
+# Nunca aborta (Codex #82, P1): si ls-remote falla devuelve un marcador que no coincide con
+# SCRIPTS_SHA, así la comparación publica `failure` en vez de dejar vivo un success.
+main_actual() { local m; m=$(git ls-remote origin refs/heads/main 2>/dev/null | cut -f1) || m=""; echo "${m:-__sin-main__}"; }
 publicar() { # $1 sha, $2 status|conclusion, $3 título, $4 archivo de resumen
   local cuerpo
   cuerpo=$(head -c 60000 "$4" 2>/dev/null || echo "sin salida")
@@ -61,15 +65,26 @@ VERDES=()
 # Antes de evaluar ninguno, TODOS los HEAD de la foto pasan a en_progreso: en una
 # re-evaluación global (política endurecida en main) un PR que espera su turno no puede
 # conservar el verde de la política vieja (Codex #82, P2).
+declare -A LISTADO=()
+ARGS=()
+for arg in "$@"; do
+  n=${arg%%:*}; h=""; [ "$n" = "$arg" ] || h=${arg#*:}
+  [[ "$n" =~ ^[0-9]+$ ]] || { echo "riesgo-ci: PR inválido $arg" >&2; total=1; continue; }
+  [[ -z "$h" || "$h" =~ ^[0-9a-f]{40}$ ]] || { echo "riesgo-ci: HEAD inválido $arg" >&2; total=1; continue; }
+  if [ -z "${LISTADO[$n]+x}" ]; then ARGS+=("$n"); LISTADO[$n]=$h; elif [ -z "${LISTADO[$n]}" ]; then LISTADO[$n]=$h; fi
+done
+set -- "${ARGS[@]+"${ARGS[@]}"}"
+sin_foto() { # $1 = PR: sin foto no hay veredicto; si se conoce el HEAD listado, se invalida
+  echo "riesgo-ci: sin foto de #$1 (API caída o respuesta inválida): sin veredicto" > "$TMP/out"
+  if [ -n "${LISTADO[$1]:-}" ]; then publicar "${LISTADO[$1]}" failure "riesgo: sin veredicto (no se pudo leer el PR)" "$TMP/out" || true; fi
+}
 for PR in "$@"; do
-  [[ "$PR" =~ ^[0-9]+$ ]] || continue
-  F0=$(foto "$PR") || { total=1; continue; }
+  F0=$(foto "$PR") || { sin_foto "$PR"; total=1; continue; }
   read -r H0 _ _ _ E0 <<< "$F0"
   if [ "$E0" = open ]; then publicar "$H0" en_progreso "riesgo: en cola de re-evaluación (scripts de main ${SCRIPTS_SHA:0:7})" /dev/null >/dev/null || total=1; fi
 done
 for PR in "$@"; do
-  [[ "$PR" =~ ^[0-9]+$ ]] || { echo "riesgo-ci: PR inválido $PR" >&2; total=1; continue; }
-  F1=$(foto "$PR") || { echo "riesgo-ci: sin foto de #$PR" >&2; total=1; continue; }; read -r HEAD BASE BASE_SHA _ ESTADO <<< "$F1"
+  F1=$(foto "$PR") || { sin_foto "$PR"; total=1; continue; }; read -r HEAD BASE BASE_SHA _ ESTADO <<< "$F1"
   [ "$ESTADO" = open ] || { echo "riesgo-ci: #$PR no está abierto; nada que publicar"; continue; }
   jq -r '.body // ""' "$TMP/pr.json" > "$TMP/cuerpo.md"
   publicar "$HEAD" en_progreso "riesgo: evaluando (scripts de main ${SCRIPTS_SHA:0:7})" /dev/null >/dev/null || total=1

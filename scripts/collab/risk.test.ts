@@ -290,7 +290,7 @@ jq -n --arg h ${HEAD_PR} --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{
 `,
     { mode: 0o755 },
   );
-  const correr = (cuerpos: string[], extra: { lista?: string; postfalla?: number } = {}) => {
+  const correr = (cuerpos: string[], extra: { lista?: string; postfalla?: number; args?: string[]; sinMain?: boolean } = {}) => {
     writeFileSync(path.join(dir, 'lista'), extra.lista ?? `7 ${HEAD_PR}\n`);
     writeFileSync(path.join(dir, 'postfalla'), String(extra.postfalla ?? 0));
     // la primera foto la consume la pasada que pone TODOS los HEAD en en_progreso
@@ -299,7 +299,7 @@ jq -n --arg h ${HEAD_PR} --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{
     rmSync(path.join(dir, 'checks.log'), { force: true });
     let rc = 0;
     try {
-      execFileSync('bash', ['scripts/collab/riesgo-ci.sh', '7'], { cwd: clon, env: { ...process.env, PATH: `${dir}/bin:${process.env.PATH}`, GITHUB_REPOSITORY: 'o/r', GH_TOKEN: 'x', RIESGO_GLOBAL: '1' }, stdio: 'pipe' });
+      execFileSync('bash', ['scripts/collab/riesgo-ci.sh', ...(extra.args ?? ['7'])], { cwd: clon, env: { ...process.env, PATH: `${dir}/bin:${process.env.PATH}`, GITHUB_REPOSITORY: 'o/r', GH_TOKEN: 'x', RIESGO_GLOBAL: '1' }, stdio: 'pipe' });
     } catch (e) {
       rc = (e as { status: number }).status;
     }
@@ -336,6 +336,13 @@ jq -n --arg h ${HEAD_PR} --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{
     // pasada previa OK (pone en_progreso), F1 falla → rc 1; el HEAD queda en en_progreso, no verde
     const r = correr(['Riesgo: bajo', '__falla__', '__falla__']);
     expect(r.rc).toBe(1);
+    expect(r.checks).not.toContain('success');
+  });
+  it('primera foto falla con HEAD listado → failure sobre ese HEAD (Codex #82, P1)', () => {
+    // todas las fotos fallan: sin la lista N:HEAD no habría dónde publicar
+    const r = correr(['__falla__'], { args: [`7:${HEAD_PR}`] });
+    expect(r.rc).toBe(1);
+    expect(r.checks).toContain('failure');
     expect(r.checks).not.toContain('success');
   });
   it('sin declaración → failure', () => {
