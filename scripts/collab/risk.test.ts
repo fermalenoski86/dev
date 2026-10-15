@@ -366,6 +366,14 @@ jq -n --arg h "$h" --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{ref:"m
     expect(r.checks).not.toContain('success');
     expect(ultimosShas).toContain(otro);
   });
+  it('PR rechazado que avanza a otro HEAD durante el lote → failure también sobre el HEAD nuevo listado (Codex #82, P1)', () => {
+    const nuevo = 'e'.repeat(40);
+    // sin declaración → rechazado sobre HEAD_PR; la lista final ya muestra el HEAD nuevo
+    const r = correr(['nada'], { lista: `7 ${nuevo}\n` });
+    expect(r.rc).toBe(1);
+    expect(ultimosShas).toContain(nuevo);
+    expect(r.checks).not.toContain('success');
+  });
   it('sin declaración → failure', () => {
     expect(correr(['nada'])).toEqual({ rc: 1, checks: ['in_progress', 'in_progress', 'failure'] });
   });

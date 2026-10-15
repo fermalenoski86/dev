@@ -21,6 +21,7 @@ REPO=${GITHUB_REPOSITORY:?}
 AQUI=$(cd "$(dirname "$0")" && pwd)
 SCRIPTS_SHA=$(git rev-parse HEAD)
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
+declare -A PUBLICADO_FALLA=()  # HEAD → 1 si este lote ya publicó failure sobre él
 
 foto() { # $1 = PR → "head base base_sha body_sha256 state"; exit ≠ 0 si algo falla
   # Se llama siempre desde `x=$(foto) || …`, donde errexit no rige dentro de la función:
@@ -61,12 +62,16 @@ publicar() { # $1 sha, $2 status|conclusion, $3 título, $4 archivo de resumen
   # y termina en rojo
   local i
   for i in 1 2 3; do
-    gh api -X POST "repos/$REPO/check-runs" --input "$TMP/check.json" --jq .html_url && return 0
+    if gh api -X POST "repos/$REPO/check-runs" --input "$TMP/check.json" --jq .html_url; then
+      [ "$2" != failure ] || PUBLICADO_FALLA[$1]=1
+      return 0
+    fi
     sleep "$i"
   done
   echo "riesgo-ci: no se pudo publicar el check sobre $1 tras 3 intentos" >&2
   return 1
 }
+
 
 total=0
 VERDES=()
@@ -122,17 +127,21 @@ for PR in "$@"; do
     publicar "$HEAD" failure "riesgo: RECHAZADO o sin veredicto (exit $RC)" "$TMP/out" || true; total=1
   fi
 done
-# PR que entraron a main durante el lote (apertura o retarget después de la lista inicial;
-# Codex #82, P1): con RIESGO_GLOBAL=1 se vuelve a listar y todo HEAD que no estaba en la
-# foto recibe `failure` "sin veredicto" hasta la corrida siguiente.
+# Conciliación por HEAD, no por número (Codex #82, P1 ×2): con RIESGO_GLOBAL=1 se vuelve a
+# listar los PR abiertos hacia main y TODO HEAD listado que no sea un verde de este lote
+# recibe `failure` "sin veredicto": cubre PR que entraron durante el lote (apertura o
+# retarget) y PR —rechazados o no— que avanzaron a otro HEAD (que puede tener un verde viejo).
+# El evento que los cambió vuelve a evaluar (carril serial; su pasada previa los pone en_progreso).
 if [ "${RIESGO_GLOBAL:-0}" = 1 ]; then
-  VISTOS=" $* "
+  VERDES_HEADS=" "
+  for v in "${VERDES[@]+"${VERDES[@]}"}"; do IFS='|' read -r _ hv _ <<< "$v"; VERDES_HEADS+="$hv "; done
   if LISTA=$(gh api "repos/$REPO/pulls?state=open&base=main&per_page=100" --paginate --jq '.[] | "\(.number) \(.head.sha)"'); then
     while read -r N H; do
       [ -n "${N:-}" ] || continue
-      case "$VISTOS" in *" $N "*) continue ;; esac
-      echo "riesgo-ci: #$N entró a main durante el lote: sin veredicto hasta la corrida siguiente" > "$TMP/out"
-      publicar "$H" failure "riesgo: sin veredicto (el PR entró durante el lote)" "$TMP/out" || true
+      case "$VERDES_HEADS" in *" $H "*) continue ;; esac
+      [ "${PUBLICADO_FALLA[$H]:-}" = 1 ] && continue
+      echo "riesgo-ci: #$N @ ${H:0:7} no tiene veredicto de este lote (entró o cambió de HEAD durante la corrida): sin veredicto hasta la corrida siguiente" > "$TMP/out"
+      publicar "$H" failure "riesgo: sin veredicto (HEAD sin evaluar en este lote)" "$TMP/out" || true
       total=1
     done <<< "$LISTA"
   else

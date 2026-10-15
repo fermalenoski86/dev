@@ -72,7 +72,14 @@ jobs:
             if [ -n "${HEAD_EVT:-}" ]; then
               jq -n --arg sha "$HEAD_EVT" --arg t "riesgo: sin veredicto (workflow cargado ≠ main; hace falta un evento nuevo o traer main a la base)" \
                 '{name:"riesgo", head_sha:$sha, status:"completed", conclusion:"failure", output:{title:$t, summary:$t}}' \
-                | GH_TOKEN="$GH_TOKEN" gh api -X POST "repos/$GITHUB_REPOSITORY/check-runs" --input - --jq .html_url || echo "::error::no se pudo invalidar $HEAD_EVT"
+                > "$RUNNER_TEMP/viejo.json"
+              # 3 intentos; si no se pudo invalidar, el job falla cerrado (Codex #82, P1)
+              INV=0
+              for i in 1 2 3; do
+                if gh api -X POST "repos/$GITHUB_REPOSITORY/check-runs" --input "$RUNNER_TEMP/viejo.json" --jq .html_url; then INV=1; break; fi
+                sleep "$i"
+              done
+              [ "$INV" = 1 ] || { echo "::error title=riesgo::no se pudo invalidar el HEAD $HEAD_EVT tras 3 intentos"; exit 1; }
             fi
             exit 0
           fi
