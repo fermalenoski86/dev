@@ -159,7 +159,9 @@ jobs:
         with: { node-version: 22 }
       # ENSAYO P-04 (AUDIT #75, se revierte en el commit siguiente): setup colgado fuera de un gate
       - name: ENSAYO setup colgado
-        run: echo "ensayo P-04: setup colgado (GITHUB_TOKEN=ghp_ensayoensayoensayoensayo0000)"; sleep 900
+        run: |
+          echo "ensayo P-04: setup colgado (GITHUB_TOKEN=ghp_ensayoensayoensayoensayo0000)"
+          sleep 900
       - run: sudo apt-get update -q && sudo apt-get install -yq ffmpeg && ffmpeg -version | head -1
       - run: npm i -g pnpm@$PNPM_VERSION && pnpm install --frozen-lockfile
       - run: scripts/ci/run.sh media npx vitest run -c vitest.media.config.ts
