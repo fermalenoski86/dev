@@ -102,6 +102,8 @@ describe('P-03 · diff completo', () => {
   it('código de producto que agrega procesos externos, secrets o DDL → alto', () => {
     expect(nivel([m('apps/platform-api/src/x.ts', "+import { spawn } from 'node:child_process';")])).toBe('alto');
     expect(nivel([m('packages/platform-assets/src/x.ts', '+  execFile(bin, args)')])).toBe('alto');
+    // quitar la llamada directa y pasar a un helper indirecto también es alto (Codex #82, P2)
+    expect(nivel([m('packages/platform-assets/src/x.ts', "-  execFile('ffmpeg', safeArgs)\n+  runFfmpeg(userArgs)")])).toBe('alto');
     expect(nivel([m('packages/platform-campaigns/src/q.ts', '+  await db.query(`ALTER TABLE campaign ADD COLUMN x int`)')])).toBe('alto');
     expect(nivel([m('apps/platform-web/src/a.ts', '+  token: ${{ secrets.X }}')])).toBe('alto');
   });
@@ -115,6 +117,9 @@ describe('P-03 · diff completo', () => {
     expect(nivel([m('packages/show-engine/src/e.test.ts', "-  it('a', () => {\n-    expect(1).toBe(1);\n+  // nada")])).toBe('alto');
     expect(nivel([m('packages/show-engine/src/e.test.ts', "+  it.skip('a', () => {})")])).toBe('alto');
     expect(nivel([m('packages/show-engine/src/e.test.ts', '+  describe.' + 'only(() => {})' /* partido: politica-fallas.sh rechaza el literal en tests */)])).toBe('alto');
+    // aserción multilínea que pierde solo el matcher (Codex #82, P2)
+    expect(nivel([m('apps/platform-web/src/components/views-bl31.test.ts', "-      .toContain('Solo lectura');\n+      ;")])).toBe('alto');
+    expect(nivel([m('packages/show-engine/src/e.test.ts', '-    ).resolves.toBe(1);')])).toBe('alto');
     // agregar `re.test(` no compensa casos quitados
     expect(nivel([m('packages/show-engine/src/e.test.ts', "-  it('a', () => {\n-  it('b', () => {\n+  ok = re.test(x);\n+  ok = re.test(y);")])).toBe('alto');
     // mismo número de casos (renombrar un test) no reduce
@@ -221,5 +226,62 @@ describe('P-03 · CLI sobre un repo git real', () => {
     expect(cli('verificar', 'no-existe', 'docs', cuerpoBajo).rc).toBe(1);
     rmSync(cuerpoBajo);
     rmSync(cuerpoAlto);
+  });
+});
+
+describe('P-03 · riesgo-ci.sh: pendiente → final → revalidación (Codex #82, P1)', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'p03ci-'));
+  afterAll(() => rmSync(dir, { recursive: true, force: true }));
+  const sh = (cmd: string, cwd: string) => execFileSync('bash', ['-c', cmd], { cwd, encoding: 'utf8' });
+  // remoto bare + clon con los scripts reales de este árbol (lo que en CI es el checkout de main)
+  sh('git init -q --bare -b main remoto.git && git init -q -b main clon', dir);
+  const clon = path.join(dir, 'clon');
+  sh(`git config user.email t@t && git config user.name t && mkdir -p scripts/collab docs && cp ${ROOT}/scripts/collab/{risk.mjs,risk.lib.mjs,paralelo.sh,riesgo-ci.sh} scripts/collab/ && cp ${ROOT}/pnpm-workspace.yaml . && echo a > docs/a.md && git add -A && git commit -qm base && git remote add origin ../remoto.git && git push -q origin main`, clon);
+  sh('git checkout -qb pr && echo b >> docs/a.md && git commit -qam pr && git push -q origin pr:refs/pull/7/head && git checkout -q main', clon);
+  const HEAD_PR = sh('git rev-parse pr', clon).trim();
+  // gh falso: cada `api repos/R/pulls/7` devuelve el cuerpo N de la secuencia; POST check-runs se registra
+  mkdirSync(path.join(dir, 'bin'));
+  writeFileSync(
+    path.join(dir, 'bin/gh'),
+    `#!/usr/bin/env bash
+set -e
+D=${dir}
+if [ "$1 $2" = "api -X" ]; then cat >> "$D/checks.log"; echo >> "$D/checks.log"; echo https://x/check; exit 0; fi
+n=$(cat "$D/n" 2>/dev/null || echo 0); n=$((n+1)); echo $n > "$D/n"
+cuerpo=$(sed -n "\${n}p" "$D/cuerpos"); [ -n "$cuerpo" ] || cuerpo=$(tail -n1 "$D/cuerpos")
+jq -n --arg h ${HEAD_PR} --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{ref:"main"}, body:$b}'
+`,
+    { mode: 0o755 },
+  );
+  const correr = (cuerpos: string[]) => {
+    writeFileSync(path.join(dir, 'cuerpos'), cuerpos.join('\n') + '\n');
+    rmSync(path.join(dir, 'n'), { force: true });
+    rmSync(path.join(dir, 'checks.log'), { force: true });
+    let rc = 0;
+    try {
+      execFileSync('bash', ['scripts/collab/riesgo-ci.sh', '7'], { cwd: clon, env: { ...process.env, PATH: `${dir}/bin:${process.env.PATH}`, GITHUB_REPOSITORY: 'o/r', GH_TOKEN: 'x' }, stdio: 'pipe' });
+    } catch (e) {
+      rc = (e as { status: number }).status;
+    }
+    const checks = readFileSync(path.join(dir, 'checks.log'), 'utf8').trim().split('\n\n').map((j) => JSON.parse(j));
+    return { rc, checks: checks.map((c: { status: string; conclusion?: string; output: { title: string } }) => c.conclusion ?? c.status) };
+  };
+
+  it('estable y bien declarado → en_progreso y success', () => {
+    expect(correr(['Riesgo: bajo'])).toEqual({ rc: 0, checks: ['in_progress', 'success'] });
+  });
+  it('cuerpo editado durante la evaluación → failure caducado (sin success)', () => {
+    expect(correr(['Riesgo: bajo', 'Riesgo: alto'])).toEqual({ rc: 1, checks: ['in_progress', 'failure'] });
+  });
+  it('cuerpo editado justo después de publicar success → se pisa con failure', () => {
+    expect(correr(['Riesgo: bajo', 'Riesgo: bajo', 'Riesgo: medio'])).toEqual({ rc: 1, checks: ['in_progress', 'success', 'failure'] });
+  });
+  it('main avanzó respecto de los scripts que corrieron → failure caducado', () => {
+    sh('git commit -q --allow-empty -m otro && git push -q origin HEAD:main && git reset -q --hard HEAD~1', clon);
+    expect(correr(['Riesgo: bajo'])).toEqual({ rc: 1, checks: ['in_progress', 'failure'] });
+    sh('git pull -q --ff-only origin main', clon);
+  });
+  it('sin declaración → failure', () => {
+    expect(correr(['nada'])).toEqual({ rc: 1, checks: ['in_progress', 'failure'] });
   });
 });

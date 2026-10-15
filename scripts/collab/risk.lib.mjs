@@ -94,6 +94,8 @@ const DDL = /\b(CREATE|ALTER|DROP|TRUNCATE)\s+(TABLE|INDEX|SCHEMA|TYPE|FUNCTION|
 const SALTEO = /\.(skip|only|todo|fixme)\s*\(|\b(xit|xdescribe|xtest)\s*\(|\bretries\s*:\s*[1-9]/;
 // sin punto ni letra antes: `re.test(` o `x.expect(` no cuentan como caso
 const CASO = /(?<![.\w$])(it|test)(\.each\([^)]*\))?\s*\(|(?<![.\w$])expect\s*\(|(?<![.\w$])assert[.(]/g;
+// matchers: una aserción multilínea pierde solo su `.toX(...)` y `expect(v);` queda sin afirmar nada (Codex #82, P2)
+const MATCHER = /\.(not\.)?(to[A-Z]\w*|rejects|resolves)\b|\.to\.(be|equal|eql|have|include|throw|deep)\b/g;
 
 function lineas(parche, signo) {
   const out = [];
@@ -116,7 +118,8 @@ export function motivosContenido(ruta, estado, parche, binario) {
   if (esDoc) return out;
   if (CODIGO.test(ruta)) {
     if (mas.some((l) => SECRETS_CTX.test(l)) || menos.some((l) => SECRETS_CTX.test(l))) out.push('toca secrets, GITHUB_TOKEN, permisos o pull_request_target');
-    if (mas.some((l) => PROCESO.test(l))) out.push('agrega ejecución de procesos externos');
+    // agregadas Y quitadas: reemplazar `execFile(...)` por un helper indirecto también cambia el borde (Codex #82, P2)
+    if ([...mas, ...menos].some((l) => PROCESO.test(l))) out.push('agrega, quita o cambia ejecución de procesos externos');
     if (mas.some((l) => DDL.test(l)) || menos.some((l) => DDL.test(l))) out.push('DDL o permisos SQL');
   }
   if (TEST.test(ruta) && estado !== 'D') {
@@ -124,6 +127,9 @@ export function motivosContenido(ruta, estado, parche, binario) {
     const quitados = contar(menos, CASO);
     const agregados = contar(mas, CASO);
     if (quitados > agregados) out.push(`reduce casos/aserciones de test (${quitados} quitados, ${agregados} agregados)`);
+    const mq = contar(menos, MATCHER);
+    const ma = contar(mas, MATCHER);
+    if (mq > ma) out.push(`reduce matchers de aserción (${mq} quitados, ${ma} agregados)`);
   }
   return out;
 }

@@ -8,9 +8,15 @@
 # Un PR que cambie risk.mjs, risk.lib.mjs, paralelo.sh (GATES_RE) o este archivo se
 # clasifica con la versión de main: no puede rebajarse a sí mismo.
 #
-# Publica el check-run "riesgo" sobre el HEAD del PR (en pull_request_target el check
-# del job cuelga del sha de la base). Sin secretos; GH_TOKEN solo en los pasos que
-# consultan la API o publican; permisos de escritura SOLO sobre checks.
+# Publica el check-run "riesgo" sobre el HEAD de cada PR (en pull_request_target el check
+# del job cuelga del sha de la base) con scripts/collab/riesgo-ci.sh: pendiente →
+# final → revalidación; si el PR (cuerpo, HEAD, base) o main cambiaron mientras tanto,
+# queda `failure` "caducado" (Codex #82, P1). TODO evento —de cualquier PR o push a
+# main— re-evalúa todos los PR abiertos hacia main en un solo carril serial: un verde
+# hecho con una política vieja de main no sobrevive al endurecimiento (Codex #82, P2),
+# y si GitHub descarta un run pendiente del carril, el que corre cubre a todos.
+# Sin secretos; GH_TOKEN solo en el paso que consulta la API y publica; permisos de
+# escritura SOLO sobre checks.
 #
 # Límite: entra en vigor cuando este archivo está en main; en el PR que lo introduce no
 # corre (a propósito, sin fallback al script del PR). Es un chequeo, no un candado: la
@@ -19,61 +25,43 @@ name: riesgo
 on:
   pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review, edited]
+  push:
+    branches: [main]
 permissions:
   contents: read
   checks: write
   pull-requests: read
 concurrency:
-  group: riesgo-${{ github.event.pull_request.number }}
+  group: riesgo
   cancel-in-progress: false
 jobs:
   riesgo:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
           persist-credentials: false
-      - name: Revisión actual de main + PR como datos (HEAD, base y cuerpo por API)
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR: ${{ github.event.pull_request.number }}
-          HEAD_EVT: ${{ github.event.pull_request.head.sha }}
+      - name: Revisión actual de main (no la del evento)
         run: |
           git fetch -q origin main
           git checkout -q --detach origin/main
-          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR" > "$RUNNER_TEMP/pr.json"
-          HEAD_SHA=$(jq -r .head.sha "$RUNNER_TEMP/pr.json"); BASE_REF=$(jq -r .base.ref "$RUNNER_TEMP/pr.json")
-          jq -r '.body // ""' "$RUNNER_TEMP/pr.json" > "$RUNNER_TEMP/cuerpo.md"
-          echo "HEAD_SHA=$HEAD_SHA" >> "$GITHUB_ENV"
-          if [ "$HEAD_SHA" != "$HEAD_EVT" ]; then
-            echo "::warning title=riesgo::el HEAD del PR avanzó ($HEAD_EVT → $HEAD_SHA); se evalúa el actual"
-          fi
-          git fetch -q origin "refs/pull/$PR/head" "+refs/heads/$BASE_REF:refs/remotes/origin/$BASE_REF"
-          git cat-file -e "$HEAD_SHA^{commit}"   # el HEAD leído por API tiene que estar traído
-          echo "BASE_SHA=$(git rev-parse "origin/$BASE_REF")" >> "$GITHUB_ENV"
-          echo "scripts de main=$(git rev-parse HEAD) · pr=#$PR head=$HEAD_SHA base=$BASE_REF"
-      - name: Riesgo declarado vs calculado (P-03)
-        run: |
-          set +e
-          OUT=$(node scripts/collab/risk.mjs verificar "$BASE_SHA" "$HEAD_SHA" "$RUNNER_TEMP/cuerpo.md" 2>&1); RC=$?
-          set -e
-          echo "$OUT"
-          printf '%s' "$OUT" > "$RUNNER_TEMP/riesgo.out"
-          echo "RC=$RC" >> "$GITHUB_ENV"
-          ENC=$(printf '%s' "$OUT" | tail -n 40 | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
-          if [ "$RC" = 0 ]; then echo "::notice title=riesgo OK::$ENC"; else echo "::error title=riesgo RECHAZADO (exit $RC)::$ENC"; fi
-      - name: Publicar check "riesgo" sobre el HEAD del PR
-        if: always()
+          echo "scripts de main=$(git rev-parse HEAD)"
+      - name: Riesgo declarado vs calculado (P-03) — todos los PR abiertos hacia main + el del evento
         env:
           GH_TOKEN: ${{ github.token }}
+          PR_EVT: ${{ github.event.pull_request.number }}
         run: |
-          [ -n "${HEAD_SHA:-}" ] || { echo "::error::sin HEAD del PR; no se publica"; exit 1; }
-          if [ "${RC:-1}" = 0 ]; then CONC=success; TIT="riesgo: OK"; else CONC=failure; TIT="riesgo: RECHAZADO o sin veredicto"; fi
-          RES=$(head -c 60000 "$RUNNER_TEMP/riesgo.out" 2>/dev/null || echo "sin salida")
-          jq -n --arg sha "$HEAD_SHA" --arg c "$CONC" --arg t "$TIT" --arg s "$RES" \
-            '{name:"riesgo", head_sha:$sha, status:"completed", conclusion:$c, output:{title:$t, summary:("```\n"+$s+"\n```")}}' \
-            | gh api -X POST "repos/$GITHUB_REPOSITORY/check-runs" --input - --jq .html_url
-          [ "$CONC" = success ]
+          PRS=$(gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&base=main&per_page=100" --paginate --jq '.[].number')
+          [ -z "$PR_EVT" ] || PRS=$(printf '%s\n%s\n' "$PRS" "$PR_EVT")
+          PRS=$(printf '%s\n' "$PRS" | grep -E '^[0-9]+$' | sort -un | tr '\n' ' ')
+          echo "PR a evaluar: ${PRS:-ninguno}"
+          [ -n "$PRS" ] || exit 0
+          set +e
+          scripts/collab/riesgo-ci.sh $PRS 2>&1 | tee "$RUNNER_TEMP/riesgo.out"; RC=${PIPESTATUS[0]}
+          set -e
+          ENC=$(tail -n 40 "$RUNNER_TEMP/riesgo.out" | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
+          if [ "$RC" = 0 ]; then echo "::notice title=riesgo OK::$ENC"; else echo "::error title=riesgo: algún PR rechazado, caducado o sin veredicto::$ENC"; fi
+          exit "$RC"
