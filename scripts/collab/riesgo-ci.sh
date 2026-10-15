@@ -92,19 +92,6 @@ for PR in "$@"; do
     publicar "$HEAD" failure "riesgo: RECHAZADO o sin veredicto (exit $RC)" "$TMP/out" || true; total=1
   fi
 done
-# Conciliación final (Codex #82, P1): mientras se evaluaban los PR siguientes, el cuerpo,
-# la base o main de uno ya verde pudieron cambiar. Se relee cada verde del lote y, si su
-# foto o main ya no coinciden, se pisa con `failure` "caducado".
-for v in "${VERDES[@]}"; do
-  IFS='|' read -r PR HEAD F1 <<< "$v"
-  FX=$(foto "$PR" 2>/dev/null || echo "__sin-foto__"); MX=$(main_actual)
-  if [ "$FX" != "$F1" ] || [ "$MX" != "$SCRIPTS_SHA" ]; then
-    printf 'caducado en la conciliación final del lote
-antes: %s · scripts %s
-ahora: %s · main %s\n' "$F1" "$SCRIPTS_SHA" "$FX" "$MX" > "$TMP/out"
-    publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out" || true; total=1
-  fi
-done
 # PR que entraron a main durante el lote (apertura o retarget después de la lista inicial;
 # Codex #82, P1): con RIESGO_GLOBAL=1 se vuelve a listar y todo HEAD que no estaba en la
 # foto recibe `failure` "sin veredicto" hasta la corrida siguiente.
@@ -122,4 +109,18 @@ if [ "${RIESGO_GLOBAL:-0}" = 1 ]; then
     echo "riesgo-ci: no se pudo volver a listar los PR hacia main" >&2; total=1
   fi
 fi
+# Conciliación final (Codex #82, P1), lo ÚLTIMO que corre —después de la conciliación
+# de PR nuevos, así un main que avanzó mientras tanto también invalida (Codex #82, ronda 6)—: mientras se evaluaban los PR siguientes, el cuerpo,
+# la base o main de uno ya verde pudieron cambiar. Se relee cada verde del lote y, si su
+# foto o main ya no coinciden, se pisa con `failure` "caducado".
+for v in "${VERDES[@]}"; do
+  IFS='|' read -r PR HEAD F1 <<< "$v"
+  FX=$(foto "$PR" 2>/dev/null || echo "__sin-foto__"); MX=$(main_actual)
+  if [ "$FX" != "$F1" ] || [ "$MX" != "$SCRIPTS_SHA" ]; then
+    printf 'caducado en la conciliación final del lote
+antes: %s · scripts %s
+ahora: %s · main %s\n' "$F1" "$SCRIPTS_SHA" "$FX" "$MX" > "$TMP/out"
+    publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out" || true; total=1
+  fi
+done
 exit "$total"

@@ -93,7 +93,7 @@ const SECRETO = /(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0
 const SECRETS_CTX = /\$\{\{\s*secrets\.|GITHUB_TOKEN|pull_request_target|permissions\s*:/;
 const PROCESO = /\b(child_process|execFile(Sync)?|execSync|spawn(Sync)?|exec)\s*\(|from\s+['"](node:)?child_process['"]|require\(\s*['"](node:)?child_process['"]\s*\)|\b(shell|detached|argv0|uid|gid)\s*:\s*\S/;
 // opciones de un spawn/execFile multilínea (`shell: true`) cambian el borde sin tocar la línea de la llamada (Codex #82, P2)
-const DDL = /\b(CREATE|ALTER|DROP|TRUNCATE)\s+(TABLE|INDEX|SCHEMA|TYPE|FUNCTION|TRIGGER|EXTENSION|ROLE|POLICY)\b|\bGRANT\b|\bREVOKE\b/i;
+const DDL = /\b(CREATE|ALTER|DROP|TRUNCATE)\s+(OR\s+REPLACE\s+)?(TEMP(ORARY)?\s+|UNIQUE\s+|MATERIALIZED\s+)?(TABLE|INDEX|SCHEMA|TYPE|FUNCTION|PROCEDURE|TRIGGER|EXTENSION|ROLE|USER|POLICY|VIEW|SEQUENCE|DATABASE|DOMAIN|RULE|AGGREGATE|COLLATION|CONVERSION|OPERATOR|SERVER|PUBLICATION|SUBSCRIPTION|TABLESPACE)\b|\bGRANT\b|\bREVOKE\b/i;
 // cualquier objeto: CREATE/ALTER/DROP <OBJETO> en mayúsculas, como se escribe SQL (VIEW, SEQUENCE, DATABASE…; Codex #82, P2)
 const DDL_GENERICO = /\b(CREATE|ALTER|DROP)\s+(OR\s+REPLACE\s+|IF\s+(NOT\s+)?EXISTS\s+|TEMP(ORARY)?\s+|UNIQUE\s+|MATERIALIZED\s+)*[A-Z]{3,}\b/;
 // también acceso por corchetes (`test['skip'](`, Codex #82, P2); una cadena partida en dos líneas
@@ -171,7 +171,8 @@ export function declarado(cuerpo) {
   const re = /^\s*[-*]?\s*(\*\*)?Riesgo(\*\*)?\s*:\s*(\*\*)?\s*`?(bajo|medio|alto)`?\s*(\*\*)?(\s|$|[.—(-])/gim;
   const hallados = [...(cuerpo ?? '').matchAll(re)].map((m) => m[4].toLowerCase());
   if (hallados.length === 0) return { error: 'el PR no declara `Riesgo: bajo|medio|alto`' };
-  if (new Set(hallados).size > 1) return { error: `el PR declara más de un riesgo distinto (${hallados.join(', ')})` };
+  // exactamente UNA línea: dos iguales (plantilla duplicada) tampoco valen (Codex #82, P2)
+  if (hallados.length > 1) return { error: `el PR declara riesgo más de una vez (${hallados.join(', ')}); tiene que haber una sola línea` };
   return { nivel: hallados[0] };
 }
 

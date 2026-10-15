@@ -116,7 +116,7 @@ describe('P-03 · diff completo', () => {
     expect(nivel([m('packages/platform-assets/src/x.ts', "-  execFile('ffmpeg', safeArgs)\n+  runFfmpeg(userArgs)")])).toBe('alto');
     expect(nivel([m('packages/platform-campaigns/src/q.ts', '+  await db.query(`ALTER TABLE campaign ADD COLUMN x int`)')])).toBe('alto');
     // DDL de cualquier objeto y opciones de proceso (Codex #82, P2)
-    for (const q of ['CREATE VIEW v AS SELECT 1', 'ALTER SEQUENCE s RESTART', 'DROP DATABASE trust', 'CREATE OR REPLACE VIEW v AS SELECT 1']) {
+    for (const q of ['CREATE VIEW v AS SELECT 1', 'ALTER SEQUENCE s RESTART', 'DROP DATABASE trust', 'CREATE OR REPLACE VIEW v AS SELECT 1', 'create view v as select 1', 'alter sequence s restart', 'drop database trust']) {
       expect(nivel([m('packages/platform-campaigns/src/q.ts', `+  await db.query(\`${q}\`)`)])).toBe('alto');
     }
     expect(nivel([m('packages/show-engine/src/runner.ts', '-    shell: false,\n+    shell: true,')])).toBe('alto');
@@ -162,7 +162,8 @@ describe('P-03 · declarado vs calculado', () => {
     expect(declarado('**Riesgo:** alto — toca gates').nivel).toBe('alto');
     expect(declarado('- **Riesgo**: `medio`').nivel).toBe('medio');
     expect(declarado('sin nada').error).toMatch(/no declara/);
-    expect(declarado('Riesgo: bajo\nRiesgo: alto').error).toMatch(/más de un/);
+    expect(declarado('Riesgo: bajo\nRiesgo: alto').error).toMatch(/más de una vez/);
+    expect(declarado('Riesgo: medio\nRiesgo: medio').error).toMatch(/más de una vez/); // Codex #82, P2
     expect(declarado('Riesgo: bajísimo').error).toMatch(/no declara/);
   });
 

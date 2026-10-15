@@ -79,7 +79,8 @@ jobs:
           PRS=$(gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&base=main&per_page=100" --paginate --jq '.[].number')
           # el PR del evento solo entra si el workflow cargado es el de main
           [ -z "$PR_EVT" ] || [ "${WF_VIEJO:-1}" != 0 ] || PRS=$(printf '%s\n%s\n' "$PRS" "$PR_EVT")
-          PRS=$(printf '%s\n' "$PRS" | grep -E '^[0-9]+$' | sort -un | tr '\n' ' ')
+          # sin PR abiertos grep sale 1: no es un error (Codex #82, P2)
+          PRS=$(printf '%s\n' "$PRS" | { grep -E '^[0-9]+$' || true; } | sort -un | tr '\n' ' ')
           echo "PR a evaluar: ${PRS:-ninguno}"
           [ -n "$PRS" ] || exit 0
           set +e
