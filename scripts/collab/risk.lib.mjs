@@ -59,13 +59,13 @@ const MEDIO = [
   [/^(apps|packages)\/[^/]+\//, 'producto (app o paquete del workspace)'],
   [/^docs\/(briefs|architecture|platform|protocols|cybersecurity|ops)\//, 'brief, ADR, contrato o doc operativo'],
   [/^docs\/collab\/(BACKLOG|PROGRESO)\.md$/, 'BACKLOG (habilita laterales) o PROGRESO (generado, con check)'],
-  [/^scripts\/[^/]+\.(ts|mjs|js|py)$/, 'script suelto de scripts/'],
-  [/^\.gitignore$/, '.gitignore'],
+  // la salida de gates es evidencia, no prosa: medio, el auditor la contrasta con la CI (Codex #82, P2)
+  [/^docs\/reviews\/[^/]+_SALIDA\.txt$/, 'salida de gates de una fase (evidencia que el auditor contrasta con la CI)'],
 ];
 
 // BAJO: solo editorial.
 const BAJO = [
-  [/^docs\/.+\.(md|txt)$/, 'documentación'],
+  [/^docs\/.+\.md$/, 'documentación'],
   [/^docs\/.+\.(png|jpe?g|gif|webp|svg)$/, 'imagen de documentación'],
   [/^[^/]+\.md$/, 'markdown de la raíz'],
 ];

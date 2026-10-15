@@ -58,6 +58,10 @@ describe('P-03 · rutas', () => {
     ['docs/briefs/F3A_UI.md', 'medio'],
     ['docs/collab/BACKLOG.md', 'medio'],
     ['docs/reviews/P03.md', 'bajo'],
+    ['docs/reviews/P03_SALIDA.txt', 'medio'], // evidencia de gates (Codex #82, P2)
+    ['docs/notas.txt', 'alto'], // .txt fuera de esa regla: sin regla
+    ['scripts/cleanup.ts', 'alto'], // script suelto nuevo: sin regla (Codex #82, P2)
+    ['.gitignore', 'alto'],
     ['docs/collab/HISTORIAL.md', 'bajo'],
     ['README.md', 'bajo'],
     ['docs/screenshots/a.png', 'bajo'],

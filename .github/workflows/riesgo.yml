@@ -59,6 +59,8 @@ jobs:
       - name: El workflow cargado tiene que ser el de main actual
         env:
           WF_SHA: ${{ github.workflow_sha }}
+          HEAD_EVT: ${{ github.event.pull_request.head.sha }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           git fetch -q origin "$WF_SHA" 2>/dev/null || true
           CARGADO=$(git show "$WF_SHA:.github/workflows/riesgo.yml" 2>/dev/null || echo "__no-disponible__")
@@ -66,6 +68,12 @@ jobs:
           if [ "$CARGADO" != "$ACTUAL" ]; then
             echo "::error title=workflow desactualizado::el workflow cargado ($WF_SHA) no es el de main actual ($(git rev-parse origin/main)); sin veredicto para el PR del evento (hace falta un evento nuevo); la re-evaluación de los PR hacia main corre igual"
             echo "WF_VIEJO=1" >> "$GITHUB_ENV"
+            # el HEAD del evento no puede conservar un verde viejo (Codex #82, P2): se pisa con failure
+            if [ -n "${HEAD_EVT:-}" ]; then
+              jq -n --arg sha "$HEAD_EVT" --arg t "riesgo: sin veredicto (workflow cargado ≠ main; hace falta un evento nuevo o traer main a la base)" \
+                '{name:"riesgo", head_sha:$sha, status:"completed", conclusion:"failure", output:{title:$t, summary:$t}}' \
+                | GH_TOKEN="$GH_TOKEN" gh api -X POST "repos/$GITHUB_REPOSITORY/check-runs" --input - --jq .html_url || echo "::error::no se pudo invalidar $HEAD_EVT"
+            fi
             exit 0
           fi
           echo "WF_VIEJO=0" >> "$GITHUB_ENV"
