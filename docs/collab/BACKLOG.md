@@ -383,6 +383,7 @@ auditado como cualquier otro.
   falla en CI; AGENTS.md define los tres mínimos.
 - **Pendiente no bloqueante (Codex #82, ronda 5):** la detección por contenido es por línea del parche `-U0`; no ve un cambio solo de argumentos dentro de un `spawn`/`execFile` multilínea ni DDL con palabra clave y objeto en líneas distintas. Mejora posible: analizar el hunk con contexto (`-U3`) o el archivo completo. No bloquea: esos archivos ya son medio (auditoría completa) y procesos/migraciones reales viven en rutas alto.
 - **Pendiente (AUDIT: CAMBIOS sobre `c424b9c`):** modificar un test existente es alto por defecto porque contar tokens no detecta desactivaciones (`false && it(...)`). Un análisis estructural fiable (AST de Vitest/Playwright: casos registrados antes y después) permitiría bajar a medio las ediciones que solo agregan o mantienen casos.
+- **Pendiente no bloqueante (Codex #82, 18:37):** `riesgo` es vinculante solo para PR hacia `main`; un PR hacia una rama de fase que avanza a un HEAD con verde viejo mientras se publica su rechazo no se revalida (la conciliación lista solo `base=main`). Si se quiere que `riesgo` gobierne merges hacia ramas de fase, reconciliar el HEAD final de todo PR de entrada.
 
 ## P-04 · Diagnóstico de fallas (prioridad 2)
 - **Problema observado:** en #26 tardamos dos días en separar "test con carrera"
