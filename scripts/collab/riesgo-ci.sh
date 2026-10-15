@@ -37,7 +37,17 @@ publicar() { # $1 sha, $2 status|conclusion, $3 título, $4 archivo de resumen
   else
     jq -n --arg sha "$1" --arg c "$2" --arg t "$3" --arg s "$cuerpo" \
       '{name:"riesgo", head_sha:$sha, status:"completed", conclusion:$c, output:{title:$t, summary:("```\n"+$s+"\n```")}}'
-  fi | gh api -X POST "repos/$REPO/check-runs" --input - --jq .html_url
+  fi > "$TMP/check.json"
+  # reintentos: un POST que falla de forma transitoria no puede cortar el lote y dejar
+  # verdes viejos en los HEAD que faltaban (Codex #82, P1); si igual falla, el lote sigue
+  # y termina en rojo
+  local i
+  for i in 1 2 3; do
+    gh api -X POST "repos/$REPO/check-runs" --input "$TMP/check.json" --jq .html_url && return 0
+    sleep "$i"
+  done
+  echo "riesgo-ci: no se pudo publicar el check sobre $1 tras 3 intentos" >&2
+  return 1
 }
 
 total=0
@@ -49,14 +59,14 @@ for PR in "$@"; do
   [[ "$PR" =~ ^[0-9]+$ ]] || continue
   F0=$(foto "$PR") || { total=1; continue; }
   read -r H0 _ _ _ E0 <<< "$F0"
-  [ "$E0" = open ] && publicar "$H0" en_progreso "riesgo: en cola de re-evaluación (scripts de main ${SCRIPTS_SHA:0:7})" /dev/null >/dev/null
+  if [ "$E0" = open ]; then publicar "$H0" en_progreso "riesgo: en cola de re-evaluación (scripts de main ${SCRIPTS_SHA:0:7})" /dev/null >/dev/null || total=1; fi
 done
 for PR in "$@"; do
   [[ "$PR" =~ ^[0-9]+$ ]] || { echo "riesgo-ci: PR inválido $PR" >&2; total=1; continue; }
-  F1=$(foto "$PR"); read -r HEAD BASE BASE_SHA _ ESTADO <<< "$F1"
+  F1=$(foto "$PR") || { echo "riesgo-ci: sin foto de #$PR" >&2; total=1; continue; }; read -r HEAD BASE BASE_SHA _ ESTADO <<< "$F1"
   [ "$ESTADO" = open ] || { echo "riesgo-ci: #$PR no está abierto; nada que publicar"; continue; }
   jq -r '.body // ""' "$TMP/pr.json" > "$TMP/cuerpo.md"
-  publicar "$HEAD" en_progreso "riesgo: evaluando (scripts de main ${SCRIPTS_SHA:0:7})" /dev/null >/dev/null
+  publicar "$HEAD" en_progreso "riesgo: evaluando (scripts de main ${SCRIPTS_SHA:0:7})" /dev/null >/dev/null || total=1
   RC=0
   if git fetch -q origin "refs/pull/$PR/head" "+refs/heads/$BASE:refs/remotes/origin/$BASE" && git cat-file -e "$HEAD^{commit}"; then
     node "$AQUI/risk.mjs" verificar "$BASE_SHA" "$HEAD" "$TMP/cuerpo.md" > "$TMP/out" 2>&1 || RC=$?
@@ -64,22 +74,22 @@ for PR in "$@"; do
     echo "riesgo-ci: no se pudo traer HEAD $HEAD o base $BASE: sin veredicto" > "$TMP/out"; RC=1
   fi
   echo "== #$PR head=$HEAD base=$BASE@${BASE_SHA:0:7} scripts=${SCRIPTS_SHA:0:7} rc=$RC"; cat "$TMP/out"
-  F2=$(foto "$PR"); M2=$(main_actual)
+  F2=$(foto "$PR" 2>/dev/null || echo "__sin-foto__"); M2=$(main_actual)
   if [ "$F2" != "$F1" ] || [ "$M2" != "$SCRIPTS_SHA" ]; then
     printf 'caducado: el PR o main cambiaron durante la evaluación\nantes: %s · scripts %s\nahora: %s · main %s\n' "$F1" "$SCRIPTS_SHA" "$F2" "$M2" >> "$TMP/out"
-    publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out"; total=1; continue
+    publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out" || true; total=1; continue
   fi
   if [ "$RC" = 0 ]; then
-    publicar "$HEAD" success "riesgo: OK" "$TMP/out"
-    F3=$(foto "$PR"); M3=$(main_actual)
+    publicar "$HEAD" success "riesgo: OK" "$TMP/out" || total=1
+    F3=$(foto "$PR" 2>/dev/null || echo "__sin-foto__"); M3=$(main_actual)
     if [ "$F3" != "$F1" ] || [ "$M3" != "$SCRIPTS_SHA" ]; then
       printf 'caducado tras publicar\nahora: %s · main %s\n' "$F3" "$M3" >> "$TMP/out"
-      publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out"; total=1
+      publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out" || true; total=1
     else
       VERDES+=("$PR|$HEAD|$F1")
     fi
   else
-    publicar "$HEAD" failure "riesgo: RECHAZADO o sin veredicto (exit $RC)" "$TMP/out"; total=1
+    publicar "$HEAD" failure "riesgo: RECHAZADO o sin veredicto (exit $RC)" "$TMP/out" || true; total=1
   fi
 done
 # Conciliación final (Codex #82, P1): mientras se evaluaban los PR siguientes, el cuerpo,
@@ -92,7 +102,24 @@ for v in "${VERDES[@]}"; do
     printf 'caducado en la conciliación final del lote
 antes: %s · scripts %s
 ahora: %s · main %s\n' "$F1" "$SCRIPTS_SHA" "$FX" "$MX" > "$TMP/out"
-    publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out"; total=1
+    publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out" || true; total=1
   fi
 done
+# PR que entraron a main durante el lote (apertura o retarget después de la lista inicial;
+# Codex #82, P1): con RIESGO_GLOBAL=1 se vuelve a listar y todo HEAD que no estaba en la
+# foto recibe `failure` "sin veredicto" hasta la corrida siguiente.
+if [ "${RIESGO_GLOBAL:-0}" = 1 ]; then
+  VISTOS=" $* "
+  if LISTA=$(gh api "repos/$REPO/pulls?state=open&base=main&per_page=100" --paginate --jq '.[] | "\(.number) \(.head.sha)"'); then
+    while read -r N H; do
+      [ -n "${N:-}" ] || continue
+      case "$VISTOS" in *" $N "*) continue ;; esac
+      echo "riesgo-ci: #$N entró a main durante el lote: sin veredicto hasta la corrida siguiente" > "$TMP/out"
+      publicar "$H" failure "riesgo: sin veredicto (el PR entró durante el lote)" "$TMP/out" || true
+      total=1
+    done <<< "$LISTA"
+  else
+    echo "riesgo-ci: no se pudo volver a listar los PR hacia main" >&2; total=1
+  fi
+fi
 exit "$total"

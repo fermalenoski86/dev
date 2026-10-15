@@ -74,6 +74,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_EVT: ${{ github.event.pull_request.number }}
+          RIESGO_GLOBAL: '1'
         run: |
           PRS=$(gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&base=main&per_page=100" --paginate --jq '.[].number')
           # el PR del evento solo entra si el workflow cargado es el de main

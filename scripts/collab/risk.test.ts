@@ -266,21 +266,27 @@ describe('P-03 · riesgo-ci.sh: pendiente → final → revalidación (Codex #82
     `#!/usr/bin/env bash
 set -e
 D=${dir}
-if [ "$1 $2" = "api -X" ]; then cat >> "$D/checks.log"; echo >> "$D/checks.log"; echo https://x/check; exit 0; fi
+if [ "$1 $2" = "api -X" ]; then
+  f=$(cat "$D/postfalla" 2>/dev/null || echo 0); if [ "$f" -gt 0 ]; then echo $((f-1)) > "$D/postfalla"; exit 1; fi
+  cat "$6" >> "$D/checks.log"; echo >> "$D/checks.log"; echo https://x/check; exit 0
+fi
+case "$2" in *'pulls?state=open'*) cat "$D/lista" 2>/dev/null; exit 0 ;; esac
 n=$(cat "$D/n" 2>/dev/null || echo 0); n=$((n+1)); echo $n > "$D/n"
 cuerpo=$(sed -n "\${n}p" "$D/cuerpos"); [ -n "$cuerpo" ] || cuerpo=$(tail -n1 "$D/cuerpos")
 jq -n --arg h ${HEAD_PR} --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{ref:"main"}, body:$b}'
 `,
     { mode: 0o755 },
   );
-  const correr = (cuerpos: string[]) => {
+  const correr = (cuerpos: string[], extra: { lista?: string; postfalla?: number } = {}) => {
+    writeFileSync(path.join(dir, 'lista'), extra.lista ?? `7 ${HEAD_PR}\n`);
+    writeFileSync(path.join(dir, 'postfalla'), String(extra.postfalla ?? 0));
     // la primera foto la consume la pasada que pone TODOS los HEAD en en_progreso
     writeFileSync(path.join(dir, 'cuerpos'), [cuerpos[0], ...cuerpos].join('\n') + '\n');
     rmSync(path.join(dir, 'n'), { force: true });
     rmSync(path.join(dir, 'checks.log'), { force: true });
     let rc = 0;
     try {
-      execFileSync('bash', ['scripts/collab/riesgo-ci.sh', '7'], { cwd: clon, env: { ...process.env, PATH: `${dir}/bin:${process.env.PATH}`, GITHUB_REPOSITORY: 'o/r', GH_TOKEN: 'x' }, stdio: 'pipe' });
+      execFileSync('bash', ['scripts/collab/riesgo-ci.sh', '7'], { cwd: clon, env: { ...process.env, PATH: `${dir}/bin:${process.env.PATH}`, GITHUB_REPOSITORY: 'o/r', GH_TOKEN: 'x', RIESGO_GLOBAL: '1' }, stdio: 'pipe' });
     } catch (e) {
       rc = (e as { status: number }).status;
     }
@@ -305,6 +311,13 @@ jq -n --arg h ${HEAD_PR} --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{
   it('un verde del lote que cambia antes de terminar el lote → la conciliación final lo pisa (Codex #82, P1)', () => {
     // fotos: pasada previa, F1, F2, F3 iguales; la conciliación final ve el cuerpo editado
     expect(correr(['Riesgo: bajo', 'Riesgo: bajo', 'Riesgo: bajo', 'Riesgo: medio'])).toEqual({ rc: 1, checks: ['in_progress', 'in_progress', 'success', 'failure'] });
+  });
+  it('un PR que entra a main durante el lote recibe failure "sin veredicto" (Codex #82, P1)', () => {
+    const r = correr(['Riesgo: bajo'], { lista: `7 ${HEAD_PR}\n9 ${'9'.repeat(40)}\n` });
+    expect(r).toEqual({ rc: 1, checks: ['in_progress', 'in_progress', 'success', 'failure'] });
+  });
+  it('POST que falla de forma transitoria se reintenta y el lote sigue (Codex #82, P1)', () => {
+    expect(correr(['Riesgo: bajo'], { postfalla: 2 })).toEqual({ rc: 0, checks: ['in_progress', 'in_progress', 'success'] });
   });
   it('sin declaración → failure', () => {
     expect(correr(['nada'])).toEqual({ rc: 1, checks: ['in_progress', 'in_progress', 'failure'] });

@@ -381,6 +381,7 @@ auditado como cualquier otro.
 - **Criterio de aceptación:** el script clasifica correctamente los últimos
   10 PRs mergeados (tabla en el PR); un PR alto sin la sección adversaria
   falla en CI; AGENTS.md define los tres mínimos.
+- **Pendiente no bloqueante (Codex #82, ronda 5):** la detección por contenido es por línea del parche `-U0`; no ve un cambio solo de argumentos dentro de un `spawn`/`execFile` multilínea ni DDL con palabra clave y objeto en líneas distintas. Mejora posible: analizar el hunk con contexto (`-U3`) o el archivo completo. No bloquea: esos archivos ya son medio (auditoría completa) y procesos/migraciones reales viven en rutas alto.
 
 ## P-04 · Diagnóstico de fallas (prioridad 2)
 - **Problema observado:** en #26 tardamos dos días en separar "test con carrera"
