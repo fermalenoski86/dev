@@ -1,10 +1,8 @@
-# P-03 · salida real (2026-10-15T14:40:17Z, rama proc/p03-riesgo @ a21978e, node v22.22.0, git 2.43.0)
+# P-03 · salida real (2026-10-15T15:39:44Z) — árbol de trabajo = HEAD e137cd2 + el commit que agrega este archivo (las mismas fuentes; ver git log), node v22.22.0, git 2.43.0
 
 $ npx vitest run scripts/collab/risk.test.ts
-   ✓ P-03 · CLI sobre un repo git real > docs → bajo; rename de un workflow con nombre no-ASCII fuera de .github → alto (merge-base, -z, --no-renames) 558ms
-   ✓ P-03 · CLI sobre un repo git real > verificar: rebaja → exit 2; declaración correcta → exit 0; base inexistente → exit 1 (sin veredicto) 572ms
  Test Files  1 passed (1)
-      Tests  57 passed (57)
+      Tests  69 passed (69)
 
 $ node scripts/collab/risk.mjs historial 3b59b10 3a8e4fc bf21484 4fd1f03 68b7e22 e7bac5a 2ee3551 1140616 8fae6fe 0742479
 | commit | riesgo | archivos | motivo principal |
@@ -21,12 +19,7 @@ $ node scripts/collab/risk.mjs historial 3b59b10 3a8e4fc bf21484 4fd1f03 68b7e22
 | 0742479 | medio | 5 | docs/architecture/DECISIONS.md — brief, ADR, contrato o doc operativo (+2) |
 
 $ node scripts/collab/risk.mjs verificar origin/main HEAD <cuerpo de este PR>
-riesgo calculado: alto
-  alto  .github/workflows/riesgo.yml — familia de riesgo alto de GATES_RE (paralelo.sh): gates/proceso, migraciones, auth, aprobación, storage, procesos externos o apps/control; toca secrets, GITHUB_TOKEN, permisos o pull_request_target
-  alto  AGENTS.md — reglas de los agentes (AGENTS.md / CLAUDE.md)
-  alto  scripts/collab/risk.lib.mjs — familia de riesgo alto de GATES_RE (paralelo.sh): gates/proceso, migraciones, auth, aprobación, storage, procesos externos o apps/control; toca secrets, GITHUB_TOKEN, permisos o pull_request_target; agrega ejecución de procesos externos
-  alto  scripts/collab/risk.mjs — familia de riesgo alto de GATES_RE (paralelo.sh): gates/proceso, migraciones, auth, aprobación, storage, procesos externos o apps/control; agrega ejecución de procesos externos
-  alto  scripts/collab/risk.test.ts — familia de riesgo alto de GATES_RE (paralelo.sh): gates/proceso, migraciones, auth, aprobación, storage, procesos externos o apps/control; parece un token o clave privada; toca secrets, GITHUB_TOKEN, permisos o pull_request_target; agrega ejecución de procesos externos; DDL o permisos SQL; agrega skip/only/todo/fixme o retries en tests
+  alto  scripts/collab/risk.test.ts — familia de riesgo alto de GATES_RE (paralelo.sh): gates/proceso, migraciones, auth, aprobación, storage, procesos externos o apps/control; parece un token o clave privada; toca secrets, GITHUB_TOKEN, permisos o pull_request_target; agrega, quita o cambia ejecución de procesos externos; DDL o permisos SQL; agrega skip/only/todo/fixme o retries en tests
 riesgo declarado: alto · efectivo: alto
 risk: OK — mínimo de auditoría: alto (AGENTS.md §Auditoría por riesgo)
 exit=0
@@ -36,14 +29,19 @@ risk: RECHAZADO — declara riesgo bajo pero el diff calcula alto: se puede elev
 risk: RECHAZADO — riesgo alto sin sección "## Pruebas adversarias" con al menos un caso (ejes en AGENTS.md §Auditoría por riesgo)
 exit=2
 
+$ bash -n scripts/collab/riesgo-ci.sh && python3 yaml.safe_load(riesgo.yml)
+ok
+
 $ bash scripts/collab/paralelo.test.sh | tail -1
 paralelo.test: 143 ok, 0 fallos
 
 $ scripts/ci/politica-fallas.sh check
 politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
 
+$ pnpm docs:contract && git diff --exit-code docs/platform
+sin diff
+
 $ pnpm verify (cola)
-✖ 12 problems (0 errors, 12 warnings)
  Test Files  54 passed | 1 skipped (55)
-      Tests  889 passed | 1 skipped (890)
+      Tests  901 passed | 1 skipped (902)
 exit=0

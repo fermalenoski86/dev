@@ -20,12 +20,18 @@ AQUI=$(cd "$(dirname "$0")" && pwd)
 SCRIPTS_SHA=$(git rev-parse HEAD)
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
 
-foto() { # $1 = PR → "head base base_sha body_sha256 state"
-  gh api "repos/$REPO/pulls/$1" > "$TMP/pr.json"
+foto() { # $1 = PR → "head base base_sha body_sha256 state"; exit ≠ 0 si algo falla
+  # Se llama siempre desde `x=$(foto) || …`, donde errexit no rige dentro de la función:
+  # cada paso se valida a mano (Codex #82, P1), así una API caída no pasa por "no abierto".
   local h b s st c
-  h=$(jq -r .head.sha "$TMP/pr.json"); b=$(jq -r .base.ref "$TMP/pr.json"); st=$(jq -r .state "$TMP/pr.json")
-  s=$(git ls-remote origin "refs/heads/$b" | cut -f1)
-  c=$(jq -r '.body // ""' "$TMP/pr.json" | sha256sum | cut -d' ' -f1)
+  gh api "repos/$REPO/pulls/$1" > "$TMP/pr.json" || return 1
+  h=$(jq -er .head.sha "$TMP/pr.json") || return 1
+  b=$(jq -er .base.ref "$TMP/pr.json") || return 1
+  st=$(jq -er .state "$TMP/pr.json") || return 1
+  [[ "$h" =~ ^[0-9a-f]{40}$ ]] || return 1
+  case "$st" in open|closed) ;; *) return 1 ;; esac
+  s=$(git ls-remote origin "refs/heads/$b" | cut -f1) || return 1
+  c=$(jq -r '.body // ""' "$TMP/pr.json" | sha256sum | cut -d' ' -f1) || return 1
   echo "$h $b ${s:-sin-base} $c $st"
 }
 main_actual() { git ls-remote origin refs/heads/main | cut -f1; }

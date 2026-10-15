@@ -105,6 +105,7 @@ describe('P-03 · diff completo', () => {
     expect(nivel([m('docs/reviews/X.md', '+Authorization: Bearer ' + 'b'.repeat(32))])).toBe('alto');
     expect(nivel([m('docs/reviews/X.md', '+cookie eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.x')])).toBe('alto');
     expect(nivel([m('docs/reviews/X.md', '+db_password: "' + 'c'.repeat(20) + '"')])).toBe('alto');
+    expect(nivel([m('docs/reviews/X.md', '+API_TOKEN="abc:def:ghi:jklmnop"')])).toBe('alto'); // puntuación (Codex #82, P2)
     // texto que nombra credenciales sin valor sigue bajo
     expect(nivel([m('docs/reviews/X.md', '+ el token va en Secrets; `password` nunca en el repo')])).toBe('bajo');
   });
@@ -274,6 +275,7 @@ fi
 case "$2" in *'pulls?state=open'*) cat "$D/lista" 2>/dev/null; exit 0 ;; esac
 n=$(cat "$D/n" 2>/dev/null || echo 0); n=$((n+1)); echo $n > "$D/n"
 cuerpo=$(sed -n "\${n}p" "$D/cuerpos"); [ -n "$cuerpo" ] || cuerpo=$(tail -n1 "$D/cuerpos")
+[ "$cuerpo" != "__falla__" ] || { echo "HTTP 502" >&2; exit 1; }
 jq -n --arg h ${HEAD_PR} --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{ref:"main"}, body:$b}'
 `,
     { mode: 0o755 },
@@ -319,6 +321,12 @@ jq -n --arg h ${HEAD_PR} --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{
   });
   it('POST que falla de forma transitoria se reintenta y el lote sigue (Codex #82, P1)', () => {
     expect(correr(['Riesgo: bajo'], { postfalla: 2 })).toEqual({ rc: 0, checks: ['in_progress', 'in_progress', 'success'] });
+  });
+  it('API caída al tomar la foto → failure, nunca "no abierto" con exit 0 (Codex #82, P1)', () => {
+    // pasada previa OK (pone en_progreso), F1 falla → rc 1; el HEAD queda en en_progreso, no verde
+    const r = correr(['Riesgo: bajo', '__falla__', '__falla__']);
+    expect(r.rc).toBe(1);
+    expect(r.checks).not.toContain('success');
   });
   it('sin declaración → failure', () => {
     expect(correr(['nada'])).toEqual({ rc: 1, checks: ['in_progress', 'in_progress', 'failure'] });
