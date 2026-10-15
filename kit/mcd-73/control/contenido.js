@@ -18,6 +18,7 @@
   let MW = 2560, MH = 1733;
 
   // ---------- ventanas: caja de cada pantalla en el mundo (px de la foto) ----------
+  const LED_ASPECTO = { corrientes: 1152 / 576, pellegrini: 1440 / 576 };   // building.ts (medidas confirmadas)
   function ventanas(G) {
     MW = G.foto.noche.ancho; MH = G.foto.noche.alto;
     const v = {};
@@ -25,7 +26,10 @@
       const q = s.quads;
       if (q.length === 1) {
         const p = q[0];
-        v[id] = { x0: Math.min(p[0][0], p[3][0]) * MW, x1: Math.max(p[1][0], p[2][0]) * MW, y0: (p[0][1] + p[1][1]) / 2 * MH, y1: (p[2][1] + p[3][1]) / 2 * MH };
+        const x0 = Math.min(p[0][0], p[3][0]) * MW, x1 = Math.max(p[1][0], p[2][0]) * MW, yc = ((p[0][1] + p[1][1]) / 2 + (p[2][1] + p[3][1]) / 2) / 2 * MH;
+        // la ventana tiene la proporción REAL del LED (píxeles cuadrados: A 2:1, B 2,5:1): lo que se dibuja no se deforma en el archivo
+        const asp = LED_ASPECTO[id] || 2, alto = (x1 - x0) / asp;
+        v[id] = { x0, x1, y0: yc - alto / 2, y1: yc + alto / 2 };
       } else {   // banda curva: a lo largo de la cadena de tramos, con su espesor medio
         let yc = 0, th = 0;
         for (const p of q) { yc += (p[0][1] + p[1][1] + p[2][1] + p[3][1]) / 4; th += ((p[3][1] - p[0][1]) + (p[2][1] - p[1][1])) / 2; }
@@ -428,7 +432,7 @@
       fondoRojo(c, vn, t, 0.1);
       columnasLuz(c, t, 0.9 * k);
       particulas(c, vn, t, 0.5, 70);
-      if (id !== 'media') marca(c, 1240 - 40 * (t - 5) / 5, 600, 236, sv((t - 5.2) / 0.8), cl((t - 6) / 2.4, 0, 1));
+      if (id !== 'media') marca(c, 1240 - 40 * (t - 5) / 5, 600, 180, sv((t - 5.2) / 0.8), cl((t - 6) / 2.4, 0, 1));
       else { cinta(c, 0.6, 1, t, 0.55 * k); marca(c, YM.cx, YM.cy, 64, sv((t - 5.6) / 0.8)); }
     } else {   // C · ICONIC MOMENT: el rastro del elemento se vuelve una cinta continua y la marca aparece donde aterrizó
       fondoRojo(c, vn, t, 0.08);
@@ -447,7 +451,7 @@
     ondasFirma(c, vn, t, 1);
     if (id === 'media') marca(c, YM.cx, YM.cy, 62, 1);
     else if (cr === 'B' && id === 'pellegrini') hamburguesa(c, 1648, 668, 280, t);
-    else if (cr === 'A') marca(c, 1240, 600, 200, 0.9);   // A: el mismo nombre gigante que une ambas pantallas
+    else if (cr === 'A') marca(c, 1240, 600, 160, 0.9);   // A: el mismo nombre gigante que une ambas pantallas
     else { const g = c.createRadialGradient(1250, 470, 0, 1250, 470, 700); g.addColorStop(0, 'rgba(255,200,110,0.22)'); g.addColorStop(1, 'rgba(255,200,110,0)');
       c.save(); c.globalCompositeOperation = 'lighter'; c.fillStyle = g; c.fillRect(vn.x0, vn.y0, vn.x1 - vn.x0, vn.y1 - vn.y0); c.restore(); }
   }

@@ -47,7 +47,7 @@ OK    «Restaurar niveles» deja todo en 100 % y color de escena
 OK    blackout: pantallas, luces y reloj en 0
 OK    soltar blackout recupera los niveles
 OK    show determinista: el mismo t da exactamente la misma salida
-OK    Play avanza el reloj del show (t=1.15 s tras 1,2 s)
+OK    Play avanza el reloj del show (t=1.18 s tras 1,2 s)
 OK    Pausa congela el show
 OK    el show termina en 15 s y se detiene
 OK    a los 4 s la ola roja avanzó desde Corrientes (izquierda) hacia Pellegrini
@@ -67,7 +67,7 @@ OK    NORMAL (1 s): fachada cálida 38 % (ochava 42 %)
 OK    EXIT: el show termina exactamente en ARCHITECTURAL_WARM
 OK    RGB_DIAGNOSTIC: rotulado «DIAGNOSTIC MODE», SUP-04 azul · SUP-11 verde · MED-08 magenta (['MED-08', 'SUP-04', 'SUP-11'])
 OK    escena comercial: sin rótulo de diagnóstico
-OK    una sola composición: 3,0 s solo Corrientes · 3,9 s Corrientes + Pellegrini · 7,5 s las tres ([173, 23, 34] → [89, 184, 34] → [194, 232, 143])
+OK    una sola composición: 3,0 s solo Corrientes · 3,9 s Corrientes + Pellegrini · 7,5 s las tres ([247, 23, 34] → [89, 184, 34] → [194, 232, 143])
 OK    contenido sin textos de demo («TAKEOVER 15 s», «UN MOMENTO SINCRONIZADO»…)
 OK    creatividades A · B · C: tres variantes visuales distintas
 OK    modo cliente: 0 sliders visibles y solo ['NORMAL', 'TAKEOVER', 'SIGNATURE', 'ANTES / DESPUÉS']
