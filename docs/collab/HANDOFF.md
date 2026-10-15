@@ -3,35 +3,35 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador) — corregir **P-04** en PR #75 (issue #76): 3 hallazgos del `AUDIT: CAMBIOS`, en una sola ronda.
-**En auditoría:** #75 @ e40c1156797cc84f66d60840da732e5269edb71c
-**Fase:** P-04 en reauditoría (ronda 7); después P-03 → PoC P-06 (orden confirmado por Fer). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
-**Estado:** `AUDIT: CAMBIOS` de ChatGPT sobre `e40c115` ([#75](https://github.com/fermalenoski86/dev/pull/75#issuecomment-6183575289)). El HEAD `e40c115` quedó por un push de Claude con la rama congelada (desvío reconocido en #76; `paralelo` exit 6). ChatGPT no pudo escribir `main` y autorizó este traspaso administrativo ([#76](https://github.com/fermalenoski86/dev/issues/76)). No mergear.
+**Pelota en:** ChatGPT (auditor) — reauditar **P-04** en PR #75 (issue #76) sobre el HEAD congelado.
+**En auditoría:** #75 @ 8bd04c5381ec970564b986178ef898aa4bb2677e
+**Fase:** P-04 en reauditoría (ronda 9); después P-03 → PoC P-06 (orden confirmado por Fer). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
+**Estado:** los 3 hallazgos del `AUDIT: CAMBIOS` sobre `e40c115` corregidos juntos en `aba796f` (+ ensayo provocado `facec22`/`d52bbee`, revertido en `f1b45c9`) y fix de la prueba 3.24 en CI en `8bd04c5`. Gates 7/7 verdes (run 38678673033), `paralelo` OK. [Pedido](https://github.com/fermalenoski86/dev/pull/75#issuecomment-6184449801).
 
-## Hallazgos a corregir (una sola ronda)
-1. **[P1] `gates.yml`:** el setup (`pnpm install`, `apt-get`, `pg-up.sh`, Playwright) corre fuera del plazo de `plazo.sh`; si se cuelga, GitHub cancela y se pierde la evidencia. Watchdog/plazo que la preserve.
-2. **[P2] `gates.yml`:** el fallback depende del checkout (`scripts/ci/entorno.sh` no existe si falla); fallback autocontenido sin secretos.
-3. **[P2] `politica-fallas.sh`:** `retries\n: 2` evade la regla `retries=0`; test adversarial rojo antes y verde después.
+## Qué se corrigió (ronda 9)
+1. **[P1]** `scripts/ci/vigia.sh`: lo lanza `plazo.sh`; corta el paso colgado (setup o `uses:`) en `P04_PLAZO_FIN` + gracia y deja `plazo-vencido.txt` + anotación. Ensayo en CI: run 38677813259 (media, setup `sleep 900`, timeout 4 min) → failure en 3 min 28 s con anotación y artifact.
+2. **[P2]** paso final autocontenido (`P04_FINAL` en el `env` de `gates.yml`): sin checkout igual anota y deja `entorno.txt`.
+3. **[P2]** `politica-fallas.sh` 1c: clave `retries`/`timeout` partida por salto de línea o comentario → rojo.
+- `run.test.sh`: 22 regresiones rojas con los scripts de `e40c115`; 194/194 verdes.
 
 ## Aviso
-- `e2e-m2c` intermitente (`experience.spec.ts:14`) → #77, causa no determinada; documentar el intento real, sin reintentos extra.
+- `e2e-m2c` intermitente (`experience.spec.ts:14`) → #77, causa no determinada; sin reintentos extra (resultado en el pedido).
 
 ## Próximo paso
-- Claude: corregir los 3 juntos, regresiones + 7 gates + `paralelo` verde sobre el SHA final, actualizar `En auditoría` a ese SHA y devolver la pelota. Sin Codex por commit.
-- ChatGPT: reauditar ese SHA.
+- ChatGPT: reauditar `8bd04c5` (HEAD congelado: Claude no lo toca).
+- Claude, con la pelota de vuelta: si `AUDIT: APROBADO`, mergear (squash), `En auditoría: ninguno`, entregable P-04 en `entregables.mjs`, y arrancar P-03. CS-0 (#74) puede mergearse después de #75 (comparten `BACKLOG.md`).
 
 ## Reglas
-- Con la pelota en Claude puede avanzar el HEAD; al pedir reauditoría, actualizar `En auditoría` al SHA final y congelarlo.
-- Codex: agrupar correcciones y no pedir revisiones por commit; registrar cantidad de revisiones/rondas (P-04: 8 revisiones, 1 pedida, 7 rondas).
+- Codex: agrupar correcciones y no pedir revisiones por commit (P-04: 9 revisiones, 1 pedida, 9 rondas; ninguna nueva en la ronda 9).
 
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-04 diagnóstico de fallas | PR #75 / #76 | `AUDIT: CAMBIOS` sobre `e40c115`; corrige Claude |
+| P-04 diagnóstico de fallas | PR #75 / #76 | reauditoría pedida sobre `8bd04c5` |
 | P-03 → PoC P-06 | #53 / #54 | siguientes, en serie |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 / PR #74 | `AUDIT: APROBADO`; merge pospuesto (P-05: comparte BACKLOG.md con #75) |
-| E2E intermitente :17 | #26 / #77 | #77: READY TO PRESENT en e2e-m2c (3 veces), causa no determinada |
+| E2E intermitente :17 | #26 / #77 | #77: READY TO PRESENT en e2e-m2c, causa no determinada |
 
 ## Pendiente de Fer
 - Tags opcionales bloqueados por proxy: bl31, bl07, bl08, f3a, f3a-ui.
