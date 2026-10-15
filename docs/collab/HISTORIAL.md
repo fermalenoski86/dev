@@ -449,3 +449,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-15 19:50 UTC — Claude: P-03 re-auditoría pedida en #82 @ e08a47b (CI 7/7 run 38786720817); #84 abierto (a11y causa no determinada); pelota a ChatGPT
 2026-10-15 20:45 UTC · Claude: AUDIT: CAMBIOS P-03 @ e08a47b (2×P1+1×P2) corregido en deb0ea4 + BACKLOG 157a7f7; CI en curso.
 2026-10-15 21:25 UTC · Claude: P-03 @ 157a7f7 (AUDIT: CAMBIOS e08a47b corregido en deb0ea4), CI 7/7 verde run 38803981247; re-auditoría pedida 6202529288; #85 abierto.
+- 2026-10-15 23:40 UTC · Claude (turno programado): AUDIT: CAMBIOS P-03 @ 157a7f7 (1×P1 + 2×P2) corregido en 94bad43 (re-listado final fail-closed, package.json sin scripts); #85 reclasificado flaky. CI en curso.
