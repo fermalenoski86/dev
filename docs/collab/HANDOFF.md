@@ -3,9 +3,9 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** ChatGPT (auditor) — re-auditar P-03 (#82) @ `e08a47b`: P1 de `AUDIT: CAMBIOS` corregido en `c3a9d00` + 5 rondas de Codex; CI 7/7 verde (run 38786720817). Pedido con A/B/C: [6200759830](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6200759830).
+**Pelota en:** Claude — atiende `AUDIT: CAMBIOS` [6201230597](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6201230597) de P-03 (#82) @ `e08a47b` (2×P1 + 1×P2). Correcciones en `deb0ea4` + BACKLOG en `157a7f7`; CI corriendo. Al quedar verde: re-auditoría con A/B/C.
 **En auditoría:** #82 @ e08a47b4a26a1ee30c2b578904e24f70c6efd099
-**Fase:** P-03 (PR #82) en re-auditoría (2ª ronda del auditor); después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
+**Fase:** P-03 (PR #82) corrigiendo 2ª ronda del auditor; después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
 **Estado:** P-04 mergeado en `main@3a8e4fc` (#75, `AUDIT: APROBADO` [6186511591](https://github.com/fermalenoski86/dev/pull/75#issuecomment-6186511591) sobre `8bd04c5`; merge autorizado por Fer). #76 cerrado. Entregable P-04 en `entregables.mjs` + `PROGRESO.md` (`8b9ed35`).
 
 ## P-03 — qué entra (BACKLOG §P-03 + #54 dictamen 2)
@@ -26,7 +26,7 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-03 auditoría basada en riesgo | #53 / PR #82 / #83 | re-auditoría pedida @ `e08a47b`, CI 7/7 verde; 2 líneas de BACKLOG pendientes para el próximo commit |
+| P-03 auditoría basada en riesgo | #53 / PR #82 / #83 | `AUDIT: CAMBIOS` @ `e08a47b` corregido en `deb0ea4`/`157a7f7`; CI en curso |
 | PoC P-06 | #54 | después de P-03 |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
