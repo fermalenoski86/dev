@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import type { Asset, Campaign, Draft, ShowVersion } from '../lib/api';
+import type { Asset, Campaign, Draft, Role, ShowVersion } from '../lib/api';
 import { builderUrlFor } from '../lib/config';
 import { type DraftSlot, DRAFT_SLOTS, SLOT_LABEL, SURFACE_TYPES, draftSlots, slotForAsset, withSlotAsset } from '../lib/draft-assets';
 import { useSession } from './SessionGate';
@@ -12,6 +12,8 @@ export interface CampaignDetailViewProps {
   draft: Draft | null;
   assets: Asset[];
   builderUrl: string | null;
+  /** OPERATOR/ADMIN: assets, asignación, envío y Builder (§22). INTERNAL_APPROVER solo lee (#43). */
+  puedeEditar: boolean;
   loadError: string | null;
   upload: { surfaceType: string; fileName: string | null; busy: boolean; error: string | null; last: Asset | null };
   assign: { busy: boolean; error: string | null };
@@ -24,6 +26,9 @@ export interface CampaignDetailViewProps {
 }
 
 const corto = (h: string | null) => (h ? h : '—');
+
+/** Roles que el servidor deja listar assets, editar el draft y enviar (ASSET/EDIT/SUBMIT_ROLES). */
+export const puedeEditarCampania = (roles: readonly Role[] | undefined) => !!roles?.some((r) => r === 'OPERATOR' || r === 'ADMIN');
 
 /** Detalle de campaña (E3b, §32): versión aprobada y working draft separados, assets, envío. */
 export function CampaignDetailView(p: CampaignDetailViewProps) {
@@ -76,7 +81,7 @@ export function CampaignDetailView(p: CampaignDetailViewProps) {
             Versión vigente
           </a>
         </p>
-        {p.builderUrl ? (
+        {!p.puedeEditar ? null : p.builderUrl ? (
           <p>
             <a href={p.builderUrl}>Editar el draft en el Builder</a>
           </p>
@@ -107,6 +112,8 @@ export function CampaignDetailView(p: CampaignDetailViewProps) {
         <ErrorMessage message={p.assign.error} />
       </section>
 
+      {p.puedeEditar ? (
+        <>
       <section aria-labelledby="assets" className="card">
         <h2 id="assets">Mis assets</h2>
         <form
@@ -212,12 +219,26 @@ export function CampaignDetailView(p: CampaignDetailViewProps) {
           {p.submit.busy ? 'Enviando…' : `Enviar rev ${p.draft.revision} a aprobación`}
         </button>
       </section>
+        </>
+      ) : (
+        <p className="muted" data-testid="solo-lectura">
+          Vista de solo lectura: subir assets, editar el draft y enviarlo a aprobación es tarea de OPERATOR o ADMIN.
+        </p>
+      )}
     </main>
   );
 }
 
+type LectorDetalle = Pick<ReturnType<typeof useSession>['client'], 'getCampaign' | 'getDraft' | 'listAssets'>;
+
+/** Carga del detalle. GET /assets es solo OPERATOR/ADMIN (§22): sin ese rol no se pide (#43). */
+export function cargarDetalle(client: LectorDetalle, campaignId: string, puedeEditar: boolean): Promise<[Campaign, Draft, Asset[]]> {
+  return Promise.all([client.getCampaign(campaignId), client.getDraft(campaignId), puedeEditar ? client.listAssets() : Promise.resolve([] as Asset[])]);
+}
+
 export function CampaignDetail({ campaignId }: { campaignId: string }) {
-  const { client } = useSession();
+  const { client, me } = useSession();
+  const puedeEditar = puedeEditarCampania(me?.roles);
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -230,7 +251,7 @@ export function CampaignDetail({ campaignId }: { campaignId: string }) {
 
   const cargar = useCallback(async () => {
     try {
-      const [c, d, as] = await Promise.all([client.getCampaign(campaignId), client.getDraft(campaignId), client.listAssets()]);
+      const [c, d, as] = await cargarDetalle(client, campaignId, puedeEditar);
       setCampaign(c);
       setDraft(d);
       setAssets(as);
@@ -238,7 +259,7 @@ export function CampaignDetail({ campaignId }: { campaignId: string }) {
     } catch (e) {
       setLoadError(describeError(e));
     }
-  }, [client, campaignId]);
+  }, [client, campaignId, puedeEditar]);
 
   useEffect(() => {
     void cargar();
@@ -288,6 +309,7 @@ export function CampaignDetail({ campaignId }: { campaignId: string }) {
       draft={draft}
       assets={assets}
       builderUrl={builderUrlFor(campaignId)}
+      puedeEditar={puedeEditar}
       loadError={loadError}
       upload={{ surfaceType, fileName: file?.name ?? null, ...upload }}
       assign={assign}

@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import type { Asset, Campaign, Draft, ShowVersion } from '../lib/api';
-import { CampaignDetailView, type CampaignDetailViewProps } from './CampaignDetail';
+import { CampaignDetailView, type CampaignDetailViewProps, cargarDetalle, puedeEditarCampania } from './CampaignDetail';
 import { VersionReviewView, type VersionReviewViewProps } from './VersionReview';
 
 /**
@@ -32,7 +32,7 @@ const version: ShowVersion = {
 };
 
 const detalle = (o: Partial<CampaignDetailViewProps> = {}): CampaignDetailViewProps => ({
-  campaign, draft, assets: [ready, rejected], builderUrl: 'https://control.trust.test/?campaign=' + U(4), loadError: null,
+  campaign, draft, assets: [ready, rejected], builderUrl: 'https://control.trust.test/?campaign=' + U(4), puedeEditar: true, loadError: null,
   upload: { surfaceType: 'horizontal', fileName: null, busy: false, error: null, last: null },
   assign: { busy: false, error: null }, submit: { busy: false, error: null, version: null },
   onSurfaceType: nada, onFile: nada, onUpload: nada, onAssign: nada, onSubmit: nada, ...o,
@@ -126,5 +126,57 @@ describe('E3b · revisión de una versión', () => {
     expect(h).toContain(`<p role="status" data-testid="version-decision">APPROVED el T sobre el hash <code class="hash">${HASH_NUEVO}</code></p>`);
     expect(h).not.toContain('Adjuntar evidencia');
     expect(h).not.toContain('>Aprobar<');
+  });
+});
+
+describe('#43 · detalle de campaña para roles sin permiso de assets', () => {
+  it('OPERATOR y ADMIN editan; INTERNAL_APPROVER, EXTERNAL_APPROVER y sin sesión no', () => {
+    expect(puedeEditarCampania(['OPERATOR'])).toBe(true);
+    expect(puedeEditarCampania(['ADMIN'])).toBe(true);
+    expect(puedeEditarCampania(['INTERNAL_APPROVER', 'OPERATOR'])).toBe(true);
+    expect(puedeEditarCampania(['INTERNAL_APPROVER'])).toBe(false);
+    expect(puedeEditarCampania(['EXTERNAL_APPROVER'])).toBe(false);
+    expect(puedeEditarCampania([])).toBe(false);
+    expect(puedeEditarCampania(undefined)).toBe(false);
+  });
+
+  it('sin permiso no se pide GET /assets (el 403 era lo que rompía el detalle); con permiso sí', async () => {
+    const llamadas: string[] = [];
+    const client = {
+      getCampaign: async () => (llamadas.push('campaign'), campaign),
+      getDraft: async () => (llamadas.push('draft'), draft),
+      listAssets: async () => {
+        llamadas.push('assets');
+        throw Object.assign(new Error('FORBIDDEN'), { status: 403 });
+      },
+    };
+    const [c, d, as] = await cargarDetalle(client as never, U(4), false);
+    expect([c.id, d.revision, as]).toEqual([U(4), 3, []]);
+    expect(llamadas.sort()).toEqual(['campaign', 'draft']);
+    await expect(cargarDetalle(client as never, U(4), true)).rejects.toThrow('FORBIDDEN');
+    expect(llamadas).toContain('assets');
+  });
+
+  it('solo lectura: versión aprobada, draft, ranuras y enlaces; sin assets, sin envío y sin Builder', () => {
+    const h = html(createElement(CampaignDetailView, detalle({ puedeEditar: false, assets: [] })));
+    expect(h).toContain('<strong>APPROVED VERSION v1</strong>');
+    expect(h).toContain('<strong>WORKING DRAFT</strong> · rev 3');
+    expect(h).toContain('data-testid="versions-link"');
+    expect(h).toContain('data-testid="active-version-link"');
+    expect(h).toContain(`<td>Horizontal</td><td>${U(2)}</td>`);
+    expect(h).toContain('data-testid="solo-lectura"');
+    expect(h).not.toContain('Mis assets');
+    expect(h).not.toContain('Enviar a aprobación');
+    expect(h).not.toContain('<button');
+    expect(h).not.toContain('Editar el draft en el Builder');
+    expect(h).not.toContain('NEXT_PUBLIC_TRUST_BUILDER_URL');
+  });
+
+  it('con permiso no aparece la nota de solo lectura y siguen assets, envío y Builder', () => {
+    const h = html(createElement(CampaignDetailView, detalle()));
+    expect(h).not.toContain('data-testid="solo-lectura"');
+    expect(h).toContain('Mis assets');
+    expect(h).toContain('Enviar a aprobación');
+    expect(h).toContain('Editar el draft en el Builder');
   });
 });
