@@ -23,6 +23,8 @@ DIR=${P04_LOGS:-test-results/ci}
 RAIZ=${P04_VIGIA_RAIZ:?vigia.sh: falta P04_VIGIA_RAIZ}
 ESPERA=$(( FIN + GRACIA - $(date +%s) ))
 [ "$ESPERA" -le 0 ] || sleep "$ESPERA"
+# sin el directorio de marcas (RUNNER_TEMP de otro proceso que ya terminó) no hay job que vigilar
+[ -d "$MARCAS" ] || exit 0
 [ -e "$MARCAS/p04-final" ] || [ -e "$MARCAS/p04-anotado" ] && exit 0
 kill -0 "$RAIZ" 2>/dev/null || exit 0
 # el paso activo = hijos directos de la raíz, salvo este vigía; su árbol completo

@@ -646,3 +646,25 @@ OK
 GATE progreso (P-02): manifiesto válido (33 entradas), docs/collab/PROGRESO.md al día
 == node scripts/acceptance/cli.mjs check
 GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día
+
+== Ronda 9 · corrección tras CI 38678170713 (3.24 en CI) · 2026-10-15T03:54:12Z
+== bash scripts/ci/run.test.sh
+1. entorno.sh
+2. sanitizar.sh
+3. run.sh
+  ✓ 3.24 plazo.sh con P04_SIN_VIGIA=1 (también en CI, con Runner.Worker): no lanza vigía
+  ✓ 3.24b plazo.sh bajo un proceso Runner.Worker lo encuentra y lanza el vigía; con P04_SIN_VIGIA=1 no
+  ✓ 3.24c vigía sin el directorio de marcas (RUNNER_TEMP ya borrado): no corta nada
+  ✓ 3.25 plazo.sh con Runner.Worker (P04_VIGIA_RAIZ) lanza el vigía en segundo plano y no espera
+  ✓ 3.26 vigía: al plazo + gracia corta el paso colgado (el worker sigue y ve el paso fallado), hijos incluidos
+  ✓ 3.27 vigía: deja $P04_LOGS/plazo-vencido.txt con motivo, entorno y procesos del paso, sanitizado
+  ✓ 3.28 entorno.sh --error con plazo-vencido.txt: la anotación lo lleva (título y procesos)
+  ✓ 3.29 vigía con la marca p04-final (el job ya está en su cierre): no corta nada ni escribe evidencia
+  ✓ 3.29 vigía con la marca p04-anotado (el job ya está en su cierre): no corta nada ni escribe evidencia
+4. politica-fallas.sh
+5. gates.yml (estático)
+run.test: 194 OK, 0 fallos
+== politica-fallas check
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+== bash -n / diff --check
+OK

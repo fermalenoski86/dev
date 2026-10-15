@@ -22,8 +22,10 @@ TOTAL=$((MIN * 60)); MARGEN=${P04_MARGEN:-180}
 FIN=$(( $(date +%s) + TOTAL - MARGEN ))
 if [ -n "${GITHUB_ENV:-}" ]; then echo "P04_PLAZO_FIN=$FIN" >> "$GITHUB_ENV"; else echo "P04_PLAZO_FIN=$FIN"; fi
 echo "plazo: $JOB timeout-minutes=$MIN margen=${MARGEN}s → los gates cortan a las $(date -u -d "@$FIN" +%H:%M:%SZ)"
+# P04_SIN_VIGIA=1: quien llama a plazo.sh fuera del primer paso del job (run.test.sh, que en CI también
+# tiene un Runner.Worker entre sus ancestros) no lanza un vigía sobre el job real
 RAIZ=${P04_VIGIA_RAIZ:-}
-if [ -z "$RAIZ" ]; then
+if [ -z "$RAIZ" ] && [ "${P04_SIN_VIGIA:-}" != 1 ]; then
   p=$$
   while [ -n "$p" ] && [ "$p" -gt 1 ]; do
     [ "$(cat "/proc/$p/comm" 2>/dev/null)" = Runner.Worker ] && { RAIZ=$p; break; }
@@ -34,5 +36,5 @@ if [ -n "$RAIZ" ]; then
   P04_VIGIA_RAIZ=$RAIZ setsid nohup "$AQUI/vigia.sh" "$FIN" "$MARGEN" > /dev/null 2>&1 < /dev/null &
   echo "plazo: vigía $! sobre el paso activo (hijos de $RAIZ) para lo que no pasa por run.sh"
 else
-  echo "plazo: sin Runner.Worker entre los ancestros: sin vigía (fuera de CI)"
+  echo "plazo: sin vigía (P04_SIN_VIGIA=1 o sin Runner.Worker entre los ancestros: fuera de CI)"
 fi

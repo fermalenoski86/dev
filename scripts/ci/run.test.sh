@@ -9,7 +9,10 @@ T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
 ok=0; fallos=0
 check() { if eval "$2"; then echo "  ✓ $1"; ok=$((ok+1)); else echo "  ✗ $1"; fallos=$((fallos+1)); fi; }
 export RUNNER_TEMP=$T/runner P04_LOGS=$T/logs; mkdir -p "$RUNNER_TEMP"
-unset GITHUB_RUN_ID GITHUB_RUN_ATTEMPT GITHUB_JOB GITHUB_ENV ImageOS ImageVersion P04_HEAD_SHA P04_PLAZO_FIN P04_MARGEN
+unset GITHUB_RUN_ID GITHUB_RUN_ATTEMPT GITHUB_JOB GITHUB_ENV ImageOS ImageVersion P04_HEAD_SHA P04_PLAZO_FIN P04_MARGEN P04_VIGIA_RAIZ
+# en CI esta prueba también tiene un Runner.Worker entre sus ancestros: plazo.sh no lanza vigías sobre
+# el job real salvo en 3.25, que pasa su propia raíz (CI run 38678170713: 3.24 rojo)
+export P04_SIN_VIGIA=1
 
 echo "1. entorno.sh"
 L=$("$AQUI/entorno.sh"); RC=$?
@@ -95,7 +98,12 @@ check "3.23g copia no escribible + comando rojo → conserva el exit del comando
 check "3.23h tee y copia fallan juntos → un solo 'log no escrito' en el título y las dos notas" 'O=$(PATH=$T/mkt:$PATH P04_LOGS=/proc/p04-prohibido "$AQUI/run.sh" "ambos" true 2>&1); [ $? != 0 ] && [ "$(printf "%s" "$O" | grep "^::error" | grep -o "log no escrito" | wc -l)" = 1 ] && printf "%s" "$O" | grep "^::error" | grep -q "tee exit.*%0Arun.sh: no se pudo escribir la copia"' 
 
 # AUDIT #75 sobre e40c115 (P1): el setup y las acciones `uses:` no pasan por run.sh; vigia.sh corta el paso colgado
-check "3.24 plazo.sh fuera de CI (sin Runner.Worker): no lanza vigía" 'GE=$T/genv; : > "$GE"; O=$(GITHUB_JOB=media GITHUB_ENV=$GE "$AQUI/plazo.sh"); printf "%s" "$O" | grep -q "sin vigía (fuera de CI)"'
+check "3.24 plazo.sh con P04_SIN_VIGIA=1 (también en CI, con Runner.Worker): no lanza vigía" 'GE=$T/genv; : > "$GE"; O=$(GITHUB_JOB=media GITHUB_ENV=$GE "$AQUI/plazo.sh"); printf "%s" "$O" | grep -q "^plazo: sin vigía (P04_SIN_VIGIA=1"'
+mkdir -p "$T/w"; ln -sf "$(command -v bash)" "$T/w/Runner.Worker"
+check "3.24b plazo.sh bajo un proceso Runner.Worker lo encuentra y lanza el vigía; con P04_SIN_VIGIA=1 no" 'O=$("$T/w/Runner.Worker" -c "P04_SIN_VIGIA= GITHUB_JOB=media GITHUB_ENV=$T/genv \"$AQUI/plazo.sh\"; :"); V=$(printf "%s" "$O" | sed -nE "s/^plazo: vigía ([0-9]+) .*/\1/p"); [ -n "$V" ] && kill -- "-$V" 2>/dev/null && O=$("$T/w/Runner.Worker" -c "GITHUB_JOB=media GITHUB_ENV=$T/genv \"$AQUI/plazo.sh\"; :") && printf "%s" "$O" | grep -q "^plazo: sin vigía"'
+mkdir -p "$T/w2"; printf '%s\n' 'sleep 30' > "$T/w2/paso.sh"; bash "$T/w2/paso.sh" & W=$!
+check "3.24c vigía sin el directorio de marcas (RUNNER_TEMP ya borrado): no corta nada" 'RUNNER_TEMP=$T/no-existe P04_VIGIA_RAIZ=$$ "$AQUI/vigia.sh" "$(date +%s)" 3; kill -0 "$W"'
+kill "$W" 2>/dev/null; pkill -P "$W" 2>/dev/null; wait "$W" 2>/dev/null
 O=$(P04_VIGIA_RAIZ=$$ GITHUB_JOB=media GITHUB_ENV=$T/genv "$AQUI/plazo.sh"); VP=$(printf "%s" "$O" | sed -nE 's/^plazo: vigía ([0-9]+) .*/\1/p')
 check "3.25 plazo.sh con Runner.Worker (P04_VIGIA_RAIZ) lanza el vigía en segundo plano y no espera" '[ -n "$VP" ] && kill -0 "$VP" 2>/dev/null && tr "\0" " " < /proc/$VP/cmdline | grep -q "vigia.sh [0-9]* 180 "'
 [ -z "$VP" ] || kill -- "-$VP" 2>/dev/null   # setsid: el vigía encabeza su grupo (con su sleep)
