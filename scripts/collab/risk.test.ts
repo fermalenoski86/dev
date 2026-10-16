@@ -348,6 +348,9 @@ case "$2" in *'pulls?state=open'*)
 pr=\${2##*/}; if [ -f "$D/cuerpo_$pr" ]; then
   [ "$(cat "$D/cuerpo_$pr")" != "__falla__" ] || { echo "HTTP 502" >&2; exit 1; }
   base=$(cat "$D/base_$pr" 2>/dev/null || echo main)
+  # secuencia de bases por foto (retarget durante el lote; AUDIT: CAMBIOS @ 9a7170b, P2)
+  if [ -f "$D/bases_$pr" ]; then k=$(cat "$D/nb_$pr" 2>/dev/null || echo 0); k=$((k+1)); echo $k > "$D/nb_$pr"
+    base=$(sed -n "\${k}p" "$D/bases_$pr"); [ -n "$base" ] || base=$(tail -n1 "$D/bases_$pr"); fi
   jq -n --arg h "${HEAD_PR}" --arg base "$base" --rawfile b "$D/cuerpo_$pr" '{state:"open", head:{sha:$h}, base:{ref:$base}, body:$b}'; exit 0; fi
 n=$(cat "$D/n" 2>/dev/null || echo 0); n=$((n+1)); echo $n > "$D/n"
 cuerpo=$(sed -n "\${n}p" "$D/cuerpos"); [ -n "$cuerpo" ] || cuerpo=$(tail -n1 "$D/cuerpos")
@@ -488,6 +491,48 @@ jq -n --arg h "$h" --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{ref:"m
     expect(r.rc).toBe(1);
     expect(deCheck('riesgo').at(-1)).toBe('failure');
     expect(deCheck('riesgo (otra base)')).toEqual([]);
+  });
+  // AUDIT: CAMBIOS @ 9a7170b, P2: #8 (mismo HEAD que #7, válido hacia main) se retargetea de main a
+  // una rama de fase en la foto N; su `caducado` va a `riesgo (otra base)` y no bloquea a #7.
+  // Fotos de #8: F0 (pasada previa), F1, F2 (tras evaluar), F3 (tras publicar success), FX (conciliación final).
+  const retarget = (bases8: string[], args: string[], con7 = true) => {
+    writeFileSync(path.join(dir, 'cuerpo_7'), 'Riesgo: bajo\n');
+    writeFileSync(path.join(dir, 'cuerpo_8'), 'Riesgo: bajo\n');
+    writeFileSync(path.join(dir, 'bases_8'), bases8.join('\n') + '\n');
+    rmSync(path.join(dir, 'nb_8'), { force: true });
+    try {
+      return correr(['Riesgo: bajo'], { lista: con7 ? `7 ${HEAD_PR}\n` : '', args });
+    } finally {
+      for (const f of ['cuerpo_7', 'cuerpo_8', 'bases_8', 'nb_8']) rmSync(path.join(dir, f), { force: true });
+    }
+  };
+  const caminos: [string, string[]][] = [
+    ['F2 (tras evaluar)', ['main', 'main', 'fase']],
+    ['F3 (tras publicar success)', ['main', 'main', 'main', 'fase']],
+    ['FX (conciliación final)', ['main', 'main', 'main', 'main', 'fase']],
+  ];
+  for (const [camino, bases8] of caminos) {
+    for (const args of [['7', '8'], ['8', '7']]) {
+      it(`retarget main → fase en ${camino} (orden ${args.join(',')}) → \`riesgo\` queda success para #7; el caducado va a \`riesgo (otra base)\` (AUDIT: CAMBIOS @ 9a7170b, P2)`, () => {
+        const r = retarget(bases8, args);
+        expect(r.rc).toBe(1); // el lote informa el caducado de #8…
+        expect(deCheck('riesgo').at(-1)).toBe('success'); // …sin pintar de rojo a #7
+        expect(deCheck('riesgo')).not.toContain('failure');
+        expect(deCheck('riesgo (otra base)').at(-1)).toBe('failure');
+        expect(new Set(ultimosShas)).toEqual(new Set([HEAD_PR]));
+      });
+    }
+    it(`retarget main → fase en ${camino} sin otro PR hacia main con ese HEAD → \`riesgo\` no queda success (AUDIT: CAMBIOS @ 9a7170b, P2)`, () => {
+      const r = retarget(bases8, ['8'], false);
+      expect(r.rc).toBe(1);
+      expect(deCheck('riesgo').at(-1)).toBe('failure');
+      expect(deCheck('riesgo (otra base)').at(-1)).toBe('failure');
+    });
+  }
+  it('retarget fase → main en F2 → el caducado va a `riesgo` y domina sobre el verde de #7 (AUDIT: CAMBIOS @ 9a7170b, P2)', () => {
+    const r = retarget(['fase', 'fase', 'main'], ['7', `8:${HEAD_PR}:otra`]);
+    expect(r.rc).toBe(1);
+    expect(deCheck('riesgo').at(-1)).toBe('failure');
   });
   it('PR que comparte HEAD con un verde pero no se evaluó en el lote → failure (AUDIT: CAMBIOS @ e08a47b, P1)', () => {
     const r = correr(['Riesgo: bajo'], { lista: `7 ${HEAD_PR}\n8 ${HEAD_PR}\n` });

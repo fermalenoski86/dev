@@ -36,6 +36,11 @@ CHECK_MAIN=riesgo
 CHECK_OTRA="riesgo (otra base)"
 CHECK=$CHECK_MAIN               # nombre con el que publica `publicar` (se fija por PR)
 check_de() { if [ "$1" = main ]; then echo "$CHECK_MAIN"; else echo "$CHECK_OTRA"; fi; }
+# Nombre del check según una foto refrescada (AUDIT: CAMBIOS @ 9a7170b, P2): si el PR se
+# retargeteó durante la evaluación, el `caducado` va al check de su base NUEVA. Sin foto
+# legible se queda el nombre anterior ($2).
+check_de_foto() { local b; read -r _ b _ <<< "$1"; if [ -n "${b:-}" ]; then check_de "$b"; else echo "$2"; fi; }
+declare -A SALIO_MAIN=()       # HEAD → 1 si un PR que apuntaba a main se fue a otra base durante el lote
 
 foto() { # $1 = PR → "head base base_sha body_sha256 state"; exit ≠ 0 si algo falla
   # Se llama siempre desde `x=$(foto) || …`, donde errexit no rige dentro de la función:
@@ -60,6 +65,15 @@ invalidar_nuevo() { # $1 = foto nueva, $2 = HEAD evaluado
   if [[ "$hn" =~ ^[0-9a-f]{40}$ ]] && [ "$hn" != "$2" ]; then
     publicar "$hn" failure "riesgo: caducado (el PR avanzó durante la evaluación; el evento siguiente re-evalúa)" "$TMP/out" || true
   fi
+}
+# Publica el `caducado` de $2 con el nombre de la foto nueva $1 y, si el PR dejó main,
+# lo anota para el cierre de `riesgo` sobre ese HEAD (ver el final del script).
+caducar() { # $1 foto nueva, $2 HEAD evaluado, $3 título
+  local viejo=$CHECK
+  CHECK=$(check_de_foto "$1" "$viejo")
+  [ "$viejo" != "$CHECK_MAIN" ] || [ "$CHECK" = "$CHECK_MAIN" ] || SALIO_MAIN[$2]=1
+  publicar "$2" failure "$3" "$TMP/out" || true; invalidar_nuevo "$1" "$2"
+  CHECK=$viejo
 }
 main_actual() { local m; m=$(git ls-remote origin refs/heads/main 2>/dev/null | cut -f1) || m=""; echo "${m:-__sin-main__}"; }
 publicar() { # $1 sha, $2 status|conclusion, $3 título, $4 archivo de resumen
@@ -132,14 +146,14 @@ for PR in "$@"; do
   F2=$(foto "$PR" 2>/dev/null || echo "__sin-foto__"); M2=$(main_actual)
   if [ "$F2" != "$F1" ] || [ "$M2" != "$SCRIPTS_SHA" ]; then
     printf 'caducado: el PR o main cambiaron durante la evaluación\nantes: %s · scripts %s\nahora: %s · main %s\n' "$F1" "$SCRIPTS_SHA" "$F2" "$M2" >> "$TMP/out"
-    publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out" || true; invalidar_nuevo "$F2" "$HEAD"; total=1; continue
+    caducar "$F2" "$HEAD" "riesgo: caducado (el evento siguiente re-evalúa)"; total=1; continue
   fi
   if [ "$RC" = 0 ]; then
     publicar "$HEAD" success "riesgo: OK" "$TMP/out" || total=1
     F3=$(foto "$PR" 2>/dev/null || echo "__sin-foto__"); M3=$(main_actual)
     if [ "$F3" != "$F1" ] || [ "$M3" != "$SCRIPTS_SHA" ]; then
       printf 'caducado tras publicar\nahora: %s · main %s\n' "$F3" "$M3" >> "$TMP/out"
-      publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out" || true; invalidar_nuevo "$F3" "$HEAD"; total=1
+      caducar "$F3" "$HEAD" "riesgo: caducado (el evento siguiente re-evalúa)"; total=1
     else
       VERDES+=("$PR|$HEAD|$CHECK|$F1")
     fi
@@ -189,6 +203,7 @@ fi
 # de PR nuevos, así un main que avanzó mientras tanto también invalida (Codex #82, ronda 6)—: mientras se evaluaban los PR siguientes, el cuerpo,
 # la base o main de uno ya verde pudieron cambiar. Se relee cada verde del lote y, si su
 # foto o main ya no coinciden, se pisa con `failure` "caducado".
+declare -A CADUCO_FINAL=()     # "PR|HEAD" → 1 si ese verde caducó en la conciliación final
 for v in "${VERDES[@]+"${VERDES[@]}"}"; do
   IFS='|' read -r PR HEAD CHECK F1 <<< "$v"
   FX=$(foto "$PR" 2>/dev/null || echo "__sin-foto__"); MX=$(main_actual)
@@ -196,13 +211,14 @@ for v in "${VERDES[@]+"${VERDES[@]}"}"; do
     printf 'caducado en la conciliación final del lote
 antes: %s · scripts %s
 ahora: %s · main %s\n' "$F1" "$SCRIPTS_SHA" "$FX" "$MX" > "$TMP/out"
-    publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out" || true; invalidar_nuevo "$FX" "$HEAD"; total=1
+    caducar "$FX" "$HEAD" "riesgo: caducado (el evento siguiente re-evalúa)"; total=1
+    CADUCO_FINAL[$PR|$HEAD]=1
   fi
 done
 # Dominancia por HEAD (AUDIT: CAMBIOS @ e08a47b, P1; Codex #82, P1): el check es por SHA
 # y la evaluación por PR. Si dos PR comparten HEAD y uno fue rechazado (o caducó), un
 # success de otro PR sobre ese SHA no puede quedar último: se republica `failure`, en
-# cualquier orden de procesamiento. Es lo ÚLTIMO que publica el lote.
+# cualquier orden de procesamiento. Solo lo sigue el cierre por retarget.
 # Solo entre PR hacia main (check `riesgo`): uno de otra base no domina (AUDIT: CAMBIOS @ 94bad43, P2).
 declare -A DOMINADO=()
 CHECK=$CHECK_MAIN
@@ -215,5 +231,30 @@ for v in "${VERDES[@]+"${VERDES[@]}"}"; do
   echo "riesgo-ci: ${HEAD:0:7} lo comparte #$PR (verde) con otro PR rechazado, caducado o sin veredicto en este lote: manda el rechazo" > "$TMP/out"
   publicar "$HEAD" failure "riesgo: RECHAZADO (otro PR con el mismo HEAD no pasó)" "$TMP/out" || true
   total=1
+done
+# Cierre de `riesgo` por retarget (AUDIT: CAMBIOS @ 9a7170b, P2). Un PR que dejó main durante
+# el lote publicó su `caducado` en `riesgo (otra base)`, pero antes había dejado en `riesgo`
+# un en_progreso (o un success) sobre su HEAD. Es lo ÚLTIMO que publica el lote:
+#  - si ese HEAD tiene un verde VÁLIDO de un PR hacia main de este lote (sobrevivió a la
+#    conciliación final) y ningún PR hacia main falló sobre él → se republica su success
+#    (el PR que se fue no lo bloquea, como pide el aislamiento por base);
+#  - si no lo tiene → `failure` en `riesgo`, para que no quede vivo el success del PR que se fue.
+declare -A VALIDO=()
+for v in "${VERDES[@]+"${VERDES[@]}"}"; do
+  IFS='|' read -r PR HEAD cv _ <<< "$v"
+  [ "$cv" = "$CHECK_MAIN" ] && [ -z "${CADUCO_FINAL[$PR|$HEAD]:-}" ] && VALIDO[$HEAD]=1
+done
+CHECK=$CHECK_MAIN
+for H in "${!SALIO_MAIN[@]}"; do
+  if [ -n "${VALIDO[$H]:-}" ]; then
+    [ "${FALLA_HEAD[$H]:-}" != 1 ] && [ "${ULTIMO[$H]:-}" != success ] || continue
+    echo "riesgo-ci: ${H:0:7} tiene un verde válido hacia main; el PR que compartía HEAD se fue a otra base durante el lote" > "$TMP/out"
+    publicar "$H" success "riesgo: OK (re-publicado tras el retarget de otro PR con este HEAD)" "$TMP/out" || total=1
+  else
+    [ "${ULTIMO[$H]:-}" != failure ] || continue
+    echo "riesgo-ci: ${H:0:7} quedó sin PR hacia main con veredicto válido (el PR se fue a otra base durante el lote)" > "$TMP/out"
+    publicar "$H" failure "riesgo: caducado (el PR dejó de apuntar a main)" "$TMP/out" || true
+    total=1
+  fi
 done
 exit "$total"
