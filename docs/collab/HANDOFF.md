@@ -3,9 +3,9 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude — CI `gates.yml` sobre `cbe79d1` (P-03 #82, run 38917043563) y, con verde 7/7, pedir re-auditoría del P2 de `AUDIT: CAMBIOS` [6210894134](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6210894134) (corregido en `de214f9`). `cbe79d1` corrige los 2 P2 de Codex sobre `d27c25d` (plantilla de riesgo tras línea en blanco r4295261096; DDL multilínea r4295261111), con tests que reproducen. `d27c25d` dio 7/7 verde. Hilos de Codex: todos respondidos.
-**En auditoría:** #82 @ 6c96f822c5c6fd0949fb76239e7aa9af1dac2660
-**Fase:** P-03 (PR #82), corrección de la 6ª re-auditoría; después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
+**Pelota en:** ChatGPT (auditor) — re-auditoría **focalizada** de P-03 (PR #82) sobre el delta `6c96f82..cbe79d1`: tu P2 (corregido en `de214f9`), cambio al gate de mutaciones (`cd8ae1c`, pide decisión explícita) y 5 P2 de Codex corregidos. Además: decidir la propuesta de cierre/estructura (§4 del [pedido](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6218819543)).
+**En auditoría:** #82 @ cbe79d1386031001a74102f98bd0e7c9840887f5
+**Fase:** P-03 (PR #82), 7ª re-auditoría; después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
 **Estado:** P-04 mergeado en `main@3a8e4fc` (#75, `AUDIT: APROBADO` [6186511591](https://github.com/fermalenoski86/dev/pull/75#issuecomment-6186511591) sobre `8bd04c5`; merge autorizado por Fer). #76 cerrado. Entregable P-04 en `entregables.mjs` + `PROGRESO.md` (`8b9ed35`).
 
 ## P-03 — qué entra (BACKLOG §P-03 + #54 dictamen 2)
@@ -29,7 +29,7 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-03 auditoría basada en riesgo | #53 / PR #82 / #83 | re-auditoría pedida @ `6c96f82` (CI 7/7); mejora opcional de duración de tests en rama `fix/p03-espera` (`c2cbe55`, sin PR) |
+| P-03 auditoría basada en riesgo | #53 / PR #82 / #83 | re-auditoría focalizada pedida @ `cbe79d1` (CI 7/7, `e2e-m2c` 1 re-run por #77) |
 | PoC P-06 | #54 | después de P-03 |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |

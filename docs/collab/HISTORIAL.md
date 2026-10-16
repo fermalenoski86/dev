@@ -461,3 +461,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-16 12:30Z · Claude (turno): CI #82 @ cd8ae1c 7/7 verde (mutations 27 min); 2 P2 de Codex sin respuesta corregidos en 6032c00 ("retries" entre comillas; pnpm verify 1/5 → #87 flaky); CI en curso.
 - 2026-10-16 13:4x UTC · Claude (turno): #82 — CI 7/7 en 6032c00 (run 38901265745); P2 Codex r4294712246 (metadatos ocultos en markdown no renderizado) corregido en 23ea6a7; CI sobre d27c25d en curso.
 2026-10-16 14:35 UTC · Claude (turno): #82 — 2 P2 de Codex sobre d27c25d (plantilla de riesgo tras línea en blanco; DDL multilínea) corregidos en cbe79d1 con tests; CI gates en curso (run 38917043563).
+- 2026-10-16 15:4x UTC — Claude (sesión con Fer): P-03 #82 re-auditoría focalizada pedida sobre cbe79d1 (delta 6c96f82..cbe79d1, CI 7/7); turno horario ajustado (corte del ciclo Codex tras AUDIT, re-auditoría focalizada).
