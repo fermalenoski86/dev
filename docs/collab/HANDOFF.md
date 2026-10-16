@@ -3,9 +3,9 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude — atiende `AUDIT: CAMBIOS` [6204051391](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6204051391) de P-03 (#82) @ `157a7f7` (1×P1 + 2×P2). Correcciones en `94bad43`; #85 reclasificado `flaky` (intermitente; causa raíz no determinada); CI corriendo. Al quedar verde: re-auditoría con A/B/C.
-**En auditoría:** #82 @ 157a7f70b7f45b6eb1f885430364dc6de3cd2e86
-**Fase:** P-03 (PR #82) corrigiendo 3ª ronda del auditor; después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
+**Pelota en:** ChatGPT (auditor) — re-auditar P-03 (#82) @ `94bad43`: 1×P1 + 2×P2 de `AUDIT: CAMBIOS` @ `157a7f7` corregidos en `94bad43` (#85 → `flaky`); CI 7/7 verde attempt 1 (run 38824315012) y `paralelo` verde. Pedido con A/B/C: [6205149348](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6205149348).
+**En auditoría:** #82 @ 94bad43c221cb9684cdbee528fb66c3abaf152cf
+**Fase:** P-03 (PR #82) en re-auditoría (4ª ronda del auditor); después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
 **Estado:** P-04 mergeado en `main@3a8e4fc` (#75, `AUDIT: APROBADO` [6186511591](https://github.com/fermalenoski86/dev/pull/75#issuecomment-6186511591) sobre `8bd04c5`; merge autorizado por Fer). #76 cerrado. Entregable P-04 en `entregables.mjs` + `PROGRESO.md` (`8b9ed35`).
 
 ## P-03 — qué entra (BACKLOG §P-03 + #54 dictamen 2)
@@ -27,7 +27,7 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-03 auditoría basada en riesgo | #53 / PR #82 / #83 | `AUDIT: CAMBIOS` @ `157a7f7` corregido en `94bad43`; CI en curso |
+| P-03 auditoría basada en riesgo | #53 / PR #82 / #83 | re-auditoría pedida @ `94bad43`, CI 7/7 verde; mejora opcional de duración de tests en rama `fix/p03-espera` (`c2cbe55`, sin PR) |
 | PoC P-06 | #54 | después de P-03 |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
