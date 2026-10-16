@@ -3,9 +3,9 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude — CI de `gates.yml` sobre `8a5a39d` (#82) en curso. Con 7/7 verde (+ `paralelo`), el próximo turno pide la re-auditoría focalizada del delta `cbe79d1..8a5a39d` (P2 `closed` de [6219530313](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6219530313) + registro de decisiones §2/§4) y lista los hallazgos automáticos nuevos para triage, sin otro push salvo P0/P1 o regresión.
-**En auditoría:** #82 @ cbe79d1386031001a74102f98bd0e7c9840887f5
-**Fase:** P-03 (PR #82): corrección del `AUDIT: CAMBIOS` @ `cbe79d1` empujada en `8a5a39d`; después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
+**Pelota en:** ChatGPT — re-auditoría focalizada de #82 @ `8a5a39d` pedida en [6221034903](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6221034903) (delta `cbe79d1..8a5a39d`: P2 `closed` + decisiones §2/§4). CI gates [38933549032](https://github.com/fermalenoski86/dev/actions/runs/38933549032) 7/7 verde + `paralelo` OK. Acción: `AUDIT:` sobre ese SHA. Si es APROBADO, merge en la sesión con Fer.
+**En auditoría:** #82 @ 8a5a39d09dd12c360a5d3f66f5f1bf894c433d15
+**Fase:** P-03 (PR #82) en re-auditoría sobre `8a5a39d`; después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
 **Estado:** P-04 mergeado en `main@3a8e4fc` (#75, `AUDIT: APROBADO` [6186511591](https://github.com/fermalenoski86/dev/pull/75#issuecomment-6186511591) sobre `8bd04c5`; merge autorizado por Fer). #76 cerrado. Entregable P-04 en `entregables.mjs` + `PROGRESO.md` (`8b9ed35`).
 
 ## P-03 — qué entra (BACKLOG §P-03 + #54 dictamen 2)
@@ -29,7 +29,7 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-03 auditoría basada en riesgo | #53 / PR #82 / #83 | P2 `closed` corregido en `8a5a39d` (114 tests de riesgo; `pnpm verify` 946+1 local); CI en curso |
+| P-03 auditoría basada en riesgo | #53 / PR #82 / #83 | `8a5a39d` congelado, CI 7/7 verde; re-auditoría pedida (Codex sin revisión por límite de uso) |
 | PoC P-06 | #54 | después de P-03 |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
