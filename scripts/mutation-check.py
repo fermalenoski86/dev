@@ -434,7 +434,11 @@ for _i, _arg in enumerate(sys.argv):
 # Una regla puede traer un 5.º campo: el comando de test que la atrapa. Por
 # defecto, la suite unitaria. Las mutaciones de procesos reales (ffprobe/ffmpeg)
 # usan la suite de media (vitest.media.config.ts).
-CMD_DEFAULT = "npx vitest run"
+# risk.test.ts (P-03) crea repos git reales y tarda ~23-45 s; ninguna regla muta
+# scripts/collab/, así que no puede atrapar nada acá y, corrido por cada una de
+# las ~104 reglas con CMD_DEFAULT, empujaba el gate más allá del plazo (#86).
+# Sigue corriendo en `pnpm verify`.
+CMD_DEFAULT = "npx vitest run --exclude scripts/collab/risk.test.ts"
 CMD_MEDIA = "npx vitest run -c vitest.media.config.ts"
 
 # MUTATION_TEST_CMD reemplaza el comando de test de TODAS las reglas. Sirve para
