@@ -614,4 +614,75 @@ jq -n --arg h "$h" --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{ref:"m
   it('sin declaración → failure', () => {
     expect(correr(['nada'])).toEqual({ rc: 1, checks: ['in_progress', 'in_progress', 'failure'] });
   });
+  // AUDIT: CAMBIOS @ cbe79d1, P2 (Codex r4295842312): #7 rechazado y #8 válido comparten HEAD.
+  // Mientras #7 está abierto domina el rechazo; al cerrarlo sin merge, la corrida que dispara
+  // `closed` (lista de abiertos = solo #8) libera a #8 sin otro push.
+  it('cerrar el PR rechazado que comparte HEAD libera al válido en la corrida siguiente (AUDIT: CAMBIOS @ cbe79d1, P2)', () => {
+    writeFileSync(path.join(dir, 'cuerpo_7'), 'nada\n');
+    writeFileSync(path.join(dir, 'cuerpo_8'), 'Riesgo: bajo\n');
+    try {
+      const antes = correr(['Riesgo: bajo'], { lista: `7 ${HEAD_PR}\n8 ${HEAD_PR}\n`, args: ['7', '8'] });
+      expect(antes.rc).toBe(1);
+      expect(antes.checks.at(-1)).toBe('failure');
+      const despues = correr(['Riesgo: bajo'], { lista: `8 ${HEAD_PR}\n`, args: ['8'] });
+      expect(despues).toEqual({ rc: 0, checks: ['in_progress', 'in_progress', 'success'] });
+      expect(ultimosShas.at(-1)).toBe(HEAD_PR);
+    } finally {
+      for (const f of ['cuerpo_7', 'cuerpo_8']) rmSync(path.join(dir, f), { force: true });
+    }
+  });
+});
+
+// AUDIT: CAMBIOS @ cbe79d1, P2: la corrida tiene que dispararse al cerrar un PR. Se ejecuta el
+// bash REAL de los pasos de riesgo.yml (extraído del YAML) con `gh` y riesgo-ci.sh falsos.
+describe('P-03 · riesgo.yml: cierre de un PR (AUDIT: CAMBIOS @ cbe79d1, P2)', () => {
+  const yaml = readFileSync(path.join(ROOT, '.github/workflows/riesgo.yml'), 'utf8');
+  const paso = (nombre: string) => {
+    const lineas = yaml.split('\n');
+    const i = lineas.findIndex((l) => l.includes(`- name: ${nombre}`));
+    const j = lineas.findIndex((l, k) => k > i && /^\s+run: \|$/.test(l));
+    const ind = /^(\s*)/.exec(lineas[j + 1])![1].length;
+    const cuerpo: string[] = [];
+    for (const l of lineas.slice(j + 1)) {
+      if (l.trim() !== '' && /^(\s*)/.exec(l)![1].length < ind) break;
+      cuerpo.push(l.slice(ind));
+    }
+    return cuerpo.join('\n');
+  };
+  const dir = mkdtempSync(path.join(tmpdir(), 'p03yml-'));
+  const sh0 = (cmd: string, cwd: string) => execFileSync('bash', ['-c', cmd], { cwd, encoding: 'utf8' });
+  afterAll(() => rmSync(dir, { recursive: true, force: true }));
+  const H7 = 'a'.repeat(40);
+  const H8 = H7; // mismo HEAD
+  mkdirSync(path.join(dir, 'bin'));
+  mkdirSync(path.join(dir, 'scripts/collab'), { recursive: true });
+  writeFileSync(path.join(dir, 'bin/gh'), `#!/usr/bin/env bash\ncase "$*" in *'pulls?state=open'*) cat "${dir}/lista"; exit 0 ;; esac\necho "$*" >> "${dir}/posts"; exit 0\n`, { mode: 0o755 });
+  writeFileSync(path.join(dir, 'scripts/collab/riesgo-ci.sh'), `#!/usr/bin/env bash\necho "$*" > "${dir}/args"\n`, { mode: 0o755 });
+  const correrPaso = (accion: string, wfViejo: '0' | '1') => {
+    writeFileSync(path.join(dir, 'lista'), `8:${H8}\n`); // #7 ya cerrado: la API lista solo #8
+    rmSync(path.join(dir, 'args'), { force: true });
+    rmSync(path.join(dir, 'posts'), { force: true });
+    const env = { ...process.env, PATH: `${dir}/bin:${process.env.PATH}`, GITHUB_REPOSITORY: 'o/r', GH_TOKEN: 'x', RUNNER_TEMP: dir, PR_EVT: '7', HEAD_EVT: H7, EVT_ACTION: accion, WF_VIEJO: wfViejo, RIESGO_GLOBAL: '1' };
+    execFileSync('bash', ['-e', '-c', paso('Riesgo declarado vs calculado')], { cwd: dir, env, stdio: 'pipe' });
+    return readFileSync(path.join(dir, 'args'), 'utf8').trim();
+  };
+  it('`closed` está entre los tipos de pull_request_target', () => {
+    const tipos = /pull_request_target:\s*\n\s*types:\s*\[([^\]]+)\]/.exec(yaml)?.[1].split(',').map((s) => s.trim());
+    expect(tipos).toContain('closed');
+  });
+  it('al cerrar #7 la re-evaluación cubre solo los abiertos (#8), sin agregar el PR cerrado', () => {
+    expect(correrPaso('closed', '0')).toBe(`8:${H8}`);
+  });
+  it('en otros eventos el PR del evento fuera de la lista se sigue agregando como `:otra`', () => {
+    expect(correrPaso('synchronize', '0')).toBe(`8:${H8} 7:${H7}:otra`);
+  });
+  it('workflow viejo + `closed`: no pinta de failure el HEAD que comparte con un PR abierto', () => {
+    const env = { ...process.env, PATH: `${dir}/bin:${process.env.PATH}`, GITHUB_REPOSITORY: 'o/r', GH_TOKEN: 'x', RUNNER_TEMP: dir, WF_SHA: 'b'.repeat(40), HEAD_EVT: H7, BASE_EVT: 'main', EVT_ACTION: 'closed', GITHUB_ENV: path.join(dir, 'genv') };
+    rmSync(path.join(dir, 'posts'), { force: true });
+    // git show del workflow cargado falla en un dir sin repo → "no disponible" ≠ main: rama WF_VIEJO
+    sh0(`git init -q -b main . && git -c user.email=t@t -c user.name=t commit -q --allow-empty -m x && git update-ref refs/remotes/origin/main HEAD && mkdir -p .github/workflows && cp ${ROOT}/.github/workflows/riesgo.yml .github/workflows/ && git add -A && git -c user.email=t@t -c user.name=t commit -qm wf && git update-ref refs/remotes/origin/main HEAD`, dir);
+    execFileSync('bash', ['-e', '-c', paso('El workflow cargado tiene que ser el de main actual')], { cwd: dir, env, stdio: 'pipe' });
+    expect(readFileSync(path.join(dir, 'genv'), 'utf8')).toContain('WF_VIEJO=1');
+    expect(() => readFileSync(path.join(dir, 'posts'), 'utf8')).toThrow();
+  });
 });

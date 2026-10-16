@@ -296,3 +296,34 @@ GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-
 $ node scripts/collab/risk.mjs calcular origin/main HEAD
 riesgo calculado: alto
 (lockfile sin cambios; PostgreSQL, media, compose, mutaciones y E2E: gates.yml sobre el SHA final.)
+
+## Ronda AUDIT: CAMBIOS @ cbe79d1 (1×P2: `closed` en riesgo.yml) — salida real 2026-10-16T16:37:28Z, node v22.22.0, pnpm 12.5.1, git version 2.43.0
+
+$ npx vitest run scripts/collab/risk.test.ts -t "cierre de un PR"   # riesgo.yml de cbe79d1 (antes del fix)
+   × P-03 · riesgo.yml: cierre de un PR (AUDIT: CAMBIOS @ cbe79d1, P2) > `closed` está entre los tipos de pull_request_target 18ms
+   × P-03 · riesgo.yml: cierre de un PR (AUDIT: CAMBIOS @ cbe79d1, P2) > al cerrar #7 la re-evaluación cubre solo los abiertos (#8), sin agregar el PR cerrado 42ms
+   × P-03 · riesgo.yml: cierre de un PR (AUDIT: CAMBIOS @ cbe79d1, P2) > workflow viejo + `closed`: no pinta de failure el HEAD que comparte con un PR abierto 267ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 1 passed | 110 skipped (114)
+
+$ npx vitest run scripts/collab/risk.test.ts   # con el fix
+ Test Files  1 passed (1)
+      Tests  114 passed (114)
+
+$ pnpm verify (cola)
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  54 passed | 1 skipped (55)
+      Tests  946 passed | 1 skipped (947)
+rc=0
+
+$ bash scripts/collab/paralelo.test.sh | tail -1
+paralelo.test: 143 ok, 0 fallos
+
+$ scripts/ci/politica-fallas.sh check
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+
+$ pnpm docs:contract && git diff --exit-code docs/platform
+sin diff
+
+$ bash -n scripts/collab/riesgo-ci.sh && python3 yaml.safe_load(riesgo.yml)
+ok

@@ -386,6 +386,7 @@ auditado como cualquier otro.
 - **Pendiente no bloqueante (Codex #82, 18:37):** `riesgo` es vinculante solo para PR hacia `main`; un PR hacia una rama de fase que avanza a un HEAD con verde viejo mientras se publica su rechazo no se revalida (la conciliación lista solo `base=main`). Si se quiere que `riesgo` gobierne merges hacia ramas de fase, reconciliar el HEAD final de todo PR de entrada.
 - **Pendiente no bloqueante (Codex #82, ronda 8):** la detección de tests mira `*.test.*`/`*.spec.*`; directorios `test/`/`tests/` y `test_*.py` no se reconocen como test (hoy no hay ninguno en el repo).
 - **Pendiente no bloqueante (Codex #82 sobre `6032c00`):** `visible()` saca comentarios HTML y bloques cercados del cuerpo del PR, pero no bloques indentados (4 espacios) ni HTML que no se renderiza (`<details>` sí se ve); hoy ningún PR usa esas formas.
+- **Diseño aceptado, no implementado (AUDIT: CAMBIOS @ `cbe79d1`, #82):** unificar el publicador de checks de `riesgo-ci.sh` con `paralelo-reevaluar.sh` (un carril, una conciliación). Antes de implementar: brief/ADR de invariantes, aislamiento por base/HEAD, eventos de ciclo de vida (incluido `closed`), fallos de API, caducidad y matriz diferencial que conserve los negativos existentes; se mantiene todo lo actual hasta demostrar equivalencia. No desplaza a P-06.
 
 ## P-04 · Diagnóstico de fallas (prioridad 2)
 - **Problema observado:** en #26 tardamos dos días en separar "test con carrera"
