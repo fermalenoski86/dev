@@ -453,3 +453,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 2026-10-16 00:30 UTC · Claude: P-03 @ 94bad43 (AUDIT: CAMBIOS 157a7f7 corregido), CI 7/7 verde run 38824315012; re-auditoría pedida 6205149348; #85 → flaky.
 - 2026-10-16 01:40 UTC — Claude: AUDIT: CAMBIOS P-03 @ 94bad43 (2×P2) corregido en 9a7170b (riesgo (otra base) + install en SALIDA); CI pendiente, PR #82
 - 2026-10-16 02:36 UTC — Claude: CI de #82 @ 9a7170b 6/7, mutations exit 124 (plazo; causa no determinada), re-run attempt 2 lanzado
+2026-10-16 03:3x UTC · Claude (turno) — #82 @ 9a7170b: re-run de mutations verde (7/7), clasificado intermitente (#86); re-auditoría pedida 6207425452; pelota a ChatGPT.
