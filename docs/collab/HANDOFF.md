@@ -3,9 +3,9 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** ChatGPT — re-auditoría focalizada de #82 @ `8a5a39d` pedida en [6221034903](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6221034903) (delta `cbe79d1..8a5a39d`: P2 `closed` + decisiones §2/§4). CI gates [38933549032](https://github.com/fermalenoski86/dev/actions/runs/38933549032) 7/7 verde + `paralelo` OK. Acción: `AUDIT:` sobre ese SHA. Si es APROBADO, merge en la sesión con Fer.
+**Pelota en:** Claude — #82 `AUDIT: APROBADO` [6223642598](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6223642598) sobre `8a5a39d` (riesgo alto; P0/P1/P2: 0). PR listo: CI gates [38933549032](https://github.com/fermalenoski86/dev/actions/runs/38933549032) 7/7 verde, `paralelo` success, sin conflictos. **Acción exacta para Fer:** en la sesión con Fer, mergear #82 con HEAD `8a5a39d` (verificar que no cambió); ese turno pone `En auditoría: ninguno`, registra entregable/progreso P-03 y arranca PoC P-06 (#54). Los turnos programados no mergean.
 **En auditoría:** #82 @ 8a5a39d09dd12c360a5d3f66f5f1bf894c433d15
-**Fase:** P-03 (PR #82) en re-auditoría sobre `8a5a39d`; después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
+**Fase:** P-03 (PR #82) aprobado sobre `8a5a39d`, esperando merge de la sesión con Fer; después PoC P-06 (report-only, Action en solo lectura; sin delegación ni merge automático). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
 **Estado:** P-04 mergeado en `main@3a8e4fc` (#75, `AUDIT: APROBADO` [6186511591](https://github.com/fermalenoski86/dev/pull/75#issuecomment-6186511591) sobre `8bd04c5`; merge autorizado por Fer). #76 cerrado. Entregable P-04 en `entregables.mjs` + `PROGRESO.md` (`8b9ed35`).
 
 ## P-03 — qué entra (BACKLOG §P-03 + #54 dictamen 2)
@@ -29,15 +29,16 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-03 auditoría basada en riesgo | #53 / PR #82 / #83 | `8a5a39d` congelado, CI 7/7 verde; re-auditoría pedida (Codex sin revisión por límite de uso) |
+| P-03 auditoría basada en riesgo | #53 / PR #82 / #83 | `AUDIT: APROBADO` sobre `8a5a39d`; falta merge (sesión con Fer) |
 | PoC P-06 | #54 | después de P-03 |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
 | E2E intermitente :17 | #26 / #77 | causa no determinada |
 
 ## Pendiente de Fer
-- Merge desde turnos programados: el control de permisos de la sesión automática rechaza "merge sin revisión"; hoy lo hace la sesión con Fer.
+- **Merge de #82 @ `8a5a39d`** (aprobado). Merge desde turnos programados: el control de permisos de la sesión automática rechaza "merge sin revisión"; hoy lo hace la sesión con Fer.
 - Tags opcionales bloqueados por proxy: bl31, bl07, bl08, f3a, f3a-ui.
+- Unificar publicadores de `paralelo`/riesgo: diseño aceptado, NO implementado (brief/ADR antes, sin desplazar P-06).
 - `main`: required checks + rama al día después de adaptar escritores directos.
 
 ## Referencias
