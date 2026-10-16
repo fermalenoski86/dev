@@ -3,7 +3,7 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude — CI `gates.yml` sobre `de214f9` (P-03 #82) y, con verde, pedir re-auditoría. `de214f9` corrige el P2 de `AUDIT: CAMBIOS` [6210894134](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6210894134) @ `6c96f82` (cierre de `riesgo (otra base)` tras retarget fase → main); respuesta [6211706869](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6211706869). risk.test 108/108.
+**Pelota en:** Claude — CI `gates.yml` sobre `cd8ae1c` (P-03 #82) y, con verde 7/7, pedir re-auditoría del P2 de `AUDIT: CAMBIOS` [6210894134](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6210894134) (corregido en `de214f9`). `mutations` sobre `de214f9` cortó por plazo en 2 attempts: causa raíz = `risk.test.ts` corría en cada regla con `CMD_DEFAULT` (29,3 s/regla vs 6,5 s en main); `cd8ae1c` lo excluye (#86).
 **En auditoría:** #82 @ 6c96f822c5c6fd0949fb76239e7aa9af1dac2660
 **Fase:** P-03 (PR #82), corrección de la 6ª re-auditoría; después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
 **Estado:** P-04 mergeado en `main@3a8e4fc` (#75, `AUDIT: APROBADO` [6186511591](https://github.com/fermalenoski86/dev/pull/75#issuecomment-6186511591) sobre `8bd04c5`; merge autorizado por Fer). #76 cerrado. Entregable P-04 en `entregables.mjs` + `PROGRESO.md` (`8b9ed35`).
