@@ -3,9 +3,9 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude — atiende `AUDIT: CAMBIOS` de P-03 (#82) @ `9a7170b` (1×P2: nombre del check `caducado` tras un retarget). Corrección en `6c96f82` (nombre recalculado desde la foto refrescada en F2/F3/conciliación final + cierre de `riesgo` tras retarget); risk.test 99/99 (10 nuevos, 10 fallan con 9a7170b), verify 931+1; CI corriendo. Al quedar verde: re-auditoría con A/B/C.
-**En auditoría:** #82 @ 9a7170b0334bd1211d39a03aea54f935023a6d7a
-**Fase:** P-03 (PR #82) corrigiendo 5ª ronda del auditor; después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
+**Pelota en:** ChatGPT — re-auditar P-03 (#82) @ `6c96f82` (respuesta al P2 de retarget/nombre del check `caducado`). CI `gates.yml` 7/7 verde (run 38851325502; `mutations` en attempt 2, intermitente → #86); risk.test 99/99. Pedido: [6210418600](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6210418600).
+**En auditoría:** #82 @ 6c96f822c5c6fd0949fb76239e7aa9af1dac2660
+**Fase:** P-03 (PR #82) en 6ª re-auditoría; después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
 **Estado:** P-04 mergeado en `main@3a8e4fc` (#75, `AUDIT: APROBADO` [6186511591](https://github.com/fermalenoski86/dev/pull/75#issuecomment-6186511591) sobre `8bd04c5`; merge autorizado por Fer). #76 cerrado. Entregable P-04 en `entregables.mjs` + `PROGRESO.md` (`8b9ed35`).
 
 ## P-03 — qué entra (BACKLOG §P-03 + #54 dictamen 2)
@@ -23,12 +23,12 @@
 - `e2e-m2c` intermitente (`experience.spec.ts:14`) → #77, causa no determinada; sin reintentos extra.
 - `e2e-platform` `a11y.spec.ts:48` (500 en `POST /assets`, 1 vez en `1d74859`) → #84, causa no determinada.
 - `e2e-m2c` murió en el setup (`npm i -g pnpm`, exit 139) en `157a7f7` attempt 1 → #85 (`flaky`): intermitente (pasó en attempt 2), causa raíz no determinada.
-- `mutations` cortado por plazo (exit 124) en `9a7170b` attempt 1, verde en attempt 2 (48 min vs plazo 56) → #86 (`flaky`): intermitente, causa raíz no determinada; no se toca el plazo.
+- `mutations` cortado por plazo (exit 124) en `9a7170b` attempt 1, verde en attempt 2 (48 min vs plazo 56); se repitió en `6c96f82` (exit 124 a 3388 s, verde en attempt 2) → #86 (`flaky`): intermitente, causa raíz no determinada; no se toca el plazo.
 
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-03 auditoría basada en riesgo | #53 / PR #82 / #83 | re-auditoría pedida @ `9a7170b` (CI 7/7); mejora opcional de duración de tests en rama `fix/p03-espera` (`c2cbe55`, sin PR) |
+| P-03 auditoría basada en riesgo | #53 / PR #82 / #83 | re-auditoría pedida @ `6c96f82` (CI 7/7); mejora opcional de duración de tests en rama `fix/p03-espera` (`c2cbe55`, sin PR) |
 | PoC P-06 | #54 | después de P-03 |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
