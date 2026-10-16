@@ -192,3 +192,26 @@ $ scripts/ci/politica-fallas.sh check
 politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
 (lockfile sin cambios en esta ronda; `pnpm install --frozen-lockfile` con pnpm 12.5.1: "Done in 5.1s".
  PostgreSQL, media, compose, mutaciones y E2E: gates.yml sobre el SHA final.)
+
+## Ronda AUDIT: CAMBIOS @ 6c96f82 (1×P2: `riesgo (otra base)` en_progreso tras retarget fase → main) — salida real 2026-10-16T08:30Z, node v22.22.0, pnpm 12.5.1
+
+$ pnpm exec vitest run scripts/collab/risk.test.ts
+ Test Files  1 passed (1)
+      Tests  108 passed (108)
+  (9 nuevos: retarget fase → main de #8 en F2, F3 y la conciliación final → `riesgo` último = failure y
+   `riesgo (otra base)` último = failure (antes quedaba in_progress: reproducción del auditor);
+   los mismos tres caminos con #7 válido hacia la fase y el mismo HEAD, en los dos órdenes →
+   `riesgo (otra base)` último = success (no se ensucia a #7); #7 hacia la fase rechazado → queda failure sin success.
+   Con el riesgo-ci.sh de 6c96f82: 5 failed | 103 passed — reproduce el hallazgo.)
+$ pnpm verify (cola: lint + typecheck + test), 5 corridas en el mismo árbol
+✖ 12 problems (0 errors, 12 warnings)
+ corrida 1: Tests  1 failed | 939 passed | 1 skipped (941)   rc=1  (no se capturó qué test: causa no determinada)
+ corridas 2-5: Test Files  54 passed | 1 skipped (55) · Tests  940 passed | 1 skipped (941)   rc=0
+$ bash -n scripts/collab/riesgo-ci.sh && python3 yaml.safe_load(riesgo.yml)
+ok
+$ bash scripts/collab/paralelo.test.sh | tail -1
+paralelo.test: 143 ok, 0 fallos
+$ scripts/ci/politica-fallas.sh check
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+(lockfile sin cambios en esta ronda; `pnpm install --frozen-lockfile` con pnpm 12.5.1 OK.
+ PostgreSQL, media, compose, mutaciones y E2E: gates.yml sobre el SHA final.)

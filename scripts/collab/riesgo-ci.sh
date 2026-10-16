@@ -41,6 +41,9 @@ check_de() { if [ "$1" = main ]; then echo "$CHECK_MAIN"; else echo "$CHECK_OTRA
 # legible se queda el nombre anterior ($2).
 check_de_foto() { local b; read -r _ b _ <<< "$1"; if [ -n "${b:-}" ]; then check_de "$b"; else echo "$2"; fi; }
 declare -A SALIO_MAIN=()       # HEAD → 1 si un PR que apuntaba a main se fue a otra base durante el lote
+declare -A SALIO_OTRA=()       # HEAD → 1 si un PR que apuntaba a otra base se fue a main durante el lote
+declare -A FALLA_OTRA=()       # HEAD → 1 si este lote quiso publicar failure sobre él en `riesgo (otra base)`
+declare -A ULTIMO_OTRA=()      # HEAD → última conclusión publicada con éxito en `riesgo (otra base)`
 
 foto() { # $1 = PR → "head base base_sha body_sha256 state"; exit ≠ 0 si algo falla
   # Se llama siempre desde `x=$(foto) || …`, donde errexit no rige dentro de la función:
@@ -66,12 +69,15 @@ invalidar_nuevo() { # $1 = foto nueva, $2 = HEAD evaluado
     publicar "$hn" failure "riesgo: caducado (el PR avanzó durante la evaluación; el evento siguiente re-evalúa)" "$TMP/out" || true
   fi
 }
-# Publica el `caducado` de $2 con el nombre de la foto nueva $1 y, si el PR dejó main,
-# lo anota para el cierre de `riesgo` sobre ese HEAD (ver el final del script).
+# Publica el `caducado` de $2 con el nombre de la foto nueva $1 y, si el PR cambió de
+# check (dejó main o llegó a main), anota el nombre VIEJO para cerrarlo sobre ese HEAD al
+# final del lote (AUDIT: CAMBIOS @ 6c96f82, P2: el en_progreso del nombre viejo no puede
+# quedar sin conclusión).
 caducar() { # $1 foto nueva, $2 HEAD evaluado, $3 título
   local viejo=$CHECK
   CHECK=$(check_de_foto "$1" "$viejo")
   [ "$viejo" != "$CHECK_MAIN" ] || [ "$CHECK" = "$CHECK_MAIN" ] || SALIO_MAIN[$2]=1
+  [ "$viejo" != "$CHECK_OTRA" ] || [ "$CHECK" = "$CHECK_OTRA" ] || SALIO_OTRA[$2]=1
   publicar "$2" failure "$3" "$TMP/out" || true; invalidar_nuevo "$1" "$2"
   CHECK=$viejo
 }
@@ -87,13 +93,14 @@ publicar() { # $1 sha, $2 status|conclusion, $3 título, $4 archivo de resumen
   fi > "$TMP/check.json"
   local m=0; [ "$CHECK" != "$CHECK_MAIN" ] || m=1
   [ "$m" = 0 ] || [ "$2" != failure ] || FALLA_HEAD[$1]=1
+  [ "$m" = 1 ] || [ "$2" != failure ] || FALLA_OTRA[$1]=1
   # reintentos: un POST que falla de forma transitoria no puede cortar el lote y dejar
   # verdes viejos en los HEAD que faltaban (Codex #82, P1); si igual falla, el lote sigue
   # y termina en rojo
   local i
   for i in 1 2 3; do
     if gh api -X POST "repos/$REPO/check-runs" --input "$TMP/check.json" --jq .html_url; then
-      if [ "$m" = 1 ]; then [ "$2" != failure ] || PUBLICADO_FALLA[$1]=1; ULTIMO[$1]=$2; fi
+      if [ "$m" = 1 ]; then [ "$2" != failure ] || PUBLICADO_FALLA[$1]=1; ULTIMO[$1]=$2; else ULTIMO_OTRA[$1]=$2; fi
       return 0
     fi
     sleep "$i"
@@ -218,7 +225,7 @@ done
 # Dominancia por HEAD (AUDIT: CAMBIOS @ e08a47b, P1; Codex #82, P1): el check es por SHA
 # y la evaluación por PR. Si dos PR comparten HEAD y uno fue rechazado (o caducó), un
 # success de otro PR sobre ese SHA no puede quedar último: se republica `failure`, en
-# cualquier orden de procesamiento. Solo lo sigue el cierre por retarget.
+# cualquier orden de procesamiento. Solo la siguen los cierres por retarget.
 # Solo entre PR hacia main (check `riesgo`): uno de otra base no domina (AUDIT: CAMBIOS @ 94bad43, P2).
 declare -A DOMINADO=()
 CHECK=$CHECK_MAIN
@@ -234,7 +241,7 @@ for v in "${VERDES[@]+"${VERDES[@]}"}"; do
 done
 # Cierre de `riesgo` por retarget (AUDIT: CAMBIOS @ 9a7170b, P2). Un PR que dejó main durante
 # el lote publicó su `caducado` en `riesgo (otra base)`, pero antes había dejado en `riesgo`
-# un en_progreso (o un success) sobre su HEAD. Es lo ÚLTIMO que publica el lote:
+# un en_progreso (o un success) sobre su HEAD. Con el cierre simétrico de abajo, es lo último del lote:
 #  - si ese HEAD tiene un verde VÁLIDO de un PR hacia main de este lote (sobrevivió a la
 #    conciliación final) y ningún PR hacia main falló sobre él → se republica su success
 #    (el PR que se fue no lo bloquea, como pide el aislamiento por base);
@@ -254,6 +261,31 @@ for H in "${!SALIO_MAIN[@]}"; do
     [ "${ULTIMO[$H]:-}" != failure ] || continue
     echo "riesgo-ci: ${H:0:7} quedó sin PR hacia main con veredicto válido (el PR se fue a otra base durante el lote)" > "$TMP/out"
     publicar "$H" failure "riesgo: caducado (el PR dejó de apuntar a main)" "$TMP/out" || true
+    total=1
+  fi
+done
+# Cierre de `riesgo (otra base)` por retarget hacia main (AUDIT: CAMBIOS @ 6c96f82, P2), el
+# simétrico del de arriba: el PR publicó su `caducado` en `riesgo`, pero antes había dejado en
+# `riesgo (otra base)` un en_progreso (o un success) sobre su HEAD. Solo toca ese nombre:
+#  - si otro PR hacia otra base de este lote tiene un verde VÁLIDO sobre ese HEAD y ningún
+#    PR hacia otra base falló sobre él → se republica su success (no se lo ensucia);
+#  - si no → `failure` (cerrado a falla: nunca queda en_progreso ni el success del que se fue;
+#    un PR hacia otra base que no estaba en el lote se re-evalúa en su próximo evento).
+declare -A VALIDO_OTRA=()
+for v in "${VERDES[@]+"${VERDES[@]}"}"; do
+  IFS='|' read -r PR HEAD cv _ <<< "$v"
+  [ "$cv" = "$CHECK_OTRA" ] && [ -z "${CADUCO_FINAL[$PR|$HEAD]:-}" ] && VALIDO_OTRA[$HEAD]=1
+done
+CHECK=$CHECK_OTRA
+for H in "${!SALIO_OTRA[@]}"; do
+  if [ -n "${VALIDO_OTRA[$H]:-}" ] && [ "${FALLA_OTRA[$H]:-}" != 1 ]; then
+    [ "${ULTIMO_OTRA[$H]:-}" != success ] || continue
+    echo "riesgo-ci: ${H:0:7} tiene un verde válido hacia otra base; el PR que compartía HEAD se fue a main durante el lote" > "$TMP/out"
+    publicar "$H" success "riesgo: OK (re-publicado tras el retarget de otro PR con este HEAD)" "$TMP/out" || total=1
+  else
+    [ "${ULTIMO_OTRA[$H]:-}" != failure ] || continue
+    echo "riesgo-ci: ${H:0:7} quedó sin PR hacia otra base con veredicto válido en este lote (el PR se fue a main durante el lote)" > "$TMP/out"
+    publicar "$H" failure "riesgo: caducado (el PR pasó a apuntar a main)" "$TMP/out" || true
     total=1
   fi
 done
