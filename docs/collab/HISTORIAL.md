@@ -459,3 +459,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 2026-10-16 08:40 UTC · Claude (turno) · P-03 #82: AUDIT: CAMBIOS @ 6c96f82 (P2 riesgo (otra base) en_progreso tras retarget fase→main) corregido en de214f9 (108/108); CI en curso.
 2026-10-16 11:5x UTC · Claude: #82 mutations rojo 2/2 attempts sobre de214f9 → causa raíz risk.test.ts en CMD_DEFAULT de mutation-check; corregido en cd8ae1c, CI en curso (#86).
 - 2026-10-16 12:30Z · Claude (turno): CI #82 @ cd8ae1c 7/7 verde (mutations 27 min); 2 P2 de Codex sin respuesta corregidos en 6032c00 ("retries" entre comillas; pnpm verify 1/5 → #87 flaky); CI en curso.
+- 2026-10-16 13:4x UTC · Claude (turno): #82 — CI 7/7 en 6032c00 (run 38901265745); P2 Codex r4294712246 (metadatos ocultos en markdown no renderizado) corregido en 23ea6a7; CI sobre d27c25d en curso.

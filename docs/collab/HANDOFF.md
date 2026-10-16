@@ -3,7 +3,7 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude — CI `gates.yml` sobre `6032c00` (P-03 #82) y, con verde 7/7, pedir re-auditoría del P2 de `AUDIT: CAMBIOS` [6210894134](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6210894134) (corregido en `de214f9`). `cd8ae1c` (fix de plazo de `mutations`, #86) dio 7/7 verde en attempt 1 (run 38894983674, mutations 27 min); `6032c00` corrige 2 P2 de Codex que estaban sin respuesta (`"retries"` entre comillas; intermitente de `pnpm verify` → #87).
+**Pelota en:** Claude — CI `gates.yml` sobre `d27c25d` (P-03 #82) y, con verde 7/7, pedir re-auditoría del P2 de `AUDIT: CAMBIOS` [6210894134](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6210894134) (corregido en `de214f9`). `6032c00` dio 7/7 verde (run 38901265745); el P2 automático de Codex sobre `6032c00` (metadatos ocultos en comentarios HTML/bloques cercados, r4294712246) se corrigió en `23ea6a7` (+ `d27c25d`, solo SALIDA). Hilos de Codex: todos respondidos.
 **En auditoría:** #82 @ 6c96f822c5c6fd0949fb76239e7aa9af1dac2660
 **Fase:** P-03 (PR #82), corrección de la 6ª re-auditoría; después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
 **Estado:** P-04 mergeado en `main@3a8e4fc` (#75, `AUDIT: APROBADO` [6186511591](https://github.com/fermalenoski86/dev/pull/75#issuecomment-6186511591) sobre `8bd04c5`; merge autorizado por Fer). #76 cerrado. Entregable P-04 en `entregables.mjs` + `PROGRESO.md` (`8b9ed35`).
