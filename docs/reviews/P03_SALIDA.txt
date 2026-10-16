@@ -239,3 +239,26 @@ $ pnpm docs:contract && git status --short   → sin diff;  pnpm progress:check 
 $ node scripts/collab/risk.mjs calcular origin/main HEAD
 riesgo calculado: alto
 (lockfile sin cambios; PostgreSQL, media, compose, mutaciones y E2E: gates.yml sobre el SHA final.)
+
+## Hallazgo de Codex sobre 6032c00 (P2: metadatos ocultos en comentarios HTML / bloques cercados) — salida real 2026-10-16T13:31:27Z, node v22.22.0, pnpm 12.5.1
+
+$ pnpm exec vitest run scripts/collab/risk.test.ts -t 'no renderiza'   (con risk.lib.mjs de 6032c00)
+AssertionError: expected '' to match /no declara/
+      Tests  1 failed | 108 skipped (109)   — <!-- Riesgo: alto / ## Pruebas adversarias / - caso --> pasaba sin errores
+$ pnpm exec vitest run scripts/collab/risk.test.ts   (con el fix)
+ Test Files  1 passed (1)
+      Tests  109 passed (109)
+$ pnpm verify
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  54 passed | 1 skipped (55)
+      Tests  941 passed | 1 skipped (942)
+rc=0
+autoprueba OK
+paralelo.test: 143 ok, 0 fallos
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+docs:contract rc=0
+For more information, try '--help'.
+For more information, try '--help'.
+riesgo calculado: alto
+$ pnpm progress:check / acceptance:check → al día; pnpm docs:contract → sin diff
+(lockfile sin cambios; PostgreSQL, media, compose, mutaciones y E2E: gates.yml sobre el SHA final.)

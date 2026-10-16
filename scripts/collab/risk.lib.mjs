@@ -173,8 +173,31 @@ export function clasificar(archivos, gatesRe) {
   return { nivel, detalle };
 }
 
+/**
+ * Texto que GitHub renderiza: saca comentarios HTML (`<!-- … -->`) y bloques de
+ * código cercados (``` / ~~~). Sin cierre, la región sigue hasta el final (como
+ * en CommonMark): ante la duda se descarta, nunca se cuenta (Codex #82, P2).
+ */
+export function visible(cuerpo) {
+  const sinComentarios = (cuerpo ?? '').replace(/<!--[\s\S]*?(-->|$)/g, '');
+  const out = [];
+  let cerca = null;
+  for (const l of sinComentarios.split('\n')) {
+    if (cerca) {
+      const c = /^ {0,3}(`{3,}|~{3,})\s*$/.exec(l); // cierre: mismo carácter, igual o más largo, sin info
+      if (c && c[1][0] === cerca[0] && c[1].length >= cerca.length) cerca = null;
+      continue;
+    }
+    const a = /^ {0,3}(`{3,}|~{3,})/.exec(l);
+    if (a) { cerca = a[1]; continue; }
+    out.push(l);
+  }
+  return out.join('\n');
+}
+
 /** Nivel declarado en el cuerpo del PR: `Riesgo: bajo|medio|alto` (una sola vez). */
 export function declarado(cuerpo) {
+  cuerpo = visible(cuerpo);
   const re = /^\s*[-*]?\s*(\*\*)?Riesgo(\*\*)?\s*:\s*(\*\*)?\s*`?(bajo|medio|alto)`?\s*(\*\*)?(\s|$|[.—(-])/gim;
   const ms = [...(cuerpo ?? '').matchAll(re)];
   const hallados = ms.map((m) => m[4].toLowerCase());
@@ -192,7 +215,7 @@ export function declarado(cuerpo) {
 
 /** ¿Tiene sección "Pruebas adversarias" con al menos un caso (ítem de lista o fila de tabla)? */
 export function tieneAdversarias(cuerpo) {
-  const ls = (cuerpo ?? '').split('\n');
+  const ls = visible(cuerpo).split('\n');
   const i = ls.findIndex((l) => /^#{2,4}\s*Pruebas adversarias\b/i.test(l.trim()));
   if (i < 0) return false;
   let separador = false;

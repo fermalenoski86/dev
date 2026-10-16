@@ -212,6 +212,22 @@ describe('P-03 · declarado vs calculado', () => {
     expect(tieneAdversarias('### Pruebas adversarias\n| eje | caso |\n|---|---|\n')).toBe(false);
     expect(tieneAdversarias('### Pruebas adversarias\n| eje | caso |\n|---|---|\n| | |')).toBe(false); // Codex #82, P2
   });
+
+  it('ignora lo que GitHub no renderiza: comentarios HTML y bloques cercados (Codex #82, P2)', () => {
+    const oculto = '<!--\nRiesgo: alto\n## Pruebas adversarias\n- caso oculto suficiente\n-->';
+    expect(verificar('alto', oculto).errores.join()).toMatch(/no declara/);
+    expect(verificar('alto', oculto).errores.join()).toMatch(/Pruebas adversarias/);
+    expect(verificar('alto', 'Riesgo: alto\n```md\n## Pruebas adversarias\n- caso dentro del ejemplo\n```').errores.join()).toMatch(/Pruebas adversarias/);
+    expect(declarado('~~~\nRiesgo: bajo\n~~~\nRiesgo: alto').nivel).toBe('alto'); // la del ejemplo no cuenta como duplicada
+    expect(declarado('texto <!-- Riesgo: bajo --> más').error).toMatch(/no declara/);
+    // sin cierre: hasta el final (como CommonMark); se descarta, nunca se cuenta
+    expect(declarado('<!-- sin cerrar\nRiesgo: alto').error).toMatch(/no declara/);
+    expect(tieneAdversarias('## Pruebas adversarias\n```\n- caso dentro de un bloque sin cerrar')).toBe(false);
+    // un cierre más corto o con info no cierra el bloque
+    expect(declarado('````\n```\nRiesgo: alto\n````').error).toMatch(/no declara/);
+    // lo visible sigue valiendo
+    expect(verificar('alto', '<!-- plantilla -->\nRiesgo: alto\n' + ADV + '\n```\nejemplo\n```').errores).toEqual([]);
+  });
 });
 
 describe('P-03 · CLI sobre un repo git real', () => {
