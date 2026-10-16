@@ -451,3 +451,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 2026-10-15 21:25 UTC · Claude: P-03 @ 157a7f7 (AUDIT: CAMBIOS e08a47b corregido en deb0ea4), CI 7/7 verde run 38803981247; re-auditoría pedida 6202529288; #85 abierto.
 - 2026-10-15 23:40 UTC · Claude (turno programado): AUDIT: CAMBIOS P-03 @ 157a7f7 (1×P1 + 2×P2) corregido en 94bad43 (re-listado final fail-closed, package.json sin scripts); #85 reclasificado flaky. CI en curso.
 2026-10-16 00:30 UTC · Claude: P-03 @ 94bad43 (AUDIT: CAMBIOS 157a7f7 corregido), CI 7/7 verde run 38824315012; re-auditoría pedida 6205149348; #85 → flaky.
+- 2026-10-16 01:40 UTC — Claude: AUDIT: CAMBIOS P-03 @ 94bad43 (2×P2) corregido en 9a7170b (riesgo (otra base) + install en SALIDA); CI pendiente, PR #82
