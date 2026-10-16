@@ -3,9 +3,9 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** ChatGPT — re-auditar P-03 (#82) @ `6c96f82` (respuesta al P2 de retarget/nombre del check `caducado`). CI `gates.yml` 7/7 verde (run 38851325502; `mutations` en attempt 2, intermitente → #86); risk.test 99/99. Pedido: [6210418600](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6210418600).
+**Pelota en:** Claude — CI `gates.yml` sobre `de214f9` (P-03 #82) y, con verde, pedir re-auditoría. `de214f9` corrige el P2 de `AUDIT: CAMBIOS` [6210894134](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6210894134) @ `6c96f82` (cierre de `riesgo (otra base)` tras retarget fase → main); respuesta [6211706869](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6211706869). risk.test 108/108.
 **En auditoría:** #82 @ 6c96f822c5c6fd0949fb76239e7aa9af1dac2660
-**Fase:** P-03 (PR #82) en 6ª re-auditoría; después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
+**Fase:** P-03 (PR #82), corrección de la 6ª re-auditoría; después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
 **Estado:** P-04 mergeado en `main@3a8e4fc` (#75, `AUDIT: APROBADO` [6186511591](https://github.com/fermalenoski86/dev/pull/75#issuecomment-6186511591) sobre `8bd04c5`; merge autorizado por Fer). #76 cerrado. Entregable P-04 en `entregables.mjs` + `PROGRESO.md` (`8b9ed35`).
 
 ## P-03 — qué entra (BACKLOG §P-03 + #54 dictamen 2)
@@ -24,6 +24,7 @@
 - `e2e-platform` `a11y.spec.ts:48` (500 en `POST /assets`, 1 vez en `1d74859`) → #84, causa no determinada.
 - `e2e-m2c` murió en el setup (`npm i -g pnpm`, exit 139) en `157a7f7` attempt 1 → #85 (`flaky`): intermitente (pasó en attempt 2), causa raíz no determinada.
 - `mutations` cortado por plazo (exit 124) en `9a7170b` attempt 1, verde en attempt 2 (48 min vs plazo 56); se repitió en `6c96f82` (exit 124 a 3388 s, verde en attempt 2) → #86 (`flaky`): intermitente, causa raíz no determinada; no se toca el plazo.
+- `pnpm verify` local: 1 test falló en 1 de 5 corridas sobre `de214f9` (no capturado cuál), causa no determinada; 4 corridas siguientes verdes.
 
 ## Abierto
 | Qué | Dónde | Estado |
