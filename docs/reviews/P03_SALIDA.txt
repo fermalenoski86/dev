@@ -253,12 +253,17 @@ $ pnpm verify
  Test Files  54 passed | 1 skipped (55)
       Tests  941 passed | 1 skipped (942)
 rc=0
+$ python3 scripts/mutation-check.py --autoprueba
 autoprueba OK
+$ bash scripts/collab/paralelo.test.sh | tail -1
 paralelo.test: 143 ok, 0 fallos
+$ scripts/ci/politica-fallas.sh check
 politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
-docs:contract rc=0
-For more information, try '--help'.
-For more information, try '--help'.
+$ pnpm docs:contract && git status --short   → rc=0, sin diff en archivos generados
+$ pnpm progress:check   (primero corrido como `pnpm -s progress:check`: pnpm 12 no acepta -s → "try '--help'"; re-corrido sin -s)
+GATE progreso (P-02): manifiesto válido (34 entradas), docs/collab/PROGRESO.md al día
+$ pnpm acceptance:check   (ídem)
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día
+$ node scripts/collab/risk.mjs calcular origin/main HEAD
 riesgo calculado: alto
-$ pnpm progress:check / acceptance:check → al día; pnpm docs:contract → sin diff
 (lockfile sin cambios; PostgreSQL, media, compose, mutaciones y E2E: gates.yml sobre el SHA final.)
