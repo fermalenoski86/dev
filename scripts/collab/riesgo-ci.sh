@@ -21,6 +21,9 @@ REPO=${GITHUB_REPOSITORY:?}
 AQUI=$(cd "$(dirname "$0")" && pwd)
 SCRIPTS_SHA=$(git rev-parse HEAD)
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
+# segundos base del backoff de reintentos (i × ESPERA); los tests lo ponen en 0 para no
+# alargar la suite (y con ella cada mutante de mutation-check.py)
+ESPERA=${RIESGO_ESPERA_S:-1}; [[ "$ESPERA" =~ ^[0-9]+$ ]] || ESPERA=1
 declare -A PUBLICADO_FALLA=()  # HEAD → 1 si este lote ya publicó failure sobre él
 declare -A FALLA_HEAD=()       # HEAD → 1 si este lote quiso publicar failure sobre él (aunque el POST fallara)
 declare -A ULTIMO=()           # HEAD → última conclusión que este lote publicó con éxito sobre él
@@ -70,7 +73,7 @@ publicar() { # $1 sha, $2 status|conclusion, $3 título, $4 archivo de resumen
       ULTIMO[$1]=$2
       return 0
     fi
-    sleep "$i"
+    sleep $((i * ESPERA))
   done
   echo "riesgo-ci: no se pudo publicar el check sobre $1 tras 3 intentos" >&2
   return 1
@@ -146,7 +149,7 @@ if [ "${RIESGO_GLOBAL:-0}" = 1 ]; then
   LISTA_OK=0
   for i in 1 2 3; do
     if LISTA=$(gh api "repos/$REPO/pulls?state=open&base=main&per_page=100" --paginate --jq '.[] | "\(.number) \(.head.sha)"'); then LISTA_OK=1; break; fi
-    [ "$i" = 3 ] || sleep "$i"
+    [ "$i" = 3 ] || sleep $((i * ESPERA))
   done
   if [ "$LISTA_OK" = 1 ]; then
     while read -r N H; do

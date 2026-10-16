@@ -364,7 +364,7 @@ jq -n --arg h "$h" --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{ref:"m
     rmSync(path.join(dir, 'checks.log'), { force: true });
     let rc = 0;
     try {
-      execFileSync('bash', ['scripts/collab/riesgo-ci.sh', ...(extra.args ?? ['7'])], { cwd: clon, env: { ...process.env, PATH: `${dir}/bin:${process.env.PATH}`, GITHUB_REPOSITORY: 'o/r', GH_TOKEN: 'x', RIESGO_GLOBAL: '1' }, stdio: 'pipe' });
+      execFileSync('bash', ['scripts/collab/riesgo-ci.sh', ...(extra.args ?? ['7'])], { cwd: clon, env: { ...process.env, PATH: `${dir}/bin:${process.env.PATH}`, GITHUB_REPOSITORY: 'o/r', GH_TOKEN: 'x', RIESGO_GLOBAL: '1', RIESGO_ESPERA_S: '0' }, stdio: 'pipe' });
     } catch (e) {
       rc = (e as { status: number }).status;
     }
