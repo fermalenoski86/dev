@@ -267,3 +267,32 @@ GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-
 $ node scripts/collab/risk.mjs calcular origin/main HEAD
 riesgo calculado: alto
 (lockfile sin cambios; PostgreSQL, media, compose, mutaciones y E2E: gates.yml sobre el SHA final.)
+
+## Hallazgos de Codex sobre d27c25d (2 × P2: plantilla tras línea en blanco; DDL multilínea) — salida real 2026-10-16T14:31:10Z, node v22.22.0, pnpm 12.5.1
+
+$ pnpm exec vitest run scripts/collab/risk.test.ts   (con risk.lib.mjs de d27c25d y los tests nuevos)
+   × P-03 · diff completo > código de producto que agrega procesos externos, secrets o DDL → alto
+   × P-03 · declarado vs calculado > lee una sola declaración en sus formas habituales
+   — '## Resumen\n\nRiesgo: bajo | medio | alto' pasaba como bajo; '+ CREATE' / '+ VIEW foo AS' en dos líneas quedaba medio
+$ pnpm exec vitest run scripts/collab/risk.test.ts   (con el fix)
+ Test Files  1 passed (1)
+      Tests  109 passed (109)
+$ pnpm verify
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  54 passed | 1 skipped (55)
+      Tests  941 passed | 1 skipped (942)
+rc=0
+$ python3 scripts/mutation-check.py --autoprueba
+autoprueba OK
+$ bash scripts/collab/paralelo.test.sh | tail -1
+paralelo.test: 143 ok, 0 fallos
+$ scripts/ci/politica-fallas.sh check
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+$ pnpm docs:contract && git status --short   → rc=0, sin diff en archivos generados
+$ pnpm progress:check
+GATE progreso (P-02): manifiesto válido (34 entradas), docs/collab/PROGRESO.md al día
+$ pnpm acceptance:check
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día
+$ node scripts/collab/risk.mjs calcular origin/main HEAD
+riesgo calculado: alto
+(lockfile sin cambios; PostgreSQL, media, compose, mutaciones y E2E: gates.yml sobre el SHA final.)

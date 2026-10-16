@@ -126,6 +126,10 @@ describe('P-03 · diff completo', () => {
       expect(nivel([m('packages/platform-campaigns/src/q.ts', `+  await db.query(\`${q}\`)`)])).toBe('alto');
     }
     expect(nivel([m('packages/show-engine/src/runner.ts', '-    shell: false,\n+    shell: true,')])).toBe('alto');
+    // sentencia SQL multilínea: CREATE en una línea, el objeto en la siguiente (Codex #82, P2 sobre d27c25d)
+    expect(nivel([m('packages/platform-campaigns/src/q.ts', '+  await db.query(`\n+    CREATE\n+    VIEW foo AS SELECT 1`)')])).toBe('alto');
+    expect(nivel([m('apps/platform-api/src/q.ts', '+  sql`create\n+    or replace view v as select 1`')])).toBe('alto');
+    expect(nivel([m('packages/platform-campaigns/src/q.ts', '-  await db.query(`ALTER\n-    TABLE x ADD c int`)\n+  await run(q)')])).toBe('alto');
     // código JS común no es DDL
     expect(nivel([m('packages/show-engine/src/a.ts', '+  const drop = items.filter((x) => x.create);')])).toBe('medio');
     expect(nivel([m('apps/platform-web/src/a.ts', '+  token: ${{ secrets.X }}')])).toBe('alto');
@@ -186,6 +190,10 @@ describe('P-03 · declarado vs calculado', () => {
     expect(declarado('Riesgo: bajo\nRiesgo: alto').error).toMatch(/más de una vez/);
     expect(declarado('Riesgo: medio\nRiesgo: medio').error).toMatch(/más de una vez/); // Codex #82, P2
     expect(declarado('Riesgo: bajo | medio | alto').error).toMatch(/más de un nivel/); // plantilla sin elegir
+    // después de una línea en blanco (cuerpo típico de PR; Codex #82, P2 sobre d27c25d)
+    expect(declarado('## Resumen\n\nRiesgo: bajo | medio | alto').error).toMatch(/más de un nivel/);
+    expect(declarado('## Resumen\n\n\n  - **Riesgo:** bajo | alto\n').error).toMatch(/más de un nivel/);
+    expect(declarado('## Resumen\n\nRiesgo: medio\n\nOtra cosa').nivel).toBe('medio');
     expect(declarado('**Riesgo:** alto — toca gates, no es bajo').error).toMatch(/más de un nivel/);
     expect(declarado('**Riesgo:** alto — toca gates').nivel).toBe('alto');
     expect(declarado('Riesgo: bajísimo').error).toMatch(/no declara/);

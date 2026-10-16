@@ -128,7 +128,10 @@ export function motivosContenido(ruta, estado, parche, binario) {
     if (mas.some((l) => SECRETS_CTX.test(l)) || menos.some((l) => SECRETS_CTX.test(l))) out.push('toca secrets, GITHUB_TOKEN, permisos o pull_request_target');
     // agregadas Y quitadas: reemplazar `execFile(...)` por un helper indirecto también cambia el borde (Codex #82, P2)
     if ([...mas, ...menos].some((l) => PROCESO.test(l))) out.push('agrega, quita o cambia ejecución de procesos externos');
-    if ([...mas, ...menos].some((l) => DDL.test(l) || DDL_GENERICO.test(l))) out.push('DDL o permisos SQL');
+    // sentencias multilínea (`CREATE` en una línea, `VIEW v AS` en la siguiente): se evalúa además el
+    // texto agregado y el quitado unidos con \n; DDL usa \s y cruza el salto (Codex #82, P2 sobre d27c25d)
+    const ddl = (t) => DDL.test(t) || DDL_GENERICO.test(t);
+    if ([...mas, ...menos].some(ddl) || ddl(mas.join('\n')) || ddl(menos.join('\n'))) out.push('DDL o permisos SQL');
   }
   // AUDIT: CAMBIOS sobre c424b9c (P1): contar tokens no detecta un test que deja de
   // registrarse conservándolos (`false && it(...)`, un `if`, un wrapper). Sin análisis
@@ -198,7 +201,9 @@ export function visible(cuerpo) {
 /** Nivel declarado en el cuerpo del PR: `Riesgo: bajo|medio|alto` (una sola vez). */
 export function declarado(cuerpo) {
   cuerpo = visible(cuerpo);
-  const re = /^\s*[-*]?\s*(\*\*)?Riesgo(\*\*)?\s*:\s*(\*\*)?\s*`?(bajo|medio|alto)`?\s*(\*\*)?(\s|$|[.—(-])/gim;
+  // solo espacio horizontal: con `\s` el `^\s*` se comía la línea en blanco anterior y `m.index`
+  // apuntaba a ella, así la plantilla sin elegir pasaba como `bajo` (Codex #82, P2 sobre d27c25d)
+  const re = /^[ \t]*[-*]?[ \t]*(\*\*)?Riesgo(\*\*)?[ \t]*:[ \t]*(\*\*)?[ \t]*`?(bajo|medio|alto)`?[ \t]*(\*\*)?([ \t]|$|[.—(-])/gim;
   const ms = [...(cuerpo ?? '').matchAll(re)];
   const hallados = ms.map((m) => m[4].toLowerCase());
   // plantilla sin elegir (`Riesgo: bajo | medio | alto`): la línea nombra más de un nivel (Codex #82, P2)
