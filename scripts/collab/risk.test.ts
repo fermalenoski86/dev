@@ -327,7 +327,7 @@ describe('P-03 · riesgo-ci.sh: pendiente → final → revalidación (Codex #82
   sh('git init -q --bare -b main remoto.git && git init -q -b main clon', dir);
   const clon = path.join(dir, 'clon');
   sh(`git config user.email t@t && git config user.name t && mkdir -p scripts/collab docs && cp ${ROOT}/scripts/collab/{risk.mjs,risk.lib.mjs,paralelo.sh,riesgo-ci.sh} scripts/collab/ && cp ${ROOT}/pnpm-workspace.yaml . && echo a > docs/a.md && git add -A && git commit -qm base && git remote add origin ../remoto.git && git push -q origin main`, clon);
-  sh('git checkout -qb pr && echo b >> docs/a.md && git commit -qam pr && git push -q origin pr:refs/pull/7/head pr:refs/pull/8/head && git checkout -q main', clon);
+  sh('git checkout -qb pr && echo b >> docs/a.md && git commit -qam pr && git push -q origin pr:refs/pull/7/head pr:refs/pull/8/head main:refs/heads/fase && git checkout -q main', clon);
   const HEAD_PR = sh('git rev-parse pr', clon).trim();
   // gh falso: cada `api repos/R/pulls/7` devuelve el cuerpo N de la secuencia; POST check-runs se registra
   mkdirSync(path.join(dir, 'bin'));
@@ -344,7 +344,11 @@ case "$2" in *'pulls?state=open'*)
   f=$(cat "$D/listafalla" 2>/dev/null || echo 0); if [ "$f" -gt 0 ]; then echo $((f-1)) > "$D/listafalla"; echo "HTTP 502" >&2; exit 1; fi
   cat "$D/lista" 2>/dev/null; exit 0 ;; esac
 # cuerpo fijo por PR (dos PR con el mismo HEAD; AUDIT: CAMBIOS @ e08a47b, P1)
-pr=\${2##*/}; if [ -f "$D/cuerpo_$pr" ]; then jq -n --arg h "${HEAD_PR}" --rawfile b "$D/cuerpo_$pr" '{state:"open", head:{sha:$h}, base:{ref:"main"}, body:$b}'; exit 0; fi
+# base por PR (PR hacia otra base con el mismo HEAD; AUDIT: CAMBIOS @ 94bad43, P2)
+pr=\${2##*/}; if [ -f "$D/cuerpo_$pr" ]; then
+  [ "$(cat "$D/cuerpo_$pr")" != "__falla__" ] || { echo "HTTP 502" >&2; exit 1; }
+  base=$(cat "$D/base_$pr" 2>/dev/null || echo main)
+  jq -n --arg h "${HEAD_PR}" --arg base "$base" --rawfile b "$D/cuerpo_$pr" '{state:"open", head:{sha:$h}, base:{ref:$base}, body:$b}'; exit 0; fi
 n=$(cat "$D/n" 2>/dev/null || echo 0); n=$((n+1)); echo $n > "$D/n"
 cuerpo=$(sed -n "\${n}p" "$D/cuerpos"); [ -n "$cuerpo" ] || cuerpo=$(tail -n1 "$D/cuerpos")
 [ "$cuerpo" != "__falla__" ] || { echo "HTTP 502" >&2; exit 1; }
@@ -354,6 +358,7 @@ jq -n --arg h "$h" --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{ref:"m
     { mode: 0o755 },
   );
   let ultimosShas: string[] = [];
+  let ultimos: { name: string; head_sha: string; status: string; conclusion?: string }[] = [];
   const correr = (cuerpos: string[], extra: { lista?: string; postfalla?: number; listafalla?: number; args?: string[]; sinMain?: boolean } = {}) => {
     writeFileSync(path.join(dir, 'lista'), extra.lista ?? `7 ${HEAD_PR}\n`);
     writeFileSync(path.join(dir, 'listafalla'), String(extra.listafalla ?? 0));
@@ -370,6 +375,7 @@ jq -n --arg h "$h" --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{ref:"m
     }
     const checks = readFileSync(path.join(dir, 'checks.log'), 'utf8').trim().split('\n\n').map((j) => JSON.parse(j));
     ultimosShas = checks.map((c: { head_sha: string }) => c.head_sha);
+    ultimos = checks;
     return { rc, checks: checks.map((c: { status: string; conclusion?: string; output: { title: string } }) => c.conclusion ?? c.status) };
   };
 
@@ -442,6 +448,47 @@ jq -n --arg h "$h" --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{ref:"m
       expect(ultimosShas.at(-1)).toBe(HEAD_PR);
     });
   }
+  // AUDIT: CAMBIOS @ 94bad43, P2: riesgo.yml agrega el PR del evento hacia otra base como `N:HEAD:otra`
+  const deCheck = (n: string) => ultimos.filter((c) => c.name === n).map((c) => c.conclusion ?? c.status);
+  const conBase = (cuerpo7: string, cuerpo8: string, base8: string | null, args: string[]) => {
+    writeFileSync(path.join(dir, 'cuerpo_7'), cuerpo7);
+    writeFileSync(path.join(dir, 'cuerpo_8'), cuerpo8);
+    if (base8) writeFileSync(path.join(dir, 'base_8'), base8);
+    try {
+      return correr(['Riesgo: bajo'], { lista: `7 ${HEAD_PR}\n`, args });
+    } finally {
+      for (const f of ['cuerpo_7', 'cuerpo_8', 'base_8']) rmSync(path.join(dir, f), { force: true });
+    }
+  };
+  for (const args of [['7', `8:${HEAD_PR}:otra`], [`8:${HEAD_PR}:otra`, '7']]) {
+    it(`PR hacia otra base rechazado con el mismo HEAD que uno válido hacia main (orden ${args.map((a) => a[0]).join(',')}) → \`riesgo\` queda success; el rechazo va a \`riesgo (otra base)\` (AUDIT: CAMBIOS @ 94bad43, P2)`, () => {
+      const r = conBase('Riesgo: bajo\n', 'nada\n', 'fase', args);
+      expect(r.rc).toBe(1); // el lote informa el rechazo de #8…
+      expect(deCheck('riesgo')).not.toContain('failure'); // …pero no pinta el check de #7
+      expect(deCheck('riesgo').at(-1)).toBe('success');
+      expect(deCheck('riesgo (otra base)').at(-1)).toBe('failure');
+      expect(new Set(ultimosShas)).toEqual(new Set([HEAD_PR]));
+    });
+  }
+  it('PR hacia otra base bien declarado → success en `riesgo (otra base)`, no toca `riesgo` (AUDIT: CAMBIOS @ 94bad43, P2)', () => {
+    const r = conBase('nada\n', 'Riesgo: bajo\n', 'fase', ['7', `8:${HEAD_PR}:otra`]);
+    expect(r.rc).toBe(1); // #7 (main) sin declaración
+    expect(deCheck('riesgo').at(-1)).toBe('failure');
+    expect(deCheck('riesgo (otra base)').at(-1)).toBe('success');
+  });
+  it('PR del evento hacia otra base sin foto (API caída) → failure solo en `riesgo (otra base)` (AUDIT: CAMBIOS @ 94bad43, P2)', () => {
+    const r = conBase('Riesgo: bajo\n', '__falla__', null, ['7', `8:${HEAD_PR}:otra`]);
+    expect(r.rc).toBe(1);
+    expect(deCheck('riesgo')).not.toContain('failure');
+    expect(deCheck('riesgo').at(-1)).toBe('success');
+    expect(deCheck('riesgo (otra base)')).toEqual(['failure', 'failure']);
+  });
+  it('marcado `:otra` pero la foto dice base main (retarget) → cuenta como PR hacia main y su rechazo domina (AUDIT: CAMBIOS @ 94bad43, P2)', () => {
+    const r = conBase('Riesgo: bajo\n', 'nada\n', null, ['7', `8:${HEAD_PR}:otra`]);
+    expect(r.rc).toBe(1);
+    expect(deCheck('riesgo').at(-1)).toBe('failure');
+    expect(deCheck('riesgo (otra base)')).toEqual([]);
+  });
   it('PR que comparte HEAD con un verde pero no se evaluó en el lote → failure (AUDIT: CAMBIOS @ e08a47b, P1)', () => {
     const r = correr(['Riesgo: bajo'], { lista: `7 ${HEAD_PR}\n8 ${HEAD_PR}\n` });
     expect(r.rc).toBe(1);

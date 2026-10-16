@@ -60,6 +60,7 @@ jobs:
         env:
           WF_SHA: ${{ github.workflow_sha }}
           HEAD_EVT: ${{ github.event.pull_request.head.sha }}
+          BASE_EVT: ${{ github.event.pull_request.base.ref }}
           GH_TOKEN: ${{ github.token }}
         run: |
           git fetch -q origin "$WF_SHA" 2>/dev/null || true
@@ -70,8 +71,11 @@ jobs:
             echo "WF_VIEJO=1" >> "$GITHUB_ENV"
             # el HEAD del evento no puede conservar un verde viejo (Codex #82, P2): se pisa con failure
             if [ -n "${HEAD_EVT:-}" ]; then
-              jq -n --arg sha "$HEAD_EVT" --arg t "riesgo: sin veredicto (workflow cargado ≠ main; hace falta un evento nuevo o traer main a la base)" \
-                '{name:"riesgo", head_sha:$sha, status:"completed", conclusion:"failure", output:{title:$t, summary:$t}}' \
+              # un PR hacia otra base no pinta el check `riesgo` de un PR hacia main con el mismo
+              # HEAD (AUDIT: CAMBIOS @ 94bad43, P2): su invalidación va con su propio nombre
+              NOMBRE=riesgo; [ "${BASE_EVT:-main}" = main ] || NOMBRE="riesgo (otra base)"
+              jq -n --arg n "$NOMBRE" --arg sha "$HEAD_EVT" --arg t "riesgo: sin veredicto (workflow cargado ≠ main; hace falta un evento nuevo o traer main a la base)" \
+                '{name:$n, head_sha:$sha, status:"completed", conclusion:"failure", output:{title:$t, summary:$t}}' \
                 > "$RUNNER_TEMP/viejo.json"
               # 3 intentos; si no se pudo invalidar, el job falla cerrado (Codex #82, P1)
               INV=0
@@ -104,12 +108,14 @@ jobs:
           # el PR del evento solo entra si el workflow cargado es el de main
           # el HEAD de la lista de la API manda: el del evento solo se agrega si ese número no
           # está listado (base ≠ main); un synchronize viejo no puede aportar un HEAD superado
-          # (Codex #82, P1)
+          # (Codex #82, P1). Va marcado `:otra`: riesgo-ci.sh publica su veredicto como
+          # `riesgo (otra base)` y lo deja fuera de la dominancia por HEAD de `riesgo`, así no
+          # puede pintar de rojo a un PR hacia main con el mismo HEAD (AUDIT: CAMBIOS @ 94bad43, P2)
           if [ -n "$PR_EVT" ] && [ "${WF_VIEJO:-1}" = 0 ] && ! printf '%s\n' "$PRS" | grep -q "^$PR_EVT:"; then
-            PRS=$(printf '%s\n%s\n' "$PRS" "$PR_EVT:$HEAD_EVT")
+            PRS=$(printf '%s\n%s\n' "$PRS" "$PR_EVT:$HEAD_EVT:otra")
           fi
           # sin PR abiertos grep sale 1: no es un error (Codex #82, P2)
-          PRS=$(printf '%s\n' "$PRS" | { grep -E '^[0-9]+(:[0-9a-f]{40})?$' || true; } | awk -F: '!visto[$1]++' | tr '\n' ' ')
+          PRS=$(printf '%s\n' "$PRS" | { grep -E '^[0-9]+(:[0-9a-f]{40}(:otra)?)?$' || true; } | awk -F: '!visto[$1]++' | tr '\n' ' ')
           echo "PR a evaluar: ${PRS:-ninguno}"
           [ -n "$PRS" ] || exit 0
           set +e

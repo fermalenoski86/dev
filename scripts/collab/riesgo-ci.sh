@@ -16,6 +16,13 @@
 #   4. publica el final; si fue success, relee otra vez y, si cambió, lo pisa con
 #      `failure` "caducado". El evento que causó el cambio vuelve a evaluar (carril serial).
 # Exit: 0 si todos quedaron success; 1 si alguno no.
+#
+# Aislamiento por base (AUDIT: CAMBIOS @ 94bad43, P2): el check es por SHA y un PR hacia
+# otra base (rama de fase) puede compartir HEAD con uno hacia main. Su veredicto se publica
+# con otro nombre (`riesgo (otra base)`) y no entra en la conciliación ni en la dominancia
+# por HEAD del check `riesgo`: un rechazo suyo no pinta de rojo al PR hacia main. La base
+# sale de la foto por API; si no hay foto, `N:HEAD:otra` (lo que agrega riesgo.yml para el
+# PR del evento que no está en la lista de main) decide dónde va el `failure`.
 set -euo pipefail
 REPO=${GITHUB_REPOSITORY:?}
 AQUI=$(cd "$(dirname "$0")" && pwd)
@@ -24,6 +31,11 @@ TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
 declare -A PUBLICADO_FALLA=()  # HEAD → 1 si este lote ya publicó failure sobre él
 declare -A FALLA_HEAD=()       # HEAD → 1 si este lote quiso publicar failure sobre él (aunque el POST fallara)
 declare -A ULTIMO=()           # HEAD → última conclusión que este lote publicó con éxito sobre él
+# las tres tablas de arriba son SOLO del check `riesgo` (PR hacia main); el de otra base no las toca
+CHECK_MAIN=riesgo
+CHECK_OTRA="riesgo (otra base)"
+CHECK=$CHECK_MAIN               # nombre con el que publica `publicar` (se fija por PR)
+check_de() { if [ "$1" = main ]; then echo "$CHECK_MAIN"; else echo "$CHECK_OTRA"; fi; }
 
 foto() { # $1 = PR → "head base base_sha body_sha256 state"; exit ≠ 0 si algo falla
   # Se llama siempre desde `x=$(foto) || …`, donde errexit no rige dentro de la función:
@@ -54,20 +66,20 @@ publicar() { # $1 sha, $2 status|conclusion, $3 título, $4 archivo de resumen
   local cuerpo
   cuerpo=$(head -c 60000 "$4" 2>/dev/null || echo "sin salida")
   if [ "$2" = en_progreso ]; then
-    jq -n --arg sha "$1" --arg t "$3" '{name:"riesgo", head_sha:$sha, status:"in_progress", output:{title:$t, summary:$t}}'
+    jq -n --arg n "$CHECK" --arg sha "$1" --arg t "$3" '{name:$n, head_sha:$sha, status:"in_progress", output:{title:$t, summary:$t}}'
   else
-    jq -n --arg sha "$1" --arg c "$2" --arg t "$3" --arg s "$cuerpo" \
-      '{name:"riesgo", head_sha:$sha, status:"completed", conclusion:$c, output:{title:$t, summary:("```\n"+$s+"\n```")}}'
+    jq -n --arg n "$CHECK" --arg sha "$1" --arg c "$2" --arg t "$3" --arg s "$cuerpo" \
+      '{name:$n, head_sha:$sha, status:"completed", conclusion:$c, output:{title:$t, summary:("```\n"+$s+"\n```")}}'
   fi > "$TMP/check.json"
-  [ "$2" != failure ] || FALLA_HEAD[$1]=1
+  local m=0; [ "$CHECK" != "$CHECK_MAIN" ] || m=1
+  [ "$m" = 0 ] || [ "$2" != failure ] || FALLA_HEAD[$1]=1
   # reintentos: un POST que falla de forma transitoria no puede cortar el lote y dejar
   # verdes viejos en los HEAD que faltaban (Codex #82, P1); si igual falla, el lote sigue
   # y termina en rojo
   local i
   for i in 1 2 3; do
     if gh api -X POST "repos/$REPO/check-runs" --input "$TMP/check.json" --jq .html_url; then
-      [ "$2" != failure ] || PUBLICADO_FALLA[$1]=1
-      ULTIMO[$1]=$2
+      if [ "$m" = 1 ]; then [ "$2" != failure ] || PUBLICADO_FALLA[$1]=1; ULTIMO[$1]=$2; fi
       return 0
     fi
     sleep "$i"
@@ -83,26 +95,30 @@ VERDES=()
 # re-evaluación global (política endurecida en main) un PR que espera su turno no puede
 # conservar el verde de la política vieja (Codex #82, P2).
 declare -A LISTADO=()
+declare -A OTRA=()             # PR → 1 si riesgo.yml lo marcó fuera de la lista de main (N:HEAD:otra)
 ARGS=()
 for arg in "$@"; do
+  o=0; case "$arg" in *:otra) o=1; arg=${arg%:otra} ;; esac
   n=${arg%%:*}; h=""; [ "$n" = "$arg" ] || h=${arg#*:}
   [[ "$n" =~ ^[0-9]+$ ]] || { echo "riesgo-ci: PR inválido $arg" >&2; total=1; continue; }
   [[ -z "$h" || "$h" =~ ^[0-9a-f]{40}$ ]] || { echo "riesgo-ci: HEAD inválido $arg" >&2; total=1; continue; }
   # el primero manda (riesgo.yml pone primero la lista de la API); duplicados posteriores se ignoran
-  if [ -z "${LISTADO[$n]+x}" ]; then ARGS+=("$n"); LISTADO[$n]=$h; fi
+  if [ -z "${LISTADO[$n]+x}" ]; then ARGS+=("$n"); LISTADO[$n]=$h; [ "$o" = 0 ] || OTRA[$n]=1; fi
 done
 set -- "${ARGS[@]+"${ARGS[@]}"}"
 sin_foto() { # $1 = PR: sin foto no hay veredicto; si se conoce el HEAD listado, se invalida
   echo "riesgo-ci: sin foto de #$1 (API caída o respuesta inválida): sin veredicto" > "$TMP/out"
+  if [ -n "${OTRA[$1]:-}" ]; then CHECK=$CHECK_OTRA; else CHECK=$CHECK_MAIN; fi
   if [ -n "${LISTADO[$1]:-}" ]; then publicar "${LISTADO[$1]}" failure "riesgo: sin veredicto (no se pudo leer el PR)" "$TMP/out" || true; fi
 }
 for PR in "$@"; do
   F0=$(foto "$PR") || { sin_foto "$PR"; total=1; continue; }
-  read -r H0 _ _ _ E0 <<< "$F0"
+  read -r H0 B0 _ _ E0 <<< "$F0"; CHECK=$(check_de "$B0")
   if [ "$E0" = open ]; then publicar "$H0" en_progreso "riesgo: en cola de re-evaluación (scripts de main ${SCRIPTS_SHA:0:7})" /dev/null >/dev/null || total=1; fi
 done
 for PR in "$@"; do
   F1=$(foto "$PR") || { sin_foto "$PR"; total=1; continue; }; read -r HEAD BASE BASE_SHA _ ESTADO <<< "$F1"
+  CHECK=$(check_de "$BASE")
   [ "$ESTADO" = open ] || { echo "riesgo-ci: #$PR no está abierto; nada que publicar"; continue; }
   jq -r '.body // ""' "$TMP/pr.json" > "$TMP/cuerpo.md"
   publicar "$HEAD" en_progreso "riesgo: evaluando (scripts de main ${SCRIPTS_SHA:0:7})" /dev/null >/dev/null || total=1
@@ -125,7 +141,7 @@ for PR in "$@"; do
       printf 'caducado tras publicar\nahora: %s · main %s\n' "$F3" "$M3" >> "$TMP/out"
       publicar "$HEAD" failure "riesgo: caducado (el evento siguiente re-evalúa)" "$TMP/out" || true; invalidar_nuevo "$F3" "$HEAD"; total=1
     else
-      VERDES+=("$PR|$HEAD|$F1")
+      VERDES+=("$PR|$HEAD|$CHECK|$F1")
     fi
   else
     publicar "$HEAD" failure "riesgo: RECHAZADO o sin veredicto (exit $RC)" "$TMP/out" || true; total=1
@@ -140,7 +156,8 @@ if [ "${RIESGO_GLOBAL:-0}" = 1 ]; then
   VERDES_HEADS=" "
   # por par PR:HEAD (AUDIT: CAMBIOS @ e08a47b, P1): un PR que comparte HEAD con un verde
   # pero no fue evaluado en este lote no hereda ese verde
-  for v in "${VERDES[@]+"${VERDES[@]}"}"; do IFS='|' read -r pv hv _ <<< "$v"; VERDES_HEADS+="$pv:$hv "; done
+  # solo verdes del check `riesgo`: uno de otra base que se retargeteó a main no cuenta
+  for v in "${VERDES[@]+"${VERDES[@]}"}"; do IFS='|' read -r pv hv cv _ <<< "$v"; [ "$cv" = "$CHECK_MAIN" ] && VERDES_HEADS+="$pv:$hv "; done
   # re-listado con reintentos; si se agotan, ningún verde de este lote puede quedar último
   # sobre su HEAD (AUDIT: CAMBIOS @ 157a7f7, P1): se pisan todos con `failure`
   LISTA_OK=0
@@ -148,6 +165,7 @@ if [ "${RIESGO_GLOBAL:-0}" = 1 ]; then
     if LISTA=$(gh api "repos/$REPO/pulls?state=open&base=main&per_page=100" --paginate --jq '.[] | "\(.number) \(.head.sha)"'); then LISTA_OK=1; break; fi
     [ "$i" = 3 ] || sleep "$i"
   done
+  CHECK=$CHECK_MAIN
   if [ "$LISTA_OK" = 1 ]; then
     while read -r N H; do
       [ -n "${N:-}" ] || continue
@@ -160,7 +178,8 @@ if [ "${RIESGO_GLOBAL:-0}" = 1 ]; then
   else
     echo "riesgo-ci: no se pudo volver a listar los PR hacia main tras 3 intentos: los verdes de este lote quedan sin veredicto" | tee "$TMP/out" >&2; total=1
     for v in "${VERDES[@]+"${VERDES[@]}"}"; do
-      IFS='|' read -r _ hv _ <<< "$v"
+      IFS='|' read -r _ hv cv _ <<< "$v"
+      [ "$cv" = "$CHECK_MAIN" ] || continue
       [ "${ULTIMO[$hv]:-}" = failure ] && continue
       publicar "$hv" failure "riesgo: sin veredicto (no se pudo conciliar el lote)" "$TMP/out" || true
     done
@@ -170,8 +189,8 @@ fi
 # de PR nuevos, así un main que avanzó mientras tanto también invalida (Codex #82, ronda 6)—: mientras se evaluaban los PR siguientes, el cuerpo,
 # la base o main de uno ya verde pudieron cambiar. Se relee cada verde del lote y, si su
 # foto o main ya no coinciden, se pisa con `failure` "caducado".
-for v in "${VERDES[@]}"; do
-  IFS='|' read -r PR HEAD F1 <<< "$v"
+for v in "${VERDES[@]+"${VERDES[@]}"}"; do
+  IFS='|' read -r PR HEAD CHECK F1 <<< "$v"
   FX=$(foto "$PR" 2>/dev/null || echo "__sin-foto__"); MX=$(main_actual)
   if [ "$FX" != "$F1" ] || [ "$MX" != "$SCRIPTS_SHA" ]; then
     printf 'caducado en la conciliación final del lote
@@ -184,9 +203,12 @@ done
 # y la evaluación por PR. Si dos PR comparten HEAD y uno fue rechazado (o caducó), un
 # success de otro PR sobre ese SHA no puede quedar último: se republica `failure`, en
 # cualquier orden de procesamiento. Es lo ÚLTIMO que publica el lote.
+# Solo entre PR hacia main (check `riesgo`): uno de otra base no domina (AUDIT: CAMBIOS @ 94bad43, P2).
 declare -A DOMINADO=()
+CHECK=$CHECK_MAIN
 for v in "${VERDES[@]+"${VERDES[@]}"}"; do
-  IFS='|' read -r PR HEAD _ <<< "$v"
+  IFS='|' read -r PR HEAD cv _ <<< "$v"
+  [ "$cv" = "$CHECK_MAIN" ] || continue
   # si lo último publicado sobre el HEAD ya es failure no hace falta repetirlo
   [ "${FALLA_HEAD[$HEAD]:-}" = 1 ] && [ "${ULTIMO[$HEAD]:-}" != failure ] && [ -z "${DOMINADO[$HEAD]:-}" ] || continue
   DOMINADO[$HEAD]=1
