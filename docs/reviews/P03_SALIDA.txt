@@ -205,7 +205,8 @@ $ pnpm exec vitest run scripts/collab/risk.test.ts
    Con el riesgo-ci.sh de 6c96f82: 5 failed | 103 passed — reproduce el hallazgo.)
 $ pnpm verify (cola: lint + typecheck + test), 5 corridas en el mismo árbol
 ✖ 12 problems (0 errors, 12 warnings)
- corrida 1: Tests  1 failed | 939 passed | 1 skipped (941)   rc=1  (no se capturó qué test: causa no determinada)
+ corrida 1: Tests  1 failed | 939 passed | 1 skipped (941)   rc=1  (no se capturó qué test)
+ → intermitente (pasa y falla en el mismo árbol), trazado en #87 (`flaky`); causa raíz no determinada
  corridas 2-5: Test Files  54 passed | 1 skipped (55) · Tests  940 passed | 1 skipped (941)   rc=0
 $ bash -n scripts/collab/riesgo-ci.sh && python3 yaml.safe_load(riesgo.yml)
 ok
@@ -215,3 +216,26 @@ $ scripts/ci/politica-fallas.sh check
 politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
 (lockfile sin cambios en esta ronda; `pnpm install --frozen-lockfile` con pnpm 12.5.1 OK.
  PostgreSQL, media, compose, mutaciones y E2E: gates.yml sobre el SHA final.)
+
+## Hallazgos de Codex sin respuesta (2×P2: clave `"retries"` entre comillas; intermitente de `pnpm verify` sin issue) — salida real 2026-10-16T12:30Z, node v22.22.0, pnpm 12.5.1
+
+$ pnpm exec vitest run scripts/collab/risk.test.ts -t 'reducción de tests'   (con risk.lib.mjs de cd8ae1c)
+      Tests  1 failed | 107 skipped (108)   — `test.describe.configure({ "retries": 2 })` en un test nuevo daba medio
+$ pnpm exec vitest run scripts/collab/risk.test.ts   (con el fix)
+ Test Files  1 passed (1)
+      Tests  108 passed (108)
+  (casos agregados al test existente: "retries" / 'retries' / `retries` / retries con 2 → alto; "retries": 0 → medio)
+$ pnpm verify > verify.log 2>&1 (salida completa guardada, ver #87)
+✖ 12 problems (0 errors, 12 warnings)
+ Test Files  54 passed | 1 skipped (55)
+      Tests  940 passed | 1 skipped (941)   rc=0
+$ python3 scripts/mutation-check.py --autoprueba
+autoprueba OK
+$ bash scripts/collab/paralelo.test.sh | tail -1
+paralelo.test: 143 ok, 0 fallos
+$ scripts/ci/politica-fallas.sh check
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+$ pnpm docs:contract && git status --short   → sin diff;  pnpm progress:check / acceptance:check → al día
+$ node scripts/collab/risk.mjs calcular origin/main HEAD
+riesgo calculado: alto
+(lockfile sin cambios; PostgreSQL, media, compose, mutaciones y E2E: gates.yml sobre el SHA final.)

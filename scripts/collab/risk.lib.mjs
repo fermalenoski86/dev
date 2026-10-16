@@ -96,9 +96,10 @@ const PROCESO = /\b(child_process|execFile(Sync)?|execSync|spawn(Sync)?|exec)\s*
 const DDL = /\b(CREATE|ALTER|DROP|TRUNCATE)\s+(OR\s+REPLACE\s+)?(TEMP(ORARY)?\s+|UNIQUE\s+|MATERIALIZED\s+)?(TABLE|INDEX|SCHEMA|TYPE|FUNCTION|PROCEDURE|TRIGGER|EXTENSION|ROLE|USER|POLICY|VIEW|SEQUENCE|DATABASE|DOMAIN|RULE|AGGREGATE|COLLATION|CONVERSION|OPERATOR|SERVER|PUBLICATION|SUBSCRIPTION|TABLESPACE)\b|\bGRANT\b|\bREVOKE\b/i;
 // cualquier objeto: CREATE/ALTER/DROP <OBJETO> en mayúsculas, como se escribe SQL (VIEW, SEQUENCE, DATABASE…; Codex #82, P2)
 const DDL_GENERICO = /\b(CREATE|ALTER|DROP)\s+(OR\s+REPLACE\s+|IF\s+(NOT\s+)?EXISTS\s+|TEMP(ORARY)?\s+|UNIQUE\s+|MATERIALIZED\s+)*[A-Z]{3,}\b/;
-// también acceso por corchetes (`test['skip'](`, Codex #82, P2); una cadena partida en dos líneas
+// también acceso por corchetes (`test['skip'](`, Codex #82, P2) y la clave `"retries"` entre comillas
+// (Codex #82, P2 sobre 6c96f82); una cadena partida en dos líneas
 // cae igual: con -U0 la línea `  .skip(` también matchea
-const SALTEO = /\.(skip|only|todo|fixme)\s*\(|\[\s*['"`](skip|only|todo|fixme)['"`]\s*\]|\b(xit|xdescribe|xtest)\s*\(|\bretries\s*:\s*[1-9]/;
+const SALTEO = /\.(skip|only|todo|fixme)\s*\(|\[\s*['"`](skip|only|todo|fixme)['"`]\s*\]|\b(xit|xdescribe|xtest)\s*\(|\bretries['"`]?\s*:\s*[1-9]/;
 // sin punto ni letra antes: `re.test(` o `x.expect(` no cuentan como caso
 const CASO = /(?<![.\w$])(it|test)(\.each\([^)]*\))?\s*\(|(?<![.\w$])expect\s*\(|(?<![.\w$])assert[.(]/g;
 // matchers: una aserción multilínea pierde solo su `.toX(...)` y `expect(v);` queda sin afirmar nada (Codex #82, P2)

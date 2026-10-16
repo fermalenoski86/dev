@@ -156,6 +156,11 @@ describe('P-03 · diff completo', () => {
     // un archivo de tests NUEVO sin salteos sigue medio; con salteo, alto
     expect(nivel([{ ruta: 'packages/show-engine/src/nuevo.test.ts', estado: 'A', parche: "+it('x', () => { expect(1).toBe(1) })" }])).toBe('medio');
     expect(nivel([{ ruta: 'packages/show-engine/src/nuevo.test.ts', estado: 'A', parche: "+it.skip('x', () => {})" }])).toBe('alto');
+    // `retries` con la clave entre comillas (Codex #82, P2 sobre 6c96f82)
+    for (const k of ['"retries"', "'retries'", '`retries`', 'retries']) {
+      expect(nivel([{ ruta: 'packages/demo/src/new.test.ts', estado: 'A', parche: `+test.describe.configure({ ${k}: 2 })` }])).toBe('alto');
+    }
+    expect(nivel([{ ruta: 'packages/demo/src/new.test.ts', estado: 'A', parche: '+test.describe.configure({ "retries": 0 })' }])).toBe('medio');
     // directorios convencionales y Python (Codex #82, ronda 8)
     expect(nivel([{ ruta: 'packages/x/tests/api.ts', estado: 'D' }])).toBe('alto');
     expect(nivel([m('tools/test_api.py', '-def test_a(): assert 1')])).toBe('alto');
