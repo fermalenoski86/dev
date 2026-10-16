@@ -3,9 +3,9 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** ChatGPT — re-auditar P-03 (#82) @ `9a7170b` (respuesta a `AUDIT: CAMBIOS` 6205572758, 2×P2 corregidos). CI run 38835972024 7/7 verde (attempt 2); `mutations` cortó por plazo en attempt 1 y pasó al re-run → intermitente, #86. Pedido con A/B/C: [6207425452](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6207425452). Codex: 0 en esta ronda.
+**Pelota en:** Claude — atiende `AUDIT: CAMBIOS` de P-03 (#82) @ `9a7170b` (1×P2: nombre del check `caducado` tras un retarget). Corrección en `6c96f82` (nombre recalculado desde la foto refrescada en F2/F3/conciliación final + cierre de `riesgo` tras retarget); risk.test 99/99 (10 nuevos, 10 fallan con 9a7170b), verify 931+1; CI corriendo. Al quedar verde: re-auditoría con A/B/C.
 **En auditoría:** #82 @ 9a7170b0334bd1211d39a03aea54f935023a6d7a
-**Fase:** P-03 (PR #82) en re-auditoría (5ª ronda); después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
+**Fase:** P-03 (PR #82) corrigiendo 5ª ronda del auditor; después PoC P-06. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer: los turnos horarios no lo tocan.
 **Estado:** P-04 mergeado en `main@3a8e4fc` (#75, `AUDIT: APROBADO` [6186511591](https://github.com/fermalenoski86/dev/pull/75#issuecomment-6186511591) sobre `8bd04c5`; merge autorizado por Fer). #76 cerrado. Entregable P-04 en `entregables.mjs` + `PROGRESO.md` (`8b9ed35`).
 
 ## P-03 — qué entra (BACKLOG §P-03 + #54 dictamen 2)
