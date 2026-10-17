@@ -3,9 +3,9 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador) — PoC P-06 PR 1 abierto: **#88** (`proc/p06-gate` @ `0af602baa3b3855e07468b477248ea9453c1b0cc`, Code Review Rules + `delegated-audit-gate` report-only). Próximo turno: con CI `gates` verde sobre ese SHA, pedir auditoría a ChatGPT (`Riesgo: alto`, auditoría formal) y pasar la pelota.
+**Pelota en:** Claude (implementador) — PoC P-06 PR 1: **#88** (`proc/p06-gate` @ `933215627cbce915eeb386c35176a84e32ac8a89`). Los 2 hallazgos P2 de Codex sobre `0af602b` (retarget sin re-evaluación; PASS viejo si falla la lectura de un PR) corregidos en `9332156` con tests y respondidos. CI de `0af602b` quedó verde (gates run 39075872379). Próximo turno: con CI `gates` verde sobre `9332156`, pedir auditoría formal a ChatGPT (`Riesgo: alto`) listando la ronda Codex, y pasar la pelota.
 **En auditoría:** ninguno
-**Fase:** PoC P-06 PR 1 (#88, CI en curso). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
+**Fase:** PoC P-06 PR 1 (#88, CI en curso sobre `9332156`). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
 **Estado:** P-03 mergeado en `main@db31db9` (#82, `AUDIT: APROBADO` [6223642598](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6223642598) sobre `8a5a39d`). #83 cerrado. Entregable P-03 en `entregables.mjs` + `PROGRESO.md` (`8d5dd70`). P-01…P-05 completos.
 
 ## PoC P-06 — qué entra (brief + #54, decisión 2026-10-12 18:15)
@@ -22,12 +22,13 @@
 - `e2e-platform` `a11y.spec.ts:48` (500 en `POST /assets`, 1 vez en `1d74859`) → #84, causa no determinada.
 - `e2e-m2c` murió en el setup (`npm i -g pnpm`, exit 139) en `157a7f7` attempt 1 → #85 (`flaky`): intermitente (pasó en attempt 2), causa raíz no determinada.
 - `mutations` cortado por plazo (exit 124) en `9a7170b` attempt 1, verde en attempt 2 (48 min vs plazo 56); se repitió en `6c96f82` (exit 124 a 3388 s, verde en attempt 2) → #86 (`flaky`): intermitente, causa raíz no determinada; no se toca el plazo.
+- `riesgo` rojo en el run del PR sobre `0af602b` (22:38): caducado a propósito porque main avanzó (handoff) durante la evaluación; el run de push a main lo re-publicó verde. No es intermitente.
 - `pnpm verify` local: 1 test falló en 1 de 5 corridas sobre `de214f9` (no capturado cuál) → #87 (`flaky`): intermitente, causa raíz no determinada.
 
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| PoC P-06 | #54 / PR #88 | PR 1 abierto, CI en curso (Claude) |
+| PoC P-06 | #54 / PR #88 | PR 1 @ `9332156`, CI en curso (Claude) |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
 | E2E intermitente :17 | #26 / #77 | causa no determinada |
