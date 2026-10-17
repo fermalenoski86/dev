@@ -1,0 +1,136 @@
+# P-03 · Auditoría basada en riesgo — declarado en el PR vs calculado sobre el diff real.
+#
+# Mismo modelo de confianza que paralelo.yml (P-05): evento pull_request_target y TODO
+# lo que se ejecuta sale de un checkout de la revisión ACTUAL de origin/main, nunca del
+# PR ni de su base. El PR aporta como DATOS su número, su HEAD, su base y su cuerpo
+# (leído por API en el momento, no del evento: un `edited` posterior no deja vivo un
+# veredicto viejo). No se ejecuta código del PR: solo `git diff` sobre sus commits.
+# Un PR que cambie risk.mjs, risk.lib.mjs, paralelo.sh (GATES_RE) o este archivo se
+# clasifica con la versión de main: no puede rebajarse a sí mismo.
+#
+# Publica el check-run "riesgo" sobre el HEAD de cada PR (en pull_request_target el check
+# del job cuelga del sha de la base) con scripts/collab/riesgo-ci.sh: pendiente →
+# final → revalidación; si el PR (cuerpo, HEAD, base) o main cambiaron mientras tanto,
+# queda `failure` "caducado" (Codex #82, P1). TODO evento —de cualquier PR o push a
+# main— re-evalúa todos los PR abiertos hacia main en un solo carril serial: un verde
+# hecho con una política vieja de main no sobrevive al endurecimiento (Codex #82, P2),
+# y si GitHub descarta un run pendiente del carril, el que corre cubre a todos.
+# Sin secretos; GH_TOKEN solo en el paso que consulta la API y publica; permisos de
+# escritura SOLO sobre checks.
+#
+# Límite: entra en vigor cuando este archivo está en main; en el PR que lo introduce no
+# corre (a propósito, sin fallback al script del PR). Es un chequeo, no un candado: la
+# protección de rama de main (required checks) sigue pendiente de Fer.
+name: riesgo
+on:
+  # `closed` (AUDIT: CAMBIOS @ cbe79d1, P2): cerrar sin merge un PR rechazado que comparte HEAD
+  # con otro válido saca el rechazo vigente; la re-evaluación global libera al que queda sin
+  # esperar otro push. El PR cerrado no se evalúa ni se invalida (ver los dos pasos de abajo).
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review, edited, closed]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  checks: write
+  pull-requests: read
+concurrency:
+  group: riesgo
+  cancel-in-progress: false
+jobs:
+  riesgo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Revisión actual de main (no la del evento)
+        run: |
+          git fetch -q origin main
+          git checkout -q --detach origin/main
+          echo "scripts de main=$(git rev-parse HEAD)"
+      # El YAML cargado sale de la base del PR (o de la revisión del evento en un re-run):
+      # checkout de main reemplaza los scripts, no la orquestación. Si el workflow cargado
+      # (workflow_sha) no es el de main actual, el veredicto del PR del evento se anula
+      # (no se evalúa ni se publica para él), pero la re-evaluación de todos los PR abiertos
+      # hacia main corre igual con los scripts de main: este run pudo desplazar al único
+      # pendiente del carril (Codex #82, P1 ×2; mismo protocolo que paralelo.yml). Límite: un YAML hostil en otra rama base podría
+      # saltearse este paso; eso solo lo cierra la protección de rama (pendiente de Fer).
+      - name: El workflow cargado tiene que ser el de main actual
+        env:
+          WF_SHA: ${{ github.workflow_sha }}
+          HEAD_EVT: ${{ github.event.pull_request.head.sha }}
+          BASE_EVT: ${{ github.event.pull_request.base.ref }}
+          EVT_ACTION: ${{ github.event.action }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git fetch -q origin "$WF_SHA" 2>/dev/null || true
+          CARGADO=$(git show "$WF_SHA:.github/workflows/riesgo.yml" 2>/dev/null || echo "__no-disponible__")
+          ACTUAL=$(git show "origin/main:.github/workflows/riesgo.yml")
+          if [ "$CARGADO" != "$ACTUAL" ]; then
+            echo "::error title=workflow desactualizado::el workflow cargado ($WF_SHA) no es el de main actual ($(git rev-parse origin/main)); sin veredicto para el PR del evento (hace falta un evento nuevo); la re-evaluación de los PR hacia main corre igual"
+            echo "WF_VIEJO=1" >> "$GITHUB_ENV"
+            # el HEAD del evento no puede conservar un verde viejo (Codex #82, P2): se pisa con failure
+            # un PR cerrado no tiene veredicto que anular, y su HEAD puede ser el de un PR abierto
+            # válido: no se lo pinta de rojo (AUDIT: CAMBIOS @ cbe79d1, P2)
+            if [ -n "${HEAD_EVT:-}" ] && [ "${EVT_ACTION:-}" != closed ]; then
+              # un PR hacia otra base no pinta el check `riesgo` de un PR hacia main con el mismo
+              # HEAD (AUDIT: CAMBIOS @ 94bad43, P2): su invalidación va con su propio nombre
+              NOMBRE=riesgo; [ "${BASE_EVT:-main}" = main ] || NOMBRE="riesgo (otra base)"
+              jq -n --arg n "$NOMBRE" --arg sha "$HEAD_EVT" --arg t "riesgo: sin veredicto (workflow cargado ≠ main; hace falta un evento nuevo o traer main a la base)" \
+                '{name:$n, head_sha:$sha, status:"completed", conclusion:"failure", output:{title:$t, summary:$t}}' \
+                > "$RUNNER_TEMP/viejo.json"
+              # 3 intentos; si no se pudo invalidar, el job falla cerrado (Codex #82, P1)
+              INV=0
+              for i in 1 2 3; do
+                if gh api -X POST "repos/$GITHUB_REPOSITORY/check-runs" --input "$RUNNER_TEMP/viejo.json" --jq .html_url; then INV=1; break; fi
+                sleep "$i"
+              done
+              [ "$INV" = 1 ] || { echo "::error title=riesgo::no se pudo invalidar el HEAD $HEAD_EVT tras 3 intentos"; exit 1; }
+            fi
+            exit 0
+          fi
+          echo "WF_VIEJO=0" >> "$GITHUB_ENV"
+          echo "workflow cargado = main actual ($WF_SHA)"
+      - name: Riesgo declarado vs calculado (P-03) — todos los PR abiertos hacia main + el del evento
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_EVT: ${{ github.event.pull_request.number }}
+          HEAD_EVT: ${{ github.event.pull_request.head.sha }}
+          EVT_ACTION: ${{ github.event.action }}
+          RIESGO_GLOBAL: '1'
+        run: |
+          # número:HEAD, así un PR cuya foto falla igual recibe failure sobre su HEAD (Codex #82, P1)
+          # la lista inicial se reintenta: sin ella no se puede invalidar ningún HEAD (Codex #82, P1);
+          # si falla 3 veces el job termina en rojo y lo dice
+          PRS=""; OK=0
+          for i in 1 2 3; do
+            if PRS=$(gh api "repos/$GITHUB_REPOSITORY/pulls?state=open&base=main&per_page=100" --paginate --jq '.[] | "\(.number):\(.head.sha)"'); then OK=1; break; fi
+            sleep "$((i * 5))"
+          done
+          if [ "$OK" != 1 ]; then echo "::error title=riesgo: sin lista de PR::la API no devolvió la lista de PR abiertos tras 3 intentos; no hay veredicto nuevo y los checks previos no se pudieron invalidar"; exit 1; fi
+          # el PR del evento solo entra si el workflow cargado es el de main
+          # el HEAD de la lista de la API manda: el del evento solo se agrega si ese número no
+          # está listado (base ≠ main); un synchronize viejo no puede aportar un HEAD superado
+          # (Codex #82, P1). Va marcado `:otra`: riesgo-ci.sh publica su veredicto como
+          # `riesgo (otra base)` y lo deja fuera de la dominancia por HEAD de `riesgo`, así no
+          # puede pintar de rojo a un PR hacia main con el mismo HEAD (AUDIT: CAMBIOS @ 94bad43, P2)
+          # un PR cerrado tampoco entra: ya no está en la lista y no hay nada que publicarle; su
+          # cierre solo dispara la re-evaluación de los abiertos (AUDIT: CAMBIOS @ cbe79d1, P2)
+          if [ -n "$PR_EVT" ] && [ "${WF_VIEJO:-1}" = 0 ] && [ "${EVT_ACTION:-}" != closed ] && ! printf '%s\n' "$PRS" | grep -q "^$PR_EVT:"; then
+            PRS=$(printf '%s\n%s\n' "$PRS" "$PR_EVT:$HEAD_EVT:otra")
+          fi
+          # sin PR abiertos grep sale 1: no es un error (Codex #82, P2)
+          PRS=$(printf '%s\n' "$PRS" | { grep -E '^[0-9]+(:[0-9a-f]{40}(:otra)?)?$' || true; } | awk -F: '!visto[$1]++' | tr '\n' ' ')
+          echo "PR a evaluar: ${PRS:-ninguno}"
+          [ -n "$PRS" ] || exit 0
+          set +e
+          scripts/collab/riesgo-ci.sh $PRS 2>&1 | tee "$RUNNER_TEMP/riesgo.out"; RC=${PIPESTATUS[0]}
+          set -e
+          ENC=$(tail -n 40 "$RUNNER_TEMP/riesgo.out" | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
+          if [ "$RC" = 0 ]; then echo "::notice title=riesgo OK::$ENC"; else echo "::error title=riesgo: algún PR rechazado, caducado o sin veredicto::$ENC"; fi
+          [ "${WF_VIEJO:-1}" = 0 ] || RC=1
+          exit "$RC"
