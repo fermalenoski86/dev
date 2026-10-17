@@ -191,3 +191,37 @@ export function checkRun(v) {
   ].join('\n');
   return { name: 'delegated-audit-gate', head_sha: v.sha, status: 'completed', conclusion: 'neutral', output: { title: titulo.slice(0, 255), summary: resumen.slice(0, 60000) } };
 }
+
+/**
+ * Veredicto FAIL para un PR listado que no se pudo evaluar (Codex #88, P2): el check se
+ * publica igual sobre el HEAD de la lista, así un PASS anterior de ese HEAD no queda vigente
+ * sin verificar. null si el HEAD de la lista no es un sha válido (no hay dónde publicar).
+ */
+export function sinVeredicto({ number, head_sha }, error) {
+  if (!Number.isSafeInteger(number) || !new RegExp(`^${SHA}$`).test(head_sha ?? '')) return null;
+  const motivo = `sin veredicto: no se pudo evaluar el PR (${String(error ?? 'error desconocido').split('\n')[0].slice(0, 200)}); el PASS anterior de este HEAD no vale`;
+  return { veredicto: 'fail', motivos: [motivo], pr: number, sha: head_sha, review_id: null, author_id: null, riesgo: null, run: null, attempt: null, rondas: 0, ignoradas: [] };
+}
+
+/**
+ * Carril `ci`: evalúa y publica cada PR listado ({number, head_sha} de la lista de la API).
+ * Todo PR listado recibe un check sobre su HEAD: si la evaluación falla, FAIL "sin veredicto".
+ * Devuelve el exit code (1 si algún PR quedó sin evaluar o sin publicar). Report-only.
+ */
+export function cicloCi(prs, { evaluarPr, publicar, log = console.log }) {
+  let rc = 0;
+  for (const p of prs) {
+    let v;
+    try { v = evaluarPr(p.number); } catch (e) {
+      rc = 1;
+      v = sinVeredicto(p, e?.message);
+      log(`::warning title=delegated-audit-gate #${p.number}::sin veredicto (no se pudo leer el PR): ${String(e?.message).split('\n')[0]}`);
+      if (!v) { log(`::error title=delegated-audit-gate #${p.number}::HEAD de la lista inválido: no hay dónde publicar`); continue; }
+    }
+    const url = publicar(v);
+    const linea = `#${p.number} @ ${String(v.sha).slice(0, 12)}: ${v.veredicto.toUpperCase()} (report-only) — riesgo ${v.riesgo ?? '—'} · review ${v.review_id ?? '—'} · gates ${v.run ?? '—'}/${v.attempt ?? '—'}${v.motivos.length ? ` · ${v.motivos.join(' | ')}` : ''}`;
+    log(`::notice title=delegated-audit-gate #${p.number}::${linea.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`);
+    if (!url) { log(`::error title=delegated-audit-gate #${p.number}::no se pudo publicar el check tras 3 intentos`); rc = 1; }
+  }
+  return rc;
+}

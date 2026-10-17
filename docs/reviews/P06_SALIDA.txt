@@ -1,16 +1,14 @@
-# P-06 PR 1 · salida real de gates locales (Claude, 2026-10-17T22:37:06Z, rama proc/p06-gate sobre main@b98571f)
+# P-06 PR 1 · salida real de gates locales (Claude, 2026-10-17T23:31:06Z, rama proc/p06-gate sobre main@b98571f — ronda Codex #88: retarget + PASS viejo ante lectura fallida)
 
 $ npx vitest run scripts/collab/delegated-audit.test.ts
- ✓ scripts/collab/delegated-audit.test.ts (52 tests) 16ms
+ ✓ scripts/collab/delegated-audit.test.ts (55 tests) 20ms
  Test Files  1 passed (1)
-      Tests  52 passed (52)
+      Tests  55 passed (55)
 
 $ pnpm verify  (lint + typecheck + suite default)
-   ✓ P-03 · CLI sobre un repo git real > docs → bajo; rename de un workflow con nombre no-ASCII fuera de .github → alto (merge-base, -z, --no-renames) 310ms
-   ✓ P-03 · CLI sobre un repo git real > alta o baja de package.json sin bloque "scripts" no es cambio de scripts; con bloque real sí (AUDIT: CAMBIOS @ 157a7f7, P2) 1071ms
  Test Files  55 passed | 1 skipped (56)
-      Tests  998 passed | 1 skipped (999)
-real	2m0.813s
+      Tests  1001 passed | 1 skipped (1002)
+real	114s
 rc=0
 
 $ bash scripts/ci/politica-fallas.sh check
@@ -21,24 +19,7 @@ docs/platform/openapi.json y docs/platform/DELIVERY.md regenerados (32 rutas reg
 GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día
 GATE progreso (P-02): manifiesto válido (35 entradas), docs/collab/PROGRESO.md al día
 
-$ node scripts/collab/delegated-audit.mjs evaluar 82   (datos reales de la API: PR cerrado, alto, sin review de Codex sobre el HEAD)
-{
-  "veredicto": "fail",
-  "motivos": [
-    "PR no abierto (closed)",
-    "elegibilidad: riesgo alto → requiere auditoría formal de ChatGPT (sin delegación, #54)",
-    "review: ninguna review de Codex sobre el HEAD 8a5a39d09dd1 (23 sobre shas anteriores: inválidas)"
-  ],
-  "pr": 82,
-  "sha": "8a5a39d09dd12c360a5d3f66f5f1bf894c433d15",
-  "review_id": null,
-  "author_id": null,
-  "riesgo": "alto",
-  "run": 38933549032,
-  "attempt": 1,
-  "rondas": 0,
-  "ignoradas": []
-}
+$ node scripts/collab/delegated-audit.mjs evaluar 82   → sin cambios en evaluar(); salida real en la ronda anterior (0af602b): FAIL "PR no abierto", "riesgo alto", "ninguna review de Codex sobre el HEAD". No se re-corrió: esta sesión no usa gh contra la API.
 
 No ejecutado localmente (sin cambios en esas áreas; los corre CI en gates.yml sobre el HEAD): postgres, bootstrap-smoke, media, mutations, e2e-m2c, e2e-platform, compose-smoke.
-No ejecutado: consulta GraphQL de edición de reviews (lastEditedAt) — el proxy de esta sesión bloquea GraphQL; si falla en CI el gate da FAIL "no se pudo verificar si fue editada" (fail-closed) y se ve en el caso 1 de la matriz.
+No ejecutado: carril `ci` contra GitHub real (publicación de check-runs) ni el disparo por `workflow_run` de `riesgo` — solo existen con el workflow en main; cubiertos por tests unitarios (cicloCi con evaluarPr que lanza) y por la forma del YAML. Consulta GraphQL de lastEditedAt: igual que la ronda anterior (fail-closed).

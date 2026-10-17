@@ -15,7 +15,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { checkRun, evaluar, jobsDeGates } from './delegated-audit.lib.mjs';
+import { checkRun, cicloCi, evaluar, jobsDeGates } from './delegated-audit.lib.mjs';
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const RAIZ = path.resolve(AQUI, '../..');
@@ -89,19 +89,13 @@ if (cmd === 'evaluar' && args.length === 1 && /^\d+$/.test(args[0])) {
   console.log(JSON.stringify(evaluarPr(Number(args[0])), null, 2));
 } else if (cmd === 'ci' && args.length === 0) {
   let prs;
-  try { prs = apiLista(`repos/${REPO}/pulls?state=open&base=main&per_page=100`).map((p) => p.number); } catch (e) {
+  // número + HEAD de la lista: si después falla la lectura del PR, igual hay HEAD donde
+  // publicar el FAIL "sin veredicto" (Codex #88, P2)
+  try { prs = apiLista(`repos/${REPO}/pulls?state=open&base=main&per_page=100`).map((p) => ({ number: p.number, head_sha: p.head?.sha })); } catch (e) {
     console.log(`::error title=delegated-audit-gate::no se pudo listar los PR abiertos: ${String(e.message).split('\n')[0]}`);
     process.exit(1);
   }
-  let rc = 0;
-  for (const n of prs) {
-    let v;
-    try { v = evaluarPr(n); } catch (e) { console.log(`::warning title=delegated-audit-gate #${n}::sin veredicto (no se pudo leer el PR): ${String(e.message).split('\n')[0]}`); rc = 1; continue; }
-    const url = publicar(v);
-    const linea = `#${n} @ ${String(v.sha).slice(0, 12)}: ${v.veredicto.toUpperCase()} (report-only) — riesgo ${v.riesgo ?? '—'} · review ${v.review_id ?? '—'} · gates ${v.run ?? '—'}/${v.attempt ?? '—'}${v.motivos.length ? ` · ${v.motivos.join(' | ')}` : ''}`;
-    console.log(`::notice title=delegated-audit-gate #${n}::${linea.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`);
-    if (!url) { console.log(`::error title=delegated-audit-gate #${n}::no se pudo publicar el check tras 3 intentos`); rc = 1; }
-  }
+  const rc = cicloCi(prs, { evaluarPr, publicar });
   if (prs.length === 0) console.log('delegated-audit-gate: sin PR abiertos hacia main');
   process.exit(rc);
 } else {

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error módulo .mjs sin tipos (script de CI, sin build)
-import { CODEX_BOT_IDS, MAX_RONDAS, checkRun, evaluar, jobsDeGates, parsearBloque } from './delegated-audit.lib.mjs';
+import { CODEX_BOT_IDS, MAX_RONDAS, checkRun, cicloCi, evaluar, jobsDeGates, parsearBloque, sinVeredicto } from './delegated-audit.lib.mjs';
 // @ts-expect-error módulo .mjs sin tipos (script de CI, sin build)
 import { clasificarRuta, gatesDesdeParalelo, raicesWorkspace } from './risk.lib.mjs';
 
@@ -181,9 +181,36 @@ describe('P-06 · publicación y workflows', () => {
   it('el gate no corre con YAML del PR: sin pull_request_target ni pull_request_review; checkout de main sin credenciales', () => {
     const y = readFileSync(path.join(ROOT, '.github/workflows/delegated-audit-gate.yml'), 'utf8').replace(/^\s*#.*$/gm, '');
     expect(y).not.toMatch(/pull_request_target|pull_request_review|pull_request:|secrets\./);
-    expect(y).toMatch(/workflow_run:\s*\n\s*workflows: \[gates, delegated-audit-senal\]/);
+    expect(y).toMatch(/workflow_run:\s*\n\s*workflows: \[gates, delegated-audit-senal, riesgo\]/);
     expect(y).toContain('persist-credentials: false');
     expect(y).toContain('git checkout -q --detach origin/main');
+  });
+  it('un retarget hacia main re-evalúa: escucha el fin de `riesgo`, que corre con pull_request_target edited (Codex #88, P2)', () => {
+    const r = readFileSync(path.join(ROOT, '.github/workflows/riesgo.yml'), 'utf8').replace(/^\s*#.*$/gm, '');
+    expect(r).toMatch(/^name: riesgo$/m);
+    expect(r).toMatch(/pull_request_target:\s*\n\s*types: \[[^\]]*\bedited\b[^\]]*\]/);
+    const y = readFileSync(path.join(ROOT, '.github/workflows/delegated-audit-gate.yml'), 'utf8').replace(/^\s*#.*$/gm, '');
+    expect(y).toMatch(/workflows: \[[^\]]*\briesgo\b[^\]]*\]/);
+  });
+  it('un PR listado cuya lectura falla recibe FAIL sobre el HEAD de la lista: no queda vigente un PASS viejo (Codex #88, P2)', () => {
+    const publicados: Array<Record<string, unknown>> = [];
+    const ok = evaluar(base());
+    const rc = cicloCi([{ number: 7, head_sha: HEAD }, { number: 8, head_sha: VIEJO }], {
+      evaluarPr: (n: number) => { if (n === 8) throw new Error('HTTP 502 al leer el PR'); return ok; },
+      publicar: (v: unknown) => { publicados.push(checkRun(v)); return 'https://x'; },
+      log: () => {},
+    });
+    expect(rc).toBe(1);
+    expect(publicados).toHaveLength(2);
+    expect(publicados[1]).toMatchObject({ name: 'delegated-audit-gate', head_sha: VIEJO, conclusion: 'neutral' });
+    expect(String((publicados[1].output as { title: string }).title)).toMatch(/^report-only: FAIL — sin veredicto: no se pudo evaluar el PR \(HTTP 502/);
+  });
+  it('sinVeredicto no publica sobre un HEAD inválido de la lista', () => {
+    expect(sinVeredicto({ number: 8, head_sha: 'xyz' }, 'e')).toBeNull();
+    const publicados: unknown[] = [];
+    const rc = cicloCi([{ number: 8, head_sha: undefined }], { evaluarPr: () => { throw new Error('x'); }, publicar: (v: unknown) => { publicados.push(v); return 'u'; }, log: () => {} });
+    expect(rc).toBe(1);
+    expect(publicados).toHaveLength(0);
   });
   it('la señal de review no tiene permisos, no hace checkout y no interpola datos del evento', () => {
     const y = readFileSync(path.join(ROOT, '.github/workflows/delegated-audit-senal.yml'), 'utf8').replace(/^\s*#.*$/gm, '');

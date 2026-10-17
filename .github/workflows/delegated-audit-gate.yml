@@ -9,8 +9,9 @@
 #     no se toma ningún dato: cada corrida re-evalúa TODOS los PR abiertos hacia main.
 #   - Checkout de la revisión actual de main, sin credenciales persistidas; el PR aporta
 #     solo número y sha (API). Su diff se lee con git (risk.mjs de main), no se ejecuta.
-# Disparadores: fin de `gates` (CI del HEAD), fin de la señal de review, push a main
-# (cambio de política). Un carril serial; si GitHub descarta un pendiente, el que corre
+# Disparadores: fin de `gates` (CI del HEAD), fin de la señal de review, fin de `riesgo`
+# (corre con pull_request_target `edited`/`reopened`: cubre el retarget de un PR hacia main,
+# que `gates` no escucha — Codex #88, P2) y push a main (cambio de política). Un carril serial; si GitHub descarta un pendiente, el que corre
 # cubre a todos.
 #
 # REPORT-ONLY: el check sale `neutral` (veredicto PASS/FAIL en el título), nunca es
@@ -22,7 +23,7 @@ on:
   push:
     branches: [main]
   workflow_run:
-    workflows: [gates, delegated-audit-senal]
+    workflows: [gates, delegated-audit-senal, riesgo]
     types: [completed]
 permissions:
   contents: read
