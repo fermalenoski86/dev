@@ -1,0 +1,16 @@
+# P-06 · señal de review para `delegated-audit-gate` (ver ese workflow).
+# `pull_request_review` carga el YAML del merge del PR: por eso este job no tiene permisos,
+# no hace checkout, no lee datos del evento y no decide nada. Solo existe para que su
+# finalización dispare `delegated-audit-gate` por `workflow_run` (YAML de main), que
+# re-evalúa todos los PR abiertos hacia main desde la API.
+name: delegated-audit-senal
+on:
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+permissions: {}
+jobs:
+  senal:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - run: echo "review registrada; delegated-audit-gate re-evalúa por workflow_run"

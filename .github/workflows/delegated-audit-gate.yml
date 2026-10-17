@@ -1,0 +1,53 @@
+# P-06 · PoC de firma delegada — check `delegated-audit-gate` (REPORT-ONLY).
+# Brief: docs/briefs/P06_BRIDGE_POC.md §3; decisión de #54 (2026-10-12 18:15).
+#
+# Modelo de confianza: este workflow NUNCA corre con YAML ni código del PR.
+#   - `workflow_run` y `push` a main cargan SIEMPRE el YAML de la rama por defecto (main).
+#   - Los eventos de review (`pull_request_review`) cargan el YAML del merge del PR, por eso
+#     NO se escuchan acá: los escucha `delegated-audit-senal.yml`, que no tiene permisos ni
+#     decide nada; su sola finalización dispara este workflow por `workflow_run`. De ese run
+#     no se toma ningún dato: cada corrida re-evalúa TODOS los PR abiertos hacia main.
+#   - Checkout de la revisión actual de main, sin credenciales persistidas; el PR aporta
+#     solo número y sha (API). Su diff se lee con git (risk.mjs de main), no se ejecuta.
+# Disparadores: fin de `gates` (CI del HEAD), fin de la señal de review, push a main
+# (cambio de política). Un carril serial; si GitHub descarta un pendiente, el que corre
+# cubre a todos.
+#
+# REPORT-ONLY: el check sale `neutral` (veredicto PASS/FAIL en el título), nunca es
+# required y no habilita merge. Manda el AUDIT de ChatGPT. Límite (#54, punto 4): main
+# admite pushes directos y no exige checks; hasta la protección de rama este check informa,
+# no hace cumplir.
+name: delegated-audit-gate
+on:
+  push:
+    branches: [main]
+  workflow_run:
+    workflows: [gates, delegated-audit-senal]
+    types: [completed]
+permissions:
+  contents: read
+  pull-requests: read
+  actions: read
+  checks: write
+concurrency:
+  group: delegated-audit-gate
+  cancel-in-progress: false
+jobs:
+  evaluar:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Revisión actual de main (no la del evento)
+        run: |
+          git fetch -q origin main
+          git checkout -q --detach origin/main
+          echo "scripts de main=$(git rev-parse HEAD)"
+      - name: Firma delegada (report-only) — todos los PR abiertos hacia main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/collab/delegated-audit.mjs ci
