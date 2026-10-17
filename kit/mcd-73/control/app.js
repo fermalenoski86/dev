@@ -815,7 +815,7 @@
   ];
   // Colores, texto y producto pedidos → creatividad P (la idea del prompt). Sin IA: reglas locales, determinísticas.
   const COLORES_ES = [
-    [/\b(?:rojo|roja)/, '#DA291C', 'rojo'], [/\b(?:dorad|oro\b|gold)/, '#FFC72C', 'dorado'], [/\b(?:amarill)/, '#FFD21F', 'amarillo'], [/\b(?:celeste|cian)/, '#4FC3F7', 'celeste'],
+    [/\b(?:rojo|roja)/, '#DA291C', 'rojo'], [/\b(?:dorad|oro\b|gold)/, '#FFC72C', 'dorado'], [/\b(?:amarill)/, '#FFD21F', 'amarillo'], [/\b(?:celeste|cian)/, '#6CACE4', 'celeste'],
     [/\b(?:azul)/, '#1E5BFF', 'azul'], [/\b(?:blanc)/, '#F4F4F4', 'blanco'], [/\b(?:negr)/, '#111111', 'negro'], [/\b(?:verde)/, '#1FA34A', 'verde'],
     [/\b(?:violeta|morad|p[uú]rpura|lila)/, '#7B3FE4', 'violeta'], [/\b(?:rosa|fucsia)/, '#FF4FA0', 'rosa'], [/\b(?:naranja)/, '#FF7A1A', 'naranja'],
     [/\b(?:marr[oó]n|chocolate|caf[eé] con leche)/, '#6B3E26', 'marrón'], [/\b(?:crema|vainilla)/, '#F3E3C3', 'crema'], [/\b(?:turquesa)/, '#19C3B5', 'turquesa'],
