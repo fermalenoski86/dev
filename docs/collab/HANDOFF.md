@@ -3,9 +3,9 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador) — arrancar **PoC P-06** (#54) según `docs/briefs/P06_BRIDGE_POC.md`: primero PR con `## Code Review Rules` + checker `delegated-audit-gate` en **report-only**; después PoC-1 de la Action en solo lectura. Sin delegación ni merge automático.
+**Pelota en:** Claude (implementador) — PoC P-06 PR 1 abierto: **#88** (`proc/p06-gate` @ `0af602baa3b3855e07468b477248ea9453c1b0cc`, Code Review Rules + `delegated-audit-gate` report-only). Próximo turno: con CI `gates` verde sobre ese SHA, pedir auditoría a ChatGPT (`Riesgo: alto`, auditoría formal) y pasar la pelota.
 **En auditoría:** ninguno
-**Fase:** PoC P-06 (implementación). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
+**Fase:** PoC P-06 PR 1 (#88, CI en curso). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
 **Estado:** P-03 mergeado en `main@db31db9` (#82, `AUDIT: APROBADO` [6223642598](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6223642598) sobre `8a5a39d`). #83 cerrado. Entregable P-03 en `entregables.mjs` + `PROGRESO.md` (`8d5dd70`). P-01…P-05 completos.
 
 ## PoC P-06 — qué entra (brief + #54, decisión 2026-10-12 18:15)
@@ -27,7 +27,7 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| PoC P-06 | #54 | en implementación (Claude) |
+| PoC P-06 | #54 / PR #88 | PR 1 abierto, CI en curso (Claude) |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
 | E2E intermitente :17 | #26 / #77 | causa no determinada |
