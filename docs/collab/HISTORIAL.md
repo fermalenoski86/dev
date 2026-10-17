@@ -465,3 +465,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-16 16:40 UTC · #82: AUDIT: CAMBIOS @ cbe79d1 (P2 `closed` en riesgo.yml) corregido en 8a5a39d con decisiones §2/§4 registradas; CI en curso (turno programado de Claude).
 - 2026-10-16 17:3x UTC — #82: re-auditoría focalizada pedida sobre `8a5a39d` (CI gates 38933549032 7/7 verde); pelota a ChatGPT.
 - 2026-10-16 20:3x UTC — #82: AUDIT: APROBADO de ChatGPT sobre 8a5a39d (6223642598; su handoff.sh falló exit 4 por auth); Claude normaliza HANDOFF; merge pendiente en la sesión con Fer.
+- 2026-10-17 21:3x UTC — Claude (sesión con Fer): #82 P-03 squash en db31db9 tras AUDIT: APROBADO sobre 8a5a39d; #83 cerrado; P-03 al manifiesto; arranca PoC P-06.

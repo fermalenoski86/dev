@@ -3,18 +3,16 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude — #82 `AUDIT: APROBADO` [6223642598](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6223642598) sobre `8a5a39d` (riesgo alto; P0/P1/P2: 0). PR listo: CI gates [38933549032](https://github.com/fermalenoski86/dev/actions/runs/38933549032) 7/7 verde, `paralelo` success, sin conflictos. **Acción exacta para Fer:** en la sesión con Fer, mergear #82 con HEAD `8a5a39d` (verificar que no cambió); ese turno pone `En auditoría: ninguno`, registra entregable/progreso P-03 y arranca PoC P-06 (#54). Los turnos programados no mergean.
-**En auditoría:** #82 @ 8a5a39d09dd12c360a5d3f66f5f1bf894c433d15
-**Fase:** P-03 (PR #82) aprobado sobre `8a5a39d`, esperando merge de la sesión con Fer; después PoC P-06 (report-only, Action en solo lectura; sin delegación ni merge automático). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
-**Estado:** P-04 mergeado en `main@3a8e4fc` (#75, `AUDIT: APROBADO` [6186511591](https://github.com/fermalenoski86/dev/pull/75#issuecomment-6186511591) sobre `8bd04c5`; merge autorizado por Fer). #76 cerrado. Entregable P-04 en `entregables.mjs` + `PROGRESO.md` (`8b9ed35`).
+**Pelota en:** Claude (implementador) — arrancar **PoC P-06** (#54) según `docs/briefs/P06_BRIDGE_POC.md`: primero PR con `## Code Review Rules` + checker `delegated-audit-gate` en **report-only**; después PoC-1 de la Action en solo lectura. Sin delegación ni merge automático.
+**En auditoría:** ninguno
+**Fase:** PoC P-06 (implementación). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
+**Estado:** P-03 mergeado en `main@db31db9` (#82, `AUDIT: APROBADO` [6223642598](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6223642598) sobre `8a5a39d`). #83 cerrado. Entregable P-03 en `entregables.mjs` + `PROGRESO.md` (`8d5dd70`). P-01…P-05 completos.
 
-## P-03 — qué entra (BACKLOG §P-03 + #54 dictamen 2)
-- `scripts/collab/risk.mjs`: riesgo `bajo|medio|alto` calculado por paths del diff real contra merge-base (renames y borrados incluidos); **alto por defecto si hay duda**; nunca se rebaja.
-- Alto: migraciones DB, `platform-auth`, `platform-approval`, storage, procesos externos, CORS/CSRF, `apps/control` congelado, hardware, workflows/`scripts/ci`/`scripts/collab`/gates, `AGENTS.md`, el propio clasificador.
-- CI compara el declarado en el PR con el calculado: si declara menos, falla. PR alto sin sección "Pruebas adversarias" → falla.
-- `AGENTS.md`: mínimos de auditoría por nivel (todos los gates corren siempre). Criterio: clasifica bien los últimos 10 PRs mergeados (tabla en el PR).
-- Política de eficiencia vigente: pre-revisión propia, Codex 1 inicial + 1 final, correcciones agrupadas.
-
+## PoC P-06 — qué entra (brief + #54, decisión 2026-10-12 18:15)
+- `## Code Review Rules — TRUST` (texto de ChatGPT) + salida estructurada que el check parsea.
+- `delegated-audit-gate`: identidad por `user.id` de la App allowlisted en código de `main`, review real con `commit_id == head.sha`, parser estricto, elegibilidad por `risk.mjs` (P-03, alto ante la duda), gates verdes del SHA. **Report-only**: nunca habilita merge.
+- Después, PoC-1 de la Action de Claude en solo lectura (token ya cargado). Matriz de 13 casos del brief; latencias medidas.
+- Política vigente: correcciones consolidadas, re-auditoría focalizada, Codex sin revisión por push si Fer cambió el disparador.
 ## Después de P-03
 - PoC P-06 según `docs/briefs/P06_BRIDGE_POC.md` (firma delegada en report-only, PoC-1 de la Action en solo lectura).
 - CS-0 (#74): mergeado en `main@3b59b10`.
@@ -29,8 +27,7 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| P-03 auditoría basada en riesgo | #53 / PR #82 / #83 | `AUDIT: APROBADO` sobre `8a5a39d`; falta merge (sesión con Fer) |
-| PoC P-06 | #54 | después de P-03 |
+| PoC P-06 | #54 | en implementación (Claude) |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
 | E2E intermitente :17 | #26 / #77 | causa no determinada |
