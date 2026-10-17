@@ -78,6 +78,40 @@ Todo PR declara en su cuerpo **una** línea `Riesgo: bajo | medio | alto`. `scri
 | medio | lo de hoy: brief/criterios, diff, gates con salida real, A/B/C, `AUDIT:` |
 | alto | lo de medio + sección `## Pruebas adversarias` en el PR con al menos un caso de cada eje aplicable: permisos cruzados, concurrencia, fallo de infraestructura a mitad de operación, rollback y, para control físico, comando duplicado / tarde / nunca. Auditoría formal de ChatGPT (sin delegación, #54) |
 
+## Code Review Rules — TRUST
+
+> **PoC P-06, report-only** (brief `docs/briefs/P06_BRIDGE_POC.md`, decisión de #54 del 2026-10-12): estas instrucciones son para la review automática de Codex. Su firma **no** reemplaza el `AUDIT:` de ChatGPT ni habilita merge; el contrato formal de §Flujo por fase no cambia hasta volver a #54 con la matriz completa. El check `delegated-audit-gate` (`.github/workflows/delegated-audit-gate.yml` + `scripts/collab/delegated-audit.mjs`, código de `main`) valida por API identidad (`user.id` allowlisted), review real sobre el HEAD exacto sin editar ni descartar, este bloque, riesgo bajo/medio (`risk.mjs`) y `gates` verde en ese sha, y publica PASS/FAIL como check `neutral`.
+
+Revisá el brief vigente, DECISIONES, diff completo y riesgos del PR.
+Informá P0, P1 y P2 con archivo:línea, reproducción y corrección; incluí
+pruebas adversariales y evidencias reales. No confundas tests verdes con
+ausencia de bugs ni ejecuciones no realizadas con éxito.
+Solo si verificaste el HEAD exacto, TODOS los gates obligatorios verdes,
+la cobertura A/B/C, tests negativos aplicables, todas las invariantes y
+ningún P0/P1/P2 abierto, podés emitir como PR review:
+AUDIT: APROBADO
+En cualquier otro caso emití:
+AUDIT: CAMBIOS
+o AUDIT: INSUFICIENTE_EVIDENCIA (sin facultad de merge).
+Incluí repo, PR, SHA exacto, fuentes CI/run/attempt, alcance, riesgo,
+lista de hallazgos y limitaciones. No uses AUDIT: APROBADO por silencio,
+por baja severidad aparente ni como simple resumen de una review.
+La política de elegibilidad y el check independiente del servidor prevalecen
+sobre estas instrucciones; nunca autodeclares un PR elegible.
+
+Formato obligatorio: **un solo** bloque por review, con estas 8 líneas en este orden (separador ` · `). En el resto de la review no escribas la cadena `AUDIT:`: una segunda aparición invalida la firma.
+
+```
+AUDIT: APROBADO | CAMBIOS | INSUFICIENTE_EVIDENCIA
+repo: fermalenoski86/dev · pr: #N · head: <sha 40>
+brief: <ruta/issue> · criterios: <n>/<N> revisados
+gates: run <id> attempt <k> · <jobs verdes>/<total> sobre <sha 40>
+abc: A <sí|no> · B <sí|no> · C <sí|no>
+hallazgos: P0 <n> · P1 <n> · P2 <n>
+negativos: <lista o "ninguno aplicable">
+no-ejecutado: <lista o "nada">
+```
+
 ## Gates obligatorios (todos con salida real, nada mockeado en el camino feliz)
 
 ```bash
