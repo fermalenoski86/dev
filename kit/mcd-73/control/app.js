@@ -680,7 +680,7 @@
   }
   document.querySelectorAll('.zsel').forEach((b) => b.addEventListener('click', () => { zonaSel = zonaSel === b.dataset.z ? null : b.dataset.z; armarZona(); }));
   document.querySelectorAll('#transicion button').forEach((b) => b.addEventListener('click', () => M.setTransicion(+b.dataset.s)));
-  document.querySelectorAll('#creatividad button').forEach((b) => b.addEventListener('click', () => M.setCreatividad(b.dataset.v)));
+  document.querySelectorAll('#creatividad button').forEach((b) => b.addEventListener('click', () => { M.setCreatividad(b.dataset.v); if (!M.estado().show.cargado) M.cargarShow(); M.seek(5.2); M.play(); }));
 
   // escenas (presets). Los técnicos/diagnóstico quedan separados de los comerciales.
   (function armarEscenas() {
@@ -813,8 +813,39 @@
     { re: /logo|marca|nombre|brand|arcos/, cre: 'A', txt: 'marca → el nombre en grande cruzando las dos pantallas (A)' },
     { re: /recorr|viaje|cruza|onda|ola|wave|de corrientes a pellegrini/, cre: 'C', txt: 'recorrido → una luz cruza de Corrientes a Pellegrini y baja a la media (C)' },
   ];
+  // Colores, texto y producto pedidos → creatividad P (la idea del prompt). Sin IA: reglas locales, determinísticas.
+  const COLORES_ES = [
+    [/\b(?:rojo|roja)/, '#DA291C', 'rojo'], [/\b(?:dorad|oro\b|gold)/, '#FFC72C', 'dorado'], [/\b(?:amarill)/, '#FFD21F', 'amarillo'], [/\b(?:celeste|cian)/, '#4FC3F7', 'celeste'],
+    [/\b(?:azul)/, '#1E5BFF', 'azul'], [/\b(?:blanc)/, '#F4F4F4', 'blanco'], [/\b(?:negr)/, '#111111', 'negro'], [/\b(?:verde)/, '#1FA34A', 'verde'],
+    [/\b(?:violeta|morad|p[uú]rpura|lila)/, '#7B3FE4', 'violeta'], [/\b(?:rosa|fucsia)/, '#FF4FA0', 'rosa'], [/\b(?:naranja)/, '#FF7A1A', 'naranja'],
+    [/\b(?:marr[oó]n|chocolate|caf[eé] con leche)/, '#6B3E26', 'marrón'], [/\b(?:crema|vainilla)/, '#F3E3C3', 'crema'], [/\b(?:turquesa)/, '#19C3B5', 'turquesa'],
+    [/\b(?:platead|plata\b)/, '#C9CED6', 'plateado'], [/\b(?:gris)/, '#8A8F98', 'gris'],
+  ];
+  const PRODUCTOS = [
+    [/mc ?flurry|helado|sundae|cono|postre/, 'helado', 'helado / postre'], [/papas|fritas|fries/, 'papas', 'papas fritas'],
+    [/caf[eé]|desayuno|medialuna|mccaf/, 'cafe', 'café y medialuna'], [/hamburgues|burger|big ?mac|cuarto de libra|combo|mcpollo|sandwich/, 'hamburguesa', 'hamburguesa'],
+  ];
+  function titularDe(original) {
+    const q = original.match(/["“”«»']([^"“”«»']{2,60})["“”«»']/); if (q) return q[1].trim();
+    const m = original.match(/(?:(?:texto|frase|slogan|claim|mensaje|leyenda)\s*:|que diga)\s*([^.,;\n]{2,60})/i); return m ? m[1].trim() : '';
+  }
   function interpretar(texto) {
-    const p = (texto || '').toLowerCase(), entendi = [];
+    const original = texto || '', p = original.toLowerCase(), entendi = [];
+    const colores = []; for (const [re, hex, nom] of COLORES_ES) { const i = p.search(re); if (i >= 0) colores.push([i, hex, nom]); }
+    colores.sort((a, b) => a[0] - b[0]);
+    const titular = titularDe(original), prod = PRODUCTOS.find(([re]) => re.test(p));
+    const energia = /r[aá]pid|din[aá]mic|en[eé]rg|explos|vibrante/.test(p) ? 1.35 : /lent|calm|suave|tranquil/.test(p) ? 0.7 : 1;
+    const propios = colores.filter((c) => !['rojo', 'dorado', 'amarillo'].includes(c[2]));   // rojo y dorado solos = la base de marca de siempre
+    if (propios.length || titular || (prod && prod[1] === 'helado')) {
+      if (colores.length) entendi.push(`colores pedidos → ${colores.map((c) => c[2]).join(', ')} en pantallas y fachada`);
+      else entendi.push('sin colores pedidos → rojo y dorado de marca');
+      if (titular) entendi.push(`texto en pantalla → «${titular.toUpperCase()}»`);
+      if (prod) entendi.push(`producto → ${prod[2]} (ilustración genérica; en producción, el packshot oficial)`);
+      if (energia !== 1) entendi.push(energia > 1 ? 'ritmo rápido → más partículas y movimiento' : 'ritmo calmo → movimiento más lento');
+      entendi.push('show generado con tu idea (P) · reglas locales, sin IA');
+      return { cre: 'P', estilo: colores.length ? 'custom' : 'rojo', int: 1, entendi,
+        personal: { colores: colores.length ? colores.map((c) => c[1]) : ['#DA291C', '#FFC72C'], titular, producto: prod ? prod[1] : null, energia } };
+    }
     const r = REGLAS.find((x) => x.re.test(p));
     const cre = r ? r.cre : 'C'; entendi.push(r ? r.txt : 'sin tema claro → recorrido de luz por las 3 pantallas (C)');
     let estilo = 'rojo';
@@ -826,14 +857,16 @@
     else if (/impact|intens|fuerte|explos|potente|m[aá]xim/.test(p)) { int = 1.12; entendi.push('intensidad alta'); }
     const seg = p.match(/(\d{1,3})\s*(s\b|seg)/); if (seg && +seg[1] !== 15) entendi.push(`duración pedida ${seg[1]} s → por ahora el show dura 15 s`);
     if (/reloj/.test(p)) entendi.push('reloj → acento dorado durante el takeover (próxima fase)');
-    return { cre, estilo, int, entendi };
+    return { cre, estilo, int, entendi, personal: null };
   }
   function generarMinishow() {
     plegarDirector(false);
     const it = interpretar($('prompt').value);
+    if (it.personal) { window.CONTENIDO.setPersonal(it.personal); if (it.estilo === 'custom') M.setPaletaShow(it.personal.colores); }
     M.setCreatividad(it.cre); M.setEstiloShow(it.estilo, it.int);
     M.cargarShow(); M.seek(0); M.play();
-    $('plan-cab').innerHTML = `<b>Show de 15 s armado desde tu pedido</b> · interpretado por reglas (no es generación por IA): base preprogramada, ajustada a lo que pediste.`;
+    $('plan-cab').innerHTML = it.personal ? `<b>Show de 15 s generado con tu idea</b> · colores, texto y producto leídos del pedido por reglas locales (sin IA).`
+      : `<b>Show de 15 s armado desde tu pedido</b> · interpretado por reglas (no es generación por IA): base preprogramada, ajustada a lo que pediste.`;
     $('plan-entendi').innerHTML = it.entendi.map((x) => `<li>${x}</li>`).join('');
     const ol = $('plan-ol'); ol.innerHTML = '';
     for (const b of M.BLOQUES) {
@@ -842,14 +875,19 @@
       ol.appendChild(li);
     }
     $('plan').hidden = false;
-    if (window.CONTENIDO) window.CONTENIDO.setMedia(null);
     return it;
   }
   // AI Content Studio: con material READY arma el concepto (estudio.js); sin material, IDEA FIRST = plantilla preprogramada.
-  $('generar').addEventListener('click', () => {
-    if (window.ESTUDIO && window.ESTUDIO.hayMedia()) { plegarDirector(false); $('plan').hidden = true; window.ESTUDIO.generar(); }
-    else generarMinishow();
-  });
+  // Generar: el prompt arma el show (colores, texto, producto) y, si hay material listo, el material entra a las pantallas
+  // en sus tramos (master A+B, Corrientes, media) encima de lo generado. Se ve y se reproduce de inmediato.
+  async function generarTodo() {
+    if (window.CONTENIDO) window.CONTENIDO.setMedia(null);
+    const it = generarMinishow();
+    if (window.ESTUDIO && window.ESTUDIO.hayMedia()) { await window.ESTUDIO.generar(); window.ESTUDIO.aplicarAlPreview(); M.seek(0); M.play(); }
+    return it;
+  }
+  $('generar').addEventListener('click', () => { generarTodo(); });
+  window.TRUST_GENERAR = generarTodo;
   $('play').addEventListener('click', () => M.play());
   $('pausa').addEventListener('click', () => M.pausa());
   $('reset').addEventListener('click', () => M.resetShow());

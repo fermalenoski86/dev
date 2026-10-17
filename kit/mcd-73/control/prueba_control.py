@@ -77,6 +77,19 @@ async def main(out):
         plan = await ev('document.getElementById("plan").innerText')
         ok(est_g['cargado'] and est_g['t'] < 1 and est_g['reproduciendo'], 'Generar show: arma el show y arranca desde 0 (se ve que pasa algo)')
         ok('preprogramada' in plan and 'no es generación por IA' in plan and plan.count(' s · ') == 5, 'Generar show: el plan muestra 5 momentos (Normal → Entrada de marca → Takeover → Cierre de marca → Salida) y se rotula como base preprogramada, no IA')
+        # --- P · la idea del prompt: colores, texto y producto pedidos cambian el contenido y la luz
+        await ev('document.getElementById("prompt").value = \'Nueva McFlurry, azul y blanco, texto "NUEVA McFLURRY", ritmo rápido\'')
+        await pg.click('#generar')
+        per = await ev('CONTENIDO.personal()'); plan = await ev('document.getElementById("plan").innerText')
+        ok(await ev('TRUST.motor.estado().creatividad') == 'P' and per['titular'] == 'NUEVA McFLURRY' and per['producto'] == 'helado' and per['colores'][:2] == ['#1E5BFF', '#F4F4F4'] and per['energia'] > 1,
+           f'prompt con colores, texto y producto → creatividad P ({per["colores"]}, «{per["titular"]}», {per["producto"]})')
+        ok('NUEVA MCFLURRY' in plan and 'azul' in plan and 'sin IA' in plan, 'el plan muestra lo entendido (colores, texto, producto) y se rotula sin IA')
+        await ev('TRUST.motor.pausa(); TRUST.motor.seek(7.5); TRUST.dibujarYa()')
+        px = await ev('TRUST.motor.estado().showPaleta')
+        ok(px[:2] == ['#1E5BFF', '#F4F4F4'], f'la fachada usa la paleta pedida ({px})')
+        await ev('document.getElementById("prompt").value = "otro texto cualquiera"')
+        await pg.click('#generar')
+        ok(await ev('TRUST.motor.estado().creatividad') != 'P', 'sin colores ni texto entre comillas no se inventa una creatividad P')
         ok('No hay IA conectada' in await ev('document.getElementById("director-nota").innerText'), 'la nota aclara cómo funciona hoy: palabras clave, sin IA conectada')
         await ev('TRUST.motor.pausa()')
         casos = [('Lanzamiento del nuevo producto, todo dorado y con mucho impacto', 'F', 'dorado', 1.12), ('Un desayuno sutil, café y medialunas', 'E', 'calido', 0.88), ('Lluvia de papas fritas', 'D', 'rojo', 1), ('Que la hamburguesa sea la protagonista', 'B', 'rojo', 1), ('El logo bien grande', 'A', 'rojo', 1)]
@@ -418,15 +431,17 @@ async def main(out):
            f'análisis básico: 5 keyframes (0/25/50/75/100 %), corte de escena ≈7 s {vis["cortes"]}, colores {nombres[:4]}')
         ok(lgA['analisis']['tecnico']['transparencia'].startswith('sí') and lgA['width'] == 800, 'imagen: resolución, aspecto y transparencia (candidata a logo)')
         ok(v9['sha256'] == hashlib.sha256(open(os.path.join(med, 'spot_vp9.mp4'), 'rb').read()).hexdigest(), 'huella SHA-256 local = la del archivo original (el original no se toca)')
-        ok(all(not a['uso']['final'] for a in ad.values()), 'nada es publicable por defecto: todo entra como REFERENCE MEDIA')
+        ok(all(a['uso']['final'] for a in ad.values() if a['status'] == 'READY'), 'subir = verlo: lo subido va al show por defecto (se puede pasar a solo referencia)')
+        ok(await ev('ESTUDIO.aplicado() && CONTENIDO.hayMedia() && TRUST.motor.estado().show.cargado'), 'al terminar el análisis el material entra solo a las pantallas y el show se carga')
         ids = {a['filename']: a['id'] for a in ad.values()}
         await pg.click(f'.adj-ver[data-id="{ids["spot_vp9.mp4"]}"]'); await pg.wait_for_timeout(300)
         vtxt = await ev('document.getElementById("visor").innerText')
-        ok(await ev('!!document.getElementById("vis-player") && !document.getElementById("u-fin").checked') and 'análisis automático' in vtxt and 'no es IA' in vtxt and 'Se usa:' in vtxt and 'Armar el show de 15 s con este video' in vtxt,
+        ok(await ev('!!document.getElementById("vis-player") && document.getElementById("u-fin").checked') and 'análisis automático' in vtxt and 'no es IA' in vtxt and 'Se usa:' in vtxt and 'Armar el show de 15 s con este video' in vtxt,
            'preview: player + metadata + AI NOTES rotuladas como análisis generado + source timeline + atajos')
         await pg.click('#build15')
         ok('Show de 15 s con el video' in await ev('document.getElementById("prompt").value'), '«Armar el show de 15 s con este video» completa el pedido')
         await pg.click('#vis-cerrar')
+        await ev(f'ESTUDIO.marcar("{ids["spot_vp9.mp4"]}", {{final: false}}); ESTUDIO.marcar("{ids["logo.png"]}", {{final: false}}); ESTUDIO.marcar("{ids["packshot.jpg"]}", {{final: false}})' + (f'; ESTUDIO.marcar("{ids["spot_h264.mp4"]}", {{final: false}})' if h264['status'] == 'READY' else ''))
         await pg.click('#generar'); await pg.wait_for_function('!!ESTUDIO.concepto()')
         c0 = await ev('ESTUDIO.concepto()')
         ok(c0['flujo'] == 'MEDIA + PROMPT' and not any(d['fuente'] == 'spot_vp9.mp4' for d in c0['derivadas']) and any('REFERENCIA' in n for n in c0['notas']),

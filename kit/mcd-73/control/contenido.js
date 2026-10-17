@@ -384,7 +384,128 @@
     c.fillStyle = g; c.fillText(txt, 0, tam * 0.04);
     c.restore();
   }
+  // ---------- P · LA IDEA DEL PROMPT: paleta, texto y producto pedidos (generado en vivo, sin IA) ----------
+  let PERSONAL = { colores: ['#DA291C', '#FFC72C', '#27251F'], titular: '', producto: null, marca: "McDonald's", energia: 1 };
+  function setPersonal(p) { PERSONAL = Object.assign({ colores: ['#DA291C', '#FFC72C'], titular: '', producto: null, marca: "McDonald's", energia: 1 }, p || {}); }
+  const rgbDe = (hex) => { const n = parseInt(String(hex).replace('#', ''), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  const lumDe = (q) => (q[0] * 0.3 + q[1] * 0.59 + q[2] * 0.11) / 255;
+  function tonosP() {   // principal (más saturado), acento (otro), oscuro (base)
+    const cols = (PERSONAL.colores.length ? PERSONAL.colores : ['#DA291C', '#FFC72C']).map(rgbDe);
+    const sat = (q) => Math.max(...q) - Math.min(...q);
+    const orden = cols.slice().sort((x, y) => sat(y) - sat(x) || lumDe(x) - lumDe(y));
+    const princ = orden[0], acento = orden[1] || [255, 236, 200], claro = cols.slice().sort((x, y) => lumDe(y) - lumDe(x))[0];
+    return { princ, acento, claro, oscuro: princ.map((v) => Math.round(v * 0.12)) };
+  }
+  const rgba = (q, a) => `rgba(${q[0]},${q[1]},${q[2]},${a})`;
+  function fondoP(c, vn, t, calma) {   // mismo volumen que el rojo de marca, con los colores pedidos
+    const T = tonosP(), caja = [vn.x0 - 4, vn.y0 - 4, vn.x1 - vn.x0 + 8, vn.y1 - vn.y0 + 8];
+    c.fillStyle = rgba(T.oscuro, 1); c.fillRect(...caja);
+    c.save(); c.globalCompositeOperation = 'lighter';
+    const fx = 1250 + 160 * Math.sin(t * 0.35 * PERSONAL.energia), fy = 470;
+    let g = c.createRadialGradient(fx, fy, 20, fx, fy, 860);
+    g.addColorStop(0, rgba(T.claro, 0.9)); g.addColorStop(0.28, rgba(T.princ, 0.95)); g.addColorStop(0.7, rgba(T.princ.map((v) => v * 0.35 | 0), 0.6)); g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = g; c.fillRect(...caja);
+    const ax = 900 + 500 * Math.sin(t * 0.22 + 1.3), ay = 640;   // segunda fuente con el acento: une las dos pantallas
+    g = c.createRadialGradient(ax, ay, 10, ax, ay, 620); g.addColorStop(0, rgba(T.acento, 0.55 * (1 - calma * 0.5))); g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = g; c.fillRect(...caja);
+    c.save(); c.translate(YM.cx, YM.cy); c.scale(3.2, 1); c.translate(-YM.cx, -YM.cy);
+    g = c.createRadialGradient(YM.cx, YM.cy, 10, YM.cx, YM.cy, 260); g.addColorStop(0, rgba(T.princ, 1)); g.addColorStop(0.5, rgba(T.princ.map((v) => v * 0.6 | 0), 0.8)); g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = g; c.fillRect(YM.cx - 300, YM.cy - 300, 600, 600); c.restore();
+    c.restore();
+    vineta(c, vn, 0.5);
+  }
+  function tamQueEntra(c, txt, maxAncho, tam) { let px = tam; c.font = `800 ${px}px ${FUENTE}`; while (c.measureText(txt).width > maxAncho && px > 18) { px *= 0.92; c.font = `800 ${px}px ${FUENTE}`; } return px; }
+  function titular(c, txt, cx, cy, maxAncho, tam, a, desliz, fijo) {   // texto pedido: blanco con halo del color principal, se ajusta al ancho
+    if (!txt || a <= 0) return;
+    const T = tonosP();
+    c.save(); c.globalAlpha = cl(a, 0, 1); c.textAlign = 'center'; c.textBaseline = 'middle';
+    const px = fijo || tamQueEntra(c, txt, maxAncho, tam); c.font = `800 ${px}px ${FUENTE}`;
+    const x = cx + (desliz || 0);
+    c.shadowColor = rgba(T.princ.map((v) => Math.min(255, v + 60)), 0.9); c.shadowBlur = px * 0.35;
+    c.fillStyle = '#ffffff'; c.fillText(txt, x, cy);
+    c.shadowBlur = 0; c.globalCompositeOperation = 'lighter'; c.globalAlpha = cl(a, 0, 1) * 0.35;
+    const g = c.createLinearGradient(x - maxAncho / 2, 0, x + maxAncho / 2, 0);
+    g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.5, rgba(T.acento, 1)); g.addColorStop(1, 'rgba(255,255,255,0)');
+    c.fillStyle = g; c.fillText(txt, x, cy);
+    c.restore();
+  }
+  function partirTitular(txt) {   // dos mitades por palabras (Corrientes | Pellegrini) cuando no hay producto
+    const w = txt.split(/\s+/).filter(Boolean); if (w.length < 2) return [txt, ''];
+    let mejor = 1, dif = 1e9;
+    for (let i = 1; i < w.length; i++) { const d = Math.abs(w.slice(0, i).join(' ').length - w.slice(i).join(' ').length); if (d < dif) { dif = d; mejor = i; } }
+    return [w.slice(0, mejor).join(' '), w.slice(mejor).join(' ')];
+  }
+  function helado(c, x, y, a, t) {   // vaso de helado con remolino (genérico, sin envase de marca); base en y
+    const T = tonosP(), h = a * 0.95, wTop = a * 0.62, wBot = a * 0.44;
+    c.save();
+    let g = c.createLinearGradient(x - wTop / 2, 0, x + wTop / 2, 0); g.addColorStop(0, '#d9dde6'); g.addColorStop(0.5, '#ffffff'); g.addColorStop(1, '#c4c9d3');
+    c.fillStyle = g; c.beginPath(); c.moveTo(x - wTop / 2, y - h * 0.62); c.lineTo(x + wTop / 2, y - h * 0.62); c.lineTo(x + wBot / 2, y); c.lineTo(x - wBot / 2, y); c.closePath(); c.fill();
+    c.fillStyle = rgba(T.princ, 0.9); c.fillRect(x - wTop * 0.47, y - h * 0.42, wTop * 0.94 - (wTop - wBot) * 0.25, h * 0.12);
+    for (let k = 0; k < 4; k++) {   // remolino
+      const r = wTop * (0.5 - k * 0.1), yy = y - h * 0.62 - k * h * 0.11 - Math.sin(t * 2 + k) * 2;
+      g = c.createRadialGradient(x - r * 0.3, yy - r * 0.3, 2, x, yy, r); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#e8e2d8');
+      c.fillStyle = g; c.beginPath(); c.ellipse(x, yy, r, r * 0.42, 0, 0, Math.PI * 2); c.fill();
+    }
+    c.fillStyle = 'rgba(40,30,30,0.85)';   // trocitos (galleta)
+    for (let k = 0; k < 14; k++) { const ax = x + (azar(k) - 0.5) * wTop * 0.7, ay = y - h * 0.66 - azar(k + 9) * h * 0.3; c.fillRect(ax, ay, a * 0.03, a * 0.022); }
+    c.restore();
+  }
+  function cucurucho(c, x, y, a) {   // cucurucho de papas (genérico): bastones dorados saliendo de un sobre del color principal
+    const T = tonosP();
+    for (let k = 0; k < 9; k++) papa(c, x - a * 0.22 + k * a * 0.055, y - a * 0.62 - azar(k) * a * 0.18, a * 0.5, -Math.PI / 2 + (k - 4) * 0.06);
+    c.save(); c.fillStyle = rgba(T.princ, 1); c.beginPath(); c.moveTo(x - a * 0.3, y - a * 0.55); c.lineTo(x + a * 0.3, y - a * 0.55); c.lineTo(x + a * 0.22, y); c.lineTo(x - a * 0.22, y); c.closePath(); c.fill(); c.restore();
+  }
+  function productoEn(c, vn, t, escala) {   // el producto entra ENTERO en la pantalla (se escala por el alto real de la ventana)
+    const p = PERSONAL.producto, h = vn.y1 - vn.y0, x = (vn.x0 + vn.x1) / 2, base = vn.y1 - h * 0.07, e = escala || 1;
+    if (p === 'helado') return helado(c, x, base, h * 0.66 * e, t);
+    if (p === 'papas') return cucurucho(c, x, base, h * 0.78 * e);
+    if (p === 'cafe') { taza(c, x + h * 0.3, base - h * 0.32, h * 0.62 * e, t); medialuna(c, x - h * 0.42, base - h * 0.3, h * 0.62 * e); return; }
+    return hamburguesa(c, x, base, h * 1.55 * e, t);
+  }
+  function titularEn(c, txt, vn, a, desliz) {   // ocupa la pantalla: una línea si es corto, dos si es largo
+    if (!txt) return;
+    const w = (vn.x1 - vn.x0) * 0.88, h = vn.y1 - vn.y0, cx = (vn.x0 + vn.x1) / 2, cy = (vn.y0 + vn.y1) / 2;
+    const pal = txt.split(/\s+/).filter(Boolean);
+    if (pal.length >= 3 && txt.length > 14) {
+      const [l1, l2] = partirTitular(txt);
+      const px = Math.min(tamQueEntra(c, l1, w, h * 0.36), tamQueEntra(c, l2, w, h * 0.36));   // las dos líneas con el mismo cuerpo
+      titular(c, l1, cx, cy - h * 0.2, w, px, a, desliz, px); titular(c, l2, cx, cy + h * 0.2, w, px, a, -(desliz || 0), px);
+    } else titular(c, txt, cx, cy, w, h * 0.55, a, desliz);
+  }
+  function revelacionP(c, id, vn, t) {
+    fondoP(c, vn, t, 0.3); particulas(c, vn, t, 0.5, 60); revelado(c, id, vn, t);
+    const s = sOrbe(t), p = enCamino(s), nace = sv((t - ORBE_T0 + 0.1) / 0.5);
+    cinta(c, Math.max(0, s - 0.16), s, t, 0.7 * nace); orbe(c, p[0], p[1], 15, nace);
+  }
+  function takeoverP(c, id, vn, t) {
+    const k = sv((t - 5) / 0.6);
+    fondoP(c, vn, t, 0);
+    particulas(c, vn, t, 0.65, Math.round(80 * PERSONAL.energia));
+    anillos(c, 5.1, t, 1240, 520);
+    const tit = (PERSONAL.titular || '').toUpperCase();
+    const entra = (d) => sv((t - d) / 0.55), desl = (d) => 120 * (1 - sv((t - d) / 0.7));
+    if (PERSONAL.producto) {
+      if (id === 'pellegrini') productoEn(c, VEN.pellegrini, t, 0.92 + 0.08 * entra(5.2));
+      if (id === 'corrientes') { if (tit) titularEn(c, tit, VEN.corrientes, entra(5.4), -desl(5.4)); else productoEn(c, VEN.corrientes, t, 1.1); }
+    } else if (tit) {
+      const [a1, a2] = partirTitular(tit);
+      if (id === 'corrientes') titularEn(c, a2 ? a1 : tit, VEN.corrientes, entra(5.3), -desl(5.3));
+      if (id === 'pellegrini') titularEn(c, a2 || tit, VEN.pellegrini, entra(5.9), desl(5.9));
+    } else { columnasLuz(c, t, 0.8 * k); cinta(c, 0, 1, t, k); }
+    if (id === 'media') marca(c, YM.cx, YM.cy, 66, sv((t - 5.6) / 0.8), cl((t - 6.4) / 1.8, 0, 1));
+  }
+  function firmaP(c, id, vn, t) {
+    fondoP(c, vn, t, 0.6);
+    c.fillStyle = 'rgba(0,0,0,0.22)'; c.fillRect(vn.x0 - 4, vn.y0 - 4, vn.x1 - vn.x0 + 8, vn.y1 - vn.y0 + 8);
+    particulas(c, vn, t, 0.4, 50); ondasFirma(c, vn, t, 0.9);
+    const tit = (PERSONAL.titular || '').toUpperCase();
+    if (id === 'media') marca(c, YM.cx, YM.cy, 62, 1);
+    else if (tit && id === 'corrientes') titularEn(c, tit, vn, 0.95);
+    else if (PERSONAL.producto && id === 'pellegrini') productoEn(c, vn, t, 0.95);
+    else if (tit && id === 'pellegrini') titularEn(c, PERSONAL.marca.toUpperCase(), vn, 0.9);
+  }
   function takeover(c, id, vn, t, cr) {   // 5–10 s: máxima presencia de pantallas
+    if (cr === 'P') return takeoverP(c, id, vn, t);
     const k = sv((t - 5) / 0.6);
     if (cr === 'D') {   // PAPAS: lluvia de papas doradas que atraviesa las 3 pantallas como un solo espacio
       fondoRojo(c, vn, t, 0.12);
@@ -445,6 +566,7 @@
     }
   }
   function firma(c, id, vn, t, cr) {   // 10–13 s: oro y calidez; la onda dorada como firma; marca serena
+    if (cr === 'P') return firmaP(c, id, vn, t);
     fondoRojo(c, vn, t, 0.55);
     c.fillStyle = 'rgba(30,6,0,0.25)'; c.fillRect(vn.x0 - 4, vn.y0 - 4, vn.x1 - vn.x0 + 8, vn.y1 - vn.y0 + 8);
     particulas(c, vn, t, 0.45, 60);
@@ -457,7 +579,7 @@
   }
   function enMomento(c, id, vn, t, cr) {
     if (t < 2) return institucional(c, id, vn, t);
-    if (t < 5) return revelacion(c, id, vn, t);
+    if (t < 5) return cr === 'P' ? revelacionP(c, id, vn, t) : revelacion(c, id, vn, t);
     if (t < 10) return takeover(c, id, vn, t, cr);
     if (t < 13) return firma(c, id, vn, t, cr);
     return institucional(c, id, vn, t);
@@ -480,7 +602,7 @@
     if (t >= 1.3 && t < 2.15) {   // la noche se apaga a negro antes de que nazca el elemento
       institucional(c, id, vn, t); c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = `rgba(0,0,0,${sv((t - 1.3) / 0.75)})`; c.fillRect(0, 0, w, h); return;
     }
-    if (t >= 4.85 && t < 5.35) return fundir(cv, id, vn, (k) => revelacion(k, id, vn, Math.min(t, 4.99)), (k) => takeover(k, id, vn, Math.max(t, 5), cr), sv((t - 4.85) / 0.5));
+    if (t >= 4.85 && t < 5.35) return fundir(cv, id, vn, (k) => (cr === 'P' ? revelacionP : revelacion)(k, id, vn, Math.min(t, 4.99)), (k) => takeover(k, id, vn, Math.max(t, 5), cr), sv((t - 4.85) / 0.5));
     if (t >= 9.6 && t < 10.4) return fundir(cv, id, vn, (k) => takeover(k, id, vn, t, cr), (k) => firma(k, id, vn, t, cr), sv((t - 9.6) / 0.8));
     if (t >= 12.6 && t < 13.6) return fundir(cv, id, vn, (k) => firma(k, id, vn, t, cr), (k) => institucional(k, id, vn, t), sv((t - 12.6) / 1));
     enMomento(c, id, vn, t, cr);
@@ -568,5 +690,5 @@
     LARGO.length = 1; for (let i = 1; i < CAMINO.length; i++) LARGO.push(LARGO[i - 1] + Math.hypot(CAMINO[i][0] - CAMINO[i - 1][0], CAMINO[i][1] - CAMINO[i - 1][1]));
     return VEN;
   }
-  window.CONTENIDO = { preparar, dibujar, enCamino, ventanas: () => VEN, setMedia, hayMedia: () => !!MEDIA, recorteCubrir };
+  window.CONTENIDO = { preparar, dibujar, enCamino, ventanas: () => VEN, setMedia, hayMedia: () => !!MEDIA, recorteCubrir, setPersonal, personal: () => JSON.parse(JSON.stringify(PERSONAL)) };
 })();

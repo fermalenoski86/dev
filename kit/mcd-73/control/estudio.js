@@ -229,7 +229,7 @@
   async function agregar(file) {
     const a = { id: 'att-' + (++seq), type: ACEPTA[file.type] || 'desconocido', filename: file.name, mimeType: file.type || 'desconocido', sizeBytes: file.size,
       durationMs: null, width: null, height: null, fps: null, codec: null, thumbnail: null, keyframes: [], assetId: null, sha256: null, status: 'UPLOADING', motivo: null,
-      uso: { referencia: true, final: false }, roles: [], derechos: { rightsConfirmed: false, sourceOwner: '', usageNotes: '' },
+      uso: { referencia: true, final: true }, roles: [], derechos: { rightsConfirmed: false, sourceOwner: '', usageNotes: '' },
       rango: null, rangoSugerido: null, analisis: null, _file: file, _url: null, _el: null };
     adjuntos.push(a); pintar();
     try {
@@ -246,6 +246,8 @@
       a.status = 'REJECTED'; a.motivo = e.message;
     }
     pintar(); if (visorId === a.id) abrirVisor(a.id);
+    // Subir = verlo: cuando termina de analizarse todo lo cargado, el material entra a las pantallas y el show arranca.
+    if (a.status === 'READY' && !adjuntos.some((x) => x.status === 'UPLOADING' || x.status === 'ANALYZING') && window.TRUST_GENERAR) window.TRUST_GENERAR();
     return a;
   }
   function quitar(id) {

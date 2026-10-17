@@ -39,7 +39,7 @@
   const OCHAVA = ['SUP-07', 'SUP-08', 'SUP-09', 'SUP-10', 'SUP-11', 'MED-09', 'MED-10', 'MED-11', 'MED-12', 'INF-07', 'INF-08', 'INF-09', 'INF-10'];
   const enOchava = new Set(OCHAVA);
   const TRANSICIONES = [0.5, 1, 2, 3, 5];
-  const CREATIVIDADES = ['A', 'B', 'C', 'D', 'E', 'F'];
+  const CREATIVIDADES = ['A', 'B', 'C', 'D', 'E', 'F', 'P'];   // P = la idea del prompt (paleta, texto y producto pedidos)
   // Apertura visual del haz (°), configurable por luminaria. Valor de SIMULACIÓN: la real depende de la óptica del equipo.
   const APERTURA = { superior: 40, medio: 50, inferior: 50 };
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -112,7 +112,7 @@
     { desde: 2, luz: (g, i, n, id, t) => {      // la cálida baja a 25 %; el rojo sube y avanza Corrientes → Pellegrini
       const x = n > 1 ? i / (n - 1) : 0, frente = (t - 2) / 2.4, k = suave((frente - x + 0.05) / 0.25);
       const base = L_(enOchava.has(id) ? 0.34 : 0.25, C.calido);   // la ochava conserva volumen en blanco cálido
-      return (i + desfaseDe(g)) % 2 === 0 ? mezclar(base, L_(0.55, C.rojo), k) : base;
+      return (i + desfaseDe(g)) % 2 === 0 ? mezclar(base, L_(0.55, OPC.estilo === 'custom' && PALETA_TAKEOVER.custom ? PALETA_TAKEOVER.custom[0].rgbw : C.rojo), k) : base;
     } },
     { desde: 5, luz: (g, i, n, id, t) => {      // persecución lenta de sectores de 3: rojo · oro · cálido (brief: 65–75 · 35–45 · 15–25 %)
       const p = (t - 5) / 1.25, paso = Math.floor(p), k = suave((p - paso) / 0.4), b = Math.floor(i / 3) + desfaseDe(g);
@@ -149,6 +149,21 @@
     dorado: [L_(0.58, C.oro), L_(0.45, C.calido), L_(0.40, C.oro)],
     calido: [L_(0.48, C.calido), L_(0.42, C.oro), L_(0.48, C.calido)],
   };
+  // Paleta pedida en el prompt → RGBW de previsualización con la regla comercial (2 canales + W, nunca R, G y B juntos).
+  function hexARGBW(hex) {
+    const n = parseInt(String(hex).replace('#', ''), 16), r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+    const mn = Math.min(r, g, b), mx = Math.max(r, g, b) || 1;
+    const q = { r: (r - mn) / mx, g: (g - mn) / mx, b: (b - mn) / mx };
+    const menor = ['r', 'g', 'b'].sort((x, y) => q[x] - q[y])[0]; q[menor] = 0;
+    const blanco = mn / mx;   // pastel / blanco → W
+    return rgbwOk({ r: q.r, g: q.g, b: q.b, w: Math.min(0.95, 0.08 + blanco * 0.9) });
+  }
+  function paletaPersonal(hexes) {
+    const cols = (hexes && hexes.length ? hexes : ['#DA291C', '#FFC72C']).map(hexARGBW);
+    const a = cols[0], b = cols[1] || C.calido, c2 = cols[2] || C.calido;
+    PALETA_TAKEOVER.custom = [L_(0.70, a), L_(0.45, b), L_(0.25, c2)];
+    PALETA_FIRMA.custom = [L_(0.52, b), L_(0.45, C.calido), L_(0.35, a)];
+  }
   const OPC = { estilo: 'rojo', intensidad: 1 };
   function showLuz(g, i, n, id, t) {
     const v = encadenar(t, (k) => MOMENTOS[k].luz(g, i, n, id, t));
@@ -260,7 +275,9 @@
     setBlackout(b) { S.blackout = !!b; return avisar(); },
     setTransicion(s) { s = +s; if (s !== 0 && !TRANSICIONES.includes(s)) throw new Error('transición ' + s); S.transicion = s; if (!s) S.fundido = null; return avisar(); },
     setCreatividad(v) { if (!CREATIVIDADES.includes(v)) throw new Error('creatividad ' + v); S.creatividad = v; return avisar(); },
+    setPaletaShow(hexes) { paletaPersonal(hexes); S.showPaleta = (hexes || []).slice(0, 3); return avisar(); },
     setEstiloShow(estilo, intensidad) {
+      if (estilo === 'custom' && !PALETA_TAKEOVER.custom) paletaPersonal(null);
       if (!(estilo in PALETA_TAKEOVER)) throw new Error('estilo ' + estilo);
       S.showEstilo = OPC.estilo = estilo; S.showIntensidad = OPC.intensidad = clamp(+intensidad || 1, 0.85, 1.15);
       return avisar();

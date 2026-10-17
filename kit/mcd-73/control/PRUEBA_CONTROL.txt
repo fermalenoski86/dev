@@ -11,6 +11,10 @@ OK    encuadre «Fachada»: la foto base original, sin deformar
 OK    Director: prompt de ejemplo «McDonald's 15 s» precargado
 OK    Generar show: arma el show y arranca desde 0 (se ve que pasa algo)
 OK    Generar show: el plan muestra 5 momentos (Normal → Entrada de marca → Takeover → Cierre de marca → Salida) y se rotula como base preprogramada, no IA
+OK    prompt con colores, texto y producto → creatividad P (['#1E5BFF', '#F4F4F4'], «NUEVA McFLURRY», helado)
+OK    el plan muestra lo entendido (colores, texto, producto) y se rotula sin IA
+OK    la fachada usa la paleta pedida (['#1E5BFF', '#F4F4F4'])
+OK    sin colores ni texto entre comillas no se inventa una creatividad P
 OK    la nota aclara cómo funciona hoy: palabras clave, sin IA conectada
 OK    el pedido cambia el show: lanzamiento→F dorado fuerte · desayuno→E cálido suave · papas→D · producto→B · logo→A ([True, True, True, True, True])
 OK    escribir en el pedido no dispara atajos (espacio, R, D, N, B se escriben normal): ['papas r d n b con espacios', 'noche', False]
@@ -94,7 +98,8 @@ OK    metadata técnica real del MP4 (cajas ISO-BMFF): 1920×1080 · 25 fps · v
 OK    análisis básico: 5 keyframes (0/25/50/75/100 %), corte de escena ≈7 s [7], colores ['rojo', 'negro', 'amarillo', 'amarillo']
 OK    imagen: resolución, aspecto y transparencia (candidata a logo)
 OK    huella SHA-256 local = la del archivo original (el original no se toca)
-OK    nada es publicable por defecto: todo entra como REFERENCE MEDIA
+OK    subir = verlo: lo subido va al show por defecto (se puede pasar a solo referencia)
+OK    al terminar el análisis el material entra solo a las pantallas y el show se carga
 OK    preview: player + metadata + AI NOTES rotuladas como análisis generado + source timeline + atajos
 OK    «Armar el show de 15 s con este video» completa el pedido
 OK    solo referencia: el plan usa paleta y ritmo (USE_AS_REFERENCE), no publica cuadros del video
