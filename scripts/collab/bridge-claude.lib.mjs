@@ -100,17 +100,67 @@ export function decidirReview({ run, prs, reviews, repo, allowlist = CODEX_BOT_I
 }
 
 /**
- * Idempotencia (AUDIT: CAMBIOS @ 5b4acf4, P2): como máximo UNA invocación de Claude por evento
- * (review o comentario), aunque la señal llegue varias veces, se re-corra el run o dos runs se
- * crucen. Registro durable = check-run `CHECK_REGISTRO` con `external_id` = clave del evento,
- * creado ANTES de invocar a Claude sobre el HEAD del PR (se busca en todos los commits del PR,
- * así un push posterior no lo esconde). Orden: leer registro → si ya está, no actúa → registrar
- * → releer → solo el registro de id más bajo para esa clave invoca (dos corridas cruzadas: una
- * sola gana). Leer o registrar falla → no actúa. Un registro queda aunque Claude falle después
- * (a lo sumo una vez, nunca reintento automático).
+ * Idempotencia (AUDIT: CAMBIOS @ 5b4acf4 y @ 06ec8be): como máximo UNA invocación de Claude por
+ * evento (review o comentario), aunque la señal llegue varias veces, se re-corra el run, dos runs
+ * se crucen o la rama del PR se reescriba.
+ *
+ * Registro durable = check-runs `CHECK_REGISTRO` con `external_id` = clave del evento, todos sobre
+ * UN commit fijo de `main` (`ANCLA_REGISTRO`), nunca sobre los commits del PR: así el historial no
+ * depende de qué commits siguen en el PR (rebase/force-push de la rama no lo esconde) y se lee de
+ * un solo lugar. La lectura es COMPLETA o falla: se pagina hasta `total_count`, se valida la forma
+ * de cada página y la cantidad final; cualquier duda → no actúa.
+ *
+ * Orden: leer → si la clave está, no actúa → registrar → releer → solo el registro de id más bajo
+ * para esa clave invoca (dos corridas cruzadas: una sola gana). Leer, registrar o confirmar falla
+ * → no actúa. Un registro queda aunque Claude falle después (a lo sumo una vez, sin reintento).
  */
 export const CHECK_REGISTRO = 'bridge-claude · invocación';
-export const claveEvento = (d) => `${d.tipo}-${d.evento_id}`;
+export const claveEvento = (d) => `pr${d.pr}-${d.tipo}-${d.evento_id}`;
+/** Commit fijo de main (merge de PR 1, #88). main no admite force-push (`handoff.sh`); si el
+ * commit dejara de existir, la API responde error y el bridge no actúa. */
+export const ANCLA_REGISTRO = 'c403b6b25192a1835180d5356d68e74970fbf51e';
+export const POR_PAGINA = 100;
+export const MAX_REGISTROS = 1000; // GitHub limita el listado por ref: más es "no se puede demostrar"
+
+/**
+ * Lectura COMPLETA del registro. `pagina(n)` devuelve el JSON de
+ * `GET /commits/{ancla}/check-runs?check_name=…&filter=all&per_page=100&page=n`.
+ * Falla (throw) si la forma no es la esperada, si `total_count` cambia entre páginas, si una
+ * página viene vacía antes de juntar `total_count`, si hay ids repetidos o si se pasa del tope.
+ */
+export function leerRegistroCompleto(pagina) {
+  const todos = [];
+  let total = null;
+  for (let n = 1; ; n++) {
+    const r = pagina(n);
+    if (!r || typeof r !== 'object' || !Number.isSafeInteger(r.total_count) || r.total_count < 0 || !Array.isArray(r.check_runs)) throw new Error(`página ${n} del registro con forma inesperada`);
+    if (total === null) total = r.total_count;
+    else if (r.total_count !== total) throw new Error(`total_count cambió durante la lectura (${total} → ${r.total_count})`);
+    if (total >= MAX_REGISTROS) throw new Error(`${total} registros: no se puede demostrar una lectura completa`);
+    for (const c of r.check_runs) {
+      if (!c || !Number.isSafeInteger(c.id) || !(typeof c.external_id === 'string' || c.external_id === null) || c.name !== CHECK_REGISTRO) throw new Error(`registro con forma inesperada en la página ${n}`);
+      todos.push({ id: c.id, external_id: c.external_id });
+    }
+    if (todos.length >= total) break;
+    if (r.check_runs.length === 0) throw new Error(`página ${n} vacía con ${todos.length}/${total} registros leídos`);
+    if (n * POR_PAGINA >= MAX_REGISTROS) throw new Error('demasiadas páginas');
+  }
+  if (todos.length !== total) throw new Error(`lectura incompleta: ${todos.length}/${total}`);
+  if (new Set(todos.map((x) => x.id)).size !== todos.length) throw new Error('ids repetidos entre páginas');
+  return todos;
+}
+
+/**
+ * Adaptador del registro sobre la API (inyectable para tests): `get(ruta)` y `post(ruta, cuerpo)`
+ * devuelven JSON. Lee y escribe SIEMPRE en el ancla, con lectura completa.
+ */
+export function registroCheckRuns({ get, post, repo, ancla = ANCLA_REGISTRO }) {
+  const nombre = encodeURIComponent(CHECK_REGISTRO);
+  return {
+    leer: () => leerRegistroCompleto((n) => get(`repos/${repo}/commits/${ancla}/check-runs?check_name=${nombre}&filter=all&per_page=${POR_PAGINA}&page=${n}`)),
+    registrar: (clave) => post(`repos/${repo}/check-runs`, { name: CHECK_REGISTRO, head_sha: ancla, external_id: clave, status: 'in_progress', output: { title: `invocación de Claude (solo lectura) · ${clave}`, summary: 'Registrada antes de invocar; a lo sumo una por evento.' } })?.id,
+  };
+}
 
 /** @param {{ decision: object, leer: () => Array<{id:number, external_id:string}>, registrar: (clave: string) => number }} io */
 export function idempotente({ decision, leer, registrar }) {

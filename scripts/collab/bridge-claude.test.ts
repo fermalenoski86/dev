@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error módulo .mjs sin tipos (script de CI, sin build)
-import { ADELANTO_MS, CHECK_REGISTRO, FER_IDS, claveEvento, idempotente, MAX_TURNOS, TOOLS_NEGADAS, TOOLS_PERMITIDAS, VENTANA_MS, anotacion, argsClaude, contexto, decidirComentario, decidirReview, metricas, prElegible, tapar } from './bridge-claude.lib.mjs';
+import { ADELANTO_MS, ANCLA_REGISTRO, CHECK_REGISTRO, FER_IDS, MAX_REGISTROS, claveEvento, idempotente, leerRegistroCompleto, registroCheckRuns, MAX_TURNOS, TOOLS_NEGADAS, TOOLS_PERMITIDAS, VENTANA_MS, anotacion, argsClaude, contexto, decidirComentario, decidirReview, metricas, prElegible, tapar } from './bridge-claude.lib.mjs';
 // @ts-expect-error módulo .mjs sin tipos (script de CI, sin build)
 import { CODEX_BOT_IDS } from './delegated-audit.lib.mjs';
 
@@ -153,7 +153,7 @@ describe('idempotencia: a lo sumo una invocación por evento (AUDIT: CAMBIOS @ 5
   it('comentario y review son eventos distintos; el mismo comentario dos veces → 1', () => {
     const a = almacen();
     const c = decidirComentario({ evento: comentario('@claude x'), pr: pr(), repo: REPO });
-    expect(claveEvento(c)).toBe('comentario-11');
+    expect(claveEvento(c)).toBe('pr7-comentario-11');
     expect(idempotente({ decision: actua(), ...a }).actuar).toBe(true);
     expect(idempotente({ decision: c, ...a }).actuar).toBe(true);
     expect(idempotente({ decision: c, ...a }).actuar).toBe(false);
@@ -176,6 +176,83 @@ describe('idempotencia: a lo sumo una invocación por evento (AUDIT: CAMBIOS @ 5
     expect(tocado).toBe(false);
   });
   it('el registro es un check-run con nombre fijo', () => expect(CHECK_REGISTRO).toBe('bridge-claude · invocación'));
+});
+
+const actuaBase = () => decidirReview({ run: { event: 'pull_request_review', head_branch: 'poc/bridge-p1', head_sha: HEAD, created_at: T0, pull_requests: [{ number: 7 }] }, prs: [pr()], reviews: [review()], repo: REPO });
+
+describe('registro sobre la API: ancla fija y lectura completa (AUDIT: CAMBIOS @ 06ec8be, 2 P2)', () => {
+  // GitHub simulado: check-runs por sha, listado paginado por `per_page`/`page` como la API real.
+  const github = (o: { ruido?: number } = {}) => {
+    const porSha = new Map<string, Array<{ id: number; name: string; external_id: string | null }>>();
+    let n = 0;
+    const gets: string[] = [];
+    const posts: Array<{ ruta: string; cuerpo: { head_sha: string; external_id: string } }> = [];
+    const agregar = (sha: string, external_id: string) => { n += 1; const l = porSha.get(sha) ?? []; l.push({ id: n, name: CHECK_REGISTRO, external_id }); porSha.set(sha, l); return n; };
+    for (let i = 0; i < (o.ruido ?? 0); i++) agregar(ANCLA_REGISTRO, `pr9-comentario-${1000 + i}`);
+    const get = (ruta: string) => {
+      gets.push(ruta);
+      const m = /commits\/([0-9a-f]{40})\/check-runs\?.*per_page=(\d+)&page=(\d+)/.exec(ruta);
+      if (!m) throw new Error(`ruta inesperada ${ruta}`);
+      const lista = [...(porSha.get(m[1]) ?? [])].sort((a, b) => b.id - a.id); // más nuevos primero
+      const pp = Number(m[2]);
+      const pg = Number(m[3]);
+      return { total_count: lista.length, check_runs: lista.slice((pg - 1) * pp, pg * pp) };
+    };
+    const post = (ruta: string, cuerpo: { head_sha: string; external_id: string }) => { posts.push({ ruta, cuerpo }); return { id: agregar(cuerpo.head_sha, cuerpo.external_id) }; };
+    return { get, post, gets, posts, porSha, agregar };
+  };
+  const comentarioDe = (sha: string) => decidirComentario({ evento: comentario('@claude x'), pr: pr({ head: { ref: 'poc/bridge-p1', sha, repo: { full_name: REPO } } }), repo: REPO });
+
+  it('reproducción 1 del auditor: clave ya atendida en la página 2 (101 registros) → no actúa y cero POST', () => {
+    const g = github();
+    g.agregar(ANCLA_REGISTRO, 'pr7-comentario-11'); // el más antiguo: queda último en el orden
+    for (let i = 0; i < 100; i++) g.agregar(ANCLA_REGISTRO, `pr7-comentario-${200 + i}`);
+    const d = idempotente({ decision: comentarioDe(HEAD), ...registroCheckRuns({ get: g.get, post: g.post, repo: REPO }) });
+    expect(d.actuar).toBe(false);
+    expect(d.motivo).toMatch(/ya atendido/);
+    expect(g.posts).toHaveLength(0);
+    expect(g.gets.some((r) => r.endsWith('page=2'))).toBe(true);
+  });
+  it('reproducción 2 del auditor: el HEAD del PR cambia (rebase/force-push o push) y se re-corre el mismo comentario → no actúa', () => {
+    const g = github();
+    const reg = registroCheckRuns({ get: g.get, post: g.post, repo: REPO });
+    expect(idempotente({ decision: comentarioDe(HEAD), ...reg }).actuar).toBe(true);
+    expect(idempotente({ decision: comentarioDe(VIEJO), ...reg }).actuar).toBe(false); // HEAD B: el registro sigue en el ancla
+    expect(g.posts).toHaveLength(1);
+    expect(g.posts[0].cuerpo.head_sha).toBe(ANCLA_REGISTRO); // nunca un commit del PR
+    expect(g.gets.every((r) => r.includes(`/commits/${ANCLA_REGISTRO}/`))).toBe(true);
+  });
+  it('control: con 250 registros ajenos, un evento nuevo actúa una sola vez', () => {
+    const g = github({ ruido: 250 });
+    const reg = registroCheckRuns({ get: g.get, post: g.post, repo: REPO });
+    expect(idempotente({ decision: comentarioDe(HEAD), ...reg }).actuar).toBe(true);
+    expect(idempotente({ decision: comentarioDe(HEAD), ...reg }).actuar).toBe(false);
+    expect(g.posts).toHaveLength(1);
+  });
+  it('el ancla es un commit de main (merge de PR 1)', () => expect(ANCLA_REGISTRO).toMatch(/^c403b6b[0-9a-f]{33}$/));
+
+  const pag = (paginas: unknown[]) => (n: number) => paginas[n - 1];
+  const cr = (id: number, external_id: string | null = 'x') => ({ id, name: CHECK_REGISTRO, external_id });
+  it('lectura completa en varias páginas', () => {
+    expect(leerRegistroCompleto(pag([{ total_count: 3, check_runs: [cr(3), cr(2)] }, { total_count: 3, check_runs: [cr(1)] }]))).toHaveLength(3);
+    expect(leerRegistroCompleto(pag([{ total_count: 0, check_runs: [] }]))).toEqual([]);
+  });
+  it.each([
+    ['respuesta no objeto', [null], /forma inesperada/],
+    ['sin total_count', [{ check_runs: [] }], /forma inesperada/],
+    ['check_runs no lista', [{ total_count: 1, check_runs: {} }], /forma inesperada/],
+    ['registro sin id', [{ total_count: 1, check_runs: [{ name: CHECK_REGISTRO, external_id: 'x' }] }], /forma inesperada/],
+    ['registro de otro nombre', [{ total_count: 1, check_runs: [{ id: 1, name: 'otro', external_id: 'x' }] }], /forma inesperada/],
+    ['página vacía antes de completar', [{ total_count: 3, check_runs: [cr(3)] }, { total_count: 3, check_runs: [] }], /vacía/],
+    ['total_count cambia entre páginas', [{ total_count: 2, check_runs: [cr(2)] }, { total_count: 3, check_runs: [cr(1)] }], /cambió/],
+    ['más registros que total_count', [{ total_count: 1, check_runs: [cr(2), cr(1)] }], /incompleta/],
+    ['ids repetidos entre páginas', [{ total_count: 2, check_runs: [cr(1)] }, { total_count: 2, check_runs: [cr(1)] }], /repetidos/],
+    ['tope de GitHub', [{ total_count: MAX_REGISTROS, check_runs: [cr(1)] }], /no se puede demostrar/],
+  ])('%s → falla (y el bridge no actúa)', (_n, paginas, re) => {
+    expect(() => leerRegistroCompleto(pag(paginas as unknown[]))).toThrow(re);
+    const d = idempotente({ decision: actuaBase(), leer: () => leerRegistroCompleto(pag(paginas as unknown[])), registrar: () => 1 });
+    expect(d.actuar).toBe(false);
+  });
 });
 
 describe('contexto: los datos de terceros van delimitados', () => {

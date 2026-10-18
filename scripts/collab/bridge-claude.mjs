@@ -13,7 +13,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CHECK_REGISTRO, anotacion, argsClaude, contexto, decidirComentario, decidirReview, idempotente, metricas, tapar } from './bridge-claude.lib.mjs';
+import { anotacion, registroCheckRuns, argsClaude, contexto, decidirComentario, decidirReview, idempotente, metricas, tapar } from './bridge-claude.lib.mjs';
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const RAIZ = path.resolve(AQUI, '../..');
@@ -43,18 +43,12 @@ function leerReviews(n) {
   return rs.map((r) => ({ ...r, editada: ed && ed.has(String(r.id)) ? ed.get(String(r.id)) : null }));
 }
 
-// Registro de invocaciones (idempotencia): check-runs CHECK_REGISTRO en TODOS los commits del PR.
-function leerRegistros(n) {
-  const commits = apiLista(`repos/${REPO}/pulls/${n}/commits?per_page=100`);
-  if (commits.length >= 250) throw new Error('más de 250 commits: no se puede recorrer el registro');
-  const nombre = encodeURIComponent(CHECK_REGISTRO);
-  return commits.flatMap((c) => api(`repos/${REPO}/commits/${c.sha}/check-runs?check_name=${nombre}&filter=all&per_page=100`).check_runs ?? [])
-    .map((r) => ({ id: r.id, external_id: r.external_id }));
-}
-function registrar(sha, clave) {
-  const cuerpo = JSON.stringify({ name: CHECK_REGISTRO, head_sha: sha, external_id: clave, status: 'in_progress', output: { title: `invocación de Claude (solo lectura) · ${clave}`, summary: 'Registrada antes de invocar; a lo sumo una por evento.' } });
-  return JSON.parse(run('gh', ['api', '-X', 'POST', `repos/${REPO}/check-runs`, '--input', '-'], cuerpo)).id;
-}
+// Registro de invocaciones (idempotencia): check-runs sobre el ancla fija de main, lectura completa.
+const REGISTRO = registroCheckRuns({
+  repo: REPO,
+  get: (ruta) => api(ruta),
+  post: (ruta, cuerpo) => JSON.parse(run('gh', ['api', '-X', 'POST', ruta, '--input', '-'], JSON.stringify(cuerpo))),
+});
 
 function decidir() {
   const nombre = process.env.GITHUB_EVENT_NAME;
@@ -74,7 +68,7 @@ function decidir() {
   } else {
     d = { actuar: false, motivo: `evento ${nombre} no soportado` };
   }
-  d = idempotente({ decision: d, leer: () => leerRegistros(d.pr), registrar: (clave) => registrar(d.sha, clave) });
+  d = idempotente({ decision: d, ...REGISTRO });
   mkdirSync(DIR, { recursive: true });
   writeFileSync(path.join(DIR, 'decision.json'), JSON.stringify(d, null, 2));
   if (d.registro && !d.actuar) cerrarRegistro(d.registro, 'neutral', 'duplicado: no se invocó', d.motivo);
