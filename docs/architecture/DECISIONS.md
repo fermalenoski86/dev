@@ -1087,3 +1087,19 @@ la base). Hasta que alguien elija una vigente, `activeVersion` es `null`.
 Alternativas descartadas: mover `latest_approved_version_id` hacia atrás
 (rompe su invariante); postergar hasta Deploy (Fer eligió A); que la vigente
 siga sola a la última aprobada (A2.1, descartada por Fer).
+
+## ADR-065 — `delegated-audit-gate`: PASS solo sobre una tupla comprobada
+
+**Estado:** aceptada por el auditor en [#88](https://github.com/fermalenoski86/dev/pull/88) (`AUDIT: CAMBIOS` sobre `9332156`, 2026-10-18: "acepto para implementación agrupada la propuesta de tupla"); implementación en `proc/p06-gate` (PoC P-06 PR 1, report-only). Brief `docs/briefs/P06_BRIDGE_POC.md` §3; decisión de #54.
+
+**Contexto.** La primera auditoría formal reprodujo tres falsos PASS de la misma familia (atribución/frescura): (1) el riesgo salía solo de `risk.mjs calcular`, sin la declaración del cuerpo del PR (un `Riesgo: alto` declarado o una declaración ausente daban PASS/bajo); (2) un run verde de un HEAD H probado contra main B seguía valiendo con main en C (H igual); (3) dos PR abiertos con el mismo HEAD recibían FAIL y PASS en el mismo check, que tiene alcance de commit y no de PR.
+
+**Decisión.** El veredicto es una tupla `(pr, head, main evaluado, riesgo efectivo, run/attempt)` + `(merge probado, base probada)`; PASS solo si cada componente se **comprueba**:
+- **main evaluado:** se fija por API al empezar; el diff, el riesgo y la procedencia se calculan contra ese sha. Al terminar se releen main, HEAD, base y cuerpo: cualquier cambio → FAIL.
+- **riesgo efectivo:** `risk.mjs verificar <main> <head> <cuerpo>` de `main` (mismo contrato que el job `riesgo`). Declaración ausente/inválida → FAIL; efectivo alto (calculado o elevado a mano) → "requiere auditoría formal"; nunca por debajo del calculado. El cuerpo se lee como texto, solo por su declaración; no se ejecuta nada del PR.
+- **procedencia de gates:** `gates.yml` declara `run-name: gates · <evento> · probado ${{ github.sha }}`. En `pull_request`, `github.sha` es el merge sintético que el run ejecuta (un re-run reusa el mismo, así que un timestamp posterior no alcanza). El gate lee sus padres por API (`git/commits/<sha>`) y exige `[main evaluado, HEAD]`. Run sin ese sufijo, padres ilegibles, otro HEAD, otra base o evento ≠ `pull_request` → FAIL. Consecuencia buscada: cuando main avanza, el PR queda en FAIL hasta una CI fresca. La `pull_requests[].base.sha` de la API del run **no** sirve: en el run 39079487711 decía `b98571f` y el merge probado (`477af1b`) era sobre `59d2215`.
+- **unicidad del HEAD:** si más de un PR abierto (hacia main o hacia otra base, porque el check se ve en todos) comparte el HEAD, ninguno recibe PASS (los dos FAIL, en cualquier orden); antes de publicar un PASS se relista y se exige mismo HEAD y unicidad (relista ausente o con error → FAIL).
+
+**Consecuencias.** `gates.yml` cambia solo en el título de sus runs (ningún job, paso ni permiso). Un PR elegible no puede falsear el `run-name` sin tocar `.github/`, que es riesgo alto y por lo tanto no elegible. Sigue report-only: el check sale `neutral` y no habilita merge; manda el `AUDIT:` de ChatGPT. Mientras no haya runs con el sufijo (es decir, hasta que este cambio esté en main y un PR corra `gates` de nuevo), todo PR da FAIL por procedencia.
+
+Alternativas descartadas: diferir el avance de main como límite (el auditor reprodujo el falso PASS); comparar timestamps del run con el push a main (un re-run ejecuta el merge viejo); parsear el log de checkout (frágil y escribible por pasos posteriores); poner el número de PR solo en el texto del check (no aísla PRs con el mismo commit).

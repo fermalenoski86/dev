@@ -1,25 +1,44 @@
-# P-06 PR 1 · salida real de gates locales (Claude, 2026-10-17T23:31:06Z, rama proc/p06-gate sobre main@b98571f — ronda Codex #88: retarget + PASS viejo ante lectura fallida)
+# P-06 PR 1 · salida real de gates locales (Claude, 2026-10-18T03:38:30Z, rama proc/p06-gate sobre main@88ba5c6 — ronda AUDIT: CAMBIOS @ 9332156: 3 × P2 + tupla de ADR-065)
+# Entorno: Node 22.22.0 · pnpm 12.5.1 (npm) · CI: Node 22 / pnpm 12.5.1
 
 $ npx vitest run scripts/collab/delegated-audit.test.ts
- ✓ scripts/collab/delegated-audit.test.ts (55 tests) 20ms
  Test Files  1 passed (1)
-      Tests  55 passed (55)
+      Tests  81 passed (81)
+
+$ (mismos tests nuevos contra delegated-audit.lib.mjs de 9332156, con stubs de exports nuevos solo para cargar el archivo)
+      Tests  26 failed | 54 passed (80)   ← los 26 de P2 1/2/3 fallan antes y pasan después
 
 $ pnpm verify  (lint + typecheck + suite default)
+✖ 12 problems (0 errors, 12 warnings)   ← warnings preexistentes en apps/control y packages/*, ninguno en scripts/collab
  Test Files  55 passed | 1 skipped (56)
-      Tests  1001 passed | 1 skipped (1002)
-real	114s
+      Tests  1027 passed | 1 skipped (1028)
+real	2m13s
 rc=0
 
 $ bash scripts/ci/politica-fallas.sh check
 politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
 
-$ pnpm docs:contract && pnpm acceptance:check && pnpm progress:check
+$ pnpm docs:contract && pnpm acceptance:check && pnpm progress:check   (sin diff tras regenerar)
 docs/platform/openapi.json y docs/platform/DELIVERY.md regenerados (32 rutas registradas)
 GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día
 GATE progreso (P-02): manifiesto válido (35 entradas), docs/collab/PROGRESO.md al día
 
-$ node scripts/collab/delegated-audit.mjs evaluar 82   → sin cambios en evaluar(); salida real en la ronda anterior (0af602b): FAIL "PR no abierto", "riesgo alto", "ninguna review de Codex sobre el HEAD". No se re-corrió: esta sesión no usa gh contra la API.
+$ bash scripts/collab/paralelo.test.sh
+paralelo.test: 143 ok, 0 fallos
+
+$ git diff --check → OK
+$ node scripts/collab/risk.mjs verificar origin/main HEAD <cuerpo de #88>
+riesgo calculado: alto · riesgo declarado: alto · efectivo: alto → risk: OK — mínimo de auditoría: alto
+
+$ node scripts/collab/delegated-audit.mjs evaluar 88   (API real, solo lectura; no publica)
+veredicto: fail · main 88ba5c69cca1 · riesgo efectivo alto (calculado alto, declarado alto, vía risk.mjs verificar)
+motivos: riesgo efectivo alto → formal | review 5560648266: no se pudo verificar si fue editada (GraphQL vía proxy) | sin bloque AUDIT |
+         procedencia: run 39079487711 no declara el commit probado (run-name sin "probado <sha>") → base no verificable
+
+$ gh api repos/fermalenoski86/dev/git/commits/477af1b1ba24acc57de1c5e2c8fcd54d67f7427b --jq '[.parents[].sha]'
+["59d22159fb8d8f6e8c1659dd32e1ba42b9d36271","933215627cbce915eeb386c35176a84e32ac8a89"]
+  ← el merge que ejecutó el run 39079487711 (checkout citado por el auditor): base probada 59d2215 + HEAD 9332156.
+    La API del run decía pull_requests[0].base.sha = b98571f (ni la base probada ni la actual): por eso la procedencia sale de github.sha.
 
 No ejecutado localmente (sin cambios en esas áreas; los corre CI en gates.yml sobre el HEAD): postgres, bootstrap-smoke, media, mutations, e2e-m2c, e2e-platform, compose-smoke.
-No ejecutado: carril `ci` contra GitHub real (publicación de check-runs) ni el disparo por `workflow_run` de `riesgo` — solo existen con el workflow en main; cubiertos por tests unitarios (cicloCi con evaluarPr que lanza) y por la forma del YAML. Consulta GraphQL de lastEditedAt: igual que la ronda anterior (fail-closed).
+No ejecutado: carril `ci` contra GitHub real (publicación de check-runs) — solo existe con el workflow en main; el `run-name` nuevo de gates.yml se verá en el run de CI de este HEAD.

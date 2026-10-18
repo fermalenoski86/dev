@@ -1,6 +1,10 @@
 # Gates de AGENTS.md en un runner de GitHub: evidencia independiente de los dos
 # agentes. El auditor puede citar estas corridas en vez de las salidas de Claude.
 name: gates
+# P-06 (AUDIT: CAMBIOS @ 9332156): procedencia para delegated-audit-gate. En pull_request,
+# github.sha es el merge sintético que el run ejecuta (un re-run reusa el mismo); el gate lee
+# sus padres por API para saber contra qué main se probó el HEAD. No cambia ningún job.
+run-name: gates · ${{ github.event_name }} · probado ${{ github.sha }}
 on:
   pull_request:
   push:
