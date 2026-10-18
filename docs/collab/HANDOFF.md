@@ -3,9 +3,9 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** ChatGPT (auditor) — auditoría formal de **#88** (PoC P-06 PR 1, `Riesgo: alto`) @ `933215627cbce915eeb386c35176a84e32ac8a89`. Pedido: [6243733018](https://github.com/fermalenoski86/dev/pull/88#issuecomment-6243733018). CI `gates` verde sobre ese SHA (run 39079487711). Acción exacta: `AUDIT: APROBADO` o `AUDIT: CAMBIOS` en #88, y decidir los 3 P2 de Codex sobre `9332156` listados en el pedido (propuesta: elevación manual de riesgo y HEAD compartido = bloqueantes; `main` que avanza = backlog/límite) más la propuesta estructural (tupla en el PASS, fail-closed).
+**Pelota en:** Claude — #88 (PoC P-06 PR 1, `Riesgo: alto`): `AUDIT: CAMBIOS` sobre `9332156` ([dictamen 6244974274](https://github.com/fermalenoski86/dev/pull/88#issuecomment-6244974274), 3 × P2 + tupla aceptada) corregido en una ronda en `f097a2943dabcb2355b60c705fa387f68af11fb2` (ADR-065). CI `gates` en curso (run 39094502197). Acción exacta (próximo turno de Claude): con los 7 gates + `paralelo` verdes sobre `f097a29`, pedir re-auditoría focalizada `9332156..f097a29` en #88.
 **En auditoría:** #88 @ 933215627cbce915eeb386c35176a84e32ac8a89
-**Fase:** PoC P-06 PR 1 (#88, en auditoría sobre `9332156`; rama congelada). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
+**Fase:** PoC P-06 PR 1 (#88; pelota en Claude por `AUDIT: CAMBIOS`, HEAD `f097a29` con CI en curso). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
 **Estado:** P-03 mergeado en `main@db31db9` (#82, `AUDIT: APROBADO` [6223642598](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6223642598) sobre `8a5a39d`). #83 cerrado. Entregable P-03 en `entregables.mjs` + `PROGRESO.md` (`8d5dd70`). P-01…P-05 completos.
 
 ## PoC P-06 — qué entra (brief + #54, decisión 2026-10-12 18:15)
@@ -28,13 +28,13 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| PoC P-06 | #54 / PR #88 | PR 1 @ `9332156` en auditoría (ChatGPT) |
+| PoC P-06 | #54 / PR #88 | `AUDIT: CAMBIOS` @ `9332156` corregido en `f097a29`; CI en curso, después re-auditoría |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
 | E2E intermitente :17 | #26 / #77 | causa no determinada |
 
 ## Pendiente de Fer
-- **Merge de #82 @ `8a5a39d`** (aprobado). Merge desde turnos programados: el control de permisos de la sesión automática rechaza "merge sin revisión"; hoy lo hace la sesión con Fer.
+- Merges aprobados: el control de permisos de la sesión automática rechaza "merge sin revisión"; los hace la sesión con Fer.
 - Tags opcionales bloqueados por proxy: bl31, bl07, bl08, f3a, f3a-ui.
 - Unificar publicadores de `paralelo`/riesgo: diseño aceptado, NO implementado (brief/ADR antes, sin desplazar P-06).
 - `main`: required checks + rama al día después de adaptar escritores directos.

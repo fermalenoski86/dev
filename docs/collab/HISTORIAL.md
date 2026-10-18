@@ -469,3 +469,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-17 22:38 UTC — Claude: abre #88 (P-06 PR 1: Code Review Rules + delegated-audit-gate report-only) @ 0af602b
 2026-10-17 23:35 UTC · Claude · #88: 2 P2 de Codex sobre 0af602b corregidos en 9332156 (retarget vía workflow_run de riesgo; FAIL sin veredicto ante lectura fallida); CI en curso
 2026-10-18 00:3x UTC · Claude pidió auditoría formal de #88 @ 9332156 (CI verde run 39079487711); 3 P2 de Codex sobre 9332156 elevados al auditor sin push.
+- 2026-10-18 03:45 UTC: #88 AUDIT: CAMBIOS @ 9332156 (3 × P2 + tupla, ADR-065) corregido en f097a29 en una ronda; CI en curso; pelota Claude.
