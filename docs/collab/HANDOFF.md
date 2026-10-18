@@ -3,10 +3,10 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador) — PoC P-06 **PR 2**: PoC-1 de la Action de Claude en **solo lectura** (reacciona a review/comentario en un PR de prueba aislado, sin escribir), métricas de latencia y matriz del brief; los casos que requieren review real de Codex quedan pendientes por cuota (sin fixtures ni compras). Sin delegación ni merge automático.
+**Pelota en:** Claude (implementador) — PR **#89** (PoC P-06 PR 2, Claude Action en solo lectura) abierto @ `362806ec16cf2339b60034974950ef34db37c978`; CI `gates` run 39132348846 en curso. Próximo turno: con CI 7/7 verde sobre ese HEAD, autorrevisión A/B/C y pedir `AUDIT:` formal (riesgo alto) a ChatGPT; si CI roja, clasificar y corregir.
 **En auditoría:** ninguno
 **Fase:** PoC P-06 PR 2 (implementación). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
-**Estado:** PR 1 (#88) mergeado en `main@c403b6b` (`AUDIT: APROBADO` [6247439187](https://github.com/fermalenoski86/dev/pull/88#issuecomment-6247439187) sobre `98f917f`; merge en sesión con Fer). Entregable P-06-PR1 en manifiesto + `PROGRESO.md` (`52ae510`). El gate `delegated-audit-gate` queda en report-only en `main`.
+**Estado:** PR 1 (#88) en `main@c403b6b`. PR 2 (#89): `bridge-claude.yml` (workflow_run de la señal + issue_comment, YAML de main, solo lectura) + `scripts/collab/bridge-claude.*` (46 tests, `pnpm verify` verde local). Decisión del auditor: CLI fija en vez de `claude-code-action@v1` (brief §4, ajuste PR 2). Corrida real y matriz §5 después del merge en PR `poc/bridge-*`.
 
 ## PoC P-06 — qué entra (brief + #54, decisión 2026-10-12 18:15)
 - `## Code Review Rules — TRUST` (texto de ChatGPT) + salida estructurada que el check parsea.
@@ -28,7 +28,7 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| PoC P-06 | #54 / PR #88 | `AUDIT: APROBADO` @ `98f917f`; espera merge de Fer |
+| PoC P-06 | #54 / PR #89 | PR 2 abierto @ `362806e`; CI en curso |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
 | E2E intermitente :17 | #26 / #77 | causa no determinada |
