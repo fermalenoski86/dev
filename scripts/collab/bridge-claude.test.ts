@@ -33,7 +33,7 @@ const bloque = (veredicto = 'CAMBIOS', head = HEAD, n = 7) => [
   'negativos: ninguno aplicable',
   'no-ejecutado: nada',
 ].join('\n');
-const review = (o: Record<string, unknown> = {}) => ({ id: 99, user: CODEX, state: 'COMMENTED', commit_id: HEAD, submitted_at: mas(T0, -30_000), body: `Hallazgo P1 en x.ts:3\n\n${bloque()}`, ...o });
+const review = (o: Record<string, unknown> = {}) => ({ id: 99, user: CODEX, state: 'COMMENTED', editada: false, commit_id: HEAD, submitted_at: mas(T0, -30_000), body: `Hallazgo P1 en x.ts:3\n\n${bloque()}`, ...o });
 const senal = (o: Record<string, unknown> = {}) => ({ event: 'pull_request_review', head_branch: 'poc/bridge-p1', head_sha: HEAD, created_at: T0, ...o });
 const dr = (o: { run?: object; prs?: object[]; reviews?: object[] } = {}) => decidirReview({ run: o.run ?? senal(), prs: o.prs ?? [pr()], reviews: o.reviews ?? [review()], repo: REPO });
 
@@ -84,6 +84,9 @@ describe('decidirReview (fin de la señal; datos de la API)', () => {
     ['usuario con id de Codex pero tipo User', { reviews: [review({ user: { ...CODEX, type: 'User' } })] }, /sin reviews de Codex/],
     ['review sobre sha viejo (caso 4)', { reviews: [review({ commit_id: VIEJO })] }, /no sobre el HEAD/],
     ['review descartada (caso 9)', { reviews: [review({ state: 'DISMISSED' })] }, /descartada/],
+    ['review editada (caso 9, Codex #89 P2)', { reviews: [review({ editada: true })] }, /editada/],
+    ['edición sin verificar (GraphQL falló)', { reviews: [review({ editada: null })] }, /sin poder verificar/],
+    ['edición ausente', { reviews: [review({ editada: undefined })] }, /sin poder verificar/],
     ['review vieja, fuera de ventana', { reviews: [review({ submitted_at: mas(T0, -VENTANA_MS - 1000) })] }, /fuera de ventana/],
     ['review posterior a la señal', { reviews: [review({ submitted_at: mas(T0, ADELANTO_MS + 1000) })] }, /fuera de ventana/],
     ['APROBADO no dispara', { reviews: [review({ body: bloque('APROBADO') })] }, /solo CAMBIOS/],
@@ -148,6 +151,11 @@ describe('solo lectura: herramientas y workflow', () => {
     expect(conSecret).toHaveLength(1);
     expect(conSecret[0]).toContain('CLAUDE_CODE_OAUTH_TOKEN');
     expect(conSecret[0]).not.toMatch(/github\.token|GH_TOKEN|GITHUB_TOKEN/);
+  });
+  it('el prefiltro del YAML no es más estricto que el script (Codex #89 P2)', () => {
+    // '\n@claude' lo acepta decidirComentario; el `if:` del job no puede descartarlo antes
+    expect(YML).not.toMatch(/startsWith\(github\.event\.comment\.body/);
+    expect(YML).toMatch(/contains\(github\.event\.comment\.body, '@claude'\)/);
   });
   it('la versión de Claude Code está fijada', () => expect(YML).toMatch(/@anthropic-ai\/claude-code@\d+\.\d+\.\d+\b/));
 });

@@ -66,7 +66,8 @@ export function decidirComentario({ evento, pr, repo }) {
  * confianza: solo su rama, sha y hora sirven para ENCONTRAR el PR y la review; todo lo que
  * decide sale de la API. Actúa si hay exactamente un PR elegible con ese HEAD y la última
  * review de Codex (allowlist por `user.id`) sobre ese HEAD, no descartada, tiene el bloque
- * estricto con `AUDIT: CAMBIOS` y se emitió dentro de la ventana del run.
+ * estricto con `AUDIT: CAMBIOS`, no fue editada (`editada === false`) y se emitió dentro de la
+ * ventana del run.
  */
 export function decidirReview({ run, prs, reviews, repo, allowlist = CODEX_BOT_IDS }) {
   if (run?.event !== 'pull_request_review') return no(`la señal vino de ${run?.event ?? '?'}, no de una review`);
@@ -79,6 +80,9 @@ export function decidirReview({ run, prs, reviews, repo, allowlist = CODEX_BOT_I
   if (deCodex.length === 0) return no(`sin reviews de Codex en #${pr.number}`);
   const ultima = [...deCodex].sort((a, b) => t(a.submitted_at) - t(b.submitted_at) || a.id - b.id).at(-1);
   if (ultima.state === 'DISMISSED') return no(`última review de Codex (${ultima.id}) descartada`);
+  // Editada (caso 9, Codex #89 P2): una edición re-dispara la señal con el mismo submitted_at.
+  // `editada` viene de GraphQL lastEditedAt (como delegated-audit-gate); sin dato → no actúa.
+  if (ultima.editada !== false) return no(`última review de Codex (${ultima.id}) ${ultima.editada === true ? 'editada' : 'sin poder verificar si fue editada'}`);
   if (ultima.commit_id !== pr.head.sha) return no(`última review de Codex (${ultima.id}) es sobre ${ultima.commit_id}, no sobre el HEAD ${pr.head.sha}`);
   const inicio = t(run.created_at);
   const emitida = t(ultima.submitted_at);

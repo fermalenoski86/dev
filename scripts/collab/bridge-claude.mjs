@@ -26,6 +26,23 @@ const apiLista = (ruta) => run('gh', ['api', '--paginate', ruta, '--jq', '.[]'])
 const salida = (k, v) => { if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `${k}=${v}\n`); };
 const leerJson = (f) => JSON.parse(readFileSync(path.join(DIR, f), 'utf8'));
 
+// GraphQL lastEditedAt por review (REST no expone edición), igual que delegated-audit.mjs.
+// Más de 100 reviews o error → null: la review queda `editada: null` y no actúa.
+function edicionesDe(n) {
+  const [owner, name] = REPO.split('/');
+  const q = 'query($owner:String!,$name:String!,$n:Int!){repository(owner:$owner,name:$name){pullRequest(number:$n){reviews(first:100){pageInfo{hasNextPage} nodes{fullDatabaseId lastEditedAt}}}}}';
+  const r = JSON.parse(run('gh', ['api', 'graphql', '-f', `query=${q}`, '-F', `owner=${owner}`, '-F', `name=${name}`, '-F', `n=${n}`]));
+  const rv = r?.data?.repository?.pullRequest?.reviews;
+  if (!rv || rv.pageInfo?.hasNextPage) return null;
+  return new Map(rv.nodes.map((x) => [String(x.fullDatabaseId), x.lastEditedAt !== null]));
+}
+function leerReviews(n) {
+  const rs = apiLista(`repos/${REPO}/pulls/${n}/reviews?per_page=100`);
+  let ed = null;
+  try { ed = edicionesDe(n); } catch { ed = null; }
+  return rs.map((r) => ({ ...r, editada: ed && ed.has(String(r.id)) ? ed.get(String(r.id)) : null }));
+}
+
 function decidir() {
   const nombre = process.env.GITHUB_EVENT_NAME;
   const evento = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
@@ -38,7 +55,7 @@ function decidir() {
     const r = evento.workflow_run ?? {};
     const prs = apiLista(`repos/${REPO}/pulls?state=open&per_page=100`);
     const cand = prs.filter((p) => p.head?.ref === r.head_branch && p.head?.sha === r.head_sha);
-    const reviews = cand.length === 1 ? apiLista(`repos/${REPO}/pulls/${cand[0].number}/reviews?per_page=100`) : [];
+    const reviews = cand.length === 1 ? leerReviews(cand[0].number) : [];
     d = decidirReview({ run: r, prs, reviews, repo: REPO });
     pr = cand.length === 1 ? cand[0] : null;
   } else {

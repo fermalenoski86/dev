@@ -29,12 +29,13 @@ concurrency:
   cancel-in-progress: false
 jobs:
   leer:
-    # Filtro barato antes de levantar nada: la decisión real la toma el script con la API.
+    # Filtro barato antes de levantar nada (más laxo que el script: `contains`, para no perder
+    # un `@claude` tras líneas en blanco — Codex #89 P2); la decisión real la toma el script.
     if: >-
       (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request_review'
         && startsWith(github.event.workflow_run.head_branch, 'poc/bridge-'))
       || (github.event_name == 'issue_comment' && github.event.issue.pull_request
-        && startsWith(github.event.comment.body, '@claude'))
+        && contains(github.event.comment.body, '@claude'))
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
