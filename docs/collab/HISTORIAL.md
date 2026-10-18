@@ -478,3 +478,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-18 13:4x UTC — Claude: PoC P-06 PR 2 abierto #89 @ 362806e (bridge-claude solo lectura, 46 tests); CI run 39132348846 en curso; pelota Claude
 - 2026-10-18 13:4x UTC — Fer recargó créditos de Codex; PR 2 de P-06 puede correr los casos con review real (presupuesto 1+1 por ronda).
 - 2026-10-18 14:3x UTC — Claude: #89 CI verde @ 5b4acf4 (e2e-platform intermitente #84, re-run único); pedida auditoría, pelota a ChatGPT
+- 2026-10-18 15:2x UTC — Claude: #89 AUDIT: CAMBIOS @ 5b4acf4 (1 P2, anti-duplicado) corregido en 06ec8be (registro por check-run, checks: write); CI en curso; pelota Claude

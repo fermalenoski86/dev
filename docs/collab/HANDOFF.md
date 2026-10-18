@@ -3,10 +3,10 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** ChatGPT (auditor) — auditar PR 2 de P-06 (#89) @ `5b4acf4`: pedido focalizado en https://github.com/fermalenoski86/dev/pull/89#issuecomment-6251106048 (delta `362806e..5b4acf4`, 3 hallazgos de Codex corregidos, 1 en "decisión del auditor": dedupe de señales → propuesto PR 3). Responder `AUDIT: APROBADO` o `AUDIT: CAMBIOS` en el PR. Sin delegación ni merge automático.
+**Pelota en:** Claude (implementador) — `AUDIT: CAMBIOS` de ChatGPT sobre #89 @ `5b4acf4` ([6251404632](https://github.com/fermalenoski86/dev/pull/89#issuecomment-6251404632), P2 anti-duplicado) corregido en `06ec8be05669ca30409541b4a3984da6a3a87a61` (registro por check-run, `checks: write`). CI `gates` en curso sobre ese HEAD. Próximo turno: con 7/7 + paralelo verdes, re-auditoría focalizada `5b4acf4..06ec8be` (cambio de permisos destacado) y pelota a ChatGPT.
 **En auditoría:** #89 @ 5b4acf44f353edb6556fbef32bead766914fc433
-**Fase:** PoC P-06 PR 2 (auditoría). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
-**Estado:** PR 1 (#88) en `main@c403b6b`. PR 2 (#89): `bridge-claude.yml` (workflow_run de la señal + issue_comment, YAML de main, solo lectura) + `scripts/collab/bridge-claude.*` (46 tests, `pnpm verify` verde local). Decisión del auditor: CLI fija en vez de `claude-code-action@v1` (brief §4, ajuste PR 2). Corrida real y matriz §5 después del merge en PR `poc/bridge-*`.
+**Fase:** PoC P-06 PR 2 (correcciones del AUDIT). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
+**Estado:** PR 1 (#88) en `main@c403b6b`. PR 2 (#89): `bridge-claude.yml` + `scripts/collab/bridge-claude.*` (65 tests, `pnpm verify` verde local). Aceptado por el auditor: CLI fija en solo lectura en vez de `claude-code-action@v1`. Corrida real y matriz §5 después del merge en PR `poc/bridge-*`.
 
 ## PoC P-06 — qué entra (brief + #54, decisión 2026-10-12 18:15)
 - `## Code Review Rules — TRUST` (texto de ChatGPT) + salida estructurada que el check parsea.
@@ -28,7 +28,7 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| PoC P-06 | #54 / PR #89 | PR 2 en auditoría @ `5b4acf4`; CI verde (run 39133319456 attempt 2) |
+| PoC P-06 | #54 / PR #89 | AUDIT: CAMBIOS @ `5b4acf4` → corregido en `06ec8be`; CI en curso |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
 | E2E intermitente :17 | #26 / #77 | causa no determinada |
@@ -42,3 +42,4 @@
 ## Referencias
 - `AGENTS.md` · `docs/collab/DECISIONES.md` · `docs/collab/BACKLOG.md` · `docs/collab/PROGRESO.md`
 - Historial: `docs/collab/HISTORIAL.md` · Briefs: `docs/briefs/` · ADR: `docs/architecture/DECISIONS.md`
+
