@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error módulo .mjs sin tipos (script de CI, sin build)
-import { ADELANTO_MS, FER_IDS, MAX_TURNOS, TOOLS_NEGADAS, TOOLS_PERMITIDAS, VENTANA_MS, anotacion, argsClaude, contexto, decidirComentario, decidirReview, metricas, prElegible, tapar } from './bridge-claude.lib.mjs';
+import { ADELANTO_MS, CHECK_REGISTRO, FER_IDS, claveEvento, idempotente, MAX_TURNOS, TOOLS_NEGADAS, TOOLS_PERMITIDAS, VENTANA_MS, anotacion, argsClaude, contexto, decidirComentario, decidirReview, metricas, prElegible, tapar } from './bridge-claude.lib.mjs';
 // @ts-expect-error módulo .mjs sin tipos (script de CI, sin build)
 import { CODEX_BOT_IDS } from './delegated-audit.lib.mjs';
 
@@ -34,7 +34,7 @@ const bloque = (veredicto = 'CAMBIOS', head = HEAD, n = 7) => [
   'no-ejecutado: nada',
 ].join('\n');
 const review = (o: Record<string, unknown> = {}) => ({ id: 99, user: CODEX, state: 'COMMENTED', editada: false, commit_id: HEAD, submitted_at: mas(T0, -30_000), body: `Hallazgo P1 en x.ts:3\n\n${bloque()}`, ...o });
-const senal = (o: Record<string, unknown> = {}) => ({ event: 'pull_request_review', head_branch: 'poc/bridge-p1', head_sha: HEAD, created_at: T0, ...o });
+const senal = (o: Record<string, unknown> = {}) => ({ event: 'pull_request_review', head_branch: 'poc/bridge-p1', head_sha: HEAD, created_at: T0, pull_requests: [{ number: 7 }], ...o });
 const dr = (o: { run?: object; prs?: object[]; reviews?: object[] } = {}) => decidirReview({ run: o.run ?? senal(), prs: o.prs ?? [pr()], reviews: o.reviews ?? [review()], repo: REPO });
 
 describe('prElegible: solo PRs de prueba aislados', () => {
@@ -96,6 +96,9 @@ describe('decidirReview (fin de la señal; datos de la API)', () => {
     ['bloque de otro PR', { reviews: [review({ body: bloque('CAMBIOS', HEAD, 8) })] }, /no nombra/],
     ['rama fuera de la PoC', { run: senal({ head_branch: 'fase/x' }), prs: [pr({ head: { ref: 'fase/x', sha: HEAD, repo: { full_name: REPO } } })] }, /poc\/bridge/],
     ['horas ilegibles', { reviews: [review({ submitted_at: null })] }, /ilegibles/],
+    ['señal sin PR asociado (grupo de concurrencia propio)', { run: senal({ pull_requests: [] }) }, /sin serialización/],
+    ['señal asociada a otro PR', { run: senal({ pull_requests: [{ number: 8 }] }) }, /sin serialización/],
+    ['señal asociada a dos PR', { run: senal({ pull_requests: [{ number: 7 }, { number: 8 }] }) }, /sin serialización/],
   ])('%s → no actúa', (_n, o, re) => {
     const d = dr(o as never);
     expect(d.actuar).toBe(false);
@@ -108,6 +111,71 @@ describe('decidirReview (fin de la señal; datos de la API)', () => {
   it('una review de otro autor más nueva no tapa la de Codex', () => {
     expect(dr({ reviews: [review(), { ...review({ id: 101, submitted_at: mas(T0, -1000) }), user: FER }] }).actuar).toBe(true);
   });
+});
+
+describe('idempotencia: a lo sumo una invocación por evento (AUDIT: CAMBIOS @ 5b4acf4, P2)', () => {
+  // Registro simulado con la semántica de check-runs: ids crecientes, lectura de todo lo creado.
+  const almacen = () => {
+    const rs: Array<{ id: number; external_id: string }> = [];
+    let n = 100;
+    return { rs, leer: () => [...rs], registrar: (clave: string) => { n += 1; rs.push({ id: n, external_id: clave }); return n; } };
+  };
+  const actua = () => dr();
+  it('reproducción del auditor: dos señales para la misma review (la 2.ª por una review ajena) → 1 sola invocación', () => {
+    const a = almacen();
+    const d1 = dr({ run: senal({ created_at: mas(T0, 1000) }) });
+    const d2 = dr({ run: senal({ created_at: mas(T0, 30_000) }), reviews: [review(), { ...review({ id: 120, submitted_at: mas(T0, 29_000) }), user: FER, body: 'ok' }] });
+    expect(d1.actuar && d2.actuar).toBe(true); // la ventana sola NO distingue (el defecto)
+    const r1 = idempotente({ decision: d1, ...a });
+    const r2 = idempotente({ decision: d2, ...a });
+    expect([r1.actuar, r2.actuar]).toEqual([true, false]);
+    expect(r2.motivo).toMatch(/ya atendido/);
+    expect(a.rs).toHaveLength(1);
+  });
+  it('re-run del mismo run → no invoca otra vez', () => {
+    const a = almacen();
+    expect(idempotente({ decision: actua(), ...a }).actuar).toBe(true);
+    expect(idempotente({ decision: actua(), ...a }).actuar).toBe(false);
+    expect(idempotente({ decision: actua(), ...a }).actuar).toBe(false);
+    expect(a.rs).toHaveLength(1);
+  });
+  it('dos corridas cruzadas (las dos leen vacío y registran) → solo la de registro más bajo invoca', () => {
+    const a = almacen();
+    // las dos leen vacío al principio; B registra primero, A después (lectura vieja)
+    const vacioPrimero = () => { let p = true; return () => (p ? ((p = false), []) : a.leer()); };
+    const leerA = vacioPrimero();
+    const b = idempotente({ decision: actua(), leer: vacioPrimero(), registrar: a.registrar });
+    const ra = idempotente({ decision: actua(), leer: leerA, registrar: a.registrar });
+    expect([b.actuar, ra.actuar]).toEqual([true, false]);
+    expect(ra.motivo).toMatch(/otra corrida/);
+    expect(ra.registro).toBeGreaterThan(b.registro);
+  });
+  it('comentario y review son eventos distintos; el mismo comentario dos veces → 1', () => {
+    const a = almacen();
+    const c = decidirComentario({ evento: comentario('@claude x'), pr: pr(), repo: REPO });
+    expect(claveEvento(c)).toBe('comentario-11');
+    expect(idempotente({ decision: actua(), ...a }).actuar).toBe(true);
+    expect(idempotente({ decision: c, ...a }).actuar).toBe(true);
+    expect(idempotente({ decision: c, ...a }).actuar).toBe(false);
+  });
+  it.each([
+    ['leer falla', { leer: () => { throw new Error('HTTP 500'); }, registrar: () => 1 }, /no se pudo leer/],
+    ['lectura ilegible', { leer: () => null, registrar: () => 1 }, /ilegible/],
+    ['registrar falla', { leer: () => [], registrar: () => { throw new Error('HTTP 403'); } }, /no se pudo registrar/],
+    ['registro sin id', { leer: () => [], registrar: () => undefined }, /sin id/],
+    ['el registro no aparece al releer', { leer: () => [], registrar: () => 5 }, /confirmar/],
+  ])('%s → no actúa (fail-closed)', (_n, io, re) => {
+    const d = idempotente({ decision: actua(), ...(io as never) });
+    expect(d.actuar).toBe(false);
+    expect(d.motivo).toMatch(re);
+  });
+  it('una decisión que ya no actúa no lee ni registra', () => {
+    let tocado = false;
+    const d = idempotente({ decision: { actuar: false, motivo: 'x' }, leer: () => { tocado = true; return []; }, registrar: () => { tocado = true; return 1; } });
+    expect(d.actuar).toBe(false);
+    expect(tocado).toBe(false);
+  });
+  it('el registro es un check-run con nombre fijo', () => expect(CHECK_REGISTRO).toBe('bridge-claude · invocación'));
 });
 
 describe('contexto: los datos de terceros van delimitados', () => {
@@ -137,10 +205,11 @@ describe('solo lectura: herramientas y workflow', () => {
     expect(a).toContain('--restricted');
     expect(a).toContain('--strict-mcp-config');
   });
-  it('permisos del workflow: solo lectura, sin pull_request_review ni pull_request_target', () => {
+  it('permisos del workflow: lectura + solo checks: write (registro), sin pull_request_review ni pull_request_target', () => {
     const perms = YML.match(/^permissions:\n((?: {2}.+\n)+)/m)?.[1] ?? '';
-    expect(perms.trim().split('\n').map((l) => l.trim()).sort()).toEqual(['contents: read', 'issues: read', 'pull-requests: read']);
-    expect(YML).not.toMatch(/: write/);
+    expect(perms.trim().split('\n').map((l) => l.trim()).filter((l) => !l.startsWith('#')).sort()).toEqual(['checks: write', 'contents: read', 'issues: read', 'pull-requests: read']);
+    const sinComentarios = YML.split('\n').filter((l) => !l.trim().startsWith('#')).join('\n');
+    expect(sinComentarios.match(/: write/g)).toHaveLength(1);
     expect(YML).not.toMatch(/^\s+pull_request_(review|target):/m);
     expect(YML).toMatch(/persist-credentials: false/);
     expect(YML).toMatch(/ref: main/);

@@ -13,14 +13,14 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { anotacion, argsClaude, contexto, decidirComentario, decidirReview, metricas, tapar } from './bridge-claude.lib.mjs';
+import { CHECK_REGISTRO, anotacion, argsClaude, contexto, decidirComentario, decidirReview, idempotente, metricas, tapar } from './bridge-claude.lib.mjs';
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const RAIZ = path.resolve(AQUI, '../..');
 const DIR = path.join(RAIZ, 'bridge-input');
 const REPO = process.env.GITHUB_REPOSITORY || 'fermalenoski86/dev';
 
-const run = (cmd, args) => execFileSync(cmd, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['pipe', 'pipe', 'pipe'] });
+const run = (cmd, args, input) => execFileSync(cmd, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['pipe', 'pipe', 'pipe'], input });
 const api = (ruta) => JSON.parse(run('gh', ['api', ruta]));
 const apiLista = (ruta) => run('gh', ['api', '--paginate', ruta, '--jq', '.[]']).split('\n').filter(Boolean).map((l) => JSON.parse(l));
 const salida = (k, v) => { if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `${k}=${v}\n`); };
@@ -43,6 +43,19 @@ function leerReviews(n) {
   return rs.map((r) => ({ ...r, editada: ed && ed.has(String(r.id)) ? ed.get(String(r.id)) : null }));
 }
 
+// Registro de invocaciones (idempotencia): check-runs CHECK_REGISTRO en TODOS los commits del PR.
+function leerRegistros(n) {
+  const commits = apiLista(`repos/${REPO}/pulls/${n}/commits?per_page=100`);
+  if (commits.length >= 250) throw new Error('más de 250 commits: no se puede recorrer el registro');
+  const nombre = encodeURIComponent(CHECK_REGISTRO);
+  return commits.flatMap((c) => api(`repos/${REPO}/commits/${c.sha}/check-runs?check_name=${nombre}&filter=all&per_page=100`).check_runs ?? [])
+    .map((r) => ({ id: r.id, external_id: r.external_id }));
+}
+function registrar(sha, clave) {
+  const cuerpo = JSON.stringify({ name: CHECK_REGISTRO, head_sha: sha, external_id: clave, status: 'in_progress', output: { title: `invocación de Claude (solo lectura) · ${clave}`, summary: 'Registrada antes de invocar; a lo sumo una por evento.' } });
+  return JSON.parse(run('gh', ['api', '-X', 'POST', `repos/${REPO}/check-runs`, '--input', '-'], cuerpo)).id;
+}
+
 function decidir() {
   const nombre = process.env.GITHUB_EVENT_NAME;
   const evento = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
@@ -61,8 +74,10 @@ function decidir() {
   } else {
     d = { actuar: false, motivo: `evento ${nombre} no soportado` };
   }
+  d = idempotente({ decision: d, leer: () => leerRegistros(d.pr), registrar: (clave) => registrar(d.sha, clave) });
   mkdirSync(DIR, { recursive: true });
   writeFileSync(path.join(DIR, 'decision.json'), JSON.stringify(d, null, 2));
+  if (d.registro && !d.actuar) cerrarRegistro(d.registro, 'neutral', 'duplicado: no se invocó', d.motivo);
   if (d.actuar) {
     const archivos = apiLista(`repos/${REPO}/pulls/${d.pr}/files?per_page=100`);
     const comentarios = d.tipo === 'review' ? apiLista(`repos/${REPO}/pulls/${d.pr}/reviews/${d.evento_id}/comments?per_page=100`) : [];
@@ -70,6 +85,11 @@ function decidir() {
   }
   console.log(`bridge-claude: ${d.actuar ? 'ACTÚA' : 'no actúa'} — ${d.motivo}`);
   salida('actuar', d.actuar ? 'true' : 'false');
+}
+
+function cerrarRegistro(id, conclusion, titulo, resumen) {
+  const cuerpo = JSON.stringify({ status: 'completed', conclusion, output: { title: titulo.slice(0, 250), summary: tapar(resumen).slice(0, 60000) } });
+  try { run('gh', ['api', '-X', 'PATCH', `repos/${REPO}/check-runs/${id}`, '--input', '-'], cuerpo); } catch (e) { console.log(`::warning title=bridge-claude::no se pudo cerrar el registro ${id}: ${tapar(e.message).split('\n')[0]}`); }
 }
 
 function claude() {
@@ -97,6 +117,9 @@ function informar() {
   const { respuesta, ...num } = m;
   if (process.env.GITHUB_STEP_SUMMARY) {
     appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## bridge-claude (solo lectura)\n\n\`\`\`json\n${JSON.stringify(num, null, 2)}\n\`\`\`\n\n${(respuesta ?? '(sin respuesta)').replaceAll('```', "'''")}\n`);
+  }
+  if (d.registro) {
+    cerrarRegistro(d.registro, 'neutral', `${m.ok ? 'respondió' : 'falló'} · turnos ${m.turnos} · USD ${m.costo_usd} · ${m.total_evento_a_respuesta_ms} ms`, `\`\`\`json\n${JSON.stringify(num, null, 2)}\n\`\`\`\n\n${(respuesta ?? '(sin respuesta)').replaceAll('```', "'''")}`);
   }
   if (!m.ok) process.exitCode = 1;
 }

@@ -1,16 +1,19 @@
 # P-06 · PoC-1 de la Claude Action en SOLO LECTURA (brief docs/briefs/P06_BRIDGE_POC.md §4;
-# decisión de #54 del 2026-10-12 18:15; PR 2). NUNCA escribe en GitHub.
+# decisión de #54 del 2026-10-12 18:15; PR 2). No escribe código, PRs, issues ni comentarios:
+# su única escritura es el check-run que registra cada invocación (idempotencia).
 #
 # Modelo de confianza (igual que delegated-audit-gate):
 #   - `workflow_run` (fin de `delegated-audit-senal`) e `issue_comment` cargan SIEMPRE el YAML
 #     de la rama por defecto (main): un PR no puede cambiar este workflow para su propio evento.
 #     No se escucha `pull_request_review` (cargaría el YAML del merge del PR).
 #   - Checkout de main sin credenciales persistidas; el PR aporta datos (API), nunca código.
-#   - Permisos de solo lectura. `GH_TOKEN` existe SOLO en el paso que decide/lee la API; el
+#   - Permisos de lectura + `checks: write` (registro de invocaciones). `GH_TOKEN` existe SOLO en
+#     los pasos que deciden/registran e informan; el
 #     secret `CLAUDE_CODE_OAUTH_TOKEN` existe SOLO en el paso de Claude, que no recibe ningún
 #     token de GitHub y corre con Read/Grep/Glob (sin Bash, Edit, Write ni red).
 #   - Solo PRs `poc/bridge-*` del mismo repo hacia main; autor por `user.id` (Codex o Fer).
-# Salida: anotación del run + resumen (respuesta y métricas). Sin comentarios ni pushes:
+# Salida: anotación del run + resumen + check-run de registro (respuesta y métricas). Sin
+# comentarios ni pushes:
 # la escritura (corregir en la rama, 4 rondas, lock P-07) es PR 3, con su propia auditoría.
 # Rollback (caso 13): desactivar este workflow o borrar el secret; nada más depende de él.
 name: bridge-claude
@@ -24,6 +27,9 @@ permissions:
   contents: read
   pull-requests: read
   issues: read
+  # Único permiso de escritura (AUDIT: CAMBIOS @ 5b4acf4): registrar cada invocación como
+  # check-run ANTES de llamar a Claude (idempotencia por evento). No toca código, PRs ni issues.
+  checks: write
 # Mismo grupo para review y comentario del mismo PR (Codex #89 P2): el número del PR, que
 # `workflow_run` trae en `pull_requests` para PRs del mismo repo; sin él, un grupo propio
 # por run (decidir no actúa igual: exige exactamente un PR elegible).
@@ -64,6 +70,8 @@ jobs:
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: node scripts/collab/bridge-claude.mjs claude
-      - name: Informar (anotación + métricas)
+      - name: Informar (anotación + métricas; cierra el registro)
         if: always() && steps.decidir.outputs.actuar == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: node scripts/collab/bridge-claude.mjs informar

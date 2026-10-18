@@ -76,6 +76,10 @@ export function decidirReview({ run, prs, reviews, repo, allowlist = CODEX_BOT_I
   const pr = cand[0];
   const e = prElegible(pr, repo);
   if (e) return no(e);
+  // El grupo de concurrencia del workflow sale de `workflow_run.pull_requests[0].number`: si el
+  // run no está asociado a ESTE PR (y solo a él), no quedó serializado con los demás → no actúa.
+  const asociados = (run.pull_requests ?? []).map((x) => x?.number);
+  if (asociados.length !== 1 || asociados[0] !== pr.number) return no(`la señal no está asociada solo a #${pr.number} (pull_requests ${JSON.stringify(asociados)}): sin serialización por PR`);
   const deCodex = (reviews ?? []).filter((r) => r?.user?.type === 'Bot' && allowlist.includes(r?.user?.id));
   if (deCodex.length === 0) return no(`sin reviews de Codex en #${pr.number}`);
   const ultima = [...deCodex].sort((a, b) => t(a.submitted_at) - t(b.submitted_at) || a.id - b.id).at(-1);
@@ -93,6 +97,39 @@ export function decidirReview({ run, prs, reviews, repo, allowlist = CODEX_BOT_I
   if (p.bloque.veredicto !== 'CAMBIOS') return no(`review ${ultima.id}: AUDIT: ${p.bloque.veredicto} (solo CAMBIOS dispara)`);
   if (p.bloque.head !== pr.head.sha || p.bloque.pr !== pr.number || p.bloque.repo !== repo) return no(`review ${ultima.id}: el bloque no nombra este repo/PR/HEAD`);
   return { actuar: true, motivo: `AUDIT: CAMBIOS de Codex en #${pr.number}`, tipo: 'review', pr: pr.number, sha: pr.head.sha, evento_id: ultima.id, evento_at: ultima.submitted_at, texto: ultima.body };
+}
+
+/**
+ * Idempotencia (AUDIT: CAMBIOS @ 5b4acf4, P2): como máximo UNA invocación de Claude por evento
+ * (review o comentario), aunque la señal llegue varias veces, se re-corra el run o dos runs se
+ * crucen. Registro durable = check-run `CHECK_REGISTRO` con `external_id` = clave del evento,
+ * creado ANTES de invocar a Claude sobre el HEAD del PR (se busca en todos los commits del PR,
+ * así un push posterior no lo esconde). Orden: leer registro → si ya está, no actúa → registrar
+ * → releer → solo el registro de id más bajo para esa clave invoca (dos corridas cruzadas: una
+ * sola gana). Leer o registrar falla → no actúa. Un registro queda aunque Claude falle después
+ * (a lo sumo una vez, nunca reintento automático).
+ */
+export const CHECK_REGISTRO = 'bridge-claude · invocación';
+export const claveEvento = (d) => `${d.tipo}-${d.evento_id}`;
+
+/** @param {{ decision: object, leer: () => Array<{id:number, external_id:string}>, registrar: (clave: string) => number }} io */
+export function idempotente({ decision, leer, registrar }) {
+  if (!decision?.actuar) return decision;
+  const clave = claveEvento(decision);
+  const de = (rs) => (Array.isArray(rs) ? rs : null)?.filter((r) => r?.external_id === clave);
+  let previos;
+  try { previos = de(leer()); } catch (e) { return no(`no se pudo leer el registro de invocaciones (${String(e?.message ?? e).split('\n')[0]}): no actúa`); }
+  if (!previos) return no('registro de invocaciones ilegible: no actúa');
+  if (previos.length) return no(`evento ${clave} ya atendido (check-run ${previos.map((r) => r.id).join(', ')}): no se invoca de nuevo`);
+  let propio;
+  try { propio = registrar(clave); } catch (e) { return no(`no se pudo registrar la invocación (${String(e?.message ?? e).split('\n')[0]}): no actúa`); }
+  if (!Number.isSafeInteger(propio)) return no('registro sin id: no actúa');
+  let todos;
+  try { todos = de(leer()); } catch { todos = null; }
+  if (!todos || !todos.some((r) => r.id === propio)) return no(`no se pudo confirmar el registro ${propio}: no actúa`, { registro: propio, clave });
+  const ganador = Math.min(...todos.map((r) => r.id));
+  if (ganador !== propio) return no(`otra corrida registró ${clave} antes (check-run ${ganador}): no actúa`, { registro: propio, clave });
+  return { ...decision, registro: propio, clave };
 }
 
 /** Contexto que lee Claude: todo es DATO no confiable, va delimitado y nunca como instrucción. */
