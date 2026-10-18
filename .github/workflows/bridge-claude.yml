@@ -1,0 +1,65 @@
+# P-06 · PoC-1 de la Claude Action en SOLO LECTURA (brief docs/briefs/P06_BRIDGE_POC.md §4;
+# decisión de #54 del 2026-10-12 18:15; PR 2). NUNCA escribe en GitHub.
+#
+# Modelo de confianza (igual que delegated-audit-gate):
+#   - `workflow_run` (fin de `delegated-audit-senal`) e `issue_comment` cargan SIEMPRE el YAML
+#     de la rama por defecto (main): un PR no puede cambiar este workflow para su propio evento.
+#     No se escucha `pull_request_review` (cargaría el YAML del merge del PR).
+#   - Checkout de main sin credenciales persistidas; el PR aporta datos (API), nunca código.
+#   - Permisos de solo lectura. `GH_TOKEN` existe SOLO en el paso que decide/lee la API; el
+#     secret `CLAUDE_CODE_OAUTH_TOKEN` existe SOLO en el paso de Claude, que no recibe ningún
+#     token de GitHub y corre con Read/Grep/Glob (sin Bash, Edit, Write ni red).
+#   - Solo PRs `poc/bridge-*` del mismo repo hacia main; autor por `user.id` (Codex o Fer).
+# Salida: anotación del run + resumen (respuesta y métricas). Sin comentarios ni pushes:
+# la escritura (corregir en la rama, 4 rondas, lock P-07) es PR 3, con su propia auditoría.
+# Rollback (caso 13): desactivar este workflow o borrar el secret; nada más depende de él.
+name: bridge-claude
+on:
+  workflow_run:
+    workflows: [delegated-audit-senal]
+    types: [completed]
+  issue_comment:
+    types: [created]
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+concurrency:
+  group: bridge-claude-${{ github.event.issue.number || github.event.workflow_run.head_branch || github.run_id }}
+  cancel-in-progress: false
+jobs:
+  leer:
+    # Filtro barato antes de levantar nada: la decisión real la toma el script con la API.
+    if: >-
+      (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request_review'
+        && startsWith(github.event.workflow_run.head_branch, 'poc/bridge-'))
+      || (github.event_name == 'issue_comment' && github.event.issue.pull_request
+        && startsWith(github.event.comment.body, '@claude'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Hora de inicio del job
+        run: echo "BRIDGE_INICIO_JOB=$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Decidir (API, solo lectura)
+        id: decidir
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/collab/bridge-claude.mjs decidir
+      - name: Instalar Claude Code (versión fija, sin secret)
+        if: steps.decidir.outputs.actuar == 'true'
+        run: npm i -g @anthropic-ai/claude-code@2.1.302
+      - name: Claude (solo lectura, sin token de GitHub)
+        if: steps.decidir.outputs.actuar == 'true'
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: node scripts/collab/bridge-claude.mjs claude
+      - name: Informar (anotación + métricas)
+        if: always() && steps.decidir.outputs.actuar == 'true'
+        run: node scripts/collab/bridge-claude.mjs informar
