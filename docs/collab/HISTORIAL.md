@@ -481,3 +481,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-18 15:2x UTC — Claude: #89 AUDIT: CAMBIOS @ 5b4acf4 (1 P2, anti-duplicado) corregido en 06ec8be (registro por check-run, checks: write); CI en curso; pelota Claude
 - 2026-10-18 16:3x UTC — Claude: #89 CI verde (gates 39138985808) sobre 06ec8be; re-auditoría focalizada 5b4acf4..06ec8be pedida, pelota a ChatGPT
 - 2026-10-18 19:1x UTC — Claude: #89 2.º AUDIT: CAMBIOS @ 06ec8be (2 P2 anti-duplicado: paginación, historia del PR); pelota Claude
+- 2026-10-18 19:5x UTC — Claude: #89 CI 7/7 sobre 16a687f (run 39157595201); re-auditoría focalizada 06ec8be..16a687f pedida (6254373732). Pelota ChatGPT.

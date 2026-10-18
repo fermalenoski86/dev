@@ -3,10 +3,10 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador) — 2.º `AUDIT: CAMBIOS` sobre #89 @ `06ec8be` ([6253915223](https://github.com/fermalenoski86/dev/pull/89#issuecomment-6253915223), 2 P2 del registro anti-duplicado: paginación y dependencia de los commits del PR). Misma familia en dos rondas → solución estructural: registro en un ancla fija de `main` + lectura completa fail-closed. Al terminar: CI 7/7 + paralelo y re-auditoría focalizada `06ec8be..<nuevo>`.
-**En auditoría:** #89 @ 06ec8be05669ca30409541b4a3984da6a3a87a61
-**Fase:** PoC P-06 PR 2 (correcciones del AUDIT). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
-**Estado:** PR 1 (#88) en `main@c403b6b`. PR 2 (#89): `bridge-claude.yml` + `scripts/collab/bridge-claude.*` (65 tests, `pnpm verify` verde local). Aceptado por el auditor: CLI fija en solo lectura en vez de `claude-code-action@v1`. Corrida real y matriz §5 después del merge en PR `poc/bridge-*`.
+**Pelota en:** ChatGPT (auditor) — re-auditoría focalizada de #89 `06ec8be..16a687f` (2.º `AUDIT: CAMBIOS` [6253915223](https://github.com/fermalenoski86/dev/pull/89#issuecomment-6253915223): registro anti-duplicado en ancla fija de `main` + lectura completa paginada). Pedido: [6254373732](https://github.com/fermalenoski86/dev/pull/89#issuecomment-6254373732). CI `gates` run 39157595201 7/7 + `paralelo`/`riesgo` OK sobre el HEAD; Codex sin hallazgos. Acción: `AUDIT: APROBADO` o `AUDIT: CAMBIOS` sobre `16a687f`.
+**En auditoría:** #89 @ 16a687ffc1af95097aa81a13a79f7b5253cac6b7
+**Fase:** PoC P-06 PR 2 (re-auditoría). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
+**Estado:** PR 1 (#88) en `main@c403b6b`. PR 2 (#89): `bridge-claude.yml` + `scripts/collab/bridge-claude.*` (80 tests, `pnpm verify` verde local). Aceptado por el auditor: CLI fija en solo lectura en vez de `claude-code-action@v1`. Corrida real y matriz §5 después del merge en PR `poc/bridge-*`.
 
 ## PoC P-06 — qué entra (brief + #54, decisión 2026-10-12 18:15)
 - `## Code Review Rules — TRUST` (texto de ChatGPT) + salida estructurada que el check parsea.
@@ -28,7 +28,7 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| PoC P-06 | #54 / PR #89 | 2.º AUDIT: CAMBIOS @ `06ec8be` (2 P2); en corrección |
+| PoC P-06 | #54 / PR #89 | re-auditoría @ `16a687f`; CI 7/7 (run 39157595201) |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
 | E2E intermitente :17 | #26 / #77 | causa no determinada |
@@ -42,5 +42,6 @@
 ## Referencias
 - `AGENTS.md` · `docs/collab/DECISIONES.md` · `docs/collab/BACKLOG.md` · `docs/collab/PROGRESO.md`
 - Historial: `docs/collab/HISTORIAL.md` · Briefs: `docs/briefs/` · ADR: `docs/architecture/DECISIONS.md`
+
 
 
