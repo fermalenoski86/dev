@@ -66,7 +66,11 @@ Falla cerrado (exit ≠ 0) si falta cualquiera de:
 6. **Sin push posterior:** `review.commit_id == head.sha` ya lo cubre; además, `synchronize` posterior invalida.
 7. **Rondas:** contador ≤ 4; en 5 → fail + `bridge-paused`.
 
-Salida: anotación con `review_id`, `author_id`, `sha`, riesgo, `run/attempt` y la razón exacta. Modo **report-only** (el check nunca es required) hasta que la matriz de §5 pase y Fer active ruleset/branch protection; aun entonces, en piloto ChatGPT revisa antes del merge.
+8. **Tupla comprobada (ADR-065, `AUDIT: CAMBIOS` de #88 sobre `9332156`):** main se fija al empezar y todo se calcula contra ese sha; riesgo **efectivo** con `risk.mjs verificar` (declaración del cuerpo del PR: ausente/inválida → fail, elevación a alto → formal, nunca rebajar); los gates tienen que haber probado el merge de **este** HEAD con **este** main (padres del `github.sha` del run, declarado en el `run-name` de `gates.yml`); el código/política en ejecución tiene que **ser** el main evaluado (checkout limpio, fijado al arrancar y releído al terminar; atrasado o modificado → fail, `AUDIT: CAMBIOS` sobre `f097a29`); main/HEAD/base/cuerpo/política que cambian durante la evaluación → fail; HEAD compartido por más de un PR abierto (cualquier base) → fail para todos.
+
+**Ajuste de implementación (PR 1, aceptado por el auditor en #88):** la "Entrada" de arriba se reemplaza por `workflow_run` (fin de `gates`, de una señal sin permisos para `pull_request_review` y de `riesgo`) + `push` a main, para que nunca decida YAML del PR; permisos `checks: write` (publicar) y `actions: read` (runs), justificados para report-only, sin ejecutar código ni artefactos del PR con ese token. El cuerpo del PR se lee **solo** como texto de la declaración de riesgo (punto 8), nunca como autoridad del veredicto.
+
+Salida: anotación con `review_id`, `author_id`, `sha`, riesgo, `run/attempt`, la tupla y la razón exacta. Modo **report-only** (el check nunca es required) hasta que la matriz de §5 pase y Fer active ruleset/branch protection; aun entonces, en piloto ChatGPT revisa antes del merge.
 
 ## 4. Claude Action (PoC-1) — límites
 

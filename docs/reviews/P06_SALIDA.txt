@@ -1,0 +1,40 @@
+# P-06 PR 1 · salida real de gates locales (Claude, 2026-10-18T05:34:11Z, rama proc/p06-gate sobre main@333d8ee — ronda AUDIT: CAMBIOS @ f097a29: 1 × P2, política ejecutada = main evaluado)
+# Entorno: Node 22.22.0 · pnpm 12.5.1 (npm) · CI: Node 22 / pnpm 12.5.1
+
+$ npx vitest run scripts/collab/delegated-audit.test.ts
+ Test Files  1 passed (1)
+      Tests  88 passed (88)
+
+$ (mismos tests contra delegated-audit.lib.mjs + delegated-audit.mjs de f097a29; su orquestación evaluarPr copiada tal cual como evaluarPrCon solo para cargar)
+      Tests  6 failed | 82 passed (88)   ← repro del auditor: A/B daba PASS con main=B; main que avanza entre dos PR: [[7,pass],[8,pass]]
+
+$ pnpm verify  (lint + typecheck + suite default)
+✖ 12 problems (0 errors, 12 warnings)   ← warnings preexistentes en apps/control y packages/*, ninguno en scripts/collab
+ Test Files  55 passed | 1 skipped (56)
+      Tests  1034 passed | 1 skipped (1035)
+real	2m2s
+rc=0
+
+$ bash scripts/ci/politica-fallas.sh check
+politica-fallas: OK (retries 0, umbrales = foto, sin .only ni skips en E2E)
+
+$ pnpm docs:contract && pnpm acceptance:check && pnpm progress:check   (sin diff tras regenerar)
+docs/platform/openapi.json y docs/platform/DELIVERY.md regenerados (32 rutas registradas)
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día
+GATE progreso (P-02): manifiesto válido (35 entradas), docs/collab/PROGRESO.md al día
+
+$ bash scripts/collab/paralelo.test.sh
+paralelo.test: 143 ok, 0 fallos
+
+$ git diff --check → OK
+
+$ node scripts/collab/delegated-audit.mjs evaluar 88   (API real, solo lectura; checkout = b482eb2, main = 333d8ee)
+fail · main 333d8ee48293 · politica b482eb2608ee
+ - política: los scripts en ejecución son de b482eb2608ee y el main evaluado es 333d8ee48293 (checkout desactualizado: sin PASS hasta una corrida con la política vigente)
+ - elegibilidad: riesgo efectivo alto → requiere auditoría formal | review: ninguna de Codex sobre f097a29 | procedencia: gates contra 88ba5c6 ≠ 333d8ee
+
+$ echo '// x' >> scripts/collab/risk.mjs; node scripts/collab/delegated-audit.mjs evaluar 88; git checkout scripts/collab/risk.mjs
+politica null · 'política: no se pudo verificar la revisión de los scripts en ejecución (checkout ilegible o con cambios locales) → sin PASS'
+
+No ejecutado localmente (sin cambios en esas áreas; los corre CI en gates.yml sobre el HEAD): build, postgres, bootstrap-smoke, media, mutations, e2e-m2c, e2e-platform, compose-smoke.
+No ejecutado: carril `ci` contra GitHub real (publicación de check-runs) — solo existe con el workflow en main.
