@@ -10,15 +10,16 @@
 // probado) + `risk.mjs verificar` de ESTE árbol (en CI: el checkout de main) sobre el diff
 // contra el main fijado y el cuerpo del PR (solo para su declaración de riesgo: se lee como
 // texto, nunca se ejecuta). Nunca un issue_comment ni archivos del PR.
-// Tupla (AUDIT: CAMBIOS @ 9332156): main se fija al empezar y todo se relee al terminar.
+// Tupla (AUDIT: CAMBIOS @ 9332156): main se fija al empezar y todo se relee al terminar;
+// y la revisión en ejecución tiene que ser ese main (AUDIT: CAMBIOS @ f097a29).
 // REPORT-ONLY: el check sale siempre `neutral` y el comando termina 0 aunque el veredicto
 // sea FAIL; solo un error de lectura de la lista de PR o de publicación da exit 1.
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { checkRun, cicloCi, evaluar, jobsDeGates, riesgoDeSalida, shaProbado } from './delegated-audit.lib.mjs';
+import { checkRun, cicloCi, evaluarPrCon, riesgoDeSalida, shaProbado } from './delegated-audit.lib.mjs';
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const RAIZ = path.resolve(AQUI, '../..');
@@ -28,6 +29,18 @@ const run = (cmd, args, opts = {}) => execFileSync(cmd, args, { encoding: 'utf8'
 const api = (ruta, ...extra) => JSON.parse(run('gh', ['api', ruta, ...extra]));
 const apiLista = (ruta, jq = '.[]') => run('gh', ['api', '--paginate', ruta, '--jq', jq]).split('\n').filter(Boolean).map((l) => JSON.parse(l));
 const intentar = (f) => { try { return f(); } catch { return null; } };
+
+// Revisión del código/política EN EJECUCIÓN (AUDIT: CAMBIOS @ f097a29, P2): se fija al
+// arrancar, con los módulos ya cargados, y se exige árbol limpio en lo que decide (este CLI,
+// su biblioteca, risk.mjs y gates.yml). evaluar() exige que sea el main evaluado; un checkout
+// atrasado o modificado da FAIL. Se relee al terminar cada PR (alguien hizo checkout en medio).
+const POLITICA = ['scripts/collab', '.github/workflows'];
+function revisionEjecutada() {
+  const h = run('git', ['rev-parse', 'HEAD'], { cwd: RAIZ }).trim();
+  run('git', ['diff', '--quiet', 'HEAD', '--', ...POLITICA], { cwd: RAIZ }); // exit 1 si hay cambios → null
+  return h;
+}
+const EJECUTADA = intentar(revisionEjecutada);
 
 function leerPr(n) {
   const p = api(`repos/${REPO}/pulls/${n}`);
@@ -92,23 +105,14 @@ function leerGates(head) {
   };
 }
 
-function evaluarPr(n) {
-  const main = intentar(mainActual);
-  const pr = leerPr(n);
-  const ok = pr && SHA_RE.test(pr.head_sha ?? '');
-  const entrada = {
-    repo: REPO,
-    pr,
-    main,
-    reviews: ok ? intentar(() => leerReviews(n)) : null,
-    riesgo: ok && main ? intentar(() => verificarRiesgo(n, pr.head_sha, main, pr.body)) : null,
-    gates: ok ? intentar(() => leerGates(pr.head_sha)) : null,
-    jobsEsperados: intentar(() => jobsDeGates(readFileSync(path.join(RAIZ, '.github/workflows/gates.yml'), 'utf8'))) ?? [],
-  };
-  // relectura al terminar: si algo de la tupla cambió en el medio, FAIL (lo decide evaluar)
-  const fin = intentar(() => { const p = leerPr(n); return { main: mainActual(), head: p.head_sha, base_ref: p.base_ref, body: p.body }; });
-  return evaluar({ ...entrada, estabilidad: fin });
-}
+const evaluarPr = (n) => evaluarPrCon(n, {
+  repo: REPO,
+  ejecutada: EJECUTADA,
+  ejecutadaAhora: revisionEjecutada,
+  mainActual, leerPr, leerReviews, verificarRiesgo, leerGates,
+  // gates.yml de la revisión ejecutada (no del árbol de trabajo)
+  gatesYml: () => run('git', ['show', `${EJECUTADA}:.github/workflows/gates.yml`], { cwd: RAIZ }),
+});
 
 function publicar(v) {
   const cuerpo = JSON.stringify(checkRun(v));

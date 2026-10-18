@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error módulo .mjs sin tipos (script de CI, sin build)
-import { CODEX_BOT_IDS, MAX_RONDAS, checkRun, cicloCi, compartidos, confirmarPass, evaluar, jobsDeGates, parsearBloque, riesgoDeSalida, shaProbado, sinVeredicto } from './delegated-audit.lib.mjs';
+import { CODEX_BOT_IDS, MAX_RONDAS, checkRun, cicloCi, compartidos, confirmarPass, evaluar, evaluarPrCon, jobsDeGates, parsearBloque, riesgoDeSalida, shaProbado, sinVeredicto } from './delegated-audit.lib.mjs';
 // @ts-expect-error módulo .mjs sin tipos (script de CI, sin build)
 import { clasificarRuta, gatesDesdeParalelo, raicesWorkspace, verificar } from './risk.lib.mjs';
 
@@ -39,8 +39,8 @@ const cuerpo = (b = bloque()) => `<!-- codex-review-receipt:v1 -->\n### Codex Re
 const review = (o: Record<string, unknown> = {}) => ({ id: 100, user: CODEX, state: 'COMMENTED', commit_id: HEAD, body: cuerpo(), submitted_at: '2026-10-17T10:00:00Z', editada: false, ...o });
 const gatesOk = (o: Record<string, unknown> = {}) => ({ id: RUN, attempt: 1, head_sha: HEAD, event: 'pull_request', status: 'completed', conclusion: 'success', jobs: JOBS.map((name: string) => ({ name, conclusion: 'success' })), probado: MERGE, base_probada: MAIN, head_probado: HEAD, ...o });
 const riesgo = (nivel: string, o: Record<string, unknown> = {}) => ({ nivel, calculado: nivel, declarado: nivel, errores: [], ...o });
-const estable = (o: Record<string, unknown> = {}) => ({ main: MAIN, head: HEAD, base_ref: 'main', body: BODY, ...o });
-const base = (o: Record<string, unknown> = {}) => ({ repo: REPO, pr: { number: 7, head_sha: HEAD, base_ref: 'main', state: 'open', body: BODY }, main: MAIN, estabilidad: estable(), reviews: [review()], riesgo: riesgo('medio'), gates: gatesOk(), jobsEsperados: JOBS, ...o });
+const estable = (o: Record<string, unknown> = {}) => ({ main: MAIN, head: HEAD, base_ref: 'main', body: BODY, ejecutada: MAIN, ...o });
+const base = (o: Record<string, unknown> = {}) => ({ repo: REPO, pr: { number: 7, head_sha: HEAD, base_ref: 'main', state: 'open', body: BODY }, main: MAIN, ejecutada: MAIN, estabilidad: estable(), reviews: [review()], riesgo: riesgo('medio'), gates: gatesOk(), jobsEsperados: JOBS, ...o });
 const motivos = (o: Record<string, unknown> = {}) => { const v = evaluar(base(o)); return { v: v.veredicto, m: v.motivos.join(' | ') }; };
 
 describe('P-06 · parser estricto del bloque (§2)', () => {
@@ -369,5 +369,93 @@ describe('P-06 · P2 3: HEAD compartido por más de un PR hacia main → sin PAS
     const f = evaluar(base({ riesgo: riesgo('alto') }));
     expect(confirmarPass(f, () => { throw new Error('no se llama'); })).toBe(f);
     expect([...compartidos([{ number: 7, head_sha: HEAD }, { number: 8, head_sha: HEAD }, { number: 9, head_sha: VIEJO }])]).toEqual([[HEAD, [7, 8]]]);
+  });
+});
+
+describe('P-06 · P2 (AUDIT: CAMBIOS @ f097a29): la política ejecutada tiene que ser el main evaluado', () => {
+  // Reproducción del auditor con E/S controladas sobre la orquestación real del CLI
+  // (evaluarPrCon): checkout A (scripts cargados), main por API B, PR único con HEAD H, review
+  // válida sobre H, run 4242/1 verde con merge [B, H]. La política de A clasifica bajo; la de B,
+  // más restrictiva, clasificaría alto. Antes: PASS con main=B calculado con la política de A.
+  const A = 'f'.repeat(40);
+  const B = MAIN;
+  const clasificador = (rev: string) => (rev === A ? riesgo('bajo') : riesgo('alto')); // B endurece la regla
+  const io = (o: { ejecutada?: string | null; ahora?: () => string | null; mains?: string[] } = {}) => {
+    const ejecutada = o.ejecutada === undefined ? A : o.ejecutada;
+    const mains = [...(o.mains ?? [B, B])];
+    return {
+      repo: REPO,
+      ejecutada,
+      ejecutadaAhora: o.ahora ?? (() => ejecutada),
+      mainActual: () => (mains.length > 1 ? mains.shift() : mains[0]),
+      leerPr: () => ({ number: 7, head_sha: HEAD, base_ref: 'main', state: 'open', body: 'Riesgo: bajo' }),
+      leerReviews: () => [review()],
+      // el riesgo lo calcula el risk.mjs del checkout EJECUTADO, no el del main evaluado
+      verificarRiesgo: () => clasificador(String(ejecutada)),
+      leerGates: () => gatesOk({ base_probada: B }),
+      gatesYml: () => GATES_YML,
+    };
+  };
+  it('repro del auditor: checkout A + main B (política B más restrictiva) → FAIL "checkout desactualizado" (antes: PASS con main=B)', () => {
+    const v = evaluarPrCon(7, io());
+    expect(v.veredicto).toBe('fail');
+    expect(v.main).toBe(B);
+    expect(v.politica).toBe(A);
+    expect(v.riesgo).toBe('bajo'); // lo que A permitió: justamente lo que no se puede atribuir a B
+    expect(v.motivos).toEqual([`política: los scripts en ejecución son de ${A.slice(0, 12)} y el main evaluado es ${B.slice(0, 12)} (checkout desactualizado: sin PASS hasta una corrida con la política vigente)`]);
+    expect(checkRun(v).output.summary).toContain(`política ${A}`);
+  });
+  it('positivo A/A: la revisión ejecutada ES el main evaluado → PASS, con la política en la tupla', () => {
+    const v = evaluarPrCon(7, { ...io({ ejecutada: B }), verificarRiesgo: () => riesgo('bajo') });
+    expect(v.motivos).toEqual([]);
+    expect(v.veredicto).toBe('pass');
+    expect(v.politica).toBe(B);
+    expect(checkRun(v).output.summary).toContain(`main ${B} · política ${B}`);
+  });
+  it('main avanza entre dos PR del mismo ciclo: el primero (A/A) PASS, el segundo (A vs B) FAIL', () => {
+    const mains = [A, A, B, B]; // PR #7: inicio y fin en A; PR #8: inicio y fin en B
+    const prs = [{ number: 7, head_sha: HEAD }, { number: 8, head_sha: VIEJO }];
+    const pub: Array<{ pr: number; v: string; m: string }> = [];
+    const base_ = io({ ejecutada: A });
+    cicloCi(prs, {
+      evaluarPr: (n: number) => evaluarPrCon(n, {
+        ...base_,
+        mainActual: () => mains.shift(),
+        leerPr: () => ({ number: n, head_sha: n === 7 ? HEAD : VIEJO, base_ref: 'main', state: 'open', body: 'Riesgo: bajo' }),
+        leerReviews: () => [review(n === 7 ? {} : { commit_id: VIEJO, body: cuerpo(bloque({ repo: `repo: ${REPO} · pr: #8 · head: ${VIEJO}`, gates: `gates: run ${RUN} attempt 1 · 7/7 sobre ${VIEJO}` })) })],
+        leerGates: () => gatesOk(n === 7 ? { base_probada: A } : { head_sha: VIEJO, head_probado: VIEJO, base_probada: B }),
+      }),
+      publicar: (v: { pr: number; veredicto: string; motivos: string[] }) => { pub.push({ pr: v.pr, v: v.veredicto, m: v.motivos.join(' | ') }); return 'u'; },
+      relistar: () => prs.map((p) => ({ ...p, base_ref: 'main' })),
+      log: () => {},
+    });
+    expect(pub.map((p) => [p.pr, p.v])).toEqual([[7, 'pass'], [8, 'fail']]);
+    expect(pub[1].m).toBe(`política: los scripts en ejecución son de ${A.slice(0, 12)} y el main evaluado es ${B.slice(0, 12)} (checkout desactualizado: sin PASS hasta una corrida con la política vigente)`);
+  });
+  it('revisión ejecutada ilegible o con cambios locales (null) → FAIL', () => {
+    const v = evaluarPrCon(7, io({ ejecutada: null, ahora: () => null }));
+    expect(v.veredicto).toBe('fail');
+    expect(v.motivos[0]).toContain('política: no se pudo verificar la revisión de los scripts en ejecución');
+    expect(motivos({ ejecutada: 'f'.repeat(7) }).m).toContain('política: no se pudo verificar');
+  });
+  it('la revisión ejecutada cambia o queda ilegible durante la evaluación (checkout en medio) → FAIL', () => {
+    expect(evaluarPrCon(7, io({ ejecutada: B, ahora: () => A })).motivos.join(' | ')).toContain('estabilidad: la revisión de los scripts en ejecución cambió');
+    expect(evaluarPrCon(7, io({ ejecutada: B, ahora: () => { throw new Error('git'); } })).motivos.join(' | ')).toContain('estabilidad: no se pudo releer');
+  });
+  it('se conservan los controles cerrados: elevación manual alta, base probada A, main que cambia en medio → FAIL', () => {
+    const ok = { ...io({ ejecutada: B }), verificarRiesgo: () => riesgo('bajo') };
+    expect(evaluarPrCon(7, { ...ok, verificarRiesgo: () => riesgo('alto', { calculado: 'bajo' }) }).motivos.join(' | ')).toContain('requiere auditoría formal');
+    expect(evaluarPrCon(7, { ...ok, leerGates: () => gatesOk({ base_probada: A }) }).motivos.join(' | ')).toContain('procedencia: gates probados contra main');
+    const m = [B, A];
+    expect(evaluarPrCon(7, { ...ok, mainActual: () => m.shift() }).motivos.join(' | ')).toContain('estabilidad: main cambió durante la evaluación');
+  });
+  it('el CLI fija la revisión ejecutada (rev-parse + árbol limpio), lee gates.yml de esa revisión y delega en evaluarPrCon', () => {
+    const cli = readFileSync(path.join(ROOT, 'scripts/collab/delegated-audit.mjs'), 'utf8');
+    expect(cli).toMatch(/const EJECUTADA = intentar\(revisionEjecutada\);/);
+    expect(cli).toMatch(/'rev-parse', 'HEAD'/);
+    expect(cli).toMatch(/'diff', '--quiet', 'HEAD', '--', \.\.\.POLITICA/);
+    expect(cli).toContain("['show', `${EJECUTADA}:.github/workflows/gates.yml`]");
+    expect(cli).toContain('ejecutadaAhora: revisionEjecutada');
+    expect(cli).not.toMatch(/readFileSync/);
   });
 });

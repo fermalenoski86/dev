@@ -126,17 +126,19 @@ const orden = (a, b) => (Date.parse(a.submitted_at) || 0) - (Date.parse(b.submit
  *        risk.mjs verificar (política de main) sobre el diff real contra `main` y el CUERPO del
  *        PR: `nivel` = riesgo efectivo (máx. de declarado y calculado). null = sin veredicto.
  * @param {string|null} e.main            sha de main fijado al empezar la evaluación (la tupla)
- * @param {object|null} e.estabilidad     relectura al terminar: {main, head, base_ref, body}
+ * @param {string|null} e.ejecutada       revisión del código/política EN EJECUCIÓN (checkout limpio
+ *        cuyos módulos están cargados y cuyos risk.mjs/gates.yml se usan); tiene que ser `main`
+ * @param {object|null} e.estabilidad     relectura al terminar: {main, head, base_ref, body, ejecutada}
  * @param {object|null} e.gates           último run pull_request de gates.yml para head_sha:
  *        {id, attempt, head_sha, event, status, conclusion, jobs, probado, base_probada, head_probado}
  * @param {string[]} e.jobsEsperados      jobsDeGates(gates.yml de main)
  * @param {number[]} [e.allowlist]
  */
-export function evaluar({ repo, pr, reviews, riesgo, main = null, estabilidad = null, gates, jobsEsperados, allowlist = CODEX_BOT_IDS }) {
+export function evaluar({ repo, pr, reviews, riesgo, main = null, ejecutada = null, estabilidad = null, gates, jobsEsperados, allowlist = CODEX_BOT_IDS }) {
   const motivos = [];
   // Tupla del veredicto (AUDIT: CAMBIOS @ 9332156): (pr, head, main evaluado, riesgo efectivo,
   // run/attempt) + base y merge probados. PASS solo si cada componente se COMPROBÓ.
-  const info = { pr: pr?.number ?? null, sha: pr?.head_sha ?? null, main: esSha(main) ? main : null, review_id: null, author_id: null, riesgo: riesgo?.nivel ?? null, calculado: riesgo?.calculado ?? null, declarado: riesgo?.declarado ?? null, run: gates?.id ?? null, attempt: gates?.attempt ?? null, probado: gates?.probado ?? null, base_probada: gates?.base_probada ?? null, rondas: 0, ignoradas: [] };
+  const info = { pr: pr?.number ?? null, sha: pr?.head_sha ?? null, main: esSha(main) ? main : null, politica: esSha(ejecutada) ? ejecutada : null, review_id: null, author_id: null, riesgo: riesgo?.nivel ?? null, calculado: riesgo?.calculado ?? null, declarado: riesgo?.declarado ?? null, run: gates?.id ?? null, attempt: gates?.attempt ?? null, probado: gates?.probado ?? null, base_probada: gates?.base_probada ?? null, rondas: 0, ignoradas: [] };
   const fin = () => ({ veredicto: motivos.length ? 'fail' : 'pass', motivos, ...info });
 
   if (!pr || !Number.isSafeInteger(pr.number) || !new RegExp(`^${SHA}$`).test(pr.head_sha ?? '')) {
@@ -147,6 +149,12 @@ export function evaluar({ repo, pr, reviews, riesgo, main = null, estabilidad = 
   if (pr.base_ref !== 'main') motivos.push(`base ${pr.base_ref} ≠ main: el gate solo evalúa PR hacia main`);
 
   if (!esSha(main)) motivos.push('tupla: main evaluado desconocido (no se pudo fijar el sha de main)');
+  // Política ejecutada (AUDIT: CAMBIOS @ f097a29, P2): el riesgo, los jobs esperados, la
+  // allowlist y estas mismas reglas salen del checkout que corre, no del main que se lee por
+  // API. Un fetch no actualiza ni el árbol ni los módulos ya cargados: si el checkout no ES el
+  // main evaluado, el veredicto se calculó con otra política → FAIL hasta una corrida vigente.
+  if (!esSha(ejecutada)) motivos.push('política: no se pudo verificar la revisión de los scripts en ejecución (checkout ilegible o con cambios locales) → sin PASS');
+  else if (esSha(main) && ejecutada !== main) motivos.push(`política: los scripts en ejecución son de ${corto(ejecutada)} y el main evaluado es ${corto(main)} (checkout desactualizado: sin PASS hasta una corrida con la política vigente)`);
 
   // 4. Elegibilidad: riesgo EFECTIVO de la política de main (diff real + declaración del
   // cuerpo del PR). Declaración ausente/inválida → fail; elevación a alto → formal; nunca
@@ -240,8 +248,39 @@ export function evaluar({ repo, pr, reviews, riesgo, main = null, estabilidad = 
     if (estabilidad.head !== pr.head_sha) motivos.push(`estabilidad: HEAD cambió durante la evaluación (${corto(pr.head_sha)} → ${corto(estabilidad.head)})`);
     if (estabilidad.base_ref !== pr.base_ref) motivos.push(`estabilidad: base cambió durante la evaluación (${pr.base_ref} → ${estabilidad.base_ref ?? '—'})`);
     if (estabilidad.body !== pr.body) motivos.push('estabilidad: el cuerpo del PR (declaración de riesgo) cambió durante la evaluación');
+    if (estabilidad.ejecutada !== ejecutada) motivos.push(`estabilidad: la revisión de los scripts en ejecución cambió o quedó ilegible durante la evaluación (${corto(ejecutada)} → ${corto(estabilidad.ejecutada)})`);
   }
   return fin();
+}
+
+/**
+ * Orquestación de UNA evaluación (antes en el CLI; acá con E/S inyectada para poder probar el
+ * CLI con respuestas controladas). `io`:
+ *   repo, ejecutada (sha de la revisión en ejecución, fijado al arrancar el proceso, o null),
+ *   ejecutadaAhora() (relectura al terminar), mainActual(), leerPr(n), leerReviews(n),
+ *   verificarRiesgo(n, head, main, cuerpo), leerGates(head), gatesYml() (gates.yml de la
+ *   revisión ejecutada).
+ * Un error de leerPr al empezar se propaga (cicloCi publica FAIL "sin veredicto"); el resto
+ * de los errores dejan su componente en null → FAIL.
+ */
+export function evaluarPrCon(n, io) {
+  const t = (f) => { try { return f(); } catch { return null; } };
+  const main = t(io.mainActual);
+  const pr = io.leerPr(n);
+  const ok = pr && esSha(pr.head_sha);
+  const entrada = {
+    repo: io.repo,
+    pr,
+    main,
+    ejecutada: esSha(io.ejecutada) ? io.ejecutada : null,
+    reviews: ok ? t(() => io.leerReviews(n)) : null,
+    riesgo: ok && main ? t(() => io.verificarRiesgo(n, pr.head_sha, main, pr.body)) : null,
+    gates: ok ? t(() => io.leerGates(pr.head_sha)) : null,
+    jobsEsperados: t(() => jobsDeGates(io.gatesYml())) ?? [],
+  };
+  // relectura al terminar: si algo de la tupla cambió en el medio, FAIL (lo decide evaluar)
+  const fin = t(() => { const p = io.leerPr(n); return { main: io.mainActual(), head: p.head_sha, base_ref: p.base_ref, body: p.body, ejecutada: io.ejecutadaAhora() }; });
+  return evaluar({ ...entrada, estabilidad: fin });
 }
 
 /** Check-run para el HEAD. Report-only: conclusión siempre `neutral`; el veredicto va en el título. */
@@ -252,7 +291,7 @@ export function checkRun(v) {
   const resumen = [
     `veredicto: **${v.veredicto.toUpperCase()}** (report-only, PoC P-06: nunca habilita merge)`,
     `pr: #${v.pr} · sha: ${v.sha} · review_id: ${v.review_id ?? '—'} · author_id: ${v.author_id ?? '—'}`,
-    `tupla: pr #${v.pr} · head ${v.sha} · main ${v.main ?? '—'} · riesgo efectivo ${v.riesgo ?? '—'} · run ${v.run ?? '—'} attempt ${v.attempt ?? '—'}`,
+    `tupla: pr #${v.pr} · head ${v.sha} · main ${v.main ?? '—'} · política ${v.politica ?? '—'} · riesgo efectivo ${v.riesgo ?? '—'} · run ${v.run ?? '—'} attempt ${v.attempt ?? '—'}`,
     `riesgo: efectivo ${v.riesgo ?? '—'} · calculado ${v.calculado ?? '—'} · declarado ${v.declarado ?? '—'} · probado ${v.probado ?? '—'} sobre main ${v.base_probada ?? '—'} · rondas: ${v.rondas}`,
     '',
     ...(v.motivos.length ? ['motivos:', ...v.motivos.map((m) => `- ${m}`)] : ['motivos: ninguno']),
@@ -272,7 +311,7 @@ export function sinVeredicto({ number, head_sha }, error) {
   return failSobre({ number, head_sha }, motivo);
 }
 
-const failSobre = ({ number, head_sha }, motivo) => ({ veredicto: 'fail', motivos: [motivo], pr: number, sha: head_sha, main: null, review_id: null, author_id: null, riesgo: null, calculado: null, declarado: null, run: null, attempt: null, probado: null, base_probada: null, rondas: 0, ignoradas: [] });
+const failSobre = ({ number, head_sha }, motivo) => ({ veredicto: 'fail', motivos: [motivo], pr: number, sha: head_sha, main: null, politica: null, review_id: null, author_id: null, riesgo: null, calculado: null, declarado: null, run: null, attempt: null, probado: null, base_probada: null, rondas: 0, ignoradas: [] });
 
 /**
  * HEAD compartido (AUDIT: CAMBIOS @ 9332156, P2 3): el check tiene alcance de commit, no de

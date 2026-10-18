@@ -1,18 +1,18 @@
-# P-06 PR 1 · salida real de gates locales (Claude, 2026-10-18T03:38:30Z, rama proc/p06-gate sobre main@88ba5c6 — ronda AUDIT: CAMBIOS @ 9332156: 3 × P2 + tupla de ADR-065)
+# P-06 PR 1 · salida real de gates locales (Claude, 2026-10-18T05:34:11Z, rama proc/p06-gate sobre main@333d8ee — ronda AUDIT: CAMBIOS @ f097a29: 1 × P2, política ejecutada = main evaluado)
 # Entorno: Node 22.22.0 · pnpm 12.5.1 (npm) · CI: Node 22 / pnpm 12.5.1
 
 $ npx vitest run scripts/collab/delegated-audit.test.ts
  Test Files  1 passed (1)
-      Tests  81 passed (81)
+      Tests  88 passed (88)
 
-$ (mismos tests nuevos contra delegated-audit.lib.mjs de 9332156, con stubs de exports nuevos solo para cargar el archivo)
-      Tests  26 failed | 54 passed (80)   ← los 26 de P2 1/2/3 fallan antes y pasan después
+$ (mismos tests contra delegated-audit.lib.mjs + delegated-audit.mjs de f097a29; su orquestación evaluarPr copiada tal cual como evaluarPrCon solo para cargar)
+      Tests  6 failed | 82 passed (88)   ← repro del auditor: A/B daba PASS con main=B; main que avanza entre dos PR: [[7,pass],[8,pass]]
 
 $ pnpm verify  (lint + typecheck + suite default)
 ✖ 12 problems (0 errors, 12 warnings)   ← warnings preexistentes en apps/control y packages/*, ninguno en scripts/collab
  Test Files  55 passed | 1 skipped (56)
-      Tests  1027 passed | 1 skipped (1028)
-real	2m13s
+      Tests  1034 passed | 1 skipped (1035)
+real	2m2s
 rc=0
 
 $ bash scripts/ci/politica-fallas.sh check
@@ -27,18 +27,14 @@ $ bash scripts/collab/paralelo.test.sh
 paralelo.test: 143 ok, 0 fallos
 
 $ git diff --check → OK
-$ node scripts/collab/risk.mjs verificar origin/main HEAD <cuerpo de #88>
-riesgo calculado: alto · riesgo declarado: alto · efectivo: alto → risk: OK — mínimo de auditoría: alto
 
-$ node scripts/collab/delegated-audit.mjs evaluar 88   (API real, solo lectura; no publica)
-veredicto: fail · main 88ba5c69cca1 · riesgo efectivo alto (calculado alto, declarado alto, vía risk.mjs verificar)
-motivos: riesgo efectivo alto → formal | review 5560648266: no se pudo verificar si fue editada (GraphQL vía proxy) | sin bloque AUDIT |
-         procedencia: run 39079487711 no declara el commit probado (run-name sin "probado <sha>") → base no verificable
+$ node scripts/collab/delegated-audit.mjs evaluar 88   (API real, solo lectura; checkout = b482eb2, main = 333d8ee)
+fail · main 333d8ee48293 · politica b482eb2608ee
+ - política: los scripts en ejecución son de b482eb2608ee y el main evaluado es 333d8ee48293 (checkout desactualizado: sin PASS hasta una corrida con la política vigente)
+ - elegibilidad: riesgo efectivo alto → requiere auditoría formal | review: ninguna de Codex sobre f097a29 | procedencia: gates contra 88ba5c6 ≠ 333d8ee
 
-$ gh api repos/fermalenoski86/dev/git/commits/477af1b1ba24acc57de1c5e2c8fcd54d67f7427b --jq '[.parents[].sha]'
-["59d22159fb8d8f6e8c1659dd32e1ba42b9d36271","933215627cbce915eeb386c35176a84e32ac8a89"]
-  ← el merge que ejecutó el run 39079487711 (checkout citado por el auditor): base probada 59d2215 + HEAD 9332156.
-    La API del run decía pull_requests[0].base.sha = b98571f (ni la base probada ni la actual): por eso la procedencia sale de github.sha.
+$ echo '// x' >> scripts/collab/risk.mjs; node scripts/collab/delegated-audit.mjs evaluar 88; git checkout scripts/collab/risk.mjs
+politica null · 'política: no se pudo verificar la revisión de los scripts en ejecución (checkout ilegible o con cambios locales) → sin PASS'
 
-No ejecutado localmente (sin cambios en esas áreas; los corre CI en gates.yml sobre el HEAD): postgres, bootstrap-smoke, media, mutations, e2e-m2c, e2e-platform, compose-smoke.
-No ejecutado: carril `ci` contra GitHub real (publicación de check-runs) — solo existe con el workflow en main; el `run-name` nuevo de gates.yml se verá en el run de CI de este HEAD.
+No ejecutado localmente (sin cambios en esas áreas; los corre CI en gates.yml sobre el HEAD): build, postgres, bootstrap-smoke, media, mutations, e2e-m2c, e2e-platform, compose-smoke.
+No ejecutado: carril `ci` contra GitHub real (publicación de check-runs) — solo existe con el workflow en main.
