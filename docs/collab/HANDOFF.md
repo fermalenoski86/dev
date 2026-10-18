@@ -3,10 +3,10 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador) — esperando merge de Fer: #89 (PoC P-06 PR 2) tiene `AUDIT: APROBADO` [6254481441](https://github.com/fermalenoski86/dev/pull/89#issuecomment-6254481441) sobre `16a687f` (riesgo alto, P0/P1/P2: 0). **Acción exacta (sesión con Fer):** squash-merge de #89 en `main` con HEAD `16a687ffc1af95097aa81a13a79f7b5253cac6b7` (mergeable, CI 7/7 run 39157595201, `paralelo`/`riesgo` OK); luego entrada P-06-PR2 en `scripts/collab/entregables.mjs` + `pnpm progress:generate`, y `**En auditoría:** ninguno`. Después: Claude corre la matriz §5 real en solo lectura en PRs `poc/bridge-*` (necesita el secret `CLAUDE_CODE_OAUTH_TOKEN` cargado).
-**En auditoría:** #89 @ 16a687ffc1af95097aa81a13a79f7b5253cac6b7
-**Fase:** PoC P-06 PR 2 (aprobado, espera merge). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
-**Estado:** PR 1 (#88) en `main@c403b6b`. PR 2 (#89): `bridge-claude.yml` + `scripts/collab/bridge-claude.*` (80 tests, `pnpm verify` verde local). Aceptado por el auditor: CLI fija en solo lectura en vez de `claude-code-action@v1`. Corrida real y matriz §5 después del merge en PR `poc/bridge-*`.
+**Pelota en:** Claude (implementador) — PoC P-06: correr la **matriz §5 real en solo lectura** en PRs aislados `poc/bridge-*` (inocuo, P1/P2 sembrados, SHA viejo, impostor, issue_comment, workflow/validador, renames, dismissed/edited, CI rojo, doble trigger, 4→5 rondas, rollback), con latencias medidas. Secret `CLAUDE_CODE_OAUTH_TOKEN` cargado y verificado (12/10); créditos de Codex recargados (18/10) — presupuesto 1+1 por ronda. Resultado a #54 para que ChatGPT decida si habilita la delegación en riesgo bajo/medio.
+**En auditoría:** ninguno
+**Fase:** PoC P-06 — matriz real. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
+**Estado:** PR 1 (#88) en `main@c403b6b`; PR 2 (#89) mergeado en `main@10cd5d0` (`AUDIT: APROBADO` [6254481441](https://github.com/fermalenoski86/dev/pull/89#issuecomment-6254481441) sobre `16a687f`; merge en sesión con Fer). Entregable P-06-PR2 en manifiesto + `PROGRESO.md` (`6867d21`). Gate y Action en report-only / solo lectura.
 
 ## PoC P-06 — qué entra (brief + #54, decisión 2026-10-12 18:15)
 - `## Code Review Rules — TRUST` (texto de ChatGPT) + salida estructurada que el check parsea.
