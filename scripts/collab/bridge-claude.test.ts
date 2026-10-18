@@ -157,6 +157,13 @@ describe('solo lectura: herramientas y workflow', () => {
     expect(YML).not.toMatch(/startsWith\(github\.event\.comment\.body/);
     expect(YML).toMatch(/contains\(github\.event\.comment\.body, '@claude'\)/);
   });
+  it('review y comentario del mismo PR comparten grupo de concurrencia (Codex #89 P2)', () => {
+    const g = YML.match(/^ {2}group: (.+)$/m)?.[1] ?? '';
+    expect(g).toContain('github.event.issue.number');
+    expect(g).toContain('github.event.workflow_run.pull_requests[0].number');
+    expect(g).not.toContain('head_branch');
+    expect(YML).toMatch(/cancel-in-progress: false/);
+  });
   it('la versión de Claude Code está fijada', () => expect(YML).toMatch(/@anthropic-ai\/claude-code@\d+\.\d+\.\d+\b/));
 });
 

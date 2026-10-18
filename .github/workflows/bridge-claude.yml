@@ -24,8 +24,11 @@ permissions:
   contents: read
   pull-requests: read
   issues: read
+# Mismo grupo para review y comentario del mismo PR (Codex #89 P2): el número del PR, que
+# `workflow_run` trae en `pull_requests` para PRs del mismo repo; sin él, un grupo propio
+# por run (decidir no actúa igual: exige exactamente un PR elegible).
 concurrency:
-  group: bridge-claude-${{ github.event.issue.number || github.event.workflow_run.head_branch || github.run_id }}
+  group: bridge-claude-pr-${{ github.event.issue.number || github.event.workflow_run.pull_requests[0].number || format('run-{0}', github.run_id) }}
   cancel-in-progress: false
 jobs:
   leer:
