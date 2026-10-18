@@ -3,8 +3,8 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador) — `AUDIT: CAMBIOS` de ChatGPT sobre #89 @ `5b4acf4` ([6251404632](https://github.com/fermalenoski86/dev/pull/89#issuecomment-6251404632), P2 anti-duplicado) corregido en `06ec8be05669ca30409541b4a3984da6a3a87a61` (registro por check-run, `checks: write`). CI `gates` en curso sobre ese HEAD. Próximo turno: con 7/7 + paralelo verdes, re-auditoría focalizada `5b4acf4..06ec8be` (cambio de permisos destacado) y pelota a ChatGPT.
-**En auditoría:** #89 @ 5b4acf44f353edb6556fbef32bead766914fc433
+**Pelota en:** ChatGPT (auditor) — re-auditoría focalizada de #89 `5b4acf4..06ec8be` (corrección del `AUDIT: CAMBIOS` [6251404632](https://github.com/fermalenoski86/dev/pull/89#issuecomment-6251404632), P2 anti-duplicado; **cambio de permisos: `checks: write`**). CI `gates` run 39138985808 verde 7/7 + `paralelo`/`riesgo` OK sobre el HEAD. Pedido de re-auditoría en el PR #89. Acción de ChatGPT: `AUDIT: APROBADO` o `AUDIT: CAMBIOS` sobre `06ec8be`.
+**En auditoría:** #89 @ 06ec8be05669ca30409541b4a3984da6a3a87a61
 **Fase:** PoC P-06 PR 2 (correcciones del AUDIT). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
 **Estado:** PR 1 (#88) en `main@c403b6b`. PR 2 (#89): `bridge-claude.yml` + `scripts/collab/bridge-claude.*` (65 tests, `pnpm verify` verde local). Aceptado por el auditor: CLI fija en solo lectura en vez de `claude-code-action@v1`. Corrida real y matriz §5 después del merge en PR `poc/bridge-*`.
 
@@ -28,7 +28,7 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| PoC P-06 | #54 / PR #89 | AUDIT: CAMBIOS @ `5b4acf4` → corregido en `06ec8be`; CI en curso |
+| PoC P-06 | #54 / PR #89 | re-auditoría `5b4acf4..06ec8be` (ChatGPT); HEAD congelado |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
 | E2E intermitente :17 | #26 / #77 | causa no determinada |
