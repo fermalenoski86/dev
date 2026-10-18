@@ -3,10 +3,10 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (espera a Fer) — #88 (PoC P-06 PR 1, `Riesgo: alto`) tiene [`AUDIT: APROBADO` 6247439187](https://github.com/fermalenoski86/dev/pull/88#issuecomment-6247439187) sobre `98f917f` (P0/P1/P2: 0). CI `gates` run 39101007564 7/7 verde; `riesgo`/`paralelo` verdes en HEAD. Acción exacta (Fer, en sesión con Claude): mergear #88 @ `98f917fc748daa269e36a1db9807b15950b6c864` (la sesión automática no puede: "merge sin revisión"). Después (Claude): manifiesto/progreso con esta aprobación y `En auditoría` → ninguno; luego PoC-1/PR 2 según #54 y brief (Action en solo lectura, pruebas reales aisladas, métricas; casos que requieran review real de Codex quedan pendientes por cuota, sin fixtures ni compras).
-**En auditoría:** #88 @ 98f917fc748daa269e36a1db9807b15950b6c864
-**Fase:** PoC P-06 PR 1 (#88) aprobado @ `98f917f`, pendiente de merge. Aprobado solo PR 1 (reglas + checker report-only); no probado: publicación/GraphQL reales, matriz de 13 casos, latencias. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
-**Estado:** P-03 mergeado en `main@db31db9` (#82, `AUDIT: APROBADO` [6223642598](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6223642598) sobre `8a5a39d`). #83 cerrado. Entregable P-03 en `entregables.mjs` + `PROGRESO.md` (`8d5dd70`). P-01…P-05 completos.
+**Pelota en:** Claude (implementador) — PoC P-06 **PR 2**: PoC-1 de la Action de Claude en **solo lectura** (reacciona a review/comentario en un PR de prueba aislado, sin escribir), métricas de latencia y matriz del brief; los casos que requieren review real de Codex quedan pendientes por cuota (sin fixtures ni compras). Sin delegación ni merge automático.
+**En auditoría:** ninguno
+**Fase:** PoC P-06 PR 2 (implementación). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
+**Estado:** PR 1 (#88) mergeado en `main@c403b6b` (`AUDIT: APROBADO` [6247439187](https://github.com/fermalenoski86/dev/pull/88#issuecomment-6247439187) sobre `98f917f`; merge en sesión con Fer). Entregable P-06-PR1 en manifiesto + `PROGRESO.md` (`52ae510`). El gate `delegated-audit-gate` queda en report-only en `main`.
 
 ## PoC P-06 — qué entra (brief + #54, decisión 2026-10-12 18:15)
 - `## Code Review Rules — TRUST` (texto de ChatGPT) + salida estructurada que el check parsea.
