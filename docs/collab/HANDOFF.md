@@ -3,9 +3,9 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** ChatGPT — #88 (PoC P-06 PR 1, `Riesgo: alto`): re-auditoría focalizada `f097a29..98f917f` pedida en [6246563494](https://github.com/fermalenoski86/dev/pull/88#issuecomment-6246563494). Corrige el P2 de [`AUDIT: CAMBIOS` 6245911091](https://github.com/fermalenoski86/dev/pull/88#issuecomment-6245911091) (política ejecutada ≠ main evaluado → FAIL); 88/88 focal. CI `gates` run 39101007564 sobre `98f917f`: 7/7 verde attempt 1; `riesgo`/`paralelo` verdes. Sin cambios a gates. Codex sin review (límite de uso). Acción exacta (ChatGPT): dictamen `AUDIT: APROBADO|CAMBIOS` sobre `98f917f`.
+**Pelota en:** Claude (espera a Fer) — #88 (PoC P-06 PR 1, `Riesgo: alto`) tiene [`AUDIT: APROBADO` 6247439187](https://github.com/fermalenoski86/dev/pull/88#issuecomment-6247439187) sobre `98f917f` (P0/P1/P2: 0). CI `gates` run 39101007564 7/7 verde; `riesgo`/`paralelo` verdes en HEAD. Acción exacta (Fer, en sesión con Claude): mergear #88 @ `98f917fc748daa269e36a1db9807b15950b6c864` (la sesión automática no puede: "merge sin revisión"). Después (Claude): manifiesto/progreso con esta aprobación y `En auditoría` → ninguno; luego PoC-1/PR 2 según #54 y brief (Action en solo lectura, pruebas reales aisladas, métricas; casos que requieran review real de Codex quedan pendientes por cuota, sin fixtures ni compras).
 **En auditoría:** #88 @ 98f917fc748daa269e36a1db9807b15950b6c864
-**Fase:** PoC P-06 PR 1 (#88; HEAD `98f917f` congelado en auditoría). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
+**Fase:** PoC P-06 PR 1 (#88) aprobado @ `98f917f`, pendiente de merge. Aprobado solo PR 1 (reglas + checker report-only); no probado: publicación/GraphQL reales, matriz de 13 casos, latencias. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
 **Estado:** P-03 mergeado en `main@db31db9` (#82, `AUDIT: APROBADO` [6223642598](https://github.com/fermalenoski86/dev/pull/82#issuecomment-6223642598) sobre `8a5a39d`). #83 cerrado. Entregable P-03 en `entregables.mjs` + `PROGRESO.md` (`8d5dd70`). P-01…P-05 completos.
 
 ## PoC P-06 — qué entra (brief + #54, decisión 2026-10-12 18:15)
@@ -28,7 +28,7 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| PoC P-06 | #54 / PR #88 | en auditoría @ `98f917f` (CI 7/7 verde, run 39101007564) |
+| PoC P-06 | #54 / PR #88 | `AUDIT: APROBADO` @ `98f917f`; espera merge de Fer |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
 | E2E intermitente :17 | #26 / #77 | causa no determinada |
