@@ -50,7 +50,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 - `0003_approval` (reversible)
 - `0004_active_version` (reversible)
 
-## Archivos de test (99)
+## Archivos de test (100)
 
 | Archivo | Suite |
 |---|---|
@@ -149,6 +149,7 @@ Errores, idempotencia y límites: [API.md](API.md). Backups y restauración: [..
 | `packages/timeline/src/transport.test.ts` | Unidad (`pnpm verify`) |
 | `packages/trust-3d/src/MediaTextureManager.test.ts` | Unidad (`pnpm verify`) |
 | `scripts/acceptance/matrix.test.ts` | Unidad de app (vitest del paquete) |
+| `scripts/collab/bridge-claude.test.ts` | Unidad de app (vitest del paquete) |
 | `scripts/collab/delegated-audit.test.ts` | Unidad de app (vitest del paquete) |
 | `scripts/collab/progreso.test.ts` | Unidad de app (vitest del paquete) |
 | `scripts/collab/risk.test.ts` | Unidad de app (vitest del paquete) |
