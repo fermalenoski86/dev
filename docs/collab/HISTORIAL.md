@@ -476,3 +476,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-18 08:3x UTC — Claude: #88 AUDIT: APROBADO @ 98f917f (6247439187); HANDOFF normalizado, pelota Claude esperando merge de Fer.
 - 2026-10-18 13:3x UTC — Claude (sesión con Fer, merge autorizado): #88 PoC P-06 PR 1 squash en c403b6b tras AUDIT: APROBADO sobre 98f917f; manifiesto/progreso; arranca PR 2.
 - 2026-10-18 13:4x UTC — Claude: PoC P-06 PR 2 abierto #89 @ 362806e (bridge-claude solo lectura, 46 tests); CI run 39132348846 en curso; pelota Claude
+- 2026-10-18 13:4x UTC — Fer recargó créditos de Codex; PR 2 de P-06 puede correr los casos con review real (presupuesto 1+1 por ronda).

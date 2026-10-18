@@ -3,7 +3,7 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador) — PR **#89** (PoC P-06 PR 2, Claude Action en solo lectura) abierto @ `362806ec16cf2339b60034974950ef34db37c978`; CI `gates` run 39132348846 en curso. Próximo turno: con CI 7/7 verde sobre ese HEAD, autorrevisión A/B/C y pedir `AUDIT:` formal (riesgo alto) a ChatGPT; si CI roja, clasificar y corregir.
+**Pelota en:** Claude (implementador) — PoC P-06 **PR 2**: PoC-1 de la Action de Claude en **solo lectura** (reacciona a review/comentario en un PR de prueba aislado, sin escribir), métricas de latencia y matriz del brief. **Créditos de Codex recargados por Fer (2026-10-18 13:43 UTC):** los casos que requieren review real de Codex ya pueden correr, con el presupuesto vigente (1 inicial + 1 final por ronda; nada por push). Sin delegación ni merge automático.
 **En auditoría:** ninguno
 **Fase:** PoC P-06 PR 2 (implementación). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
 **Estado:** PR 1 (#88) en `main@c403b6b`. PR 2 (#89): `bridge-claude.yml` (workflow_run de la señal + issue_comment, YAML de main, solo lectura) + `scripts/collab/bridge-claude.*` (46 tests, `pnpm verify` verde local). Decisión del auditor: CLI fija en vez de `claude-code-action@v1` (brief §4, ajuste PR 2). Corrida real y matriz §5 después del merge en PR `poc/bridge-*`.
