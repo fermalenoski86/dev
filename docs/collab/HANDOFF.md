@@ -3,9 +3,9 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador) — PoC P-06 **PR 2**: PoC-1 de la Action de Claude en **solo lectura** (reacciona a review/comentario en un PR de prueba aislado, sin escribir), métricas de latencia y matriz del brief. **Créditos de Codex recargados por Fer (2026-10-18 13:43 UTC):** los casos que requieren review real de Codex ya pueden correr, con el presupuesto vigente (1 inicial + 1 final por ronda; nada por push). Sin delegación ni merge automático.
-**En auditoría:** ninguno
-**Fase:** PoC P-06 PR 2 (implementación). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
+**Pelota en:** ChatGPT (auditor) — auditar PR 2 de P-06 (#89) @ `5b4acf4`: pedido focalizado en https://github.com/fermalenoski86/dev/pull/89#issuecomment-6251106048 (delta `362806e..5b4acf4`, 3 hallazgos de Codex corregidos, 1 en "decisión del auditor": dedupe de señales → propuesto PR 3). Responder `AUDIT: APROBADO` o `AUDIT: CAMBIOS` en el PR. Sin delegación ni merge automático.
+**En auditoría:** #89 @ 5b4acf44f353edb6556fbef32bead766914fc433
+**Fase:** PoC P-06 PR 2 (auditoría). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
 **Estado:** PR 1 (#88) en `main@c403b6b`. PR 2 (#89): `bridge-claude.yml` (workflow_run de la señal + issue_comment, YAML de main, solo lectura) + `scripts/collab/bridge-claude.*` (46 tests, `pnpm verify` verde local). Decisión del auditor: CLI fija en vez de `claude-code-action@v1` (brief §4, ajuste PR 2). Corrida real y matriz §5 después del merge en PR `poc/bridge-*`.
 
 ## PoC P-06 — qué entra (brief + #54, decisión 2026-10-12 18:15)
@@ -19,7 +19,7 @@
 
 ## Aviso
 - `e2e-m2c` intermitente (`experience.spec.ts:14`) → #77, causa no determinada; sin reintentos extra.
-- `e2e-platform` `a11y.spec.ts:48` (500 en `POST /assets`, 1 vez en `1d74859`) → #84, causa no determinada.
+- `e2e-platform` 500 en `POST /assets` (`a11y.spec.ts:48` en `1d74859`; `active-version.spec.ts:59` en `5b4acf4`, verde al re-run) → #84, causa no determinada.
 - `e2e-m2c` murió en el setup (`npm i -g pnpm`, exit 139) en `157a7f7` attempt 1 → #85 (`flaky`): intermitente (pasó en attempt 2), causa raíz no determinada.
 - `mutations` cortado por plazo (exit 124) en `9a7170b` attempt 1, verde en attempt 2 (48 min vs plazo 56); se repitió en `6c96f82` (exit 124 a 3388 s, verde en attempt 2) → #86 (`flaky`): intermitente, causa raíz no determinada; no se toca el plazo.
 - `riesgo` rojo en el run del PR sobre `0af602b` (22:38): caducado a propósito porque main avanzó (handoff) durante la evaluación; el run de push a main lo re-publicó verde. No es intermitente.
@@ -28,7 +28,7 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| PoC P-06 | #54 / PR #89 | PR 2 abierto @ `362806e`; CI en curso |
+| PoC P-06 | #54 / PR #89 | PR 2 en auditoría @ `5b4acf4`; CI verde (run 39133319456 attempt 2) |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
 | E2E intermitente :17 | #26 / #77 | causa no determinada |
