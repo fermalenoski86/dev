@@ -1,0 +1,29 @@
+{
+ "titulo": "Noche Celeste",
+ "concepto": "Un postre helado cremoso con remolino y galleta brilla como una luz fresca sobre la noche azul de Buenos Aires, en celeste y blanco.",
+ "corrientes": {
+  "prompt": "Professional advertising product photography, wide 2:1 horizontal composition. A plain smooth white cup, generic and unbranded, filled with creamy white and pale sky-blue soft-serve frozen dessert in a tall elegant swirl, with chunks of chocolate sandwich cookie embedded in the cream. The cup is perfectly centered, with generous empty dark space on both left and right. A few cookie crumbs float lightly in the air at mid-distance on both sides. Deep midnight navy blue seamless background with a very subtle gradient. Studio lighting: soft cool key light from the upper left, crisp light-blue rim light outlining the swirl, high contrast, glossy creamy highlights, fresh and luminous mood. Sharp focus, clean and minimal, readable from far away. No text, no letters, no numbers, no logos, no brand markings, no people, no faces."
+ },
+ "pellegrini": {
+  "prompt": "Professional advertising product photography, ultra-wide 2.5:1 horizontal composition, tighter framing than a full shot. A plain smooth white cup, generic and unbranded, with a creamy white and sky-blue swirl of frozen dessert rising in the center, with large cookie chunks pressed into the cream. The cup and swirl sit exactly in the middle, with wide empty dark navy space to the left and right, and a few small cookie crumbs suspended in the air at the sides. Seamless deep midnight blue background. Studio lighting: soft cool key light from the upper left, light-blue rim light, high contrast, glossy cream texture, fresh and bright. Sharp focus, minimal, clean, visible at night from a distance. No text, no letters, no numbers, no logos, no brand markings, no people, no faces."
+ },
+ "media": {
+  "prompt": "Professional advertising macro photography, extremely panoramic 4.66:1 horizontal composition. A smooth horizontal ribbon of creamy white and sky-blue frozen dessert flows across the whole frame like a calm horizon, with a gentle wave swirl and cookie crumbs and small cookie chunks scattered along it. At the center, a small plain white unbranded cup sits as a quiet focal point, with long uninterrupted dark space around it. Deep midnight navy blue background, with the cream band occupying the middle third of the frame. Studio lighting: soft cool key light from the upper left, light-blue rim light, high contrast, glossy highlights, fresh and luminous. Suited to sideways motion on a LED strip. No text, no letters, no numbers, no logos, no brand markings, no people, no faces."
+ },
+ "video": {
+  "pantalla": null,
+  "movimiento": ""
+ },
+ "ficha": {
+  "efecto": "respiracion",
+  "paleta": [
+   "#0A1B3F",
+   "#75AADB",
+   "#BFE0F5",
+   "#FFFFFF"
+  ],
+  "zonas": [],
+  "velocidad": 1,
+  "titular": "Frescura de verano"
+ }
+}
