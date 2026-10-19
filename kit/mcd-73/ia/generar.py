@@ -62,7 +62,14 @@ def claude(sistema, contenido, max_tokens=2000):
              {'x-api-key': ANT, 'anthropic-version': '2023-06-01'})
     txt = ''.join(b.get('text', '') for b in r.get('content', []))
     i, j = txt.find('{'), txt.rfind('}')
-    return json.loads(txt[i:j + 1])
+    try:
+        return json.loads(txt[i:j + 1])
+    except ValueError:
+        RAROS.append({'stop': r.get('stop_reason'), 'texto': txt[:600]})
+        return None
+
+
+RAROS = []   # respuestas de Claude que no fueron JSON (quedan en el informe para revisar)
 
 
 DIRECTOR = """Sos director de arte de un edificio con pantallas LED frente al Obelisco (Buenos Aires): EL TRUST.
@@ -91,10 +98,12 @@ deformaciones visibles del producto, o si el sujeto queda cortado o perdido en e
 
 
 def revisar(img_bytes, pantalla):
-    b64 = base64.b64encode(img_bytes).decode()
+    im = Image.open(io.BytesIO(img_bytes)).convert('RGB'); im.thumbnail((1280, 1280))   # alcanza para juzgar y cuesta menos
+    buf = io.BytesIO(); im.save(buf, 'JPEG', quality=88); b64 = base64.b64encode(buf.getvalue()).decode()
     gastar(f'control {pantalla}', PRECIO['claude'], TOPE)
     return claude(CONTROL, [{'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': b64}},
-                            {'type': 'text', 'text': f'Pantalla: {PANTALLAS[pantalla]["nombre"]}.'}], 600)
+                            {'type': 'text', 'text': f'Pantalla: {PANTALLAS[pantalla]["nombre"]}. Respondé solo el JSON.'}], 600) or \
+        {'ok': True, 'lectura_panoramica': '?', 'defectos': 'control sin respuesta legible: revisar a mano'}
 
 
 # ---------- fal ----------
@@ -150,7 +159,9 @@ def main():
     for n, pz in enumerate(pedido['piezas']):
         d = os.path.join(sal, pz['id']); os.makedirs(d, exist_ok=True)
         gastar(f'director {pz["id"]}', PRECIO['claude'], TOPE)
-        plan = claude(DIRECTOR, f'Brief del cliente: {pz["brief"]}\nVideo pedido: {"sí" if pz.get("video") else "no"}.')
+        plan = claude(DIRECTOR, f'Brief del cliente: {pz["brief"]}\nVideo pedido: {"sí" if pz.get("video") else "no"}.') or \
+            claude(DIRECTOR, f'Brief del cliente: {pz["brief"]}\nVideo pedido: {"sí" if pz.get("video") else "no"}. Respondé solo el JSON.')
+        if not plan: raise SystemExit(f'el director no devolvió un plan legible para {pz["id"]}')
         json.dump(plan, open(os.path.join(d, 'plan.json'), 'w'), ensure_ascii=False, indent=1)
         informe += [f'## {pz["id"]} · {plan.get("titulo", "")}', '', plan.get('concepto', ''), '']
         urls = {}
@@ -171,6 +182,7 @@ def main():
             open(os.path.join(d, f'{v["pantalla"]}-video.mp4'), 'wb').write(video(urls[v['pantalla']], v.get('movimiento', 'slow push-in')))
             informe.append(f'- video 5 s en {v["pantalla"]}: {v.get("movimiento", "")}')
         informe.append('')
+    if RAROS: informe += ['## Respuestas de Claude no legibles (revisar)', ''] + [f'- {x}' for x in RAROS] + ['']
     informe += ['## Costo estimado', ''] + [f'- {c}: USD {u:.3f}' for c, u in GASTO['detalle']] + ['', f'**Total estimado: USD {GASTO["usd"]:.2f}**']
     open(os.path.join(sal, 'INFORME.md'), 'w').write('\n'.join(informe) + '\n')
     print(f'listo · {len(pedido["piezas"])} piezas · USD {GASTO["usd"]:.2f} estimado')
@@ -182,5 +194,5 @@ if __name__ == '__main__':
     except BaseException as e:   # el error queda publicado en la rama de salida (sin claves: los mensajes no las incluyen)
         sal = sys.argv[2] if len(sys.argv) > 2 else '.'
         os.makedirs(sal, exist_ok=True)
-        open(os.path.join(sal, 'ERROR.txt'), 'w').write(f'{type(e).__name__}: {e}\nGasto estimado hasta el corte: USD {GASTO["usd"]:.2f}\n{GASTO["detalle"]}\n')
+        open(os.path.join(sal, 'ERROR.txt'), 'w').write(f'{type(e).__name__}: {e}\nRespuestas raras: {RAROS}\nGasto estimado hasta el corte: USD {GASTO["usd"]:.2f}\n{GASTO["detalle"]}\n')
         raise
