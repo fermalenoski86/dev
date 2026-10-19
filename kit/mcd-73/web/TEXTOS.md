@@ -71,9 +71,7 @@ Fuente: `kit/mcd-73/web/public/index.html` y la pantalla de entrada en `src/work
 - **P-59** (p): Por ahora todo esto es una simulación: no está conectado a las pantallas ni a las luces reales. Lo próximo es sumar la tercera pantalla, trabajar con el material en alta del cliente y conectar el sistema con los equipos del edificio.
 - **P-60** (p): Abrir el simulador Crear una pieza
 - **P-61** (h2): Herramientas
-- **P-62** (h2): Ver un show en el edificio
-- **P-63** (p): El edificio real, de noche o de día, con las pantallas y las luces funcionando juntas. Escribís una idea y la ves al instante.
-- **P-64** (a): Abrir el simulador
+- P-62, P-63 y P-64: sacados (la fila «Ver un show en el edificio» repetía el botón del final).
 - **P-65** (h2): Crear una pieza nueva
 - **P-66** (p): Contá la idea en una frase. En unos minutos tenés las imágenes para las tres pantallas, listas para ver en el edificio. Los textos y la marca se suman después, con el material oficial del cliente.
 - **P-67** (li): Postre celeste y blanco
@@ -95,3 +93,16 @@ Fuente: `kit/mcd-73/web/public/index.html` y la pantalla de entrada en `src/work
 - **P-83** (entrada, label): Clave
 - **P-84** (entrada, button): Entrar
 - **P-85** (entrada, p): Affinitas. Material de trabajo, no publicar.
+
+Agregados el 19/10/2026 (el material subido ahora se ve como un show en el edificio, no como fotos sueltas):
+- **P-86** (capítulo material, rótulo sobre el show): Campaña de la Selección, animada en el edificio · simulación
+- **P-87** (capítulo material, nota si falta material): Cuando el material de la campaña esté cargado en «Material de marca», acá se ve su show.
+- **P-88** (Material de marca, resumen): Las 6 piezas de la campaña están cargadas y se ven animadas en el edificio.
+- **P-89** (Material de marca, resumen si faltan): Hay 4 de 6 piezas de la campaña cargadas. Las que faltan se suben abajo.
+- **P-90** (Material de marca, botón): Ver el show de la campaña
+- **P-91** (Material de marca, desplegable): Cargar o reemplazar archivos
+
+## Cómo devolver los cambios
+
+Para textos: una línea por código, `P-xx: texto nuevo`. Solo los que cambian.
+Para la web (orden, diseño, qué sobra o qué falta): una lista corta, cada punto con la sección a la que se refiere.

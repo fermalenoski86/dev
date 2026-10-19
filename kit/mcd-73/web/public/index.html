@@ -50,9 +50,11 @@ h1 { margin: 0 0 22px; font-weight: 850; font-stretch: 62%; font-size: clamp(80p
 .nota-cap { font-size: 14px !important; color: var(--niebla) !important; }
 .capitulo.final { grid-template-columns: minmax(0, 1fr); border-top: 1px solid var(--linea); }
 .capitulo.final .texto-cap p { max-width: 60ch; }
-.mosaico { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; min-height: 240px; background: var(--noche-2); }
-.mosaico img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; display: block; }
-.mosaico img:first-child { grid-row: span 2; }
+.show-vivo { position: relative; aspect-ratio: 5 / 4; border-radius: 6px; overflow: hidden; background: #050b18; }
+.show-vivo iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+.show-vivo .pie { position: absolute; left: 10px; bottom: 8px; font-size: 12px; color: #c9d3e6; background: rgba(5,11,24,.7); padding: 3px 8px; border-radius: 3px; pointer-events: none; }
+.material-det summary { cursor: pointer; color: var(--sodio); font-size: 15px; margin-top: 4px; }
+.material-det[open] summary { margin-bottom: 12px; }
 .pila { display: grid; gap: 10px; } .pila img { width: 100%; height: auto; border-radius: 6px; display: block; }
 .pila img.vertical { max-width: 320px; justify-self: end; box-shadow: 0 12px 40px rgba(0,0,0,.45); }
 .capitulo.solo { grid-template-columns: minmax(0, 1fr); }
@@ -274,7 +276,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
   </article>
 
   <article class="capitulo" id="cap-material">
-    <div class="mosaico" id="mosaico" aria-hidden="true"></div>
+    <div class="show-vivo" id="show-material"><span class="pie" id="pie-material">Cargando el show…</span></div>
     <div class="texto-cap">
       <h2>Con material real de la marca</h2>
       <p>Para McDonald's armamos un show con piezas de su campaña con la Selección: el afiche de la McÁlvarez, las tres hamburguesas con sus nombres y los jugadores en el mostrador.</p>
@@ -308,11 +310,6 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
 
 <main>
   <h2 class="separador" id="herramientas">Herramientas</h2>
-  <section class="tarea" aria-labelledby="t-sim">
-    <div><h2 id="t-sim">Ver un show en el edificio</h2><p>El edificio real, de noche o de día, con las pantallas y las luces funcionando juntas. Escribís una idea y la ves al instante.</p></div>
-    <div><a class="boton" href="/control/">Abrir el simulador</a></div>
-  </section>
-
   <section class="tarea" aria-labelledby="t-ia">
     <div><h2 id="t-ia">Crear una pieza nueva</h2><p>Contá la idea en una frase. En unos minutos tenés las imágenes para las tres pantallas, listas para ver en el edificio. Los textos y la marca se suman después, con el material oficial del cliente.</p></div>
     <div>
@@ -339,9 +336,13 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
   <section class="tarea" aria-labelledby="t-material">
     <div><h2 id="t-material">Material de marca</h2><p>Fotos, logos y piezas oficiales del cliente. Queda guardado acá, sin publicar, y se usa para armar los shows: nada se inventa.</p></div>
     <div>
-      <ul class="lugares" id="lugares" aria-label="Material que usa la campaña de la Selección"></ul>
-      <div class="controles"><label class="boton sec" for="subir">Subir otro archivo</label><input type="file" id="subir" accept="image/jpeg,image/png,image/webp,image/svg+xml,video/mp4" multiple hidden><span class="gasto" id="estado-material" aria-live="polite"></span></div>
-      <div class="galeria chica" id="material"></div>
+      <p id="resumen-material" class="nota-cap">Revisando el material…</p>
+      <p><a class="boton" href="/control/?pieza=campana-seleccion">Ver el show de la campaña</a></p>
+      <details class="material-det">
+        <summary>Cargar o reemplazar archivos</summary>
+        <ul class="lugares" id="lugares" aria-label="Material que usa la campaña de la Selección"></ul>
+        <div class="controles"><label class="boton sec" for="subir">Subir otro archivo</label><input type="file" id="subir" accept="image/jpeg,image/png,image/webp,image/svg+xml,video/mp4" multiple hidden><span class="gasto" id="estado-material" aria-live="polite"></span></div>
+      </details>
     </div>
   </section>
 
@@ -460,25 +461,29 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
         li.querySelector('input').addEventListener('change', async (e) => { const f = e.target.files[0]; if (f) { await subir(f, a.archivo.replace(/\.jpg$/, '')); cargarMaterial(); } });
         ul.appendChild(li);
       }
-      const usados = new Set(Object.values(CFG.archivos).map((a) => a.archivo)), g = $('material'); g.innerHTML = '';
-      for (const m of subidos.filter((x) => !usados.has(x.nombre))) {
-        const f = document.createElement('figure');
-        f.innerHTML = (/\.mp4$/.test(m.nombre) ? `<video src="${m.url}" muted></video>` : `<img src="${m.url}" alt="" loading="lazy">`) + '<figcaption></figcaption>';
-        f.querySelector('figcaption').textContent = m.nombre; g.appendChild(f);
-      }
+      const usados = new Set(Object.values(CFG.archivos).map((a) => a.archivo)), total = Object.keys(CFG.archivos).length;
+      const cargados = Object.values(CFG.archivos).filter((a) => hay.has(a.archivo)).length, otros = subidos.filter((x) => !usados.has(x.nombre)).length;
+      $('resumen-material').textContent = (cargados === total ? `Las ${total} piezas de la campaña están cargadas y se ven animadas en el edificio.` : `Hay ${cargados} de ${total} piezas de la campaña cargadas. Las que faltan se suben abajo.`) + (otros ? ` Además hay ${otros} archivo${otros > 1 ? 's' : ''} más guardado${otros > 1 ? 's' : ''} para próximos shows.` : '');
     } catch (e) { $('estado-material').textContent = 'No se pudo cargar el material. Recargá la página.'; }
   }
   $('subir').addEventListener('change', async (e) => { for (const f of e.target.files) await subir(f); e.target.value = ''; cargarMaterial(); });
 
-  async function mosaico() {   // el capítulo de material muestra lo que está cargado (privado, en el portal)
+  async function showMaterial() {   // el material subido se ve como un show más, en el edificio, no como fotos sueltas
+    const caja = $('show-material'), pie = $('pie-material');
+    let pieza = '4-hamburguesa-hero', texto = 'Pieza creada para las pantallas · simulación';
     try {
-      const l = (await (await fetch('/api/material')).json()).filter((m) => /\.(jpe?g|png|webp)$/.test(m.nombre));
-      const pref = ['mcalvarez-afiche.jpg', 'trio-productos.jpg', 'jugadores-mostrador.jpg'], el = l.filter((m) => pref.includes(m.nombre)).sort((a, b) => pref.indexOf(a.nombre) - pref.indexOf(b.nombre));
-      const usar = el.length ? el : l.slice(0, 3);
-      if (!usar.length) { $('mosaico').hidden = true; $('cap-material').classList.add('solo'); $('nota-material').textContent = 'Las imágenes aparecen acá cuando el material está cargado en «Material de marca», más abajo.'; return; }
-      $('mosaico').innerHTML = usar.map((m) => `<img src="${m.url}" alt="" loading="lazy">`).join('');
-      $('nota-material').innerHTML = 'Para verlo en el edificio: <a href="/control/?pieza=campana-seleccion">abrir la campaña en el simulador</a>.';
-    } catch (e) { $('mosaico').hidden = true; $('cap-material').classList.add('solo'); }
+      const l = new Set((await (await fetch('/api/material')).json()).map((m) => m.nombre));
+      if (['mcalvarez-afiche.jpg', 'trio-productos.jpg', 'jugadores-mostrador.jpg'].every((n) => l.has(n))) { pieza = 'campana-seleccion'; texto = 'Campaña de la Selección, animada en el edificio · simulación'; }
+      else $('nota-material').textContent = 'Cuando el material de la campaña esté cargado en «Material de marca», acá se ve su show.';
+    } catch (e) {}
+    pie.textContent = texto;
+    const url = `/control/?vitrina=1&pieza=${encodeURIComponent(pieza)}`;
+    let fr = null;
+    const io = new IntersectionObserver(([e]) => {   // corre solo mientras se ve, para no gastar batería
+      if (e.isIntersecting && !fr) { fr = document.createElement('iframe'); fr.title = texto; fr.src = url; fr.setAttribute('loading', 'lazy'); caja.prepend(fr); }
+      else if (!e.isIntersecting && fr) { fr.remove(); fr = null; }
+    }, { rootMargin: '200px' });
+    io.observe(caja);
   }
   // ---------- probador de efectos: el mismo motor del simulador, sobre las 46 posiciones reales ----------
   (function probador() {
@@ -522,7 +527,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       return `<div class="color"><div class="muestra" style="--c:${h}"></div><div><strong>${n}</strong><div class="canales">${can.map(([k, nom, col]) => `<div class="canal">${nom} ${Math.round(q[k] * 100)} %<div><span style="width:${Math.round(q[k] * 100)}%;background:${col}"></span></div></div>`).join('')}</div></div></div>`; }).join('');
   })();
 
-  cargarGaleria(); actualizarGasto(); cargarMaterial(); mosaico();
+  cargarGaleria(); actualizarGasto(); cargarMaterial(); showMaterial();
 })();
 </script>
 </body>
