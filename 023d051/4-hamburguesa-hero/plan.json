@@ -1,0 +1,30 @@
+{
+ "titulo": "Brasa Dorada",
+ "concepto": "Una hamburguesa premium que emerge de la oscuridad cálida como un monumento de luz ámbar, con el queso derretido como gesto central y la textura del pan y las semillas extendiéndose en horizonte.",
+ "corrientes": {
+  "prompt": "Premium advertising studio photograph of a single gourmet hamburger, centered, side view at slight low angle, glossy golden brioche bun with toasted sesame seeds, thick juicy beef patty, melted cheddar cheese draping over the edges, fresh crisp green lettuce leaf ruffled between layers. Dramatic warm key light from the upper left with amber rim light, deep black-brown seamless background with soft warm gradient, subtle steam, high contrast, sharp specular highlights on the bun. Wide 2:1 horizontal composition, burger occupying about 50 percent of the frame height, generous dark empty space on left and right sides. No text, no letters, no numbers, no logos, no people, no faces, no branded packaging."
+ },
+ "pellegrini": {
+  "prompt": "Premium advertising macro studio photograph of the upper half of a gourmet hamburger, centered, three-quarter close-up: shiny domed brioche bun covered in sesame seeds, molten yellow cheese slowly dripping down over the edge of a seared beef patty, a fresh green lettuce frill peeking out. Dramatic warm amber studio lighting with strong rim light, same palette of deep dark brown-black background, high contrast, shallow depth of field, a few drifting sesame seeds. Ultra wide 2.5:1 horizontal composition, subject centered and self-contained, large dark negative space on both sides. No text, no letters, no numbers, no logos, no people, no faces, no branded packaging."
+ },
+ "media": {
+  "prompt": "Ultra panoramic 4.66:1 advertising texture band, dark warm-black surface with a horizontal line of toasted sesame seeds scattered across the foreground, glowing amber and orange bokeh embers along a horizon line, soft wisps of warm steam drifting sideways, a few fresh green lettuce leaf edges and golden cheese melt highlights as small accents at the far left and right. Same dramatic warm studio lighting, amber rim light, high contrast, mostly dark and clean in the center, designed for lateral movement. No text, no letters, no numbers, no logos, no people, no faces, no branded packaging."
+ },
+ "video": {
+  "pantalla": "corrientes",
+  "movimiento": "Very slow cinematic push-in toward the hamburger with a subtle upward drift, faint warm steam rising and slowly curling, amber rim light gently shimmering on the glossy bun, cheese highlights slightly glistening, background stays dark and stable, smooth and continuous motion with no cuts."
+ },
+ "ficha": {
+  "efecto": "respiracion",
+  "paleta": [
+   "#FFB347",
+   "#E8590C",
+   "#FFD27F",
+   "#3B1F0E",
+   "#7DB840"
+  ],
+  "zonas": [],
+  "velocidad": 1,
+  "titular": "Para morder despacio"
+ }
+}

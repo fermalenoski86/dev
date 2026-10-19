@@ -1,0 +1,29 @@
+{
+ "titulo": "Amanecer porteño",
+ "concepto": "Un desayuno de café humeante y medialunas doradas que se enciende con la luz baja del sol entrando de costado, como la primera hora del día frente al Obelisco.",
+ "corrientes": {
+  "prompt": "Professional commercial product photography, 2:1 wide horizontal frame. A plain generic white ceramic coffee cup with no logo, centered on a rustic dark wooden table, with a thick curl of steam rising and glowing in the light. Two golden glazed medialunas (small Argentine croissants) rest on each side of the cup, with generous empty space left and right. Warm low sunrise light enters from the left side, creating long soft shadows, amber rim light on the steam and flaky crust highlights. Very dark, clean, near-black warm brown background, high contrast, studio quality, sharp focus, shallow depth of field. No text, no letters, no logos, no people, no faces."
+ },
+ "pellegrini": {
+  "prompt": "Professional commercial product photography, 2.5:1 ultra wide horizontal frame. Centered hero composition of three golden, shiny, flaky medialunas (Argentine croissants) stacked slightly on a dark rustic wooden board, with a small plain unbranded dark ceramic cup far to the right edge releasing a thin wisp of steam. Large empty dark space on both left and right sides. Warm low sunrise side light from the left, glowing amber highlights on the buttery glaze, deep soft shadows, a few crumbs on the wood. Pure dark, clean, near-black warm brown background, high contrast, macro-style detail, studio quality. No text, no letters, no logos, no people, no faces."
+ },
+ "media": {
+  "prompt": "Cinematic panoramic product photography, extreme wide 4.66:1 horizontal strip. A long rustic wooden table surface running edge to edge with rich visible wood grain, seen at low angle like a horizon. Scattered along it with wide spacing: a few golden medialunas, a plain generic white coffee cup with steam drifting sideways, and some crumbs. Warm low sunrise light raking from the left across the wood texture, long soft shadows, amber glow fading into a dark, clean, near-black warm brown background above. High contrast, shallow depth of field, studio quality, lots of negative space. No text, no letters, no logos, no people, no faces."
+ },
+ "video": {
+  "pantalla": null,
+  "movimiento": ""
+ },
+ "ficha": {
+  "efecto": "degrade",
+  "paleta": [
+   "#FFB45A",
+   "#E8782A",
+   "#FFE2B0",
+   "#3B1F0E"
+  ],
+  "zonas": [],
+  "velocidad": 0.5,
+  "titular": "Buen día, Buenos Aires"
+ }
+}

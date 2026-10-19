@@ -1,0 +1,29 @@
+{
+ "titulo": "Verano Celeste",
+ "concepto": "Un postre helado cremoso con remolino y galleta, blanco y celeste sobre el azul de la noche porteña, que da frescura a la fachada frente al Obelisco.",
+ "corrientes": {
+  "prompt": "Professional advertising product photograph, 2:1 wide landscape composition. A plain smooth white cup with no label and no branding, filled with creamy soft-serve frozen dessert in a tall elegant swirl, with chunks of chocolate cookie embedded in it. The cup sits exactly in the center, with generous empty dark space on both left and right. Seamless deep midnight navy blue background, studio lighting, a soft sky-blue rim light on one side and a crisp white key light, high contrast, glossy highlights on the cream, a few cookie crumbs and tiny frost sparkles floating around, clean and minimal, readable from far away at night. No text, no letters, no numbers, no logos, no people, no faces."
+ },
+ "pellegrini": {
+  "prompt": "Professional advertising product photograph, 2.5:1 ultra wide landscape composition, tighter macro close-up. The top of a creamy frozen dessert swirl rising out of a plain smooth white cup with no label or branding, with cookie chunks and crumbs pressed into the cream. The swirl is centered, with wide dark negative space on both sides. Clean deep navy blue night background, studio lighting with sky-blue (celeste) and pure white color accents, high contrast, soft cold glow, tiny droplets of condensation, shallow depth of field, cool and fresh mood. No text, no letters, no numbers, no logos, no people, no faces."
+ },
+ "media": {
+  "prompt": "Abstract advertising texture photograph, 4.66:1 extremely wide panoramic strip. Horizontal flowing ribbons and waves of white and sky-blue creamy frozen dessert, forming a smooth horizon line across the full width, with scattered cookie chunks and fine crumbs and sparkling frost particles drifting along the line. Very dark midnight navy blue background above and below, studio lighting, high contrast, glossy cream highlights, built for lateral movement, calm and luminous, with no single focal point cut at the edges. No text, no letters, no numbers, no logos, no packaging with branding, no people, no faces."
+ },
+ "video": {
+  "pantalla": null,
+  "movimiento": ""
+ },
+ "ficha": {
+  "efecto": "ola",
+  "paleta": [
+   "#0A1A3F",
+   "#75AADB",
+   "#BFE3F5",
+   "#FFFFFF"
+  ],
+  "zonas": [],
+  "velocidad": 1,
+  "titular": "Fresquito de verano"
+ }
+}

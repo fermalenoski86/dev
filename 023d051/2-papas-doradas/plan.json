@@ -1,0 +1,30 @@
+{
+ "titulo": "Lluvia dorada",
+ "concepto": "Papas fritas doradas caen en cámara lenta sobre un rojo profundo, con chispas de sal que brillan como estrellas frente al Obelisco.",
+ "corrientes": {
+  "prompt": "Advertising product photography, 2:1 wide horizontal composition. A plain smooth glossy red snack container with no label, no logo and no printing, centered, tilted slightly. Golden crispy French fries burst upward and fall around it, frozen mid-air in ultra-slow motion, with tiny sparkling salt crystals catching the light. Deep crimson red seamless background fading to near black at the edges, warm golden rim light and soft key light from the upper left, high contrast, sharp, glossy highlights. Large empty dark red space on the left and right sides, subject fully contained in the central 50% of the frame. No text, no letters, no numbers, no logos, no people, no faces."
+ },
+ "pellegrini": {
+  "prompt": "Advertising product photography, 2.5:1 very wide horizontal composition. A cluster of golden crispy French fries falling in slow motion in the center, forming a vertical cascade, with glittering white salt sparkles floating around them. A plain smooth red container with no label or branding sits low in the center of the frame. Deep saturated red background with a dark vignette, warm golden backlight and rim light, strong contrast, clean and minimal, readable from far away at night. Generous empty dark red negative space on both sides, nothing important near the left or right edges. No text, no letters, no numbers, no logos, no people, no faces."
+ },
+ "media": {
+  "prompt": "Ultra-panoramic 4.66:1 horizontal banner. A long sweeping horizontal river of golden crispy French fries tumbling and drifting sideways in slow motion across a deep red background, with sparkling salt crystals scattered like glitter and soft bokeh golden light in the distance. Fries are dense in the center and thin out toward both edges, leaving dark red empty space. Warm golden light from the left, smooth glossy highlights, high contrast, clean dark crimson to black background, same palette as a premium snack campaign. Texture and lateral movement only, no container needed. No text, no letters, no numbers, no logos, no people, no faces."
+ },
+ "video": {
+  "pantalla": null,
+  "movimiento": ""
+ },
+ "ficha": {
+  "efecto": "destello",
+  "paleta": [
+   "#7A0010",
+   "#D91E18",
+   "#FFB627",
+   "#FFE08A",
+   "#FFF8E7"
+  ],
+  "zonas": [],
+  "velocidad": 1,
+  "titular": ""
+ }
+}
