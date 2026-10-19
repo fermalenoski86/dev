@@ -314,6 +314,7 @@
 
   // ---------- acciones ----------
   const api = {
+    hexARGBW,   // para mostrar cómo se arma cada color con los canales del equipo
     EFECTOS: Object.fromEntries(Object.entries(EFECTOS).map(([k, v]) => [k, { nombre: v.nombre, txt: v.txt }])),
     DUR, GRUPOS, PANTALLAS, ESCENAS, BLOQUES, APERTURA, ZONAS, OCHAVA, TRANSICIONES, CREATIVIDADES, COLORES: C,
     estado: () => JSON.parse(JSON.stringify(S)),

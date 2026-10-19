@@ -53,6 +53,32 @@ h1 { margin: 0 0 22px; font-weight: 850; font-stretch: 62%; font-size: clamp(80p
 .mosaico { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; min-height: 240px; background: var(--noche-2); }
 .mosaico img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; display: block; }
 .mosaico img:first-child { grid-row: span 2; }
+.pila { display: grid; gap: 10px; } .pila img { width: 100%; height: auto; border-radius: 6px; display: block; }
+.pila img.vertical { max-width: 320px; justify-self: end; box-shadow: 0 12px 40px rgba(0,0,0,.45); }
+.capitulo.solo { grid-template-columns: minmax(0, 1fr); }
+.probador { background: #071226; border-radius: 6px; padding: 14px; }
+.probador canvas { width: 100%; height: auto; display: block; }
+.efectos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.efectos button { font: inherit; font-size: 14px; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--linea); background: none; color: var(--piedra); cursor: pointer; }
+.efectos button[aria-pressed="true"] { background: var(--sodio); color: #1D1205; border-color: var(--sodio); }
+.colores { display: grid; gap: 14px; }
+.color { display: grid; grid-template-columns: 76px 1fr; gap: 16px; align-items: center; }
+.muestra { width: 76px; height: 76px; border-radius: 50%; box-shadow: 0 0 34px var(--c); background: var(--c); }
+.color strong { display: block; font-weight: 650; margin-bottom: 6px; }
+.canales { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.canal { font-size: 12px; color: var(--niebla); }
+.canal div { height: 8px; border-radius: 4px; background: var(--linea); margin-top: 4px; overflow: hidden; }
+.canal div span { display: block; height: 100%; }
+.flujo { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; counter-reset: paso; }
+.flujo li { counter-increment: paso; padding: 14px 16px 14px 54px; border: 1px solid var(--linea); border-radius: 6px; position: relative; }
+.flujo li::before { content: counter(paso); position: absolute; left: 16px; top: 14px; font-weight: 800; font-stretch: 75%; font-size: 22px; color: var(--sodio); }
+.flujo b { display: block; font-weight: 700; } .flujo span { font-size: 15px; color: var(--niebla); }
+.plataforma { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); border-top: 1px solid var(--linea); }
+.plataforma > :first-child { order: 0 !important; }
+.modulos { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.modulos li { display: grid; grid-template-columns: 150px 1fr auto; gap: 16px; align-items: baseline; padding: 16px 0; border-bottom: 1px solid var(--linea); }
+.modulos b { font-weight: 750; font-stretch: 80%; font-size: 22px; } .modulos span { color: #D6CDBC; } .modulos i { font-style: normal; font-size: 13px; color: var(--celeste); white-space: nowrap; }
+@media (max-width: 860px) { .modulos li { grid-template-columns: 1fr; gap: 4px; } .pila img.vertical { margin-top: 0; justify-self: center; } .plataforma { grid-template-columns: 1fr; } }
 .separador { margin: 0; padding: 48px 0 0; font-size: clamp(28px, 2.6vw, 38px); }
 
 /* Lo que se puede hacer: tres filas con su acción a la derecha */
@@ -142,39 +168,111 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       <p>Arriba tiene dos pantallas, una tercera banda abraza la esquina y 46 luminarias pueden pintar la fachada de cualquier color. La idea es que todo eso funcione junto, como una sola pieza, y no como tres carteles con unas luces alrededor.</p>
     </div>
   </article>
+
   <article class="capitulo">
-    <img src="/img/dia.webp" alt="El mismo edificio visto de día en el simulador" loading="lazy" width="1294" height="1175">
+    <img src="/img/postre-pantallas.webp" alt="Las dos pantallas de arriba, una a cada lado de la cúpula" loading="lazy" width="1024" height="331">
     <div class="texto-cap">
-      <h2>Lo vemos antes de que pase</h2>
-      <p>Un edificio así no se ensaya en vivo. Por eso armamos un simulador sobre la foto real de la esquina: cada pantalla está medida y cada luminaria está en su lugar.</p>
-      <p>Se puede mirar de noche o de día, avanzar el show segundo a segundo y ajustar las luces de a una. Lo que se arma acá es la referencia para programar el edificio después.</p>
+      <h2>Tres pantallas, cada una con su forma</h2>
+      <p>La de Corrientes mide 7,68 por 3,84 metros y la de Pellegrini 9,60 por 3,84. Están apoyadas sobre la cornisa, una a cada lado de la cúpula. Abajo, la banda corre de punta a punta por encima del primer piso.</p>
+      <p>Son formatos raros: muy anchos, nada que ver con un video común. Por eso cada pieza se arma para su pantalla y nunca se estira una imagen pensada para otra cosa.</p>
     </div>
   </article>
+
   <article class="capitulo">
-    <img src="/img/ola.webp" alt="La fachada en celeste y blanco con el mensaje VAMOS en una pantalla y ARGENTINA en la otra" loading="lazy" width="1294" height="1175">
+    <img src="/img/luminarias.webp" alt="Detalle de la fachada con los haces de luz rojos y dorados subiendo por la piedra" loading="lazy" width="1150" height="878">
     <div class="texto-cap">
-      <h2>Las luces también cuentan</h2>
-      <p>Las luminarias no son decorado. Acompañan lo que pasa en las pantallas: si la campaña es celeste y blanca, la fachada se pone celeste y blanca; si hay tres protagonistas, cada uno tiene su color y su momento.</p>
-      <p>Hay barridos que cruzan la fachada, olas que suben desde la planta baja, latidos y destellos. Todo dentro de lo que el equipo real puede hacer.</p>
+      <h2>Cuarenta y seis luces, de a una</h2>
+      <p>Las luminarias están repartidas en tres filas y en la ochava. Cada una se puede prender, apagar y teñir por separado, o en grupo: arriba, en el medio, abajo, la esquina, la cúpula.</p>
+      <p>En el simulador cada haz sube por la piedra como lo haría en la realidad, se corta en las cornisas y nunca cae sobre las pantallas. Así lo que se ve en la prueba se parece a lo que va a pasar en la calle.</p>
     </div>
   </article>
+
   <article class="capitulo">
-    <img src="/img/ola-pantallas.webp" alt="VAMOS en la pantalla de Corrientes y ARGENTINA en la de Pellegrini, con la cúpula en el medio" loading="lazy" width="984" height="331">
+    <div class="probador" id="probador">
+      <canvas id="fachada-luces" width="900" height="560" aria-label="Las 46 luminarias de la fachada mostrando el efecto elegido"></canvas>
+      <div class="efectos" role="group" aria-label="Elegí un efecto">
+        <button type="button" data-ef="barrido" aria-pressed="true">Barrido</button>
+        <button type="button" data-ef="ola">Ola</button>
+        <button type="button" data-ef="latido">Latido</button>
+        <button type="button" data-ef="destello">Destellos</button>
+        <button type="button" data-ef="degrade">Degradé</button>
+        <button type="button" data-ef="tramos">Tramos</button>
+      </div>
+    </div>
+    <div class="texto-cap">
+      <h2>Probá los efectos</h2>
+      <p>Cada punto es una luminaria real, en su lugar. Elegí un efecto y mirá cómo se mueve la luz por la fachada: es el mismo motor que usa el simulador, corriendo acá.</p>
+      <p>Un barrido cruza de Corrientes a Pellegrini. La ola sube desde la planta baja. El latido golpea dos veces, como un corazón. Los tramos le dan a cada protagonista su color y su momento.</p>
+    </div>
+  </article>
+
+  <article class="capitulo">
+    <div class="colores" id="colores" aria-label="Cómo se arma cada color con los canales del equipo"></div>
+    <div class="texto-cap">
+      <h2>Colores que el equipo puede hacer</h2>
+      <p>Las luminarias son RGBW: rojo, verde, azul y un blanco propio. Para que los colores salgan limpios usamos dos canales de color más el blanco, nunca los tres juntos.</p>
+      <p>Así sale, por ejemplo, el celeste de la camiseta: nada de rojo, un poco de verde, bastante azul y la mitad de blanco. Cada color de una campaña se traduce a esa receta antes de llegar a la fachada.</p>
+    </div>
+  </article>
+
+  <article class="capitulo">
+    <div class="pila">
+      <img src="/img/software.webp" alt="El simulador TRUST Control con el edificio, los controles y la línea de tiempo del show" loading="lazy" width="1600" height="825">
+      <img src="/img/linea-de-tiempo.webp" alt="La línea de tiempo del show con una pista por pantalla y por zona de luces" loading="lazy" width="1436" height="227">
+    </div>
+    <div class="texto-cap">
+      <h2>El simulador por dentro</h2>
+      <p>TRUST Control es el programa donde se arma cada show. A la izquierda, el edificio; a la derecha, las pantallas, las zonas de luz y cada luminaria; abajo, la línea de tiempo con una pista para cada cosa.</p>
+      <p>Un show dura 15 segundos y tiene cinco momentos: la previa, la entrada de la marca, el takeover con todo al máximo, el cierre y la vuelta a la calma. Se puede frenar en cualquier segundo y ver exactamente qué hace cada pantalla y cada luz.</p>
+    </div>
+  </article>
+
+  <article class="capitulo">
+    <img src="/img/dia-noche.webp" alt="El edificio partido al medio: la mitad izquierda de noche y la derecha de día" loading="lazy" width="1294" height="1175">
+    <div class="texto-cap">
+      <h2>De noche y de día</h2>
+      <p>De noche mandan las luces. De día casi no se ven y las pantallas tienen que pelear contra el sol. El simulador muestra las dos situaciones con la misma toma, para decidir qué funciona en cada horario.</p>
+    </div>
+  </article>
+
+  <article class="capitulo">
+    <img src="/img/ola-pantallas.webp" alt="VAMOS en la pantalla de Corrientes y ARGENTINA en la de Pellegrini, con la cúpula en el medio" loading="lazy" width="1024" height="331">
     <div class="texto-cap">
       <h2>Una idea, tres pantallas</h2>
       <p>Entre las dos pantallas de arriba está la cúpula. Parece un detalle, pero cambia mucho: una palabra que cruza de una a la otra se lee cortada.</p>
       <p>Por eso el mensaje se reparte para que cada pantalla se entienda sola. Solo se parte cuando alguien lo pide a propósito.</p>
     </div>
   </article>
+
   <article class="capitulo">
-    <img src="/img/piezas-ia.webp" alt="Cuatro imágenes creadas para las pantallas: postre, papas, desayuno y hamburguesa" loading="lazy" width="1212" height="492">
+    <div class="pila">
+      <ol class="flujo" aria-label="Cómo una idea llega al edificio">
+        <li><b>Una frase</b><span>«Ola celeste y blanca, que diga VAMOS ARGENTINA»</span></li>
+        <li><b>La ficha del show</b><span>colores, efecto, zonas, texto y tiempos, revisados contra lo que el edificio puede hacer</span></li>
+        <li><b>El motor</b><span>arma cada cuadro para las tres pantallas y las 46 luces</span></li>
+        <li><b>El edificio</b><span>hoy en el simulador; mañana, en los equipos reales</span></li>
+      </ol>
+      <img src="/img/estudio.webp" alt="El panel donde se escribe la idea y el sistema muestra lo que entendió" loading="lazy" width="450" height="725" class="vertical">
+    </div>
+    <div class="texto-cap">
+      <h2>De una frase a un show</h2>
+      <p>Se escribe la idea como se la contarías a alguien. El sistema la convierte en una ficha con los colores, el efecto, las zonas y el texto, y muestra lo que entendió antes de mover nada.</p>
+      <p>Esa ficha pasa por un control: si algo no existe en el edificio, no entra. Recién después el motor la ejecuta.</p>
+    </div>
+  </article>
+
+  <article class="capitulo">
+    <div class="pila">
+      <img src="/img/piezas-ia.webp" alt="Cuatro imágenes creadas para las pantallas: postre, papas, desayuno y hamburguesa" loading="lazy" width="1212" height="492">
+      <img src="/img/hamburguesa-pantallas.webp" alt="Las pantallas de arriba con la hamburguesa creada para la pieza" loading="lazy" width="1024" height="331">
+    </div>
     <div class="texto-cap">
       <h2>Contar la idea y verla</h2>
       <p>Es la parte que más nos entusiasma. Escribís en una frase lo que querés mostrar y en unos minutos tenés imágenes hechas a medida de cada pantalla, ya puestas en el edificio.</p>
       <p>Antes de mostrar una imagen, el sistema la revisa: si aparece una letra suelta, un logo que no existe o el producto cortado, la vuelve a hacer. Los textos y la marca nunca los inventa la máquina; salen del material oficial.</p>
-      <img class="detalle" src="/img/hamburguesa-pantallas.webp" alt="Las pantallas de arriba con la hamburguesa creada para la pieza" loading="lazy" width="984" height="331">
     </div>
   </article>
+
   <article class="capitulo" id="cap-material">
     <div class="mosaico" id="mosaico" aria-hidden="true"></div>
     <div class="texto-cap">
@@ -184,6 +282,21 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       <p class="nota-cap" id="nota-material"></p>
     </div>
   </article>
+
+  <article class="capitulo plataforma">
+    <div class="texto-cap">
+      <h2>La plataforma que estamos armando</h2>
+      <p>El simulador es la primera pieza. Alrededor estamos construyendo el resto, paso a paso y con cada parte revisada antes de pasar a la siguiente.</p>
+    </div>
+    <ul class="modulos">
+      <li><b>Previs</b><span>El edificio en 3D, medido, para ver los shows desde cualquier esquina y no solo desde una foto.</span><i>En desarrollo</i></li>
+      <li><b>Control</b><span>La operación diaria: qué campaña sale, a qué hora, quién la aprobó.</span><i>En desarrollo</i></li>
+      <li><b>Edge</b><span>El equipo instalado en el edificio, que ejecuta el show aunque se corte internet.</span><i>Próximo</i></li>
+      <li><b>Creative Studio</b><span>Un editor para que el equipo de marketing del cliente arme sus propias piezas.</span><i>Próximo</i></li>
+      <li><b>Audiencia</b><span>Un conteo de personas con cámaras, primero como reporte interno.</span><i>Próximo</i></li>
+    </ul>
+  </article>
+
   <article class="capitulo final">
     <div class="texto-cap">
       <h2>Lo que sigue</h2>
@@ -242,6 +355,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
 
 <script src="/control/encuadres.js"></script>
 <script src="/control/luminarias.js"></script>
+<script src="/control/motor.js"></script>
 <script>
 (function () {
   'use strict';
@@ -361,11 +475,53 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       const l = (await (await fetch('/api/material')).json()).filter((m) => /\.(jpe?g|png|webp)$/.test(m.nombre));
       const pref = ['mcalvarez-afiche.jpg', 'trio-productos.jpg', 'jugadores-mostrador.jpg'], el = l.filter((m) => pref.includes(m.nombre)).sort((a, b) => pref.indexOf(a.nombre) - pref.indexOf(b.nombre));
       const usar = el.length ? el : l.slice(0, 3);
-      if (!usar.length) { $('mosaico').hidden = true; $('nota-material').textContent = 'Las imágenes aparecen acá cuando el material está cargado en «Material de marca», más abajo.'; return; }
+      if (!usar.length) { $('mosaico').hidden = true; $('cap-material').classList.add('solo'); $('nota-material').textContent = 'Las imágenes aparecen acá cuando el material está cargado en «Material de marca», más abajo.'; return; }
       $('mosaico').innerHTML = usar.map((m) => `<img src="${m.url}" alt="" loading="lazy">`).join('');
       $('nota-material').innerHTML = 'Para verlo en el edificio: <a href="/control/?pieza=campana-seleccion">abrir la campaña en el simulador</a>.';
-    } catch (e) { $('mosaico').hidden = true; }
+    } catch (e) { $('mosaico').hidden = true; $('cap-material').classList.add('solo'); }
   }
+  // ---------- probador de efectos: el mismo motor del simulador, sobre las 46 posiciones reales ----------
+  (function probador() {
+    const M = window.MOTOR, L = window.LUMINARIAS, E = window.ENCUADRES && window.ENCUADRES.completo, cv = $('fachada-luces');
+    if (!M || !L || !E || !cv) return;
+    const c = cv.getContext('2d'), [rx, ry, rw, rh] = E.rect;
+    const pts = Object.entries(L.puntos).map(([id, [x, y]]) => ({ id, x: (rx + x * rw), y: (ry + y * rh) }));
+    const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    const aPx = (p) => [60 + (p.x - x0) / (x1 - x0) * (cv.width - 120), 70 + (p.y - y0) / (y1 - y0) * (cv.height - 160)];
+    const PAL = { barrido: ['#DA291C', '#FFC72C'], ola: ['#6CACE4', '#F4F4F4'], latido: ['#DA291C', '#FFC72C'], destello: ['#7B3FE4', '#F3E3C3'], degrade: ['#DA291C', '#FFC72C', '#F4F4F4'], tramos: ['#DA291C', '#F4F4F4', '#FFC72C'] };
+    const rgb = (q) => [Math.min(1, q.r + q.w), Math.min(1, q.g + q.w * 0.9), Math.min(1, q.b + q.w * 0.78)].map((v) => Math.round(v * 255));
+    let ef = 'barrido', t0 = performance.now();
+    function elegir(e) { ef = e; M.setPaletaShow(PAL[e]); M.setEstiloShow('custom', 1); M.setFicha({ efecto: e }); M.cargarShow(); t0 = performance.now(); document.querySelectorAll('.efectos button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.ef === e))); }
+    document.querySelectorAll('.efectos button').forEach((b) => b.addEventListener('click', () => elegir(b.dataset.ef)));
+    elegir('barrido');
+    const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function cuadro(ts) {
+      const t = quieto ? 7 : 5 + ((ts - t0) / 1000) % 5;   // recorre el tramo de takeover (5–10 s) en bucle
+      M.seek(t); const sal = M.salidas().luces;
+      c.fillStyle = '#071226'; c.fillRect(0, 0, cv.width, cv.height);
+      c.globalCompositeOperation = 'lighter';
+      for (const l of sal) {
+        const p = pts.find((q) => q.id === l.id); if (!p) continue;
+        const [x, y] = aPx(p), [r, g, b] = rgb(l.rgbw), a = Math.min(1, l.nivel * 1.3), rad = 26 + 26 * a;
+        const gr = c.createRadialGradient(x, y - rad * 0.6, 0, x, y - rad * 0.6, rad * 1.6); gr.addColorStop(0, `rgba(${r},${g},${b},${0.55 * a})`); gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+        c.fillStyle = gr; c.fillRect(x - rad * 1.6, y - rad * 2.3, rad * 3.2, rad * 3.2);
+        c.fillStyle = `rgba(${r},${g},${b},${0.35 + 0.65 * a})`; c.beginPath(); c.arc(x, y, 5, 0, Math.PI * 2); c.fill();
+      }
+      c.globalCompositeOperation = 'source-over';
+      c.fillStyle = '#5E6E88'; c.font = '13px Archivo, system-ui, sans-serif'; c.fillText('Corrientes', 16, cv.height - 18); c.textAlign = 'right'; c.fillText('Pellegrini', cv.width - 16, cv.height - 18); c.textAlign = 'left';
+      if (!quieto) requestAnimationFrame(cuadro);
+    }
+    requestAnimationFrame(cuadro);
+  })();
+  // ---------- recetas de color RGBW ----------
+  (function colores() {
+    const M = window.MOTOR, caja = $('colores'); if (!M || !M.hexARGBW || !caja) return;
+    const lista = [['Rojo McDonald\'s', '#DA291C'], ['Dorado', '#FFC72C'], ['Celeste', '#6CACE4'], ['Blanco cálido', '#FFF1D6']];
+    const can = [['r', 'Rojo', '#ff4b3a'], ['g', 'Verde', '#3fd27a'], ['b', 'Azul', '#4a8cff'], ['w', 'Blanco', '#f4efe4']];
+    caja.innerHTML = lista.map(([n, h]) => { const q = M.hexARGBW(h);
+      return `<div class="color"><div class="muestra" style="--c:${h}"></div><div><strong>${n}</strong><div class="canales">${can.map(([k, nom, col]) => `<div class="canal">${nom} ${Math.round(q[k] * 100)} %<div><span style="width:${Math.round(q[k] * 100)}%;background:${col}"></span></div></div>`).join('')}</div></div></div>`; }).join('');
+  })();
+
   cargarGaleria(); actualizarGasto(); cargarMaterial(); mosaico();
 })();
 </script>
