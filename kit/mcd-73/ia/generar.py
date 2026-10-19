@@ -93,7 +93,7 @@ Devolvé SOLO JSON:
 CONTROL = """Sos control de calidad de piezas para pantallas LED publicitarias. Mirá la imagen y respondé SOLO JSON:
 {"ok": true|false, "texto_o_letras": bool, "logo_o_marca": bool, "rostro_protagonista": bool,
  "lectura_panoramica": "buena|regular|mala", "defectos": "breve", "correccion": "instrucción en inglés para regenerar, o vacío"}
-Rechazá (ok=false) si hay cualquier texto, letra o número legible, logo o marca, envase con marca, rostro protagonista,
+Rechazá (ok=false) si el producto o su envase quedan cortados por un borde, si hay cualquier texto, letra o número legible, logo o marca, envase con marca, rostro protagonista,
 deformaciones visibles del producto, o si el sujeto queda cortado o perdido en el formato panorámico."""
 
 
@@ -102,8 +102,8 @@ def revisar(img_bytes, pantalla):
     buf = io.BytesIO(); im.save(buf, 'JPEG', quality=88); b64 = base64.b64encode(buf.getvalue()).decode()
     gastar(f'control {pantalla}', PRECIO['claude'], TOPE)
     return claude(CONTROL, [{'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': b64}},
-                            {'type': 'text', 'text': f'Pantalla: {PANTALLAS[pantalla]["nombre"]}. Respondé solo el JSON.'}], 600) or \
-        {'ok': True, 'lectura_panoramica': '?', 'defectos': 'control sin respuesta legible: revisar a mano'}
+                            {'type': 'text', 'text': f'Pantalla: {PANTALLAS[pantalla]["nombre"]}. Respondé solo el JSON; "defectos" en menos de 25 palabras.'}], 1500) or \
+        {'ok': False, 'lectura_panoramica': '?', 'defectos': 'control sin respuesta legible', 'correccion': 'Keep the full subject inside the frame with margin on all sides.'}   # sin veredicto = se regenera (falla cerrada)
 
 
 # ---------- fal ----------
