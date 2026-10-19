@@ -177,4 +177,10 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except BaseException as e:   # el error queda publicado en la rama de salida (sin claves: los mensajes no las incluyen)
+        sal = sys.argv[2] if len(sys.argv) > 2 else '.'
+        os.makedirs(sal, exist_ok=True)
+        open(os.path.join(sal, 'ERROR.txt'), 'w').write(f'{type(e).__name__}: {e}\nGasto estimado hasta el corte: USD {GASTO["usd"]:.2f}\n{GASTO["detalle"]}\n')
+        raise
