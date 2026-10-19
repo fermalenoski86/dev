@@ -1,0 +1,4 @@
+public/control/
+node_modules/
+.wrangler/
+.dev.vars

@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>EL TRUST</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap" rel="stylesheet">
+<style>
+/* Portal EL TRUST. Noche porteña: azul de cielo urbano, piedra de fachada, sodio de farola, celeste de pantalla. */
+:root { --noche: #0A1830; --noche-2: #10213F; --linea: #22355A; --piedra: #E9DFCC; --niebla: #93A0B5; --sodio: #F2A63B; --celeste: #6CACE4; --error: #FFB4A2; }
+* { box-sizing: border-box; }
+html { background: var(--noche); }
+body { margin: 0; color: var(--piedra); font-family: Archivo, system-ui, sans-serif; font-size: 17px; line-height: 1.5; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--sodio); outline-offset: 3px; }
+.barra { display: flex; justify-content: space-between; align-items: center; padding: 18px clamp(16px, 4vw, 56px); }
+.marca { font-weight: 850; font-stretch: 62%; font-size: 26px; letter-spacing: .01em; text-decoration: none; }
+.salir { color: var(--niebla); font-size: 15px; }
+
+/* Héroe: el edificio de noche con sus 46 luminarias, que se encienden una vez de abajo hacia arriba */
+.heroe { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); align-items: end; min-height: min(86vh, 900px); }
+.heroe-texto { padding: 0 clamp(16px, 4vw, 56px) clamp(32px, 6vh, 72px); }
+h1 { margin: 0 0 22px; font-weight: 850; font-stretch: 62%; font-size: clamp(80px, 12vw, 220px); position: relative; z-index: 1; line-height: .8; letter-spacing: -.01em; }
+.bajada { margin: 0; max-width: 34ch; font-size: clamp(18px, 1.6vw, 22px); color: var(--piedra); }
+.datos { display: flex; gap: clamp(20px, 3vw, 40px); margin: 30px 0 0; padding: 0; list-style: none; }
+.datos b { display: block; font-weight: 800; font-stretch: 75%; font-size: 40px; line-height: 1; color: var(--sodio); }
+.datos span { font-size: 14px; color: var(--niebla); }
+.edificio { position: relative; height: min(86vh, 900px); overflow: hidden; }
+.edificio img, .edificio svg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+.edificio::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, var(--noche), rgba(10,24,48,0) 30%), linear-gradient(0deg, var(--noche), rgba(10,24,48,0) 22%); pointer-events: none; }
+.luz { fill: var(--sodio); opacity: 0; }
+.encendida .luz { animation: encender 1.6s ease-out forwards; }
+@keyframes encender { 0% { opacity: 0; r: 4; } 35% { opacity: 1; r: 22; } 100% { opacity: .8; r: 9; } }
+@media (prefers-reduced-motion: reduce) { .encendida .luz { animation: none; opacity: .8; } }
+
+/* Lo que se puede hacer: tres filas con su acción a la derecha */
+main { padding: 0 clamp(16px, 4vw, 56px) 64px; }
+.tarea { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); gap: clamp(20px, 4vw, 64px); padding: 40px 0; border-top: 1px solid var(--linea); }
+h2 { margin: 0 0 8px; font-weight: 750; font-stretch: 80%; font-size: clamp(28px, 2.6vw, 38px); line-height: 1.05; }
+.tarea p { margin: 0; color: var(--niebla); max-width: 46ch; }
+.boton { display: inline-block; font: inherit; font-weight: 700; font-size: 16px; padding: 13px 22px; border: 0; border-radius: 6px; background: var(--sodio); color: #1D1205; cursor: pointer; text-decoration: none; }
+.boton:disabled { opacity: .5; cursor: progress; }
+.boton.sec { background: transparent; color: var(--piedra); box-shadow: inset 0 0 0 1px var(--linea); }
+textarea { width: 100%; min-height: 110px; font: inherit; font-size: 17px; padding: 14px; border-radius: 6px; border: 1px solid var(--linea); background: var(--noche-2); color: var(--piedra); resize: vertical; }
+textarea:focus { outline: 2px solid var(--sodio); outline-offset: 2px; border-color: transparent; }
+.controles { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; margin-top: 12px; }
+.opcion { display: flex; gap: 8px; align-items: center; color: var(--niebla); font-size: 15px; }
+.opcion input { width: 18px; height: 18px; accent-color: var(--sodio); }
+.gasto { margin-left: auto; color: var(--niebla); font-size: 14px; }
+.ejemplos { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; padding: 0; list-style: none; }
+.ejemplos button { font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--linea); background: none; color: var(--piedra); cursor: pointer; }
+.ejemplos button:hover { border-color: var(--celeste); }
+.progreso { list-style: none; margin: 18px 0 0; padding: 0; font-size: 15px; }
+.progreso li { padding: 4px 0 4px 26px; position: relative; color: var(--niebla); }
+.progreso li::before { content: ""; position: absolute; left: 4px; top: 11px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--linea); }
+.progreso li.hecho { color: var(--piedra); } .progreso li.hecho::before { background: var(--celeste); border-color: var(--celeste); }
+.progreso li.activo::before { border-color: var(--sodio); animation: latir 1s infinite alternate; }
+.progreso li.mal { color: var(--error); } .progreso li.mal::before { border-color: var(--error); }
+@keyframes latir { to { background: var(--sodio); } }
+.resultado { margin-top: 20px; display: grid; grid-template-columns: 1fr 1.25fr; gap: 8px; }
+.resultado img { width: 100%; aspect-ratio: 2 / 1; object-fit: cover; border-radius: 4px; background: var(--noche-2); }
+.resultado img:nth-child(2) { aspect-ratio: 2.5 / 1; }
+.resultado img:nth-child(3) { grid-column: 1 / -1; aspect-ratio: 4.66 / 1; }
+.resultado-acciones { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; }
+.galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
+.pieza { text-decoration: none; display: block; }
+.pieza img { width: 100%; aspect-ratio: 2.5 / 1; object-fit: cover; border-radius: 4px; display: block; background: var(--noche-2); }
+.pieza strong { display: block; margin-top: 8px; font-weight: 650; font-size: 16px; }
+.pieza span { font-size: 13px; color: var(--niebla); }
+.pieza:hover strong { color: var(--sodio); }
+.vacio { color: var(--niebla); grid-column: 1 / -1; margin: 0; }
+footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 13px; border-top: 1px solid var(--linea); }
+@media (max-width: 860px) {
+  .heroe { grid-template-columns: 1fr; min-height: 0; }
+  .edificio { height: 56vh; order: -1; }
+  .edificio::after { background: linear-gradient(0deg, var(--noche), rgba(10,24,48,0) 40%); }
+  .heroe-texto { padding-top: 0; margin-top: -60px; position: relative; }
+  .tarea { grid-template-columns: 1fr; }
+  .datos b { font-size: 32px; }
+}
+</style>
+</head>
+<body>
+<header class="barra"><a class="marca" href="/">EL TRUST</a><a class="salir" href="/salir">Salir</a></header>
+
+<section class="heroe">
+  <div class="heroe-texto">
+    <h1>EL<br>TRUST</h1>
+    <p class="bajada">Corrientes y Carlos Pellegrini, frente al Obelisco. Desde acá se diseñan, se generan y se prueban los shows del edificio antes de salir al aire.</p>
+    <ul class="datos">
+      <li><b>3</b><span>pantallas LED</span></li>
+      <li><b>46</b><span>luminarias RGBW</span></li>
+      <li><b>15 s</b><span>por show</span></li>
+    </ul>
+  </div>
+  <div class="edificio" id="edificio">
+    <img src="/control/fotos/trust-noche-completa.jpg" alt="El edificio EL TRUST de noche, con sus pantallas y la fachada iluminada" fetchpriority="high">
+    <svg id="luces" viewBox="0 0 2570 2872" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+  </div>
+</section>
+
+<main>
+  <section class="tarea" aria-labelledby="t-sim">
+    <div><h2 id="t-sim">Probar un show</h2><p>El simulador muestra el edificio real con las tres pantallas y las 46 luminarias. Escribís la idea, elegís efectos y lo ves de noche o de día.</p></div>
+    <div><a class="boton" href="/control/">Abrir el simulador</a></div>
+  </section>
+
+  <section class="tarea" aria-labelledby="t-ia">
+    <div><h2 id="t-ia">Generar una pieza con IA</h2><p>Claude arma la idea para cada pantalla y fal genera las imágenes. Cada imagen pasa un control: sin textos, sin logos, sin productos cortados. Los textos y la marca los pone el sistema después.</p></div>
+    <div>
+      <ul class="ejemplos" aria-label="Ideas de ejemplo">
+        <li><button type="button" data-b="Noche de verano: postre helado cremoso en vaso blanco liso, celeste y blanco sobre azul noche.">Postre celeste y blanco</button></li>
+        <li><button type="button" data-b="Papas fritas doradas cayendo en cámara lenta sobre rojo profundo, envase rojo liso sin marca.">Papas doradas</button></li>
+        <li><button type="button" data-b="Café humeante y medialunas al amanecer porteño, luz cálida de costado sobre madera.">Desayuno al amanecer</button></li>
+      </ul>
+      <label for="brief" class="opcion" style="margin-bottom:6px">Contá la idea de la campaña</label>
+      <textarea id="brief" placeholder="Ej.: hamburguesa premium protagonista, fondo oscuro cálido, luz de estudio dramática"></textarea>
+      <div class="controles">
+        <button class="boton" id="generar" type="button">Generar pieza</button>
+        <label class="opcion"><input type="checkbox" id="con-video"> Sumar un clip de 5 s (USD 0,35)</label>
+        <span class="gasto" id="gasto" aria-live="polite"></span>
+      </div>
+      <ol class="progreso" id="progreso" aria-live="polite"></ol>
+      <div id="resultado" hidden>
+        <div class="resultado" id="miniaturas"></div>
+        <div class="resultado-acciones"><a class="boton" id="ver-sim" href="/control/">Ver en el simulador</a><button class="boton sec" type="button" id="otra">Generar otra</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="tarea" aria-labelledby="t-piezas">
+    <div><h2 id="t-piezas">Piezas guardadas</h2><p>Todo lo generado queda acá. Tocá una pieza para verla en el edificio.</p></div>
+    <div class="galeria" id="galeria"><p class="vacio">Cargando…</p></div>
+  </section>
+</main>
+
+<footer>Affinitas. Simulación conceptual, no conectada a equipos reales. Las piezas son mockups ilustrativos: no publicar.</footer>
+
+<script src="/control/encuadres.js"></script>
+<script src="/control/luminarias.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  // 46 luminarias sobre la foto completa: sus posiciones están calibradas sobre la foto base, ubicada dentro del encuadre «completo»
+  (function luces() {
+    const L = window.LUMINARIAS, E = window.ENCUADRES && window.ENCUADRES.completo; if (!L || !E) return;
+    const [rx, ry, rw, rh] = E.rect, svg = $('luces'), ns = 'http://www.w3.org/2000/svg';
+    const pts = Object.entries(L.puntos).map(([id, [x, y]]) => ({ id, x: (rx + x * rw) * E.ancho, y: (ry + y * rh) * E.alto }));
+    const ymax = Math.max(...pts.map((p) => p.y)), ymin = Math.min(...pts.map((p) => p.y));
+    for (const p of pts) {
+      const c = document.createElementNS(ns, 'circle'); c.setAttribute('cx', p.x); c.setAttribute('cy', p.y); c.setAttribute('r', 9); c.setAttribute('class', 'luz');
+      c.style.animationDelay = (0.25 + (ymax - p.y) / (ymax - ymin || 1) * 1.1 + (p.x / E.ancho) * 0.25).toFixed(2) + 's';   // de abajo hacia arriba
+      c.style.filter = 'drop-shadow(0 0 14px #F2A63B)'; svg.appendChild(c);
+    }
+    requestAnimationFrame(() => $('edificio').classList.add('encendida'));
+  })();
+
+  // ---------- generación (el navegador orquesta; el servidor guarda las claves y el tope) ----------
+  const post = async (ruta, cuerpo) => {
+    const r = await fetch(ruta, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(cuerpo) });
+    const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || `Error ${r.status}`); return d;
+  };
+  const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+  async function esperarFal(trabajo) {
+    for (let i = 0; i < 150; i++) { const s = await post('/api/estado', trabajo); if (s.listo) return s.url; if (s.error) throw new Error(s.error); await espera(3000); }
+    throw new Error('fal tardó demasiado');
+  }
+  const pasos = $('progreso'); let actual = null;
+  function paso(txt) {
+    const li = document.createElement('li'); li.textContent = txt; li.className = 'activo'; pasos.appendChild(li);
+    const p = { ok: (t) => { li.className = 'hecho'; if (t) li.textContent = t; }, mal: (t) => { li.className = 'mal'; li.textContent = t; } }; actual = p; return p;
+  }
+  async function actualizarGasto() { try { const g = await (await fetch('/api/gasto')).json(); $('gasto').textContent = `Hoy: USD ${g.usd.toFixed(2)} de ${g.tope}`; } catch (e) { /* sin dato */ } }
+  const NOMBRES = { corrientes: 'Corrientes', pellegrini: 'Pellegrini', media: 'la banda media' };
+  async function pantalla(pid, prompt, semilla) {
+    let p = prompt;
+    for (let intento = 1; intento <= 3; intento++) {
+      const s = paso(`Imagen para ${NOMBRES[pid]}${intento > 1 ? ` (intento ${intento})` : ''}…`);
+      const url = await esperarFal(await post('/api/imagen', { pantalla: pid, prompt: p, seed: semilla + intento }));
+      const qc = await post('/api/control', { url, pantalla: pid });
+      if (qc.ok) { s.ok(`Imagen para ${NOMBRES[pid]}: aprobada`); return url; }
+      s.mal(`Imagen para ${NOMBRES[pid]}: rechazada (${qc.defectos || 'no pasó el control'}). Se rehace.`);
+      p = prompt + ' ' + (qc.correccion || '');
+      if (intento === 3) return url;   // tras 3 intentos se deja la última, marcada en el progreso
+    }
+  }
+  $('generar').addEventListener('click', async () => {
+    const brief = $('brief').value.trim(); if (brief.length < 8) { $('brief').focus(); return; }
+    $('generar').disabled = true; $('resultado').hidden = true; pasos.innerHTML = ''; actual = null;
+    try {
+      const s0 = paso('Claude arma el plan para las tres pantallas…');
+      const plan = await post('/api/plan', { brief, video: $('con-video').checked });
+      s0.ok(`Plan: ${plan.titulo}. ${plan.concepto || ''}`);
+      const semilla = Math.floor(Math.random() * 1e6), urls = {};
+      for (const pid of ['corrientes', 'pellegrini', 'media']) urls[pid] = await pantalla(pid, plan[pid].prompt, semilla);
+      const v = plan.video || {};
+      if ($('con-video').checked && urls[v.pantalla]) { const s = paso(`Clip de 5 s para ${NOMBRES[v.pantalla]}…`); urls[v.pantalla + '_video'] = await esperarFal(await post('/api/video', { imagen: urls[v.pantalla], movimiento: v.movimiento })); s.ok(`Clip de 5 s para ${NOMBRES[v.pantalla]}: listo`); }
+      const sg = paso('Guardando la pieza…');
+      const meta = await post('/api/guardar', { titulo: plan.titulo, concepto: plan.concepto, brief, ficha: plan.ficha, pantallas: urls });
+      sg.ok('Pieza guardada');
+      $('miniaturas').innerHTML = ['corrientes', 'pellegrini', 'media'].map((k) => `<img src="${meta.pantallas[k]}" alt="${NOMBRES[k]}">`).join('');
+      $('ver-sim').href = `/control/?pieza=${encodeURIComponent(meta.id)}`; $('resultado').hidden = false;
+      cargarGaleria();
+    } catch (e) { (actual || paso('')).mal(e.message); }
+    finally { $('generar').disabled = false; actualizarGasto(); }
+  });
+  $('otra').addEventListener('click', () => { $('resultado').hidden = true; pasos.innerHTML = ''; $('brief').focus(); });
+  document.querySelectorAll('.ejemplos button').forEach((b) => b.addEventListener('click', () => { $('brief').value = b.dataset.b; $('brief').focus(); }));
+
+  async function cargarGaleria() {
+    const g = $('galeria');
+    try {
+      const l = await (await fetch('/api/piezas')).json();
+      if (!l.length) { g.innerHTML = '<p class="vacio">Todavía no hay piezas generadas acá. Las cuatro del kit se ven en el simulador.</p>'; return; }
+      g.innerHTML = '';
+      for (const p of l) {
+        const a = document.createElement('a'); a.className = 'pieza'; a.href = `/control/?pieza=${encodeURIComponent(p.id)}`;
+        const fecha = new Date(p.creada).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+        a.innerHTML = `<img src="${p.pantallas.pellegrini}" alt="" loading="lazy"><strong></strong><span>${fecha}</span>`;
+        a.querySelector('strong').textContent = p.titulo; g.appendChild(a);
+      }
+    } catch (e) { g.innerHTML = '<p class="vacio">No se pudieron cargar las piezas. Recargá la página.</p>'; }
+  }
+  cargarGaleria(); actualizarGasto();
+})();
+</script>
+</body>
+</html>

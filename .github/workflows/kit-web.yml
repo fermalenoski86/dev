@@ -1,0 +1,63 @@
+# Kit #73 · Portal EL TRUST en Cloudflare (trust.affinitas.com.ar). SIMULACIÓN CONCEPTUAL / mockup ilustrativo, no publicar.
+# Corre SOLO por push a kit/73-mcd que toque el portal o el simulador; nunca en PRs ni en main.
+# Claves desde GitHub Secrets; se cargan como secrets del Worker y no se imprimen.
+# El resultado se informa como anotaciones del check (visibles por la API de checks).
+name: kit-web
+on:
+  push:
+    branches: [kit/73-mcd]
+    paths: [kit/mcd-73/web/**, kit/mcd-73/control/**, .github/workflows/kit-web.yml]
+permissions:
+  contents: read
+concurrency:
+  group: kit-web
+  cancel-in-progress: false
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Armar el sitio
+        run: |
+          W=kit/mcd-73/web; mkdir -p $W/public/control/fotos
+          C=kit/mcd-73/control
+          cp $C/index.html $C/*.js $C/*.css $W/public/control/
+          cp $C/fotos/trust-noche-completa.jpg $C/fotos/trust-relieve-completa.jpg $C/fotos/trust-cielo-completa.png \
+             $C/fotos/trust-noche.jpg $C/fotos/trust-relieve.jpg $C/fotos/trust-cielo.png $W/public/control/fotos/
+          du -sh $W/public
+      - name: Publicar
+        working-directory: kit/mcd-73/web
+        run: |
+          set -o pipefail
+          W="npx --yes wrangler@4.20.0"
+          $W r2 bucket create trust-piezas >/tmp/r2.log 2>&1 || grep -qi "already" /tmp/r2.log || { echo "::error title=R2::$(tail -c 600 /tmp/r2.log | tr '\n' ' ')"; exit 1; }
+          if ! $W deploy >/tmp/deploy.log 2>&1; then echo "::error title=deploy::$(tail -c 900 /tmp/deploy.log | tr '\n' ' ')"; exit 1; fi
+          echo "::notice title=deploy::$(grep -Eo 'https://[^ ]+|trust\.affinitas\.com\.ar[^ ]*' /tmp/deploy.log | sort -u | tr '\n' ' ')"
+      - name: Cargar secrets del Worker
+        working-directory: kit/mcd-73/web
+        env:
+          CLAVE: ${{ secrets.TRUST_CLAVE }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FAL_KEY: ${{ secrets.FAL_KEY }}
+        run: |
+          W="npx --yes wrangler@4.20.0"
+          for n in CLAVE ANTHROPIC_API_KEY FAL_KEY; do
+            [ -n "${!n}" ] || { echo "::error title=secret::falta el secret de GitHub para $n"; exit 1; }
+            printf '%s' "${!n}" | $W secret put "$n" >/tmp/s.log 2>&1 || { echo "::error title=secret $n::$(tail -c 400 /tmp/s.log | tr '\n' ' ')"; exit 1; }
+          done
+          echo "::notice title=secrets::CLAVE, ANTHROPIC_API_KEY y FAL_KEY cargados"
+      - name: Probar
+        run: |
+          for u in https://trust.affinitas.com.ar/login https://trust.affinitas.com.ar/; do
+            c=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$u" || echo error)
+            echo "::notice title=prueba::$u → $c"
+          done

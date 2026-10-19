@@ -1157,6 +1157,11 @@
     $('plan-ficha').textContent = JSON.stringify(fc, null, 1); $('plan').hidden = false; plegarDirector(false);
   }
   window.TRUST_PIEZA_IA = (n) => aplicarPiezaIA((window.PIEZAS_IA || [])[n]);
+  (function piezaDeLaURL() {   // portal web: /control/?pieza=<id> abre esa pieza directo en el edificio
+    const id = new URLSearchParams(location.search).get('pieza'); if (!id) return;
+    const pz = (window.PIEZAS_IA || []).find((x) => x.id === id);
+    if (pz) { const pg = $('portada'); if (pg) pg.classList.add('fuera'); setTimeout(() => aplicarPiezaIA(pz), 200); }
+  })();
   // Ejemplos: un clic completa el pedido y genera (sirve para la demo y para descubrir qué entiende el intérprete)
   document.querySelectorAll('#ejemplos button').forEach((b) => b.addEventListener('click', () => { $('prompt').value = b.dataset.p; generarTodo(); }));
   // AI Content Studio: con material READY arma el concepto (estudio.js); sin material, IDEA FIRST = plantilla preprogramada.

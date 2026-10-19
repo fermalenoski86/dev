@@ -1,0 +1,19 @@
+# Portal EL TRUST · trust.affinitas.com.ar (kit #73). Se publica desde .github/workflows/kit-web.yml.
+# Secrets (los carga el workflow desde GitHub Secrets): CLAVE, ANTHROPIC_API_KEY, FAL_KEY.
+name = "trust-portal"
+main = "src/worker.js"
+compatibility_date = "2025-06-01"
+workers_dev = true
+routes = [{ pattern = "trust.affinitas.com.ar", custom_domain = true }]
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+
+[[r2_buckets]]
+binding = "PIEZAS"
+bucket_name = "trust-piezas"
+
+[vars]
+TOPE_DIARIO_USD = "5"
