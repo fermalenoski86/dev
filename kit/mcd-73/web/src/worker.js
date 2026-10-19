@@ -21,6 +21,9 @@ Reglas de las imágenes (las genera otro modelo a partir de tus prompts en ingl�
   el sistema después, desde el pack oficial del cliente. Pedí envases lisos y genéricos.
 - Fotografía publicitaria de producto, iluminación de estudio, alto contraste, fondos limpios y oscuros que se lean de
   noche a 80 m de distancia; el sujeto principal centrado, entero (con su envase completo) y con aire alrededor.
+- Encuadre por pantalla: en corrientes y pellegrini (2:1 y 2,5:1) el producto entero en el centro, ocupando cerca de la
+  mitad del alto, con lo que cae o vuela (papas, migas, chispas) contenido dentro del cuadro; en media (4,66:1) una banda
+  horizontal o un horizonte que puede salir por los costados, con el producto chico al centro.
 - Las 3 imágenes forman una campaña coherente (misma luz y paleta), pero cada una con un encuadre propio de su formato.
 Devolvé SOLO JSON:
 {"titulo": "...", "concepto": "una frase en español",
@@ -30,9 +33,13 @@ Devolvé SOLO JSON:
            "zonas": [], "velocidad": 1, "titular": "texto corto en español para que el sistema lo ponga (o vacío)"}}`;
 
 const CONTROL = `Sos control de calidad de piezas para pantallas LED publicitarias. Mirá la imagen y respondé SOLO JSON:
-{"ok": true|false, "lectura_panoramica": "buena|regular|mala", "defectos": "menos de 25 palabras", "correccion": "instrucción en inglés para regenerar, o vacío"}
-Rechazá (ok=false) si el producto o su envase quedan cortados por un borde, si hay cualquier texto, letra o número legible,
-logo o marca (incluidas galletas, envases o productos que imiten una marca conocida), rostro protagonista o deformaciones visibles.`;
+{"grave": true|false, "motivo": "menos de 15 palabras, en español", "correccion": "instrucción en inglés para regenerar, o vacío"}
+grave = true SOLO si pasa algo de esto:
+- hay texto, letras o números legibles, o un logo, o un producto/envase con una marca reconocible impresa;
+- el producto PRINCIPAL (el protagonista) o su envase quedan cortados por un borde;
+- el producto está deformado o se ve claramente falso.
+NO es grave (respondé grave=false): elementos secundarios que tocan un borde (papas que caen, migas, chispas, humo),
+una banda o textura que sale por los costados en formatos muy panorámicos, un envase liso de color, aire vacío a los lados.`;
 
 // ---------- utilidades ----------
 const enc = new TextEncoder();
@@ -116,7 +123,8 @@ async function api(req, env, ruta) {
     await cobrar(env, `control ${cuerpo.pantalla}`, PRECIO.claude);
     const qc = await claude(env, CONTROL, [{ type: 'image', source: { type: 'url', url: cuerpo.url } },
       { type: 'text', text: `Pantalla ${cuerpo.pantalla} (${GEN[cuerpo.pantalla][0] / GEN[cuerpo.pantalla][1]}:1). Respondé solo el JSON.` }], 1500);
-    return json(qc || { ok: false, defectos: 'control sin respuesta legible', correccion: 'Keep the full subject inside the frame with margin on all sides.' });   // falla cerrada
+    if (!qc) return json({ ok: false, motivo: 'el control no respondió claro', correccion: 'Keep the main product fully inside the frame.' });   // falla cerrada
+    return json({ ok: qc.grave !== true, motivo: qc.motivo || '', correccion: qc.correccion || '' });
   }
   if (ruta === '/api/guardar') {   // copia los originales de fal a R2 (la CDN de fal no garantiza guardarlos)
     const id = `${hoy()}-${crypto.randomUUID().slice(0, 8)}`, pantallas = {};

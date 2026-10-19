@@ -171,21 +171,21 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
   const pasos = $('progreso'); let actual = null;
   function paso(txt) {
     const li = document.createElement('li'); li.textContent = txt; li.className = 'activo'; pasos.appendChild(li);
-    const p = { ok: (t) => { li.className = 'hecho'; if (t) li.textContent = t; }, mal: (t) => { li.className = 'mal'; li.textContent = t; } }; actual = p; return p;
+    const p = { ok: (t) => { li.className = 'hecho'; if (t) li.textContent = t; }, activo: () => { li.className = 'activo'; }, mal: (t) => { li.className = 'mal'; li.textContent = t; } }; actual = p; return p;
   }
   async function actualizarGasto() { try { const g = await (await fetch('/api/gasto')).json(); $('gasto').textContent = `Hoy van USD ${g.usd.toFixed(2).replace('.', ',')} de ${g.tope}`; } catch (e) { /* sin dato */ } }
   const NOMBRES = { corrientes: 'Corrientes', pellegrini: 'Pellegrini', media: 'la banda media' };
-  async function pantalla(pid, prompt, semilla) {
-    let p = prompt;
-    for (let intento = 1; intento <= 3; intento++) {
-      const s = paso(`Imagen para ${NOMBRES[pid]}${intento > 1 ? `, otra vez` : ''}…`);
-      const url = await esperarFal(await post('/api/imagen', { pantalla: pid, prompt: p, seed: semilla + intento }));
-      const qc = await post('/api/control', { url, pantalla: pid });
-      if (qc.ok) { s.ok(`Imagen para ${NOMBRES[pid]}: lista`); return url; }
-      s.mal(`Imagen para ${NOMBRES[pid]}: no quedó bien${qc.defectos ? ` (${qc.defectos.replace(/\.$/, '')})` : ''}. Va de nuevo.`);
-      p = prompt + ' ' + (qc.correccion || '');
-      if (intento === 3) return url;   // tras 3 intentos se deja la última, marcada en el progreso
+  async function pantalla(pid, prompt, semilla) {   // hasta 2 intentos: solo se rehace si el control encuentra algo grave
+    const s = paso(`Imagen para ${NOMBRES[pid]}…`);
+    let url = await esperarFal(await post('/api/imagen', { pantalla: pid, prompt, seed: semilla }));
+    let qc = await post('/api/control', { url, pantalla: pid });
+    if (!qc.ok) {
+      s.ok(`Imagen para ${NOMBRES[pid]}: ajustando${qc.motivo ? ` (${qc.motivo.replace(/\.$/, '')})` : ''}…`); s.activo();
+      url = await esperarFal(await post('/api/imagen', { pantalla: pid, prompt: prompt + ' ' + (qc.correccion || ''), seed: semilla + 7 }));
+      qc = await post('/api/control', { url, pantalla: pid });
     }
+    s.ok(`Imagen para ${NOMBRES[pid]}: ${qc.ok ? 'lista' : 'lista, conviene revisarla'}`);
+    return url;
   }
   $('generar').addEventListener('click', async () => {
     const brief = $('brief').value.trim(); if (brief.length < 8) { $('brief').focus(); return; }

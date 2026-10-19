@@ -91,10 +91,13 @@ Devolvé SOLO JSON:
            "zonas": [], "velocidad": 1, "titular": "texto corto en español para que el sistema lo ponga (o vacío)"}}"""
 
 CONTROL = """Sos control de calidad de piezas para pantallas LED publicitarias. Mirá la imagen y respondé SOLO JSON:
-{"ok": true|false, "texto_o_letras": bool, "logo_o_marca": bool, "rostro_protagonista": bool,
- "lectura_panoramica": "buena|regular|mala", "defectos": "breve", "correccion": "instrucción en inglés para regenerar, o vacío"}
-Rechazá (ok=false) si el producto o su envase quedan cortados por un borde, si hay cualquier texto, letra o número legible, logo o marca, envase con marca, rostro protagonista,
-deformaciones visibles del producto, o si el sujeto queda cortado o perdido en el formato panorámico."""
+{"grave": true|false, "motivo": "menos de 15 palabras, en español", "correccion": "instrucción en inglés para regenerar, o vacío"}
+grave = true SOLO si pasa algo de esto:
+- hay texto, letras o números legibles, o un logo, o un producto/envase con una marca reconocible impresa;
+- el producto PRINCIPAL (el protagonista) o su envase quedan cortados por un borde;
+- el producto está deformado o se ve claramente falso.
+NO es grave (respondé grave=false): elementos secundarios que tocan un borde (papas que caen, migas, chispas, humo),
+una banda o textura que sale por los costados en formatos muy panorámicos, un envase liso de color, aire vacío a los lados."""
 
 
 def revisar(img_bytes, pantalla):
@@ -102,8 +105,8 @@ def revisar(img_bytes, pantalla):
     buf = io.BytesIO(); im.save(buf, 'JPEG', quality=88); b64 = base64.b64encode(buf.getvalue()).decode()
     gastar(f'control {pantalla}', PRECIO['claude'], TOPE)
     return claude(CONTROL, [{'type': 'image', 'source': {'type': 'base64', 'media_type': 'image/jpeg', 'data': b64}},
-                            {'type': 'text', 'text': f'Pantalla: {PANTALLAS[pantalla]["nombre"]}. Respondé solo el JSON; "defectos" en menos de 25 palabras.'}], 1500) or \
-        {'ok': False, 'lectura_panoramica': '?', 'defectos': 'control sin respuesta legible', 'correccion': 'Keep the full subject inside the frame with margin on all sides.'}   # sin veredicto = se regenera (falla cerrada)
+                            {'type': 'text', 'text': f'Pantalla: {PANTALLAS[pantalla]["nombre"]}. Respondé solo el JSON.'}], 1500) or \
+        {'grave': True, 'motivo': 'control sin respuesta legible', 'correccion': 'Keep the main product fully inside the frame.'}   # sin veredicto = se regenera (falla cerrada)
 
 
 # ---------- fal ----------
@@ -167,16 +170,17 @@ def main():
         urls = {}
         for k, (pid, P) in enumerate(PANTALLAS.items()):
             prompt = plan[pid]['prompt'] + ' Absolutely no text, no letters, no numbers, no logos, no brand marks.'
-            for intento in range(3):
+            for intento in range(2):   # solo se rehace si el control encuentra algo grave
                 b, url = imagen(prompt, *P['gen'], semilla=1000 * n + 10 * k + intento)
                 qc = revisar(b, pid)
-                if qc.get('ok'): break
+                qc['ok'] = qc.get('grave') is not True
+                if qc['ok']: break
                 prompt = plan[pid]['prompt'] + ' ' + (qc.get('correccion') or '') + ' Absolutely no text, no letters, no logos.'
             open(os.path.join(d, f'{pid}-hd.jpg'), 'wb').write(b)
             recortar(b, P['px']).save(os.path.join(d, f'{pid}.jpg'), quality=92)
             urls[pid] = url
             informe.append(f'- {pid}: {"aprobada" if qc.get("ok") else "RECHAZADA (se deja la última para revisión)"} '
-                           f'en {intento + 1} intento(s) · lectura {qc.get("lectura_panoramica", "?")} · {qc.get("defectos", "")}')
+                           f'en {intento + 1} intento(s) · {qc.get("motivo", "")}')
         v = plan.get('video') or {}
         if pz.get('video') and v.get('pantalla') in urls:
             open(os.path.join(d, f'{v["pantalla"]}-video.mp4'), 'wb').write(video(urls[v['pantalla']], v.get('movimiento', 'slow push-in')))
