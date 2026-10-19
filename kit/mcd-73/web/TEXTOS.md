@@ -1,0 +1,97 @@
+# Textos del portal EL TRUST (trust.affinitas.com.ar)
+
+Fuente: `kit/mcd-73/web/public/index.html` y la pantalla de entrada en `src/worker.js`. Cada línea tiene un código (P-01, P-02…) para poder devolver los cambios por código.
+
+**Lo que no se cambia** (son datos verificados):
+- las medidas: Corrientes 7,68 × 3,84 m y Pellegrini 9,60 × 3,84 m;
+- 3 pantallas, 46 luminarias y 15 segundos por show;
+- la receta del celeste: 0 % rojo, 28 % verde, 53 % azul, 51 % blanco;
+- que es una simulación, no conectada a los equipos reales;
+- los estados de los módulos: «en desarrollo» o «próximo»;
+- los datos de la campaña de McDonald's.
+
+- **P-01** (a): Simulador
+- **P-02** (a): Crear una pieza
+- **P-03** (a): Material
+- **P-04** (a): Salir
+- **P-05** (p): La esquina más vista de Buenos Aires. Acá armamos y probamos cada show antes de que se prenda el edificio. Abajo te contamos qué estamos haciendo.
+- **P-06** (li): 3 pantallas LED
+- **P-07** (li): 46 luces de fachada
+- **P-08** (li): 15 s cada show
+- **P-09** (h2): Un edificio que ya es un medio
+- **P-10** (p): EL TRUST está en la esquina de Corrientes y Carlos Pellegrini, mirando al Obelisco. Por ahí pasa medio Buenos Aires: a pie, en auto, en colectivo, de día y de noche.
+- **P-11** (p): Arriba tiene dos pantallas, una tercera banda abraza la esquina y 46 luminarias pueden pintar la fachada de cualquier color. La idea es que todo eso funcione junto, como una sola pieza, y no como tres carteles con unas luces alrededor.
+- **P-12** (h2): Tres pantallas, cada una con su forma
+- **P-13** (p): La de Corrientes mide 7,68 por 3,84 metros y la de Pellegrini 9,60 por 3,84. Están apoyadas sobre la cornisa, una a cada lado de la cúpula. Abajo, la banda corre de punta a punta por encima del primer piso.
+- **P-14** (p): Son formatos raros: muy anchos, nada que ver con un video común. Por eso cada pieza se arma para su pantalla y nunca se estira una imagen pensada para otra cosa.
+- **P-15** (h2): Cuarenta y seis luces, de a una
+- **P-16** (p): Las luminarias están repartidas en tres filas y en la ochava. Cada una se puede prender, apagar y teñir por separado, o en grupo: arriba, en el medio, abajo, la esquina, la cúpula.
+- **P-17** (p): En el simulador cada haz sube por la piedra como lo haría en la realidad, se corta en las cornisas y nunca cae sobre las pantallas. Así lo que se ve en la prueba se parece a lo que va a pasar en la calle.
+- **P-18** (button): Barrido
+- **P-19** (button): Ola
+- **P-20** (button): Latido
+- **P-21** (button): Destellos
+- **P-22** (button): Degradé
+- **P-23** (button): Tramos
+- **P-24** (h2): Probá los efectos
+- **P-25** (p): Cada punto es una luminaria real, en su lugar. Elegí un efecto y mirá cómo se mueve la luz por la fachada: es el mismo motor que usa el simulador, corriendo acá.
+- **P-26** (p): Un barrido cruza de Corrientes a Pellegrini. La ola sube desde la planta baja. El latido golpea dos veces, como un corazón. Los tramos le dan a cada protagonista su color y su momento.
+- **P-27** (h2): Colores que el equipo puede hacer
+- **P-28** (p): Las luminarias son RGBW: rojo, verde, azul y un blanco propio. Para que los colores salgan limpios usamos dos canales de color más el blanco, nunca los tres juntos.
+- **P-29** (p): Así sale, por ejemplo, el celeste de la camiseta: nada de rojo, un poco de verde, bastante azul y la mitad de blanco. Cada color de una campaña se traduce a esa receta antes de llegar a la fachada.
+- **P-30** (h2): El simulador por dentro
+- **P-31** (p): TRUST Control es el programa donde se arma cada show. A la izquierda, el edificio; a la derecha, las pantallas, las zonas de luz y cada luminaria; abajo, la línea de tiempo con una pista para cada cosa.
+- **P-32** (p): Un show dura 15 segundos y tiene cinco momentos: la previa, la entrada de la marca, el takeover con todo al máximo, el cierre y la vuelta a la calma. Se puede frenar en cualquier segundo y ver exactamente qué hace cada pantalla y cada luz.
+- **P-33** (h2): De noche y de día
+- **P-34** (p): De noche mandan las luces. De día casi no se ven y las pantallas tienen que pelear contra el sol. El simulador muestra las dos situaciones con la misma toma, para decidir qué funciona en cada horario.
+- **P-35** (h2): Una idea, tres pantallas
+- **P-36** (p): Entre las dos pantallas de arriba está la cúpula. Parece un detalle, pero cambia mucho: una palabra que cruza de una a la otra se lee cortada.
+- **P-37** (p): Por eso el mensaje se reparte para que cada pantalla se entienda sola. Solo se parte cuando alguien lo pide a propósito.
+- **P-38** (li): Una frase «Ola celeste y blanca, que diga VAMOS ARGENTINA»
+- **P-39** (li): La ficha del show colores, efecto, zonas, texto y tiempos, revisados contra lo que el edificio puede hacer
+- **P-40** (li): El motor arma cada cuadro para las tres pantallas y las 46 luces
+- **P-41** (li): El edificio hoy en el simulador; mañana, en los equipos reales
+- **P-42** (h2): De una frase a un show
+- **P-43** (p): Se escribe la idea como se la contarías a alguien. El sistema la convierte en una ficha con los colores, el efecto, las zonas y el texto, y muestra lo que entendió antes de mover nada.
+- **P-44** (p): Esa ficha pasa por un control: si algo no existe en el edificio, no entra. Recién después el motor la ejecuta.
+- **P-45** (h2): Contar la idea y verla
+- **P-46** (p): Es la parte que más nos entusiasma. Escribís en una frase lo que querés mostrar y en unos minutos tenés imágenes hechas a medida de cada pantalla, ya puestas en el edificio.
+- **P-47** (p): Antes de mostrar una imagen, el sistema la revisa: si aparece una letra suelta, un logo que no existe o el producto cortado, la vuelve a hacer. Los textos y la marca nunca los inventa la máquina; salen del material oficial.
+- **P-48** (h2): Con material real de la marca
+- **P-49** (p): Para McDonald's armamos un show con piezas de su campaña con la Selección: el afiche de la McÁlvarez, las tres hamburguesas con sus nombres y los jugadores en el mostrador.
+- **P-50** (p): El simulador las anima para el formato del edificio y cambia el color de la fachada con cada jugador. No se agrega nada que la marca no haya hecho.
+- **P-51** (h2): La plataforma que estamos armando
+- **P-52** (p): El simulador es la primera pieza. Alrededor estamos construyendo el resto, paso a paso y con cada parte revisada antes de pasar a la siguiente.
+- **P-53** (li): Previs El edificio en 3D, medido, para ver los shows desde cualquier esquina y no solo desde una foto. En desarrollo
+- **P-54** (li): Control La operación diaria: qué campaña sale, a qué hora, quién la aprobó. En desarrollo
+- **P-55** (li): Edge El equipo instalado en el edificio, que ejecuta el show aunque se corte internet. Próximo
+- **P-56** (li): Creative Studio Un editor para que el equipo de marketing del cliente arme sus propias piezas. Próximo
+- **P-57** (li): Audiencia Un conteo de personas con cámaras, primero como reporte interno. Próximo
+- **P-58** (h2): Lo que sigue
+- **P-59** (p): Por ahora todo esto es una simulación: no está conectado a las pantallas ni a las luces reales. Lo próximo es sumar la tercera pantalla, trabajar con el material en alta del cliente y conectar el sistema con los equipos del edificio.
+- **P-60** (p): Abrir el simulador Crear una pieza
+- **P-61** (h2): Herramientas
+- **P-62** (h2): Ver un show en el edificio
+- **P-63** (p): El edificio real, de noche o de día, con las pantallas y las luces funcionando juntas. Escribís una idea y la ves al instante.
+- **P-64** (a): Abrir el simulador
+- **P-65** (h2): Crear una pieza nueva
+- **P-66** (p): Contá la idea en una frase. En unos minutos tenés las imágenes para las tres pantallas, listas para ver en el edificio. Los textos y la marca se suman después, con el material oficial del cliente.
+- **P-67** (li): Postre celeste y blanco
+- **P-68** (li): Papas doradas
+- **P-69** (li): Desayuno al amanecer
+- **P-70** (label): ¿Qué querés mostrar?
+- **P-71** (button): Crear pieza
+- **P-72** (label): Con video de 5 segundos
+- **P-73** (a): Ver en el simulador
+- **P-74** (button): Crear otra
+- **P-75** (h2): Material de marca
+- **P-76** (p): Fotos, logos y piezas oficiales del cliente. Queda guardado acá, sin publicar, y se usa para armar los shows: nada se inventa.
+- **P-77** (label): Subir otro archivo
+- **P-78** (h2): Piezas guardadas
+- **P-79** (p): Todo lo que se crea queda acá. Tocá una para verla en el edificio.
+- **P-80** (p): Cargando…
+- **P-81** (entrada, h1): EL TRUST
+- **P-82** (entrada, p): Corrientes y Carlos Pellegrini, frente al Obelisco.
+- **P-83** (entrada, label): Clave
+- **P-84** (entrada, button): Entrar
+- **P-85** (entrada, p): Affinitas. Material de trabajo, no publicar.
