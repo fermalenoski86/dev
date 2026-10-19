@@ -42,6 +42,7 @@
 
   <main>
     <section class="escenario" id="escenario">
+      <canvas id="fondo-amb" aria-hidden="true"></canvas>
       <canvas id="lienzo" aria-label="Fotografía real del edificio EL TRUST con pantallas e iluminación simuladas"></canvas>
       <div class="capa" id="capa">
         <div class="marca-sel" id="marca-sel"></div>
@@ -62,15 +63,23 @@
     </section>
 
     <aside id="panel">
-      <div class="tarjeta plegado" id="t-director">
+      <div class="tarjeta" id="t-director">
         <header><div class="ico oro"><svg viewBox="0 0 24 24" fill="none" stroke="#E8B65B" stroke-width="2"><path d="M4 20l7-7M14 4l1.5 3L19 8.5 15.5 10 14 13l-1.5-3L9 8.5 12.5 7z"/></svg></div>
           <div><h2>Estudio de contenido <span class="sim">demo</span></h2><p>Escribí la idea o subí material: arma el show de 15 s para pantallas y luces</p></div>
-          <button class="plegar" id="director-plegar" aria-expanded="false" aria-controls="director-cuerpo" title="Mostrar u ocultar el prompt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 15l6-6 6 6"/></svg></button></header>
+          <button class="plegar" id="director-plegar" aria-expanded="true" aria-controls="director-cuerpo" title="Mostrar u ocultar el prompt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 15l6-6 6 6"/></svg></button></header>
         <div class="cuerpo-director" id="director-cuerpo">
         <label class="lbl" for="prompt">Tu idea</label>
         <textarea id="prompt" class="prompt" rows="5">Takeover de 15 s para McDonald's: que la campaña nazca en Corrientes, cruce a Pellegrini y termine en la pantalla de abajo con la marca. Rojo en la fachada y cierre dorado.</textarea>
-        <div class="plan" id="plan" hidden><p class="cab" id="plan-cab"></p><p class="sub">Lo que entendí</p><ul id="plan-entendi" class="lista-chica"></ul><p class="sub">Cómo queda</p><ol id="plan-ol"></ol></div>
-        <p class="nota" id="director-nota"><b>Cómo funciona hoy:</b> el pedido se lee con reglas: <b>colores</b> (azul, verde, blanco…), <b>texto entre comillas</b> o después de «texto:», <b>producto</b> (hamburguesa, papas, café, McFlurry) y <b>ritmo</b> generan el show en las pantallas y la fachada; las palabras de tema (lanzamiento, desayuno, marca…) eligen una base ya diseñada. Si subís un video o una imagen, entra solo a las pantallas. <b>No hay IA conectada</b> y nada sale de esta computadora. Más adelante se puede sumar un modelo de IA, siempre con aprobación antes de salir al aire.</p>
+        <div class="ejemplos" id="ejemplos"><span>Probá:</span>
+          <button data-p="Ola celeste y blanco que suba por la fachada, texto: VAMOS ARGENTINA">Ola celeste y blanco</button>
+          <button data-p="McFlurry, violeta y crema, destellos en la cúpula y arriba, ritmo rápido">Destellos McFlurry</button>
+          <button data-p="Barrido rojo y dorado de Corrientes a Pellegrini, con mucho impacto">Barrido de marca</button>
+          <button data-p="Latido rojo en toda la fachada, solo luces">Latido solo luces</button>
+          <button data-p="Desayuno tranquilo, degradé cálido, café y medialuna">Desayuno en degradé</button>
+        </div>
+        <div class="plan" id="plan" hidden><p class="cab" id="plan-cab"></p><p class="sub">Lo que entendí</p><ul id="plan-entendi" class="lista-chica"></ul><p class="sub">Cómo queda</p><ol id="plan-ol"></ol>
+          <details class="ficha"><summary>Ficha del show (lo que ejecuta el motor)</summary><pre id="plan-ficha"></pre></details></div>
+        <p class="nota" id="director-nota"><b>Cómo funciona hoy:</b> el pedido se convierte en una <b>ficha del show</b> que el motor valida y ejecuta. Entiende <b>colores</b> (celeste, azul, verde, blanco…; «sin rojo» lo saca), <b>texto entre comillas</b> o después de «texto:», <b>producto</b> (hamburguesa, papas, café, McFlurry), <b>efectos de luz</b> (barrido, ola, latido, destellos, degradé, respiración), <b>zonas</b> (arriba, abajo, ochava, cúpula; «solo pantallas», «solo luces») y <b>ritmo</b>; las palabras de tema (lanzamiento, desayuno, marca…) eligen una base ya diseñada. Si subís un video o una imagen, entra solo a las pantallas. <b>No hay IA conectada</b> y nada sale de esta computadora. Más adelante se puede sumar un modelo de IA, siempre con aprobación antes de salir al aire.</p>
         </div>
         <div class="adjuntos" id="adjuntos">
           <div class="adj-cab"><span class="lbl">Material</span><button class="b" id="upload" title="Video MP4 o imagen JPG, PNG, WEBP">+ Subir video o imagen</button></div>

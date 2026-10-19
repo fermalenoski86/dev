@@ -16,6 +16,14 @@ OK    el plan muestra lo entendido (colores, texto, producto) y se rotula sin IA
 OK    la fachada usa la paleta pedida (['#1E5BFF', '#F4F4F4'])
 OK    sin colores ni texto entre comillas no se inventa una creatividad P
 OK    la nota aclara cómo funciona hoy: palabras clave, sin IA conectada
+OK    ficha: ola celeste y blanco con texto (ola, ['#6CACE4', '#F4F4F4'])
+OK    ficha: destellos en la cúpula y arriba, rápido (['superior', 'cupula'])
+OK    ficha: «rojo y dorado» manda el primero → estilo rojo, barrido (rojo)
+OK    ficha: «solo luces» deja las pantallas en institucional
+OK    ficha: «solo pantallas» y «sin rojo» (['#1FA34A', '#F4F4F4'])
+OK    pedido sin nada reconocible: lo dice y sugiere ejemplos (no falla en silencio)
+OK    el latido se ve en las luminarias (niveles [0.45, 0.34, 0.19]) y las pantallas quedan institucionales
+OK    los ejemplos de un clic generan el show
 OK    el pedido cambia el show: lanzamiento→F dorado fuerte · desayuno→E cálido suave · papas→D · producto→B · logo→A ([True, True, True, True, True])
 OK    escribir en el pedido no dispara atajos (espacio, R, D, N, B se escriben normal): ['papas r d n b con espacios', 'noche', False]
 OK    barra espaciadora fuera del texto: Play/Pausa
@@ -41,8 +49,9 @@ OK    escena «Luces apagadas»: las 46 en 0
 OK    blanco cálido = mezcla RGBW, sin amarillo saturado (≈3000–3500 K: R 1.00 G 0.77 B 0.61)
 OK    escena «RGBW libre»: base neutra moderada para colorear por luminaria o grupo
 OK    color por grupo: «medio» en azul, superior e inferior sin tocar
-OK    Director de show plegado al abrir: prompt oculto, botón Generar visible ([True, True, True])
-OK    Director de show: se despliega con su botón
+OK    Director de show desplegado al abrir (19/10): el prompt y los ejemplos a la vista, botón Generar visible ([False, False, True])
+OK    Director de show: se pliega con su botón
+OK    Director de show: se vuelve a desplegar
 OK    apertura del haz configurable por luminaria (solo SUP-03 cambió: ['SUP-03'])
 OK    46 luminarias 16/16/14 → {'superior': 16, 'medio': 16, 'inferior': 14}
 OK    Día ↔ Noche: niveles, colores y salidas idénticos
@@ -51,7 +60,7 @@ OK    «Restaurar niveles» deja todo en 100 % y color de escena
 OK    blackout: pantallas, luces y reloj en 0
 OK    soltar blackout recupera los niveles
 OK    show determinista: el mismo t da exactamente la misma salida
-OK    Play avanza el reloj del show (t=1.12 s tras 1,2 s)
+OK    Play avanza el reloj del show (t=1.15 s tras 1,2 s)
 OK    Pausa congela el show
 OK    el show termina en 15 s y se detiene
 OK    a los 4 s la ola roja avanzó desde Corrientes (izquierda) hacia Pellegrini
@@ -71,7 +80,7 @@ OK    NORMAL (1 s): fachada cálida 38 % (ochava 42 %)
 OK    EXIT: el show termina exactamente en ARCHITECTURAL_WARM
 OK    RGB_DIAGNOSTIC: rotulado «DIAGNOSTIC MODE», SUP-04 azul · SUP-11 verde · MED-08 magenta (['MED-08', 'SUP-04', 'SUP-11'])
 OK    escena comercial: sin rótulo de diagnóstico
-OK    una sola composición: 3,0 s solo Corrientes · 3,9 s Corrientes + Pellegrini · 7,5 s las tres ([247, 23, 34] → [89, 184, 34] → [194, 232, 143])
+OK    una sola composición: 3,0 s solo Corrientes · 3,9 s Corrientes + Pellegrini · 7,5 s las tres ([247, 23, 34] → [89, 184, 34] → [194, 232, 144])
 OK    contenido sin textos de demo («TAKEOVER 15 s», «UN MOMENTO SINCRONIZADO»…)
 OK    creatividades A · B · C: tres variantes visuales distintas
 OK    modo cliente: 0 sliders visibles y solo ['NORMAL', 'TAKEOVER', 'SIGNATURE', 'ANTES / DESPUÉS']
@@ -79,14 +88,14 @@ OK    ANTES / DESPUÉS: sin iluminación ↔ arquitectónica cálida
 OK    modo cliente: TAKEOVER reproduce el show
 OK    modo operador: vuelve el panel completo (master, zonas, RGBW, transiciones, escenas)
 OK    ningún halo sobre el contenido LED: 72 píxeles dentro de las 3 pantallas idénticos con luces 100 % y 0 % (difieren 0)
-OK    luces apagadas: el TRUST sigue visible con la luz urbana (63% del brillo de la foto)
-OK    vecino, torre blanca y cielo no cambian (quedan como en la foto)
+OK    luces apagadas: el TRUST sigue visible con la luz urbana (64% del brillo de la foto)
+OK    vecino y torre blanca no cambian; el cielo es el nocturno parejo (19/10), oscuro y azulado como el de la foto ([13, 18, 34, 255] vs [16, 22, 34, 255])
 OK    un haz encendido se suma a la luz urbana (brillo ×2.1 sobre apagado)
 OK    SUP-05 al 20 %: baja su baño y el resto de la fachada no cambia
 OK    3 luminarias cambian de color: las otras 43 salidas idénticas
-OK    SUP-04 azul, SUP-11 verde, MED-08 magenta visibles en su baño ([[55, 62, 107, 255], [75, 133, 79, 255], [93, 43, 67, 255]])
+OK    SUP-04 azul, SUP-11 verde, MED-08 magenta visibles en su baño ([[55, 62, 107, 255], [75, 133, 80, 255], [97, 49, 75, 255]])
 OK    fuera de esos 3 baños la fachada no cambia (30 puntos idénticos)
-OK    takeover: el rojo cubre 18/60 puntos de la fachada (acentos, no capa uniforme)
+OK    takeover: el rojo cubre 19/60 puntos de la fachada (acentos, no capa uniforme)
 OK    takeover: hay acentos rojos visibles
 OK    mismo instante del show → mismos píxeles (sin parpadeo)
 OK    variación por equipo determinista y acotada (±6° de apertura, flujo 0,86–1,14): [(-3, 1.03), (-3, 0.89), (-5, 1.12), (6, 1.1)]
@@ -115,6 +124,6 @@ OK    preview aplicado: Corrientes muestra el clip subido a los 3,4 s ([211, 39,
 OK    Product Hero: el producto del packshot (contenido, sin estirar) al centro de Pellegrini a los 7 s ([191, 111, 41])
 OK    «Quitar media del preview» vuelve al contenido generado
 OK    [remove] quita el adjunto
-OK    0 pedidos de red fuera de file:// (82 pedidos locales)
+OK    0 pedidos de red fuera de file:// (87 pedidos locales)
 OK    0 errores de consola ([])
 Resultado: TODO OK

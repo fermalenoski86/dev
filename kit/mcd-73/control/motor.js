@@ -115,7 +115,8 @@
       return (i + desfaseDe(g)) % 2 === 0 ? mezclar(base, L_(0.55, OPC.estilo === 'custom' && PALETA_TAKEOVER.custom ? PALETA_TAKEOVER.custom[0].rgbw : C.rojo), k) : base;
     } },
     { desde: 5, luz: (g, i, n, id, t) => {      // persecución lenta de sectores de 3: rojo · oro · cálido (brief: 65–75 · 35–45 · 15–25 %)
-      const p = (t - 5) / 1.25, paso = Math.floor(p), k = suave((p - paso) / 0.4), b = Math.floor(i / 3) + desfaseDe(g);
+      if (OPC.efecto && OPC.efecto !== 'persecucion' && EFECTOS[OPC.efecto]) return EFECTOS[OPC.efecto].f(g, i, n, id, (t - 5) * OPC.velocidad);
+      const p = (t - 5) * OPC.velocidad / 1.25, paso = Math.floor(p), k = suave((p - paso) / 0.4), b = Math.floor(i / 3) + desfaseDe(g);
       const est = (s) => PALETA_TAKEOVER[OPC.estilo][((b + s) % 3 + 3) % 3];   // con jerarquía −8 %: 66 · 39 · 20 %
       return mezclar(est(paso - 1), est(paso), k);
     } },
@@ -164,12 +165,67 @@
     PALETA_TAKEOVER.custom = [L_(0.70, a), L_(0.45, b), L_(0.25, c2)];
     PALETA_FIRMA.custom = [L_(0.52, b), L_(0.45, C.calido), L_(0.35, a)];
   }
-  const OPC = { estilo: 'rojo', intensidad: 1 };
+  // OPC: lo que pide la FICHA del show (ver app.js · validarFicha). efecto del takeover, velocidad, zonas que participan,
+  // y si participan las luces y/o las pantallas. Sin ficha = la plantilla de siempre.
+  const OPC = { estilo: 'rojo', intensidad: 1, efecto: null, velocidad: 1, zonas: null, luces: true, pantallas: true };
+  // Biblioteca de efectos para las 46 luminarias (momento takeover, 5–10 s). f(grupo, i, n, id, τ) con τ = segundos × velocidad.
+  // x = posición a lo largo de la fachada (0 Corrientes → 1 Pellegrini); fila 0 inferior · 1 medio · 2 superior.
+  // Colores: los 3 de la paleta activa (la pedida o la de marca). Respetan la regla 2 canales + W porque vienen de la paleta.
+  const fila = (g) => (g === 'inferior' ? 0 : g === 'medio' ? 1 : 2);
+  const posX = (i, n) => (n > 1 ? i / (n - 1) : 0.5);
+  const pal = () => (PALETA_TAKEOVER[OPC.estilo] || PALETA_TAKEOVER.rojo).map((x) => x.rgbw);
+  const fr = (v) => v - Math.floor(v);
+  const azar = (id, k) => { let h = 2166136261; for (const ch of id + ':' + k) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0; return (h % 10007) / 10007; };
+  const EFECTOS = {
+    persecucion: { nombre: 'persecución', txt: 'sectores de 3 que avanzan con los 3 colores', f: null },
+    barrido: { nombre: 'barrido', txt: 'una franja de luz recorre la fachada de Corrientes a Pellegrini', f: (g, i, n, id, u) => {
+      const [a, b] = pal(), frente = fr(u / 2.2) * 1.4 - 0.2, d = posX(i, n) - frente, k = Math.exp(-(d * d) / 0.012);
+      return L_(0.22 + 0.68 * k, mezclaRGBW(b, a, k));
+    } },
+    ola: { nombre: 'ola', txt: 'ondas de color que suben de la planta baja al coronamiento', f: (g, i, n, id, u) => {
+      const [a, b] = pal(), s = 0.5 + 0.5 * Math.sin(u * 2.6 - fila(g) * 1.1 - posX(i, n) * 2.2);
+      return L_(0.25 + 0.6 * s, mezclaRGBW(b, a, s));
+    } },
+    latido: { nombre: 'latido', txt: 'toda la fachada late en doble pulso, como un corazón', f: (g, i, n, id, u) => {
+      const [a, b] = pal(), p = fr(u / 0.9), env = Math.exp(-p * 9) + (p > 0.2 ? 0.65 * Math.exp(-(p - 0.2) * 9) : 0);
+      return L_(0.2 + 0.72 * Math.min(1, env), enOchava.has(id) ? b : a);
+    } },
+    destello: { nombre: 'destellos', txt: 'luminarias sueltas destellan sobre una base suave', f: (g, i, n, id, u) => {
+      const [a, b] = pal(), paso = Math.floor(u * 5), k = azar(id, paso) > 0.72 ? Math.exp(-fr(u * 5) * 3.2) : 0;
+      return L_(0.24 + 0.7 * k, mezclaRGBW(b, a, k));
+    } },
+    degrade: { nombre: 'degradé', txt: 'los colores se funden a lo largo de la fachada y se desplazan lento', f: (g, i, n, id, u) => {
+      const [a, b, c2] = pal(), x = fr(posX(i, n) * 0.9 + fila(g) * 0.08 + u * 0.12) * 2;
+      return L_(0.6, x < 1 ? mezclaRGBW(a, b, suave(x)) : mezclaRGBW(b, OPC.estilo === 'custom' ? c2 : a, suave(x - 1)));
+    } },
+    respiracion: { nombre: 'respiración', txt: 'la fachada sube y baja lento, en un solo color', f: (g, i, n, id, u) => {
+      const [a] = pal(), s = 0.5 - 0.5 * Math.cos(u * 1.5);
+      return L_(0.28 + 0.4 * s, a);
+    } },
+  };
+  // ¿la luminaria participa? (zonas pedidas: superior · medio · inferior · ochava)
+  function participa(g, id) {
+    if (!OPC.luces) return false;
+    const z = OPC.zonas; if (!z || !z.length) return true;
+    return z.includes(g) || (z.includes('ochava') && enOchava.has(id));
+  }
   function showLuz(g, i, n, id, t) {
-    const v = encadenar(t, (k) => MOMENTOS[k].luz(g, i, n, id, t));
+    let v = encadenar(t, (k) => MOMENTOS[k].luz(g, i, n, id, t));
+    if (!participa(g, id)) {   // fuera de las zonas pedidas: queda en la cálida de base (se funde al entrar y al salir)
+      const fuera = suave((t - 1.5) / 1) * (1 - suave((t - 13) / 1));
+      v = mezclar(v, L_(enOchava.has(id) ? 0.36 : 0.32, C.calido), fuera);
+    }
     return L_(Math.min(1, v.nivel * (1 - JERARQUIA * presencia(t)) * (t >= 2 && t < 13 ? OPC.intensidad : 1)), v.rgbw);
   }
-  function showZona(z, t) { const v = encadenar(t, (k) => ZONAS_MOMENTO[k][z]); return L_(v.nivel * (1 - JERARQUIA * presencia(t)), v.rgbw); }
+  function showZona(z, t) {
+    let v = encadenar(t, (k) => ZONAS_MOMENTO[k][z]);
+    const cupulaPedida = z === 'cupula' && OPC.zonas && OPC.zonas.includes('cupula');
+    if (z === 'cupula' && (cupulaPedida || OPC.estilo === 'custom') && OPC.luces) {   // la cúpula toma el color pedido en el takeover
+      const k = suave((t - 4.5) / 1) * (1 - suave((t - 12.5) / 1)), puls = cupulaPedida ? 0.12 * Math.sin((t - 5) * OPC.velocidad * 3) : 0;
+      v = mezclar(v, L_(0.62 + puls, pal()[0]), k);
+    } else if (!OPC.luces) v = L_(0.5, C.calido);
+    return L_(v.nivel * (1 - JERARQUIA * presencia(t)), v.rgbw);
+  }
   function showReloj(t) {   // CLOCK ACCENT (próxima fase): realce dorado durante takeover y firma
     if (t < 5) return L_(0.85, C.neutro);
     if (t < 13) return L_(1, mezclaRGBW(C.neutro, C.oro, suave((t - 5) / 1)));
@@ -234,6 +290,7 @@
   }
   function salidaReloj() { const b = baseReloj(); return { nivel: S.blackout ? 0 : b.nivel * (S.reloj.nivel / 100), rgbw: b.rgbw }; }
   function contenido() {
+    if (S.show.cargado && !OPC.pantallas) return { modo: 'institucional', t: 0, bloque: bloque(S.show.t).id, creatividad: S.creatividad };   // «solo luces»
     if (S.show.cargado) return { modo: 'show', t: S.show.t, bloque: bloque(S.show.t).id, creatividad: S.creatividad };
     return { modo: ESCENAS[S.escena].pantallas, t: 0, bloque: null, creatividad: S.creatividad };
   }
@@ -251,6 +308,7 @@
 
   // ---------- acciones ----------
   const api = {
+    EFECTOS: Object.fromEntries(Object.entries(EFECTOS).map(([k, v]) => [k, { nombre: v.nombre, txt: v.txt }])),
     DUR, GRUPOS, PANTALLAS, ESCENAS, BLOQUES, APERTURA, ZONAS, OCHAVA, TRANSICIONES, CREATIVIDADES, COLORES: C,
     estado: () => JSON.parse(JSON.stringify(S)),
     salidas,
@@ -275,6 +333,16 @@
     setBlackout(b) { S.blackout = !!b; return avisar(); },
     setTransicion(s) { s = +s; if (s !== 0 && !TRANSICIONES.includes(s)) throw new Error('transición ' + s); S.transicion = s; if (!s) S.fundido = null; return avisar(); },
     setCreatividad(v) { if (!CREATIVIDADES.includes(v)) throw new Error('creatividad ' + v); S.creatividad = v; return avisar(); },
+    // Ficha del show (efecto, velocidad, zonas, qué participa). La valida app.js; acá se vuelve a acotar por seguridad.
+    setFicha(f) {
+      f = f || {};
+      OPC.efecto = f.efecto && f.efecto in EFECTOS ? f.efecto : null;
+      OPC.velocidad = clamp(+f.velocidad || 1, 0.5, 2);
+      OPC.zonas = Array.isArray(f.zonas) ? f.zonas.filter((z) => ['superior', 'medio', 'inferior', 'ochava', 'cupula'].includes(z)) : null;
+      OPC.luces = f.luces !== false; OPC.pantallas = f.pantallas !== false || !OPC.luces;   // nunca las dos apagadas
+      S.ficha = { efecto: OPC.efecto, velocidad: OPC.velocidad, zonas: OPC.zonas, luces: OPC.luces, pantallas: OPC.pantallas };
+      return avisar();
+    },
     setPaletaShow(hexes) { paletaPersonal(hexes); S.showPaleta = (hexes || []).slice(0, 3); return avisar(); },
     setEstiloShow(estilo, intensidad) {
       if (estilo === 'custom' && !PALETA_TAKEOVER.custom) paletaPersonal(null);
@@ -317,7 +385,7 @@
       S.luces.master = 100; S.reloj.nivel = 100; S.blackout = false;
       return api.volverAEscena();
     },
-    reiniciarTodo() { S = nuevoEstado(); OPC.estilo = 'rojo'; OPC.intensidad = 1; return avisar(); },
+    reiniciarTodo() { S = nuevoEstado(); Object.assign(OPC, { estilo: 'rojo', intensidad: 1, efecto: null, velocidad: 1, zonas: null, luces: true, pantallas: true }); return avisar(); },
     // Escenas guardadas como archivo local (sin servicio ni red).
     exportarEscena() {
       return JSON.stringify({ formato: 'trust-escena-v1', simulacion: true, escena: S.escena, transicion: S.transicion, creatividad: S.creatividad,

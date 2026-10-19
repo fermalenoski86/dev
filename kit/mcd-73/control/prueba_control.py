@@ -91,6 +91,24 @@ async def main(out):
         await pg.click('#generar')
         ok(await ev('TRUST.motor.estado().creatividad') != 'P', 'sin colores ni texto entre comillas no se inventa una creatividad P')
         ok('No hay IA conectada' in await ev('document.getElementById("director-nota").innerText'), 'la nota aclara cómo funciona hoy: palabras clave, sin IA conectada')
+        # --- ficha del show (19/10): efectos, zonas, «solo luces/pantallas», «sin X», y la ficha validada a la vista
+        fc = []
+        for txt in ['Ola celeste y blanco que suba por la fachada, texto: VAMOS ARGENTINA', 'McFlurry, violeta y crema, destellos en la cúpula y arriba, ritmo rápido',
+                    'Barrido rojo y dorado de Corrientes a Pellegrini', 'Latido rojo en toda la fachada, solo luces', 'verde y blanco sin rojo, solo pantallas', 'algo lindo']:
+            await pg.fill('#prompt', txt); await pg.click('#generar'); await ev('TRUST.motor.pausa()')
+            fc.append(json.loads(await ev('document.getElementById("plan-ficha").textContent')))
+        ok(fc[0]['efecto'] == 'ola' and fc[0]['paleta'] == ['#6CACE4', '#F4F4F4'] and fc[0]['titular'] == 'VAMOS ARGENTINA', f'ficha: ola celeste y blanco con texto ({fc[0]["efecto"]}, {fc[0]["paleta"]})')
+        ok(fc[1]['efecto'] == 'destello' and fc[1]['zonas'] == ['superior', 'cupula'] and fc[1]['energia'] > 1, f'ficha: destellos en la cúpula y arriba, rápido ({fc[1]["zonas"]})')
+        ok(fc[2]['efecto'] == 'barrido' and fc[2]['estilo'] == 'rojo', f'ficha: «rojo y dorado» manda el primero → estilo rojo, barrido ({fc[2]["estilo"]})')
+        ok(fc[3]['efecto'] == 'latido' and fc[3]['pantallas'] is False and fc[3]['luces'] is True, 'ficha: «solo luces» deja las pantallas en institucional')
+        ok(fc[4]['luces'] is False and '#DA291C' not in fc[4]['paleta'], f'ficha: «solo pantallas» y «sin rojo» ({fc[4]["paleta"]})')
+        ok(fc[5]['efecto'] is None and 'no encontré' in await ev('document.getElementById("plan-entendi").innerText'), 'pedido sin nada reconocible: lo dice y sugiere ejemplos (no falla en silencio)')
+        await pg.fill('#prompt', 'Latido rojo en toda la fachada, solo luces'); await pg.click('#generar'); await ev('TRUST.motor.pausa(); TRUST.motor.seek(7.2)')
+        lat = await ev('(()=>{const v=[];for(const t of [5.05,5.3,5.6]){TRUST.motor.seek(t);v.push(TRUST.motor.salidas().luces[20].nivel)}return [v, TRUST.motor.salidas().contenido.modo]})()')
+        ok(max(lat[0]) - min(lat[0]) > 0.2 and lat[1] == 'institucional', f'el latido se ve en las luminarias (niveles {[round(x,2) for x in lat[0]]}) y las pantallas quedan institucionales')
+        await ev('document.querySelector("#ejemplos button").click()'); await ev('TRUST.motor.pausa()')
+        ok(json.loads(await ev('document.getElementById("plan-ficha").textContent'))['efecto'] == 'ola', 'los ejemplos de un clic generan el show')
+        await ev('TRUST.motor.setFicha(null)')
         await ev('TRUST.motor.pausa()')
         casos = [('Lanzamiento del nuevo producto, todo dorado y con mucho impacto', 'F', 'dorado', 1.12), ('Un desayuno sutil, café y medialunas', 'E', 'calido', 0.88), ('Lluvia de papas fritas', 'D', 'rojo', 1), ('Que la hamburguesa sea la protagonista', 'B', 'rojo', 1), ('El logo bien grande', 'A', 'rojo', 1)]
         res = []
@@ -186,10 +204,11 @@ async def main(out):
         await pg.reload(); await pg.wait_for_function('window.TRUST && TRUST.info().W > 0'); await pg.evaluate('TRUST.motor.setTransicion(0)')   # estado de apertura recién abierto
         await ev('document.getElementById("portada").classList.add("fuera")'); await pg.wait_for_timeout(700)
         ple = await ev('[document.getElementById("t-director").classList.contains("plegado"), document.getElementById("director-cuerpo").offsetParent === null, !!document.getElementById("generar").offsetParent]')
-        ok(ple == [True, True, True], f'Director de show plegado al abrir: prompt oculto, botón Generar visible ({ple})')
+        ok(ple == [False, False, True], f'Director de show desplegado al abrir (19/10): el prompt y los ejemplos a la vista, botón Generar visible ({ple})')
         await pg.click('#director-plegar')
-        ok(await ev('document.getElementById("director-cuerpo").offsetParent !== null && document.getElementById("director-plegar").getAttribute("aria-expanded") === "true"'), 'Director de show: se despliega con su botón')
+        ok(await ev('document.getElementById("director-cuerpo").offsetParent === null && document.getElementById("director-plegar").getAttribute("aria-expanded") === "false"'), 'Director de show: se pliega con su botón')
         await pg.click('#director-plegar')
+        ok(await ev('document.getElementById("director-cuerpo").offsetParent !== null'), 'Director de show: se vuelve a desplegar')
         await ev(f'{M}.setFixtureApertura("SUP-03", 25)')
         aps = await ev(f'{M}.salidas().luces.filter(l=>l.apertura!==({M}.APERTURA[l.grupo])).map(l=>l.id)')
         ok(aps == ['SUP-03'], f'apertura del haz configurable por luminaria (solo SUP-03 cambió: {aps})')
@@ -344,7 +363,9 @@ async def main(out):
         n_f = len(fachada)
         rel = sum(lum_(a) for a in apag[:n_f]) / max(1, sum(lum_(f) for f in foto[:n_f]))
         ok(0.45 < rel < 0.8, f'luces apagadas: el TRUST sigue visible con la luz urbana ({rel:.0%} del brillo de la foto)')
-        ok(apag[n_f:] == foto[n_f:], 'vecino, torre blanca y cielo no cambian (quedan como en la foto)')
+        cie_a, cie_f = apag[-1], foto[-1]
+        ok(apag[n_f:-1] == foto[n_f:-1] and abs(lum_(cie_a) - lum_(cie_f)) < 12 and cie_a[2] > cie_a[0],
+           f'vecino y torre blanca no cambian; el cielo es el nocturno parejo (19/10), oscuro y azulado como el de la foto ({cie_a} vs {cie_f})')
         sup5 = (await ev('LUMINARIAS'))['puntos']['SUP-05']
         en_haz = [[sup5[0], sup5[1] - 0.02]]
         await ev(f'{M}.setLucesMaster(100)'); prend = await ev(f'{json.dumps(en_haz)}.map(([x,y])=>TRUST.pixel(x,y))')

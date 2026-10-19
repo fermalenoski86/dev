@@ -19,7 +19,7 @@
   let encuadre = ENC.completo ? 'completo' : 'cerca';
   const IMGS = {};
   function imagen(src) {
-    if (!IMGS[src]) { const i = new Image(); i.addEventListener('load', () => { capaAmb.dataset.listo = ''; capaCielo.dataset.listo = ''; pedirCuadro(); }); i.src = src; IMGS[src] = i; }
+    if (!IMGS[src]) { const i = new Image(); i.addEventListener('load', () => { capaAmb.dataset.listo = ''; capaCielo.dataset.listo = ''; capaCieloN.dataset.listo = ''; pedirCuadro(); }); i.src = src; IMGS[src] = i; }
     return IMGS[src];
   }
   const fotoE = () => imagen(ENC[encuadre].archivo), relieveE = () => imagen(ENC[encuadre].relieve), cieloE = () => imagen(ENC[encuadre].cielo);
@@ -47,6 +47,24 @@
     c.globalCompositeOperation = 'destination-in'; c.drawImage(cielo, 0, 0, W, H);
     capaCielo.dataset.listo = cielo.complete && cielo.naturalWidth ? encuadre : '';
     return capaCielo;
+  }
+  // Cielo de noche (19/10): la toma entera es un compuesto y el cielo tenía parches de distinto tono (se veía un rectángulo
+  // más claro arriba a la derecha). Se reemplaza por un cielo nocturno parejo de ciudad: azul profundo arriba y el
+  // resplandor cálido del alumbrado cerca del horizonte. Recortado con la misma máscara de cielo; cacheado por tamaño.
+  const capaCieloN = document.createElement('canvas');
+  function cieloDeNoche(W, H) {
+    const cielo = cieloE();
+    if (capaCieloN.width === W && capaCieloN.height === H && capaCieloN.dataset.listo === encuadre) return capaCieloN;
+    capaCieloN.width = W; capaCieloN.height = H; const c = capaCieloN.getContext('2d');
+    const g = c.createLinearGradient(0, 0, 0, H * 0.6);
+    g.addColorStop(0, '#060c1c'); g.addColorStop(0.55, '#0c1730'); g.addColorStop(1, '#1d2236');
+    c.fillStyle = g; c.fillRect(0, 0, W, H);
+    const ciudad = c.createRadialGradient(W * 0.5, H * 0.62, 0, W * 0.5, H * 0.62, W * 0.9);   // resplandor urbano
+    ciudad.addColorStop(0, 'rgba(120,80,60,0.22)'); ciudad.addColorStop(1, 'rgba(120,80,60,0)');
+    c.fillStyle = ciudad; c.fillRect(0, 0, W, H);
+    c.globalCompositeOperation = 'destination-in'; c.drawImage(cielo, 0, 0, W, H);
+    capaCieloN.dataset.listo = cielo.complete && cielo.naturalWidth ? encuadre : '';
+    return capaCieloN;
   }
   let fotoDia = null;
   if (G.foto.dia && G.foto.dia.sha256) { fotoDia = new Image(); fotoDia.src = G.foto.dia.archivo; }
@@ -114,6 +132,77 @@
     return c;
   }
 
+
+  // ---------- entorno (19/10): que el edificio se lea como foto nocturna real y no como un render plano ----------
+  // Todo barato: imágenes chicas escaladas con interpolación (= desenfoque gratis) y capas cacheadas por tamaño.
+  const fondoAmb = $('fondo-amb'), fctx = fondoAmb ? fondoAmb.getContext('2d') : null;
+  let fondoT = 0, fondoTO = null;
+  function actualizarFondo() {   // eco de la escena a los costados del lienzo (no deja franjas negras)
+    if (!fctx) return;
+    const e = $('escenario'), w = 96, h = Math.max(24, Math.round(96 * e.clientHeight / Math.max(1, e.clientWidth)));
+    if (fondoAmb.width !== w || fondoAmb.height !== h) { fondoAmb.width = w; fondoAmb.height = h; }
+    const r = lienzo.width / lienzo.height, rc = w / h;   // «cubrir»: la escena entera estirada al área, centrada
+    const dw = rc > r ? w : h * r, dh = rc > r ? w / r : h;
+    fctx.globalCompositeOperation = 'source-over'; fctx.fillStyle = '#04070f'; fctx.fillRect(0, 0, w, h);
+    fctx.drawImage(lienzo, (w - dw) / 2, (h - dh) / 2, dw, dh);
+  }
+  function brilloDe(src, sw, sh, c) {   // versión diminuta del contenido: al ampliarla queda un halo con SUS colores
+    // con un margen transparente: al ampliarla, el halo se desvanece a cero en el borde (sin rectángulos visibles en el cielo)
+    const k = 10, w = Math.max(4, Math.round(sw / k)), h = Math.max(3, Math.round(sh / k)), m = Math.round(h * 0.6);
+    if (!c || c.width !== w + 2 * m) c = mk(w + 2 * m, h + 2 * m);
+    const x = c.getContext('2d'); x.clearRect(0, 0, c.width, c.height); x.filter = `blur(${(h * 0.22).toFixed(1)}px)`; x.drawImage(src, m, m, w, h); x.filter = 'none'; c.margen = m; return c;   // blur en la imagen diminuta: barato
+  }
+  const BRILLO = {};
+  function bloomPantallas(dia, W, H) {   // halo de las pantallas sobre la piedra y el aire (bloom), con el color de cada zona del LED
+    if (dia) return;
+    for (const id of M.PANTALLAS) {
+      const nivel = M.salidas().pantallas[id]; if (nivel < 0.02) continue;
+      const sup = G.superficies[id], src = CONTB[id];
+      if (!BRILLO[id] || !M.animando() || cuadroN % 3 === 0) BRILLO[id] = brilloDe(src, src.width, src.height, BRILLO[id]);
+      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+      for (const qd of sup.quads) for (const [x, y] of aPx(qd, W, H)) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+      const bw = x1 - x0, bh = y1 - y0;
+      ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.imageSmoothingQuality = 'high';
+      const b = BRILLO[id], mg = b.margen;
+      const halo = (esc, alfa) => {   // el contenido queda centrado sobre la pantalla; el margen transparente da el desvanecido
+        const ew = bw * esc * b.width / (b.width - 2 * mg), eh = bh * esc * 1.25 * b.height / (b.height - 2 * mg);
+        ctx.globalAlpha = alfa * nivel; ctx.drawImage(b, x0 + bw / 2 - ew / 2, y0 + bh / 2 - eh / 2, ew, eh);
+      };
+      halo(1.15, 0.2);   // halo cercano
+      halo(1.7, 0.1);    // halo amplio (aire)
+      ctx.restore();
+    }
+  }
+  function reflejoCalle(dia, WC, HC, MK) {   // asfalto: reflejo alargado del color de las pantallas y de la fachada encendida
+    if (dia || encuadre !== 'completo') return;
+    const yCalle = MK.oy + MK.H * 1.42, alto = HC - yCalle; if (alto <= 0) return;
+    ctx.save(); ctx.globalCompositeOperation = 'screen';
+    for (const id of ['corrientes', 'pellegrini', 'media']) {
+      const col = COLOR_MEDIO[id], nivel = M.salidas().pantallas[id]; if (!col || nivel < 0.02) continue;
+      const qd = G.superficies[id].quads, xs = qd.flat().map((p) => MK.ox + p[0] * MK.W), cx = (Math.min(...xs) + Math.max(...xs)) / 2, ancho = (Math.max(...xs) - Math.min(...xs)) * 0.5;
+      ctx.save(); ctx.translate(cx, yCalle + alto * 0.45); ctx.scale(ancho / (alto * 0.5), 1);
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, alto * 0.5);
+      const a = (id === 'media' ? 0.22 : 0.15) * nivel;
+      g.addColorStop(0, `rgba(${col.join(',')},${a})`); g.addColorStop(1, `rgba(${col.join(',')},0)`);
+      ctx.fillStyle = g; ctx.fillRect(-alto * 0.5, -alto * 0.5, alto, alto); ctx.restore();
+    }
+    ctx.restore();
+  }
+  // Grano fotográfico y viñeta: capa CSS sobre el lienzo (la compone el navegador en la GPU: no suma costo al dibujo).
+  // Unen la parte nítida de la foto con la ampliada y le sacan el aspecto de render limpio.
+  const terminacion = document.createElement('div'); terminacion.id = 'terminacion'; terminacion.setAttribute('aria-hidden', 'true');
+  (function () {
+    const c = mk(160, 160), x = c.getContext('2d'), d = x.createImageData(160, 160);
+    let sem = 7; const rnd = () => ((sem = Math.imul(sem ^ (sem >>> 15), 2246822507) + 0x6d2b79f5 >>> 0) % 1000) / 1000;
+    for (let i = 0; i < d.data.length; i += 4) { const v = 128 + (rnd() + rnd() - 1) * 70; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; }
+    x.putImageData(d, 0, 0); terminacion.style.setProperty('--grano', `url(${c.toDataURL()})`);
+    $('escenario').insertBefore(terminacion, $('capa'));
+  })();
+  function ubicarTerminacion() {
+    const es = $('escenario'), e = es.getBoundingClientRect(), r = lienzo.getBoundingClientRect();
+    Object.assign(terminacion.style, { left: (r.left - e.left - es.clientLeft) + 'px', top: (r.top - e.top - es.clientTop) + 'px', width: r.width + 'px', height: r.height + 'px' });
+  }
+
   // Resolución dinámica (19/10): si un cuadro tarda más de ~45 ms mientras el show corre, el lienzo baja de resolución por
   // pasos (el CSS lo muestra al mismo tamaño) para que los controles sigan respondiendo; en pausa vuelve a la nitidez completa.
   let ESCALA_RENDER = 1, lentos = 0, rapidos = 0;
@@ -136,7 +225,7 @@
       // los mapas de luz son suaves: se calculan a MEDIA resolución y se escalan (interpolación bilineal = más suavidad)
       capaLuz.width = Math.ceil(pw / 2); capaLuz.height = Math.ceil(ph / 2); capaTinte.width = capaLuz.width; capaTinte.height = capaLuz.height;
     }
-    ubicarEtiquetas();
+    ubicarEtiquetas(); ubicarTerminacion();
     pedirCuadro();
   }
 
@@ -533,6 +622,9 @@
       }
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
+    // 2a''. cielo nocturno parejo, DESPUÉS de luz, ambiente y relieve: esas capas se recortan con un polígono de la silueta que
+    //       incluye algo de cielo sobre el remate, y ahí dejaban rectángulos de otro tono. Así el cielo queda limpio.
+    if (!dia && cieloE().complete && cieloE().naturalWidth) { ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 0.94; ctx.drawImage(cieloDeNoche(WC, HC), 0, 0); ctx.globalAlpha = 1; }
     ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = dia ? 0.06 : 0.6;   // 2b. la fuente (punto contenido)
     ctx.drawImage(capaLuz, 0, 0, WC, HC);
     ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
@@ -574,6 +666,7 @@
       ctx.filter = `blur(${Math.max(8, W / 90).toFixed(0)}px)`; ctx.fillStyle = `rgb(${em.color.join(',')})`;
       ctx.beginPath(); for (const qd of G.superficies.media.quads) trazarQuad(ctx, aPx(qd, W, H)); ctx.fill(); ctx.restore();
     }
+    bloomPantallas(dia, W, H);   // 3d. bloom de las pantallas: ANTES del LED (opaco), así ningún halo cae sobre sus píxeles
     // 4. pantallas (opacas, encima de todo)
     for (const id of M.PANTALLAS) {
       const sup = G.superficies[id], src = CONTB[id], nq = sup.quads.length, nivel = sal.pantallas[id];
@@ -599,6 +692,11 @@
       }
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0); OFF = [0, 0];
+    reflejoCalle(dia, WC, HC, MK);   // 5. entorno: asfalto, viñeta y grano
+    // el eco de los costados se refresca como mucho 4 veces por segundo (copiar el lienzo es lo caro); en pausa, una vez al quedar quieto
+    const ahora = performance.now();
+    if (ahora - fondoT > 250) { fondoT = ahora; actualizarFondo(); clearTimeout(fondoTO); }
+    else { clearTimeout(fondoTO); fondoTO = setTimeout(() => { fondoT = performance.now(); actualizarFondo(); }, 260); }
     ultimaInfo = { lucesDibujadas: n, foto: foto === fotoN ? 'noche' : 'dia', W: WC, H: HC, encuadre };
     actualizarUI(est, sal);
   }
@@ -765,8 +863,9 @@
     for (const t of PISTAS) {
       const nom = document.createElement('div'); nom.className = 'nom'; nom.innerHTML = `<i style="background:${t.color}"></i>${t.nombre}`; p.appendChild(nom);
       const pista = document.createElement('div'); pista.className = 'pista';
+      t.dom = [];
       for (const [a, b, txt] of t.clips) {
-        const c = document.createElement('div'); c.className = 'clip'; c.textContent = txt;
+        const c = document.createElement('div'); c.className = 'clip'; c.textContent = txt; t.dom.push(c);
         c.style.left = (a / D * 100) + '%'; c.style.width = ((b - a) / D * 100) + '%';
         c.style.background = `linear-gradient(180deg, ${t.color}, ${t.color}cc)`; pista.appendChild(c);
       }
@@ -823,15 +922,7 @@
   $('v-dia').addEventListener('click', () => M.setVista('dia'));
   $('v-noche').addEventListener('click', () => M.setVista('noche'));
   $('cargar').addEventListener('click', () => M.cargarShow());
-  // Director de show (SIMULADO): siempre carga la plantilla McDonald's 15 s; el prompt no se interpreta ni sale del navegador.
-  const PLAN = {
-    normal: 'el edificio en su luz cálida; las pantallas con la imagen del TRUST',
-    revelacion: 'la campaña entra en Corrientes y pasa a Pellegrini; la fachada acompaña con rojo',
-    takeover: 'las 3 pantallas juntas al máximo; la fachada baja un poco para no competir',
-    firma: 'cierre de marca con dorados; la fachada vuelve a la calma',
-    salida: 'vuelta suave al edificio en luz cálida',
-  };
-  function plegarDirector(plegado) {
+    function plegarDirector(plegado) {
     $('t-director').classList.toggle('plegado', plegado);
     $('director-plegar').setAttribute('aria-expanded', String(!plegado));
   }
@@ -862,54 +953,164 @@
     const q = original.match(/["“”«»']([^"“”«»']{2,60})["“”«»']/); if (q) return q[1].trim();
     const m = original.match(/(?:(?:texto|frase|slogan|claim|mensaje|leyenda)\s*:|que diga)\s*([^.,;\n]{2,60})/i); return m ? m[1].trim() : '';
   }
+  // ---------- FICHA DEL SHOW ----------
+  // El pedido se traduce a una FICHA (JSON) y el motor solo ejecuta fichas validadas. Hoy la arma un intérprete local
+  // (reglas, sin IA); mañana la puede armar un modelo de IA con el MISMO formato: validarFicha() acota todo lo que entra
+  // (efectos de la biblioteca, zonas reales, colores hex, texto corto) así que nada fuera de rango llega al edificio.
+  const EFECTOS_ES = [
+    [/barr(?:id|e)|cortina|wipe|de izquierda a derecha|de corrientes a pellegrini/, 'barrido'],
+    [/\bola\b|\bolas\b|\bonda|wave|que suba|subiendo/, 'ola'],
+    [/lat(?:id|e)|pulso|pulsa|\bbeat|coraz[oó]n|bombo/, 'latido'],
+    [/destell|chispa|centell|brill|flash|estrella|sparkle|purpurina/, 'destello'],
+    [/degrad|gradiente|arco ?iris|se mezcl|fund(?:a|e)n/, 'degrade'],
+    [/respir|calm|tranquil|relaj/, 'respiracion'],
+    [/persecuc|chase|secuencia|carrera/, 'persecucion'],
+  ];
+  const ZONAS_ES = [
+    [/(?:arriba|superior|parte alta|coronamiento|[uú]ltimo piso)/, 'superior', 'nivel superior'],
+    [/(?:fachada media|nivel medio|franja del medio|pisos del medio|al medio)/, 'medio', 'nivel medio'],
+    [/(?:abajo|inferior|parte baja|primer piso|planta baja)/, 'inferior', 'nivel inferior'],
+    [/(?:ochava|esquina)/, 'ochava', 'esquina / ochava'],
+    [/(?:c[uú]pula|torre)/, 'cupula', 'cúpula'],
+  ];
+  const nombreColor = (hex) => (COLORES_ES.find((c) => c[1] === hex) || [0, 0, hex])[2];
+  function validarFicha(f) {
+    const hex = (h) => (/^#[0-9a-f]{6}$/i.test(String(h)) ? String(h).toUpperCase() : null);
+    const v = {
+      version: 1,
+      creatividad: M.CREATIVIDADES.includes(f.creatividad) ? f.creatividad : 'C',
+      estilo: ['rojo', 'dorado', 'calido', 'custom'].includes(f.estilo) ? f.estilo : 'rojo',
+      intensidad: Math.min(1.12, Math.max(0.88, +f.intensidad || 1)),
+      paleta: (Array.isArray(f.paleta) ? f.paleta : []).map(hex).filter(Boolean).slice(0, 3),
+      titular: String(f.titular || '').replace(/[<>]/g, '').trim().slice(0, 40),
+      producto: ['helado', 'papas', 'cafe', 'hamburguesa'].includes(f.producto) ? f.producto : null,
+      energia: Math.min(1.35, Math.max(0.7, +f.energia || 1)),
+      efecto: f.efecto && f.efecto in M.EFECTOS ? f.efecto : null,
+      velocidad: Math.min(1.6, Math.max(0.6, +f.velocidad || 1)),
+      zonas: (Array.isArray(f.zonas) ? f.zonas : []).filter((z) => ['superior', 'medio', 'inferior', 'ochava', 'cupula'].includes(z)),
+      luces: f.luces !== false, pantallas: f.pantallas !== false || f.luces === false,
+    };
+    if (v.estilo === 'custom' && !v.paleta.length) v.estilo = 'rojo';
+    if (v.creatividad === 'P' && !v.paleta.length) v.paleta = ['#DA291C', '#FFC72C'];
+    return v;
+  }
   function interpretar(texto) {
     const original = texto || '', p = original.toLowerCase(), entendi = [];
-    const colores = []; for (const [re, hex, nom] of COLORES_ES) { const i = p.search(re); if (i >= 0) colores.push([i, hex, nom]); }
+    const sinPantallaAbajo = p.replace(/pantalla (?:de )?abajo|pantalla media|pantalla del medio|marquesina/g, ' ');
+    const colores = [];
+    for (const [re, hex, nom] of COLORES_ES) {
+      const i = p.search(re); if (i < 0) continue;
+      if (/\bsin\s+(?:el\s+|la\s+)?$/.test(p.slice(Math.max(0, i - 8), i))) { entendi.push(`«sin ${nom}» → ${nom} afuera`); continue; }
+      colores.push([i, hex, nom]);
+    }
     colores.sort((a, b) => a[0] - b[0]);
     const titular = titularDe(original), prod = PRODUCTOS.find(([re]) => re.test(p));
-    const energia = /r[aá]pid|din[aá]mic|en[eé]rg|explos|vibrante/.test(p) ? 1.35 : /lent|calm|suave|tranquil/.test(p) ? 0.7 : 1;
+    const energia = /r[aá]pid|din[aá]mic|en[eé]rg|explos|vibrante|fiesta|loco/.test(p) ? 1.35 : /lent|calm|suave|tranquil|relaj/.test(p) ? 0.7 : 1;
+    const ef = EFECTOS_ES.find(([re]) => re.test(p));
+    const zonas = ZONAS_ES.filter(([re]) => re.test(sinPantallaAbajo));
+    const soloPantallas = /solo (?:las |en las )?pantallas|sin (?:las )?luces|fachada apagada|luces apagadas/.test(p);
+    const soloLuces = /solo (?:las |con las )?luces|solo (?:la )?fachada|sin (?:las )?pantallas|pantallas apagadas/.test(p);
+    const f = { energia, velocidad: energia, titular, producto: prod ? prod[1] : null, efecto: ef ? ef[1] : null, zonas: zonas.map((z) => z[1]),
+      luces: !soloPantallas, pantallas: !soloLuces };
     const propios = colores.filter((c) => !['rojo', 'dorado', 'amarillo'].includes(c[2]));   // rojo y dorado solos = la base de marca de siempre
     if (propios.length || titular || (prod && prod[1] === 'helado')) {
+      Object.assign(f, { creatividad: 'P', estilo: colores.length ? 'custom' : 'rojo', intensidad: 1, paleta: colores.length ? colores.map((c) => c[1]) : ['#DA291C', '#FFC72C'] });
       if (colores.length) entendi.push(`colores pedidos → ${colores.map((c) => c[2]).join(', ')} en pantallas y fachada`);
       else entendi.push('sin colores pedidos → rojo y dorado de marca');
       if (titular) entendi.push(`texto en pantalla → «${titular.toUpperCase()}»`);
       if (prod) entendi.push(`producto → ${prod[2]} (ilustración genérica; en producción, el packshot oficial)`);
-      if (energia !== 1) entendi.push(energia > 1 ? 'ritmo rápido → más partículas y movimiento' : 'ritmo calmo → movimiento más lento');
-      entendi.push('show generado con tu idea (P) · reglas locales, sin IA');
-      return { cre: 'P', estilo: colores.length ? 'custom' : 'rojo', int: 1, entendi,
-        personal: { colores: colores.length ? colores.map((c) => c[1]) : ['#DA291C', '#FFC72C'], titular, producto: prod ? prod[1] : null, energia } };
+    } else {
+      const r = REGLAS.find((x) => x.re.test(p));
+      f.creatividad = r ? r.cre : 'C';
+      entendi.push(r ? r.txt : 'sin tema claro → recorrido de luz por las 3 pantallas (C)');
+      const primero = colores.length ? colores[0][2] : (/dorad|oro|gold|amarill/.test(p) ? 'dorado' : null);   // «rojo y dorado» → manda el primero
+      if (primero === 'dorado' || primero === 'amarillo') { f.estilo = 'dorado'; entendi.push('dorado → luces con oro protagonista'); }
+      else if (/elegan|sobri|c[aá]lid|premium|sutil|tranquil/.test(p) || f.creatividad === 'E') { f.estilo = 'calido'; entendi.push('tono cálido → fachada más sobria, el rojo como acento'); }
+      else { f.estilo = 'rojo'; entendi.push('rojo de marca como acento principal en la fachada'); }
+      f.intensidad = /sutil|suave|tranquil|discret/.test(p) ? 0.88 : /impact|intens|fuerte|explos|potente|m[aá]xim/.test(p) ? 1.12 : 1;
+      if (f.intensidad !== 1) entendi.push(f.intensidad > 1 ? 'intensidad alta' : 'intensidad suave');
     }
-    const r = REGLAS.find((x) => x.re.test(p));
-    const cre = r ? r.cre : 'C'; entendi.push(r ? r.txt : 'sin tema claro → recorrido de luz por las 3 pantallas (C)');
-    let estilo = 'rojo';
-    if (/dorad|oro|gold|amarill/.test(p)) { estilo = 'dorado'; entendi.push('dorado → luces con oro protagonista'); }
-    else if (/elegan|sobri|c[aá]lid|premium|sutil|tranquil/.test(p) || cre === 'E') { estilo = 'calido'; entendi.push('tono cálido → fachada más sobria, el rojo como acento'); }
-    else entendi.push('rojo de marca como acento principal en la fachada');
-    let int = 1;
-    if (/sutil|suave|tranquil|discret/.test(p)) { int = 0.88; entendi.push('intensidad suave'); }
-    else if (/impact|intens|fuerte|explos|potente|m[aá]xim/.test(p)) { int = 1.12; entendi.push('intensidad alta'); }
+    if (f.efecto) entendi.push(`efecto de luces → ${M.EFECTOS[f.efecto].nombre}: ${M.EFECTOS[f.efecto].txt}`);
+    if (zonas.length) entendi.push(`zonas → ${zonas.map((z) => z[2]).join(', ')}; el resto de la fachada queda en cálido`);
+    if (soloPantallas) entendi.push('solo pantallas → la fachada queda en su luz cálida');
+    if (soloLuces && !soloPantallas) entendi.push('solo luces → las pantallas quedan con la imagen institucional');
+    if (energia !== 1) entendi.push(energia > 1 ? 'ritmo rápido → efectos y movimiento más rápidos' : 'ritmo calmo → movimiento más lento');
     const seg = p.match(/(\d{1,3})\s*(s\b|seg)/); if (seg && +seg[1] !== 15) entendi.push(`duración pedida ${seg[1]} s → por ahora el show dura 15 s`);
     if (/reloj/.test(p)) entendi.push('reloj → acento dorado durante el takeover (próxima fase)');
-    return { cre, estilo, int, entendi, personal: null };
+    const nada = !colores.length && !titular && !prod && !ef && !zonas.length && !REGLAS.some((x) => x.re.test(p)) && !soloPantallas && !soloLuces;
+    if (nada) entendi.push('no encontré colores, efecto ni tema → armé el recorrido base; probá con un ejemplo de abajo');
+    entendi.push(f.creatividad === 'P' ? 'show generado con tu idea (P) · reglas locales, sin IA' : 'base preprogramada ajustada a tu pedido · reglas locales, sin IA');
+    const ficha = validarFicha(f);
+    return { cre: ficha.creatividad, estilo: ficha.estilo, int: ficha.intensidad, entendi, ficha,
+      personal: ficha.creatividad === 'P' ? { colores: ficha.paleta, titular: ficha.titular, producto: ficha.producto, energia: ficha.energia } : null };
+  }
+  // Plan y línea de tiempo a partir de la ficha (antes eran textos fijos: decían «rojo» aunque se pidiera celeste).
+  function describir(fc) {
+    const cols = fc.estilo === 'custom' ? fc.paleta.map(nombreColor) : fc.estilo === 'dorado' ? ['oro', 'rojo'] : fc.estilo === 'calido' ? ['cálido', 'oro'] : ['rojo', 'oro'];
+    const c1 = cols[0], cr = fc.estilo === 'custom' ? c1 : 'rojo', c12 = cols.slice(0, 2).join(' y ');
+    const ef = fc.efecto ? M.EFECTOS[fc.efecto].nombre : 'persecución';
+    const dnd = fc.zonas.filter((z) => z !== 'cupula').length ? ` en ${fc.zonas.filter((z) => z !== 'cupula').map((z) => ({ superior: 'el nivel superior', medio: 'el nivel medio', inferior: 'el nivel inferior', ochava: 'la ochava' })[z]).join(', ')}` : '';
+    const pant = !fc.pantallas ? 'las pantallas quedan con la imagen institucional' : fc.titular ? `las pantallas dicen «${fc.titular.toUpperCase()}»${fc.producto ? ' con el ' + ({ helado: 'helado', papas: 'paquete de papas', cafe: 'café', hamburguesa: 'producto' })[fc.producto] : ''}` : 'las 3 pantallas juntas al máximo';
+    const luz = !fc.luces ? 'la fachada queda en cálido' : `${ef} en ${c12}${dnd}${fc.zonas.includes('cupula') ? ' y la cúpula pulsa en ' + c1 : ''}`;
+    return {
+      plan: {
+        normal: 'el edificio en su luz cálida; las pantallas con la imagen del TRUST',
+        revelacion: `la campaña entra en Corrientes y pasa a Pellegrini; ${fc.luces ? 'la fachada acompaña con ' + cr : 'la fachada sigue cálida'}`,
+        takeover: `${pant}; ${luz}`,
+        firma: `cierre ${fc.creatividad === 'P' ? 'con ' + (cols[1] || c1) : 'de marca con dorados'}; la fachada vuelve a la calma`,
+        salida: 'vuelta suave al edificio en luz cálida',
+      },
+      pistas: {
+        superior: [['Cálida 38 %'], [`${cap(cr)} 55 % →`], [`${cap(ef)} · ${c12}`], [`${cap(cols[1] || c1)} + cálido`], ['A cálida']],
+        firma: fc.creatividad === 'P' ? `Cierre ${cols[1] || c1}` : 'Firma dorada',
+        cupula: `Cúpula ${fc.luces && (fc.zonas.includes('cupula') || fc.estilo === 'custom') ? c1 : 'oro'}`,
+      },
+    };
+  }
+  const cap = (x) => x.charAt(0).toUpperCase() + x.slice(1);
+  function pintarPistas(fc) {
+    const d = describir(fc), filas = { superior: 'superior', medio: 'medio', inferior: 'inferior' };
+    for (const [id] of Object.entries(filas)) {
+      const pista = PISTAS.find((t) => t.id === id), activa = fc.luces && (!fc.zonas.filter((z) => z !== 'cupula' && z !== 'ochava').length || fc.zonas.includes(id));
+      const etiquetas = activa ? d.pistas.superior.map((x) => x[0]) : ['Cálida 38 %', 'Cálida', 'Cálida (fuera de zona)', 'Cálida', 'A cálida'];
+      etiquetas.forEach((txt, k) => { if (pista.dom && pista.dom[k]) pista.dom[k].textContent = txt; });
+    }
+    const zp = PISTAS.find((t) => t.id === 'zonas'); if (zp.dom && zp.dom[1]) zp.dom[1].textContent = d.pistas.cupula;
+    for (const id of ['corrientes', 'pellegrini']) {
+      const t = PISTAS.find((x) => x.id === id); if (!t.dom) continue;
+      t.dom[3].textContent = d.pistas.firma;
+      t.dom[2].textContent = !fc.pantallas ? 'Institucional' : fc.titular ? `«${fc.titular.toUpperCase().slice(0, 22)}»` : 'Takeover · una pieza';
+    }
+    return d;
+  }
+  function aplicarFicha(fc) {
+    if (fc.creatividad === 'P') {
+      window.CONTENIDO.setPersonal({ colores: fc.paleta, titular: fc.titular, producto: fc.producto, energia: fc.energia });
+    }
+    if (fc.estilo === 'custom') M.setPaletaShow(fc.paleta);
+    M.setCreatividad(fc.creatividad); M.setEstiloShow(fc.estilo, fc.intensidad); M.setFicha(fc);
   }
   function generarMinishow() {
     plegarDirector(false);
     const it = interpretar($('prompt').value);
-    if (it.personal) { window.CONTENIDO.setPersonal(it.personal); if (it.estilo === 'custom') M.setPaletaShow(it.personal.colores); }
-    M.setCreatividad(it.cre); M.setEstiloShow(it.estilo, it.int);
+    aplicarFicha(it.ficha);
     M.cargarShow(); M.seek(0); M.play();
-    $('plan-cab').innerHTML = it.personal ? `<b>Show de 15 s generado con tu idea</b> · colores, texto y producto leídos del pedido por reglas locales (sin IA).`
+    const d = pintarPistas(it.ficha);
+    $('plan-cab').innerHTML = it.personal ? `<b>Show de 15 s generado con tu idea</b> · colores, texto, producto y efecto leídos del pedido por reglas locales (sin IA).`
       : `<b>Show de 15 s armado desde tu pedido</b> · interpretado por reglas (no es generación por IA): base preprogramada, ajustada a lo que pediste.`;
-    $('plan-entendi').innerHTML = it.entendi.map((x) => `<li>${x}</li>`).join('');
+    $('plan-entendi').innerHTML = it.entendi.map((x) => `<li>${x.replace(/</g, '&lt;')}</li>`).join('');
     const ol = $('plan-ol'); ol.innerHTML = '';
     for (const b of M.BLOQUES) {
       const li = document.createElement('li');
-      li.innerHTML = `<b>${b.desde}–${b.hasta} s · ${b.nombre}</b> — ${PLAN[b.id] || ''}`;
+      li.innerHTML = `<b>${b.desde}–${b.hasta} s · ${b.nombre}</b> — `; li.appendChild(document.createTextNode(d.plan[b.id] || ''));
       ol.appendChild(li);
     }
+    $('plan-ficha').textContent = JSON.stringify(it.ficha, null, 1);
     $('plan').hidden = false;
     return it;
   }
+  // Ejemplos: un clic completa el pedido y genera (sirve para la demo y para descubrir qué entiende el intérprete)
+  document.querySelectorAll('#ejemplos button').forEach((b) => b.addEventListener('click', () => { $('prompt').value = b.dataset.p; generarTodo(); }));
   // AI Content Studio: con material READY arma el concepto (estudio.js); sin material, IDEA FIRST = plantilla preprogramada.
   // Generar: el prompt arma el show (colores, texto, producto) y, si hay material listo, el material entra a las pantallas
   // en sus tramos (master A+B, Corrientes, media) encima de lo generado. Se ve y se reproduce de inmediato.
@@ -1045,7 +1246,7 @@
   fotoNoche.addEventListener('load', ajustarTamano);
   function setEncuadre(e) {
     if (!ENC[e]) return;
-    encuadre = e; capaAmb.dataset.listo = ''; capaCielo.dataset.listo = '';
+    encuadre = e; capaAmb.dataset.listo = ''; capaCielo.dataset.listo = ''; capaCieloN.dataset.listo = '';
     document.querySelectorAll('#encuadre button').forEach((b) => b.classList.toggle('on', b.dataset.e === e));
     const f = fotoE(); if (f.complete && f.naturalWidth) ajustarTamano(); else f.addEventListener('load', ajustarTamano, { once: true });
   }
