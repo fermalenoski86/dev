@@ -1,0 +1,28 @@
+{
+ "titulo": "Verano Celeste y Blanco",
+ "concepto": "Un postre helado cremoso, con remolino y galleta, que brilla como una luz fresca de verano sobre el azul de la noche porteña.",
+ "corrientes": {
+  "prompt": "Professional advertising product photograph of a creamy frozen dessert with a tall soft-serve swirl topped with crunchy cookie chunks, served in a plain smooth white cup with no branding, no text, no logo. The cup is perfectly centered with generous empty dark space on both left and right sides, wide 2:1 horizontal composition. Clean deep midnight navy blue background, smooth gradient to near black at the edges. Studio lighting with soft sky-blue rim light from behind and a crisp white key light, high contrast, glossy creamy highlights, a few cookie crumbs floating in the air. Palette strictly sky blue, white and midnight navy. Readable from far away at night, minimal, no people, no faces, no text."
+ },
+ "pellegrini": {
+  "prompt": "Extreme close-up advertising macro photograph of the creamy white swirl of a frozen dessert with cookie pieces embedded, rising from the rim of a plain smooth white cup with no branding, no text, no logo. The swirl is centered in a wide 2.5:1 horizontal frame, with ample dark negative space left and right, so the subject reads fully on its own. Seamless dark midnight navy background, studio lighting, bright white key light, cool sky-blue rim light and soft blue reflections on the cream, high contrast, tiny cookie crumbs and subtle frost sparkles. Palette sky blue, white and midnight navy. No people, no faces, no text, no letters."
+ },
+ "media": {
+  "prompt": "Ultra-wide panoramic 4.66:1 advertising texture photograph: a long horizontal ribbon of smooth creamy white frozen dessert flowing in soft waves from left to right across a dark midnight navy surface, dotted with small cookie chunks and crumbs, with soft sky-blue light streaks following the horizon line. Low, centered horizontal band composition with lots of empty dark space above and below, rhythmic repeating shapes suited to lateral movement. Studio lighting, high contrast, glossy cream highlights, cool sky-blue rim light, clean dark background. Palette sky blue, white and midnight navy, same lighting as a coherent campaign. No cups with branding, no people, no faces, no text, no letters, no logos."
+ },
+ "video": {
+  "pantalla": null,
+  "movimiento": "Not requested"
+ },
+ "ficha": {
+  "efecto": "respiracion",
+  "paleta": [
+   "#0A1A3F",
+   "#7EC8F2",
+   "#FFFFFF"
+  ],
+  "zonas": [],
+  "velocidad": 1,
+  "titular": "Fresco como el verano"
+ }
+}
