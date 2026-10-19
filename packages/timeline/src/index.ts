@@ -70,7 +70,6 @@ export class Transport {
   }
 
   setDurationMs(durationMs: number): void {
-    if (durationMs <= 0) throw new Error('durationMs debe ser > 0');
     const current = this.getTimeMs();
     this.durationMs = Math.floor(durationMs);
     this.seek(Math.min(current, this.durationMs));
