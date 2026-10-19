@@ -1,0 +1,9 @@
+{
+ "tope_usd": 8,
+ "piezas": [
+  {"id": "1-postre-celeste", "brief": "Noche de verano en Buenos Aires: un postre helado cremoso con remolino y trozos de galleta, en vaso liso blanco. Paleta celeste y blanco (guiño argentino), fresco y luminoso sobre fondo azul noche.", "video": false},
+  {"id": "2-papas-doradas", "brief": "Papas fritas doradas y crocantes cayendo en cámara lenta, con chispas de sal brillando. Fondo rojo profundo y luz dorada cálida. Envase rojo liso sin ninguna marca.", "video": false},
+  {"id": "3-desayuno-amanecer", "brief": "Desayuno porteño al amanecer: taza de café con vapor y medialunas doradas sobre mesa de madera, luz cálida de sol bajo entrando de costado.", "video": false},
+  {"id": "4-hamburguesa-hero", "brief": "Hamburguesa premium protagonista: pan brillante con semillas, queso derretido, lechuga fresca, sobre fondo oscuro cálido con luz de estudio dramática. Pieza principal del takeover.", "video": true}
+ ]
+}

@@ -1,0 +1,44 @@
+# Kit #73 · generación con IA real (Claude director + fal). SIMULACIÓN CONCEPTUAL / mockup ilustrativo, no publicar.
+# Corre SOLO por push a la rama del kit (kit/73-mcd) que toque el pedido; nunca en PRs ni en main.
+# Las claves vienen de GitHub Secrets (FAL_KEY, ANTHROPIC_API_KEY): no se imprimen ni se escriben en archivos.
+# El resultado se publica en la rama aparte ia/73-salida (no en la del kit): Claude lo revisa y lo integra con
+# commits propios. Tope de gasto en el pedido (tope_usd); el script corta antes de pasarlo.
+name: kit-ia
+on:
+  push:
+    branches: [kit/73-mcd]
+    paths: [kit/mcd-73/ia/pedido.json]
+permissions:
+  contents: write
+concurrency:
+  group: kit-ia
+  cancel-in-progress: false
+jobs:
+  generar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pillow==10.4.0
+      - name: Generar piezas
+        env:
+          FAL_KEY: ${{ secrets.FAL_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python3 kit/mcd-73/ia/generar.py kit/mcd-73/ia/pedido.json /tmp/salida/${GITHUB_SHA::7}
+      - name: Publicar en ia/73-salida
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [ -d /tmp/salida ] || exit 0
+          cd /tmp/salida
+          git init -q -b ia/73-salida
+          git config user.name "kit-ia" && git config user.email "kit-ia@users.noreply.github.com"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git fetch -q origin ia/73-salida 2>/dev/null; then git reset -q FETCH_HEAD; fi
+          git add --ignore-removal . && git commit -qm "kit-ia: piezas de ${GITHUB_SHA::7}" && git push -q origin HEAD:ia/73-salida
