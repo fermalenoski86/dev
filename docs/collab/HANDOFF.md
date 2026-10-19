@@ -3,7 +3,7 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador) — PoC P-06: correr la **matriz §5 real en solo lectura** en PRs aislados `poc/bridge-*` (inocuo, P1/P2 sembrados, SHA viejo, impostor, issue_comment, workflow/validador, renames, dismissed/edited, CI rojo, doble trigger, 4→5 rondas, rollback), con latencias medidas. Secret `CLAUDE_CODE_OAUTH_TOKEN` cargado y verificado (12/10); créditos de Codex recargados (18/10) — presupuesto 1+1 por ronda. Resultado a #54 para que ChatGPT decida si habilita la delegación en riesgo bajo/medio.
+**Pelota en:** Claude (implementador) — PoC P-06, matriz §5 real en solo lectura: PRs en borrador #90 (caso 1 inocuo), #91 (P1 sembrado), #92 (P2 sembrado), #93 (impostor, casos 5-6), #94 (validador, caso 7), #95 (rename, caso 8). Próximo turno: con `gates` verde, pasar #90–#92 a *listo* (Codex revisa; 1+1 por ronda), leer el gate y medir latencias; caso 4 sobre #90 tras su review. Confirmar con #90 verde la observación de #54 [6257172798](https://github.com/fermalenoski86/dev/issues/54#issuecomment-6257172798) (el gate lee como "job extra" su propio check `neutral` → se bloquearía). Casos 11/12 no ejecutables sin PR 3; 13 (rollback) pide a Fer al final. Tabla viva en ese comentario.
 **En auditoría:** ninguno
 **Fase:** PoC P-06 — matriz real. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
 **Estado:** PR 1 (#88) en `main@c403b6b`; PR 2 (#89) mergeado en `main@10cd5d0` (`AUDIT: APROBADO` [6254481441](https://github.com/fermalenoski86/dev/pull/89#issuecomment-6254481441) sobre `16a687f`; merge en sesión con Fer). Entregable P-06-PR2 en manifiesto + `PROGRESO.md` (`6867d21`). Gate y Action en report-only / solo lectura.
@@ -28,7 +28,7 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| PoC P-06 | #54 / PR #89 | `AUDIT: APROBADO` @ `16a687f`; espera merge de Fer |
+| PoC P-06 matriz | #54 / #90–#95 | PRs de prueba en borrador, CI en curso; no se mergean |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
 | E2E intermitente :17 | #26 / #77 | causa no determinada |
