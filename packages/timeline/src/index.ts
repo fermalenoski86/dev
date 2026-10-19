@@ -109,7 +109,7 @@ export class Transport {
 
     if (raw >= this.durationMs) {
       if (this.loop) {
-        return Math.floor(raw % this.durationMs);
+        return raw % this.durationMs;
       }
       return this.durationMs;
     }
