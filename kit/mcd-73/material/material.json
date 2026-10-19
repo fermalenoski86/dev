@@ -1,0 +1,333 @@
+{
+ "aviso": "SIMULACIÓN CONCEPTUAL / mockup ilustrativo, no publicar. Material de campaña de McDonald's Argentina pasado por Fer (19/10/2026), en resolución web; para la versión final pedir originales en alta a la agencia.",
+ "campana": {
+  "nombre": "Hamburguesas de la Selección: McÁlvarez, McAllister, McFernández",
+  "verificado": [
+   "Lanzamiento el 17/04/2026 para el Mundial 2026, con Julián Álvarez, Alexis Mac Allister y Enzo Fernández (Los Andes, 21/04/2026).",
+   "McAllister: simple o doble; salsa Mequinesse, panceta, cebolla, lechuga, tomate y cheddar blanco.",
+   "McÁlvarez: simple o doble; salsa Cheddar Melt, panceta, pepino, cheddar, cebolla crispy y salsa Ranch.",
+   "McFernández: hamburguesa de pollo crispy, salsa Ranch, panceta, lechuga, tomate y cheddar.",
+   "Vuelven por tiempo limitado con la campaña «The Last Dance», atada a la fecha FIFA (iProfesional, 29/09/2026). Confirmar con el cliente si siguen a la venta antes de presentar."
+  ],
+  "fuentes": [
+   "https://www.losandes.com.ar/empresas-y-negocios/mcdonalds-presenta-tres-nuevas-hamburguesas-junto-figuras-la-seleccion-argentina-vivir-el-mundial-2026-n5988468",
+   "https://www.iprofesional.com/recreo/465529-mcdonalds-revive-tres-hamburguesas-que-habian-sido-edicion-limitada-cuales-son.amp"
+  ]
+ },
+ "archivos": {
+  "afiche": {
+   "archivo": "mcalvarez-afiche.jpg",
+   "que": "afiche vertical «NUEVA McALVAREZ» con Julián Álvarez",
+   "px": [
+    495,
+    619
+   ]
+  },
+  "trio": {
+   "archivo": "trio-productos.jpg",
+   "que": "las 3 hamburguesas con sus nombres en cajas roja, amarilla y blanca",
+   "px": [
+    800,
+    600
+   ]
+  },
+  "mostrador": {
+   "archivo": "jugadores-mostrador.jpg",
+   "que": "los 3 jugadores en el mostrador (arriba) + trío de productos (abajo)",
+   "px": [
+    399,
+    501
+   ]
+  },
+  "triptico": {
+   "archivo": "triptico.jpg",
+   "que": "tríptico de los 3 jugadores con sus nombres (baja resolución)",
+   "px": [
+    440,
+    246
+   ]
+  },
+  "triptico_productos": {
+   "archivo": "triptico-productos.jpg",
+   "que": "tríptico + fila de productos (baja resolución)",
+   "px": [
+    436,
+    458
+   ]
+  },
+  "cuarto": {
+   "archivo": "cuarto-de-libra.jpg",
+   "que": "Cuarto de Libra con Queso y Doble, con los Arcos Dorados",
+   "px": [
+    554,
+    554
+   ]
+  }
+ },
+ "piezas": [
+  {
+   "id": "campana-seleccion",
+   "titulo": "Selección · McÁlvarez, McFernández, McAllister",
+   "concepto": "Material real de la campaña, animado para el edificio: cada jugador tiene su tramo y la fachada toma el color de su caja (rojo, blanco, amarillo).",
+   "ficha": {
+    "efecto": "tramos",
+    "paleta": [
+     "#DA291C",
+     "#FFFFFF",
+     "#FFC72C"
+    ],
+    "velocidad": 1,
+    "titular": ""
+   },
+   "pistas": {
+    "corrientes": [
+     {
+      "desde": 2.2,
+      "hasta": 5.3,
+      "modo": "contener",
+      "fuente": "afiche",
+      "rect": [
+       0,
+       0.02,
+       1,
+       0.31
+      ],
+      "fondo": "#DA291C",
+      "escala": 0.98,
+      "entra": "izq",
+      "kb": {
+       "z": [
+        0.96,
+        1.02
+       ]
+      }
+     },
+     {
+      "desde": 5.0,
+      "hasta": 6.95,
+      "modo": "cubrir",
+      "fuente": "afiche",
+      "rect": [
+       0.04,
+       0.3,
+       0.96,
+       0.7
+      ],
+      "kb": {
+       "z": [
+        1,
+        1.1
+       ],
+       "f": [
+        [
+         0.5,
+         0.15
+        ],
+        [
+         0.5,
+         0.45
+        ]
+       ]
+      }
+     },
+     {
+      "desde": 6.65,
+      "hasta": 8.65,
+      "modo": "contener",
+      "fuente": "trio",
+      "rect": [
+       0.7,
+       0.55,
+       0.3,
+       0.36
+      ],
+      "fondo": "#FFFFFF",
+      "lado": "der",
+      "kb": {
+       "z": [
+        0.95,
+        1.05
+       ]
+      }
+     },
+     {
+      "desde": 6.65,
+      "hasta": 8.65,
+      "modo": "contener",
+      "fuente": "trio",
+      "rect": [
+       0.705,
+       0.37,
+       0.29,
+       0.1
+      ],
+      "sinFondo": true,
+      "lado": "izq",
+      "entra": "izq"
+     },
+     {
+      "desde": 8.35,
+      "hasta": 10.4,
+      "modo": "contener",
+      "fuente": "trio",
+      "rect": [
+       0.27,
+       0.46,
+       0.43,
+       0.46
+      ],
+      "fondo": "#FFC72C",
+      "lado": "der",
+      "kb": {
+       "z": [
+        0.95,
+        1.05
+       ]
+      }
+     },
+     {
+      "desde": 8.35,
+      "hasta": 10.4,
+      "modo": "contener",
+      "fuente": "trio",
+      "rect": [
+       0.285,
+       0.24,
+       0.41,
+       0.15
+      ],
+      "sinFondo": true,
+      "lado": "izq",
+      "entra": "izq"
+     },
+     {
+      "desde": 10.1,
+      "hasta": 12.9,
+      "modo": "cubrir",
+      "fuente": "trio",
+      "rect": [
+       0,
+       0.22,
+       1,
+       0.68
+      ],
+      "kb": {
+       "z": [
+        1.08,
+        1
+       ]
+      }
+     }
+    ],
+    "pellegrini": [
+     {
+      "desde": 2.6,
+      "hasta": 5.3,
+      "modo": "contener",
+      "fuente": "trio",
+      "rect": [
+       0.275,
+       0.23,
+       0.425,
+       0.175
+      ],
+      "fondo": "#FFC72C",
+      "entra": "der",
+      "kb": {
+       "z": [
+        0.9,
+        0.98
+       ]
+      }
+     },
+     {
+      "desde": 5.0,
+      "hasta": 10.4,
+      "modo": "cubrir",
+      "fuente": "mostrador",
+      "rect": [
+       0,
+       0.08,
+       1,
+       0.37
+      ],
+      "kb": {
+       "z": [
+        1.45,
+        1.45
+       ],
+       "f": [
+        [
+         0,
+         0.45
+        ],
+        [
+         1,
+         0.45
+        ]
+       ]
+      }
+     },
+     {
+      "desde": 10.1,
+      "hasta": 12.9,
+      "modo": "cubrir",
+      "fuente": "trio",
+      "rect": [
+       0,
+       0.22,
+       1,
+       0.68
+      ],
+      "kb": {
+       "z": [
+        1,
+        1.1
+       ],
+       "f": [
+        [
+         0.5,
+         0.6
+        ],
+        [
+         0.5,
+         0.45
+        ]
+       ]
+      }
+     }
+    ],
+    "media": [
+     {
+      "desde": 2.2,
+      "hasta": 12.9,
+      "modo": "cubrir",
+      "fuente": "trio",
+      "rect": [
+       0,
+       0.55,
+       1,
+       0.34
+      ],
+      "kb": {
+       "z": [
+        1.3,
+        1.3
+       ],
+       "f": [
+        [
+         0,
+         0.5
+        ],
+        [
+         1,
+         0.5
+        ]
+       ]
+      }
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -71,6 +71,14 @@ textarea:focus { outline: 2px solid var(--sodio); outline-offset: 2px; border-co
 .pieza span { font-size: 13px; color: var(--niebla); }
 .pieza:hover strong { color: var(--sodio); }
 .vacio { color: var(--niebla); grid-column: 1 / -1; margin: 0; }
+.lugares { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 8px; }
+.lugares li { display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center; padding: 8px; border: 1px solid var(--linea); border-radius: 6px; }
+.lugares img, .lugares .sin { width: 64px; height: 40px; object-fit: cover; border-radius: 3px; background: var(--noche-2); }
+.lugares strong { display: block; font-weight: 650; font-size: 15px; } .lugares span { font-size: 13px; color: var(--niebla); }
+.lugares label { font-size: 14px; color: var(--sodio); cursor: pointer; text-decoration: underline; }
+.galeria.chica { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); margin-top: 14px; }
+.galeria.chica figure { margin: 0; } .galeria.chica img, .galeria.chica video { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 4px; background: var(--noche-2); display: block; }
+.galeria.chica figcaption { font-size: 12px; color: var(--niebla); margin-top: 4px; overflow-wrap: anywhere; }
 footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 13px; border-top: 1px solid var(--linea); }
 @media (max-width: 860px) {
   .heroe { grid-template-columns: 1fr; min-height: 0; }
@@ -127,6 +135,15 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
         <div class="resultado" id="miniaturas"></div>
         <div class="resultado-acciones"><a class="boton" id="ver-sim" href="/control/">Ver en el simulador</a><button class="boton sec" type="button" id="otra">Crear otra</button></div>
       </div>
+    </div>
+  </section>
+
+  <section class="tarea" aria-labelledby="t-material">
+    <div><h2 id="t-material">Material de marca</h2><p>Fotos, logos y piezas oficiales del cliente. Queda guardado acá, sin publicar, y se usa para armar los shows: nada se inventa.</p></div>
+    <div>
+      <ul class="lugares" id="lugares" aria-label="Material que usa la campaña de la Selección"></ul>
+      <div class="controles"><label class="boton sec" for="subir">Subir otro archivo</label><input type="file" id="subir" accept="image/jpeg,image/png,image/webp,image/svg+xml,video/mp4" multiple hidden><span class="gasto" id="estado-material" aria-live="polite"></span></div>
+      <div class="galeria chica" id="material"></div>
     </div>
   </section>
 
@@ -224,7 +241,37 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       }
     } catch (e) { g.innerHTML = '<p class="vacio">No se pudieron cargar las piezas. Recargá la página.</p>'; }
   }
-  cargarGaleria(); actualizarGasto();
+  // ---------- material de marca ----------
+  let CFG = null;
+  async function subir(archivo, nombre) {
+    const fd = new FormData(); fd.append('archivo', archivo); if (nombre) fd.append('nombre', nombre);
+    $('estado-material').textContent = `Subiendo ${archivo.name}…`;
+    const r = await fetch('/api/material', { method: 'POST', body: fd }), d = await r.json().catch(() => ({}));
+    $('estado-material').textContent = r.ok ? `Listo: ${d.nombre}` : (d.error || 'No se pudo subir.');
+  }
+  async function cargarMaterial() {
+    try {
+      if (!CFG) CFG = await (await fetch('/control/material.json')).json();
+      const subidos = await (await fetch('/api/material')).json(), hay = new Map(subidos.map((x) => [x.nombre, x]));
+      const ul = $('lugares'); ul.innerHTML = '';
+      for (const [clave, a] of Object.entries(CFG.archivos)) {
+        const li = document.createElement('li'), ok = hay.get(a.archivo), id = 'slot-' + clave;
+        li.innerHTML = `${ok ? `<img src="${ok.url}" alt="">` : '<div class="sin"></div>'}<div><strong></strong><span>${ok ? 'Cargado' : 'Falta'}</span></div><label for="${id}">${ok ? 'Reemplazar' : 'Subir'}</label><input type="file" id="${id}" accept="image/jpeg" hidden>`;
+        li.querySelector('strong').textContent = a.que.charAt(0).toUpperCase() + a.que.slice(1);
+        li.querySelector('input').addEventListener('change', async (e) => { const f = e.target.files[0]; if (f) { await subir(f, a.archivo.replace(/\.jpg$/, '')); cargarMaterial(); } });
+        ul.appendChild(li);
+      }
+      const usados = new Set(Object.values(CFG.archivos).map((a) => a.archivo)), g = $('material'); g.innerHTML = '';
+      for (const m of subidos.filter((x) => !usados.has(x.nombre))) {
+        const f = document.createElement('figure');
+        f.innerHTML = (/\.mp4$/.test(m.nombre) ? `<video src="${m.url}" muted></video>` : `<img src="${m.url}" alt="" loading="lazy">`) + '<figcaption></figcaption>';
+        f.querySelector('figcaption').textContent = m.nombre; g.appendChild(f);
+      }
+    } catch (e) { $('estado-material').textContent = 'No se pudo cargar el material. Recargá la página.'; }
+  }
+  $('subir').addEventListener('change', async (e) => { for (const f of e.target.files) await subir(f); e.target.value = ''; cargarMaterial(); });
+
+  cargarGaleria(); actualizarGasto(); cargarMaterial();
 })();
 </script>
 </body>

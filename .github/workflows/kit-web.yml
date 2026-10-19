@@ -6,7 +6,7 @@ name: kit-web
 on:
   push:
     branches: [kit/73-mcd]
-    paths: [kit/mcd-73/web/**, kit/mcd-73/control/**, .github/workflows/kit-web.yml]
+    paths: [kit/mcd-73/web/**, kit/mcd-73/control/**, kit/mcd-73/material/material.json, .github/workflows/kit-web.yml]
 permissions:
   contents: read
 concurrency:
@@ -31,6 +31,7 @@ jobs:
           W=kit/mcd-73/web; mkdir -p $W/public/control/fotos
           C=kit/mcd-73/control
           cp $C/index.html $C/*.js $C/*.css $W/public/control/
+          cp kit/mcd-73/material/material.json $W/public/control/material.json
           cp $C/fotos/trust-noche-completa.jpg $C/fotos/trust-relieve-completa.jpg $C/fotos/trust-cielo-completa.png \
              $C/fotos/trust-noche.jpg $C/fotos/trust-relieve.jpg $C/fotos/trust-cielo.png $W/public/control/fotos/
           du -sh $W/public

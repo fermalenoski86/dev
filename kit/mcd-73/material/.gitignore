@@ -1,0 +1,5 @@
+# Material de McDonald's: NO va al repositorio (es público). Solo viaja en el paquete privado y en el portal (R2, con clave).
+*
+!.gitignore
+!material.json
+!LEEME.md

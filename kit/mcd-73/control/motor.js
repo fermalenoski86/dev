@@ -198,6 +198,12 @@
       const [a, b, c2] = pal(), x = fr(posX(i, n) * 0.9 + fila(g) * 0.08 + u * 0.12) * 2;
       return L_(0.6, x < 1 ? mezclaRGBW(a, b, suave(x)) : mezclaRGBW(b, OPC.estilo === 'custom' ? c2 : a, suave(x - 1)));
     } },
+    tramos: { nombre: 'tramos de color', txt: 'la fachada pasa por cada color de la paleta, un tramo por protagonista', f: (g, i, n, id, u) => {
+      u = Math.max(0, u);   // el fundido de entrada evalúa el efecto desde t = 4,5 s (u negativo)
+      const p = pal(), dur = 5 * OPC.velocidad / p.length, k = Math.max(0, Math.min(p.length - 1, Math.floor(u / dur))), f = u - k * dur;   // u = (t−5)·vel
+      const ola = suave((f * 2.2) - (1 - posX(i, n)) * 0.5), prev = p[Math.max(0, k - 1)];
+      return L_(0.66, k === 0 ? p[0] : mezclaRGBW(prev, p[k], ola));
+    } },
     respiracion: { nombre: 'respiración', txt: 'la fachada sube y baja lento, en un solo color', f: (g, i, n, id, u) => {
       const [a] = pal(), s = 0.5 - 0.5 * Math.cos(u * 1.5);
       return L_(0.28 + 0.4 * s, a);

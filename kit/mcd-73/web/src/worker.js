@@ -143,8 +143,37 @@ async function api(req, env, ruta) {
     return json(meta);
   }
   if (ruta === '/api/piezas') return json(await listarPiezas(env));
+  if (ruta === '/api/material' && req.method === 'GET') {   // lo subido + los lugares que pide material.json
+    const l = await env.PIEZAS.list({ prefix: 'material/', limit: 500 });
+    return json(l.objects.map((o) => ({ nombre: o.key.slice(9), bytes: o.size, url: '/' + o.key })));
+  }
   return json({ error: 'no existe' }, 404);
 }
+// Material de marca (fotos, logos, piezas de campaña): se sube desde el portal y queda en R2, privado (el repo es público).
+const TIPOS = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/svg+xml': 'svg', 'video/mp4': 'mp4' };
+async function subirMaterial(req, env) {
+  const f = await req.formData(), a = f.get('archivo'); if (!a || typeof a === 'string') return json({ error: 'Elegí un archivo.' }, 400);
+  if (!TIPOS[a.type]) return json({ error: 'Formato no admitido: subí JPG, PNG, WEBP, SVG o MP4.' }, 400);
+  if (a.size > 25e6) return json({ error: 'El archivo pesa más de 25 MB.' }, 400);
+  const base = String(f.get('nombre') || a.name || 'material').toLowerCase().replace(/\.[a-z0-9]+$/, '').normalize('NFD').replace(/[^a-z0-9-]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'material';
+  const nombre = `${base}.${TIPOS[a.type]}`;
+  await env.PIEZAS.put('material/' + nombre, await a.arrayBuffer(), { httpMetadata: { contentType: a.type } });
+  return json({ nombre, url: '/material/' + nombre });
+}
+async function borrarMaterial(env, nombre) { await env.PIEZAS.delete('material/' + nombre.replace(/[^a-z0-9.-]/g, '')); return json({ ok: true }); }
+// Piezas de material animado (material.json del kit) con las fuentes que ya estén subidas
+async function piezasMaterial(env, origen) {
+  let cfg; try { cfg = await (await env.ASSETS.fetch(new Request(new URL('/control/material.json', origen)))).json(); } catch { return []; }
+  const subidos = new Set((await env.PIEZAS.list({ prefix: 'material/', limit: 500 })).objects.map((o) => o.key.slice(9)));
+  const out = [];
+  for (const p of cfg.piezas || []) {
+    const usadas = new Set(Object.values(p.pistas).flat().map((x) => x.fuente)), fuentes = {};
+    for (const k of usadas) { const arch = cfg.archivos[k] && cfg.archivos[k].archivo; if (arch && subidos.has(arch)) fuentes[k] = '/material/' + arch; }
+    if (Object.keys(fuentes).length === usadas.size) out.push({ ...p, fuentes, material: true });
+  }
+  return out;
+}
+
 async function listarPiezas(env) {
   const l = await env.PIEZAS.list({ prefix: 'piezas/', limit: 1000 }), metas = l.objects.filter((o) => o.key.endsWith('/meta.json')).map((o) => o.key);
   const out = []; for (const k of metas.slice(-60)) { const m = await leerR2(env, k, null); if (m) out.push(m); }
@@ -181,8 +210,17 @@ export default {
     if (!(await sesionValida(req, env))) return ruta.startsWith('/api/') ? json({ error: 'La sesión venció. Volvé a entrar con la clave.' }, 401) : Response.redirect(new URL('/login', url), 302);
     try {
       if (ruta.startsWith('/api/')) {
-        if (req.method === 'POST' && req.headers.get('origin') && new URL(req.headers.get('origin')).host !== url.host) return json({ error: 'origen inválido' }, 403);
+        if (req.method !== 'GET' && req.headers.get('origin') && new URL(req.headers.get('origin')).host !== url.host) return json({ error: 'origen inválido' }, 403);
+        if (ruta === '/api/material' && req.method === 'POST') return await subirMaterial(req, env);
+        if (ruta.startsWith('/api/material/') && req.method === 'DELETE') return await borrarMaterial(env, decodeURIComponent(ruta.slice(14)));
         return await api(req, env, ruta);
+      }
+      if (ruta.startsWith('/material/')) {
+        const o = await env.PIEZAS.get(ruta.slice(1)); if (!o) return new Response('no existe', { status: 404 });
+        return new Response(o.body, { headers: { 'content-type': o.httpMetadata?.contentType || 'application/octet-stream', 'cache-control': 'private, max-age=3600' } });
+      }
+      if (ruta === '/control/material_mcd.js') {
+        return new Response(`window.PIEZAS_IA = (window.PIEZAS_IA || []).concat(${JSON.stringify(await piezasMaterial(env, url))});\n`, { headers: { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-store' } });
       }
       if (ruta.startsWith('/piezas/')) {
         const o = await env.PIEZAS.get(ruta.slice(1)); if (!o) return new Response('no existe', { status: 404 });

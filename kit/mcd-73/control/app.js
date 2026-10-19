@@ -1134,13 +1134,17 @@
     const lista = window.PIEZAS_IA || [], caja = $('piezas-ia'); if (!lista.length || !caja) return;
     caja.hidden = false;
     lista.forEach((pz, n) => {
-      const b = document.createElement('button'); b.textContent = `${n + 1} · ${pz.titulo}`; b.title = pz.concepto;
+      const b = document.createElement('button'); b.textContent = pz.material ? `★ ${pz.titulo}` : `${n + 1} · ${pz.titulo}`; b.title = pz.concepto;
       b.addEventListener('click', () => aplicarPiezaIA(pz)); caja.appendChild(b);
     });
   })();
   function aplicarPiezaIA(pz) {
     const fuentes = {}, pistas = {};
-    for (const pan of ['corrientes', 'pellegrini', 'media']) {
+    if (pz.pistas) {   // pieza de MATERIAL REAL animado (material.json): tramos con recorte, Ken Burns y entradas, por pantalla
+      for (const [k, src] of Object.entries(pz.fuentes || {})) { const im = new Image(); im.onload = pedirCuadro; im.src = src; fuentes[k] = im; }
+      Object.assign(pistas, JSON.parse(JSON.stringify(pz.pistas)));
+    }
+    for (const pan of (pz.pistas ? [] : ['corrientes', 'pellegrini', 'media'])) {
       let el = null;
       if (pz.pantallas[pan + '_video']) {
         el = document.createElement('video'); el.muted = true; el.loop = true; el.playsInline = true; el.src = pz.pantallas[pan + '_video'];
@@ -1158,11 +1162,12 @@
     window.CONTENIDO.setMedia({ pistas, fuentes, sincronizar: null });
     M.cargarShow(); M.seek(0); M.play();
     const d = pintarPistas(fc);
-    $('plan-cab').innerHTML = `<b>Pieza generada con IA · ${pz.titulo.replace(/</g, '&lt;')}</b> · imágenes de fal (Flux 2 Pro) dirigidas por Claude; textos, luces y reglas los pone TRUST Control. SIMULACIÓN CONCEPTUAL / mockup ilustrativo, no publicar.`;
+    $('plan-cab').innerHTML = pz.material ? `<b>${pz.titulo.replace(/</g, '&lt;')}</b> · material real de la campaña, animado por TRUST Control para las tres pantallas y las luces. SIMULACIÓN CONCEPTUAL / mockup ilustrativo, no publicar.`
+      : `<b>Pieza generada con IA · ${pz.titulo.replace(/</g, '&lt;')}</b> · imágenes de fal (Flux 2 Pro) dirigidas por Claude; textos, luces y reglas los pone TRUST Control. SIMULACIÓN CONCEPTUAL / mockup ilustrativo, no publicar.`;
     $('plan-entendi').innerHTML = [pz.concepto, `luces → ${M.EFECTOS[fc.efecto] ? M.EFECTOS[fc.efecto].nombre : 'persecución'} con la paleta de la pieza`, f.titular ? `texto del motor → «${String(f.titular).toUpperCase()}» en la banda media` : '']
       .filter(Boolean).map((x) => `<li>${String(x).replace(/</g, '&lt;')}</li>`).join('');
     const ol = $('plan-ol'); ol.innerHTML = '';
-    for (const b of M.BLOQUES) { const li = document.createElement('li'); li.innerHTML = `<b>${b.desde}–${b.hasta} s · ${b.nombre}</b> — `; li.appendChild(document.createTextNode(b.id === 'takeover' || b.id === 'revelacion' || b.id === 'firma' ? 'la pieza IA en las 3 pantallas; ' + (d.plan[b.id] || '').split('; ').pop() : d.plan[b.id] || '')); ol.appendChild(li); }
+    for (const b of M.BLOQUES) { const li = document.createElement('li'); li.innerHTML = `<b>${b.desde}–${b.hasta} s · ${b.nombre}</b> — `; li.appendChild(document.createTextNode(b.id === 'takeover' || b.id === 'revelacion' || b.id === 'firma' ? (pz.material ? 'el material de campaña en las 3 pantallas; ' : 'la pieza IA en las 3 pantallas; ') + (d.plan[b.id] || '').split('; ').pop() : d.plan[b.id] || '')); ol.appendChild(li); }
     $('plan-ficha').textContent = JSON.stringify(fc, null, 1); $('plan').hidden = false; plegarDirector(false);
   }
   window.TRUST_PIEZA_IA = (n) => aplicarPiezaIA((window.PIEZAS_IA || [])[n]);

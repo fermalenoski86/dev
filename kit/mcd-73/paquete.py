@@ -51,7 +51,7 @@ FILES.append(('consola/base-trust-noche.jpg', 'consola/base-trust-noche.jpg', 'F
 # TRUST Control: presentación interactiva offline (SIMULACIÓN, no conectada a equipos). Abre con doble clic.
 FILES.insert(0, ('control/index.html', 'control/index.html',
                  "TRUST Control — presentación interactiva offline: foto real, Día/Noche, pantallas y 46 luminarias con dimmers independientes, show McDonald's 15 s. SIMULACIÓN."))
-for f in ('estilo.css', 'fuentes.css', 'app.js', 'motor.js', 'contenido.js', 'estudio.js', 'AI_CONTENT_STUDIO.md', 'PRESETS_RGBW.md', 'geometria.js', 'encuadres.js', 'luminarias.js', 'piezas_ia.js', 'FICHA_SHOW.md', 'LICENCIA-Inter.txt', 'fotos/trust-noche.jpg', 'fotos/trust-relieve.jpg', 'fotos/trust-cielo.png', 'fotos/trust-noche-completa.jpg', 'fotos/trust-relieve-completa.jpg', 'fotos/trust-cielo-completa.png', 'fotos/trust-dia.jpg'):
+for f in ('estilo.css', 'fuentes.css', 'app.js', 'motor.js', 'contenido.js', 'estudio.js', 'AI_CONTENT_STUDIO.md', 'PRESETS_RGBW.md', 'geometria.js', 'encuadres.js', 'luminarias.js', 'piezas_ia.js', 'material_mcd.js', 'FICHA_SHOW.md', 'LICENCIA-Inter.txt', 'fotos/trust-noche.jpg', 'fotos/trust-relieve.jpg', 'fotos/trust-cielo.png', 'fotos/trust-noche-completa.jpg', 'fotos/trust-relieve-completa.jpg', 'fotos/trust-cielo-completa.png', 'fotos/trust-dia.jpg'):
     if os.path.isfile(os.path.join(K, 'control', f)):
         FILES.append((f'control/{f}', f'control/{f}', 'Archivo de TRUST Control.'))
 FILES.insert(0, ('ABRIR-PRESENTACION.txt', 'ABRIR-PRESENTACION.txt', 'Cómo abrir y operar la presentación (empezar por acá).'))

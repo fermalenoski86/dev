@@ -665,33 +665,53 @@
     c.fillStyle = g2; c.fillRect(sx - w * 0.08, 0, w * 0.16, h);
     c.restore();
   }
-  function capaMedia(cv, id, t) {
-    const seg = (MEDIA.pistas[id] || []).find((x) => t >= x.desde && t < x.hasta); if (!seg) return null;
-    const c = cv.getContext('2d'), w = cv.width, h = cv.height, a = sv((t - seg.desde) / 0.35) * sv((seg.hasta - t) / 0.35);
-    c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-over';
+  // Capa de material. Además de los modos de siempre, cada tramo puede animar el material (19/10, Fer: «animalo, que no
+  // quede en materiales»): rect = recorte normalizado de la fuente [x, y, an, al]; kb = Ken Burns {z: [desde, hasta],
+  // f: [[fx, fy], [fx, fy]]} (zoom y foco que viajan durante el tramo); entra = 'izq' | 'der' | 'abajo' (deslizamiento de
+  // 0,5 s). Los tramos que se solapan se funden entre sí (antes se dibujaba uno solo y el cruce pasaba por el fondo).
+  const lerp2 = (p, q, u) => [p[0] + (q[0] - p[0]) * u, p[1] + (q[1] - p[1]) * u];
+  function tramoMedia(c, w, h, seg, t) {
+    const dur = Math.max(0.01, seg.hasta - seg.desde), u = cl((t - seg.desde) / dur, 0, 1);
+    const fi = seg.fundido == null ? 0.35 : seg.fundido, a = sv((t - seg.desde) / fi) * sv((seg.hasta - t) / fi);
     if (seg.modo === 'paleta' || seg.modo === 'logo') paletaMov(c, w, h, t, seg.paleta, a);
-    const el = seg.modo === 'paleta' ? null : MEDIA.fuentes[seg.fuente];
-    if (el) {
-      if (seg.src && MEDIA.sincronizar) MEDIA.sincronizar(seg, t);
-      const [sw, sh] = dimsDe(el);
-      if (sw && sh) {
-        c.globalAlpha = a;
-        if (seg.modo === 'cubrir') { const r = recorteCubrir(sw, sh, w / h, seg.foco); c.drawImage(el, r[0], r[1], r[2], r[3], 0, 0, w, h); }
-        else if (seg.modo === 'master') {
-          const r = recorteCubrir(sw, sh, 2592 / 576, seg.foco), fa = 1152 / 2592;
-          const sub = seg.parte === 'a' ? [r[0], r[1], r[2] * fa, r[3]] : [r[0] + r[2] * fa, r[1], r[2] * (1 - fa), r[3]];
-          c.drawImage(el, sub[0], sub[1], sub[2], sub[3], 0, 0, w, h);
-        } else if (seg.modo === 'contener') {
-          const r = recorteCubrir(sw, sh, w / h, [0.5, 0.5]);
-          c.filter = `blur(${Math.round(h * 0.06)}px) brightness(0.45)`; c.drawImage(el, r[0], r[1], r[2], r[3], -w * 0.04, -h * 0.08, w * 1.08, h * 1.16); c.filter = 'none';
-          const k = Math.min(w / sw, h / sh) * 0.94, dw = sw * k, dh = sh * k; c.drawImage(el, 0, 0, sw, sh, (w - dw) / 2, (h - dh) / 2, dw, dh);
-        } else if (seg.modo === 'logo') {
-          const k = Math.min(w * 0.8 / sw, h * 0.74 / sh), dw = sw * k, dh = sh * k; c.drawImage(el, 0, 0, sw, sh, (w - dw) / 2, (h - dh) / 2, dw, dh);
-        }
+    const el = seg.modo === 'paleta' ? null : MEDIA.fuentes[seg.fuente]; if (!el) return;
+    if (seg.src && MEDIA.sincronizar) MEDIA.sincronizar(seg, t);
+    const [W0, H0] = dimsDe(el); if (!W0 || !H0) return;
+    const R = seg.rect ? [seg.rect[0] * W0, seg.rect[1] * H0, seg.rect[2] * W0, seg.rect[3] * H0] : [0, 0, W0, H0];
+    const kb = seg.kb || {}, z = kb.z ? kb.z[0] + (kb.z[1] - kb.z[0]) * sv(u) : 1, foco = kb.f ? lerp2(kb.f[0], kb.f[1], sv(u)) : (seg.foco || [0.5, 0.5]);
+    const e = seg.entra ? 1 - sv((t - seg.desde) / 0.5) : 0;
+    const dx = seg.entra === 'izq' ? -w * e : seg.entra === 'der' ? w * e : 0, dy = seg.entra === 'abajo' ? h * e : 0;
+    c.save(); c.globalAlpha = a; c.translate(dx, dy);
+    if (seg.modo === 'cubrir') {
+      let cw = R[2], ch = R[2] / (w / h); if (ch > R[3]) { ch = R[3]; cw = R[3] * (w / h); }
+      cw /= z; ch /= z;
+      const x = R[0] + (R[2] - cw) * cl(foco[0], 0, 1), y = R[1] + (R[3] - ch) * cl(foco[1], 0, 1);
+      c.drawImage(el, x, y, cw, ch, 0, 0, w, h);
+    } else if (seg.modo === 'master') {
+      const r = recorteCubrir(W0, H0, 2592 / 576, seg.foco), fa = 1152 / 2592;
+      const sub = seg.parte === 'a' ? [r[0], r[1], r[2] * fa, r[3]] : [r[0] + r[2] * fa, r[1], r[2] * (1 - fa), r[3]];
+      c.drawImage(el, sub[0], sub[1], sub[2], sub[3], 0, 0, w, h);
+    } else if (seg.modo === 'contener') {   // el recorte entero + el mismo material desenfocado de fondo (o el color del tramo)
+      if (seg.sinFondo) { /* capa encima de otra del mismo tramo */ }
+      else if (seg.fondo) { c.fillStyle = seg.fondo; c.fillRect(0, 0, w, h); }
+      else {
+        let cw = R[2], ch = R[2] / (w / h); if (ch > R[3]) { ch = R[3]; cw = R[3] * (w / h); }
+        c.filter = `blur(${Math.round(h * 0.06)}px) brightness(0.45)`; c.drawImage(el, R[0] + (R[2] - cw) / 2, R[1] + (R[3] - ch) / 2, cw, ch, -w * 0.04, -h * 0.08, w * 1.08, h * 1.16); c.filter = 'none';
       }
+      const anch = seg.lado ? w * 0.5 : w, k = Math.min(anch / R[2], h / R[3]) * (seg.escala || 0.94) * z, dw = R[2] * k, dh = R[3] * k, px = seg.lado === 'izq' ? w * 0.26 : seg.lado === 'der' ? w * 0.74 : w / 2;
+      c.drawImage(el, R[0], R[1], R[2], R[3], px - dw / 2, (h - dh) / 2, dw, dh);
+    } else if (seg.modo === 'logo') {
+      const k = Math.min(w * 0.8 / R[2], h * 0.74 / R[3]), dw = R[2] * k, dh = R[3] * k; c.drawImage(el, R[0], R[1], R[2], R[3], (w - dw) / 2, (h - dh) / 2, dw, dh);
     }
     c.restore();
-    return seg;
+  }
+  function capaMedia(cv, id, t) {
+    const segs = (MEDIA.pistas[id] || []).filter((x) => t >= x.desde && t < x.hasta); if (!segs.length) return null;
+    const c = cv.getContext('2d'), w = cv.width, h = cv.height;
+    c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-over';
+    for (const seg of segs) tramoMedia(c, w, h, seg, t);
+    c.restore();
+    return segs[segs.length - 1];
   }
 
   // ---------- entrada ----------
