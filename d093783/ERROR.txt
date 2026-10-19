@@ -1,0 +1,3 @@
+SystemExit: HTTP 403 en https://queue.fal.run/fal-ai/flux-2-pro: {"detail":"User is locked. Reason: Exhausted balance. Top up your balance at fal.ai/dashboard/billing."}
+Gasto estimado hasta el corte: USD 0.08
+[('director 1-postre-celeste', 0.02), ('imagen 2048x1024', 0.06)]

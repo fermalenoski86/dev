@@ -1,0 +1,29 @@
+{
+ "titulo": "Verano Celeste",
+ "concepto": "Un postre helado cremoso con remolino y galleta que brilla como un amanecer celeste y blanco sobre la noche porteña.",
+ "corrientes": {
+  "prompt": "Premium advertising product photograph, 2:1 wide horizontal composition. A plain smooth glossy white cup, completely generic with no logo, no text and no label, filled with creamy soft-serve frozen dessert in a tall elegant swirl, studded with chunks of chocolate cookie. The cup is perfectly centered, with generous empty dark space on both left and right. Seamless deep midnight navy blue background, clean and uncluttered. Soft sky-blue rim light from behind and a bright white key light on the cream, with tiny cold condensation droplets and a few cookie crumbs floating. High contrast, crisp studio lighting, sky blue and white palette, fresh and luminous, readable from far away at night. No people, no faces, no text, no letters, no numbers."
+ },
+ "pellegrini": {
+  "prompt": "Premium advertising macro product photograph, 2.5:1 ultra wide horizontal composition. Close-up of the top of a creamy frozen dessert swirl rising from a plain smooth white cup with no logo and no text, with large cookie chunks embedded in the cream. The swirl is centered, and clean dark negative space extends to the left and right. A few cookie crumbs hang in the air, and a gentle sky-blue glow outlines the cream. Seamless deep midnight navy blue background. Bright white studio key light, cool celeste rim light, high contrast, glossy creamy texture, same sky blue and white palette as the rest of the campaign. No people, no faces, no text, no letters, no numbers, no logos."
+ },
+ "media": {
+  "prompt": "Very wide panoramic strip, 4.66:1 aspect ratio. A flowing horizontal ribbon of creamy white frozen dessert swirls rolling like soft waves across the frame, with small cookie chunks and crumbs scattered along it, set low on a seamless deep midnight navy blue background. Soft sky-blue light glows along the edge of the cream like a horizon line, with tiny sparkling frost particles. Large empty dark space above the ribbon. The pattern repeats smoothly from left to right, suited to lateral movement. Studio lighting, high contrast, sky blue and white palette, fresh and luminous. No cups, no people, no faces, no text, no letters, no numbers, no logos."
+ },
+ "video": {
+  "pantalla": null,
+  "movimiento": ""
+ },
+ "ficha": {
+  "efecto": "respiracion",
+  "paleta": [
+   "#0A1A3F",
+   "#75C3F0",
+   "#BFE6FA",
+   "#FFFFFF"
+  ],
+  "zonas": [],
+  "velocidad": 1,
+  "titular": "Fresco como el verano"
+ }
+}
