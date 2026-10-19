@@ -989,6 +989,7 @@
       velocidad: Math.min(1.6, Math.max(0.6, +f.velocidad || 1)),
       zonas: (Array.isArray(f.zonas) ? f.zonas : []).filter((z) => ['superior', 'medio', 'inferior', 'ochava', 'cupula'].includes(z)),
       luces: f.luces !== false, pantallas: f.pantallas !== false || f.luces === false,
+      cruzar: f.cruzar === true,   // regla de corte: por defecto ninguna palabra ni logo queda partido entre las dos pantallas
     };
     if (v.estilo === 'custom' && !v.paleta.length) v.estilo = 'rojo';
     if (v.creatividad === 'P' && !v.paleta.length) v.paleta = ['#DA291C', '#FFC72C'];
@@ -1011,7 +1012,8 @@
     const soloPantallas = /solo (?:las |en las )?pantallas|sin (?:las )?luces|fachada apagada|luces apagadas/.test(p);
     const soloLuces = /solo (?:las |con las )?luces|solo (?:la )?fachada|sin (?:las )?pantallas|pantallas apagadas/.test(p);
     const f = { energia, velocidad: energia, titular, producto: prod ? prod[1] : null, efecto: ef ? ef[1] : null, zonas: zonas.map((z) => z[1]),
-      luces: !soloPantallas, pantallas: !soloLuces };
+      luces: !soloPantallas, pantallas: !soloLuces,
+      cruzar: /cruce (?:las|ambas) (?:dos )?pantallas|cruzando (?:las|ambas)|de punta a punta|una sola pieza|partid[oa]|que se parta/.test(p) };
     const propios = colores.filter((c) => !['rojo', 'dorado', 'amarillo'].includes(c[2]));   // rojo y dorado solos = la base de marca de siempre
     if (propios.length || titular || (prod && prod[1] === 'helado')) {
       Object.assign(f, { creatividad: 'P', estilo: colores.length ? 'custom' : 'rojo', intensidad: 1, paleta: colores.length ? colores.map((c) => c[1]) : ['#DA291C', '#FFC72C'] });
@@ -1034,6 +1036,7 @@
     if (zonas.length) entendi.push(`zonas → ${zonas.map((z) => z[2]).join(', ')}; el resto de la fachada queda en cálido`);
     if (soloPantallas) entendi.push('solo pantallas → la fachada queda en su luz cálida');
     if (soloLuces && !soloPantallas) entendi.push('solo luces → las pantallas quedan con la imagen institucional');
+    if (f.cruzar) entendi.push('una sola pieza → el nombre puede cruzar las dos pantallas por detrás de la cúpula (pedido explícito)');
     if (energia !== 1) entendi.push(energia > 1 ? 'ritmo rápido → efectos y movimiento más rápidos' : 'ritmo calmo → movimiento más lento');
     const seg = p.match(/(\d{1,3})\s*(s\b|seg)/); if (seg && +seg[1] !== 15) entendi.push(`duración pedida ${seg[1]} s → por ahora el show dura 15 s`);
     if (/reloj/.test(p)) entendi.push('reloj → acento dorado durante el takeover (próxima fase)');
@@ -1088,6 +1091,7 @@
       window.CONTENIDO.setPersonal({ colores: fc.paleta, titular: fc.titular, producto: fc.producto, energia: fc.energia });
     }
     if (fc.estilo === 'custom') M.setPaletaShow(fc.paleta);
+    window.CONTENIDO.setCorte(fc.cruzar);
     M.setCreatividad(fc.creatividad); M.setEstiloShow(fc.estilo, fc.intensidad); M.setFicha(fc);
   }
   function generarMinishow() {

@@ -108,7 +108,13 @@ async def main(out):
         ok(max(lat[0]) - min(lat[0]) > 0.2 and lat[1] == 'institucional', f'el latido se ve en las luminarias (niveles {[round(x,2) for x in lat[0]]}) y las pantallas quedan institucionales')
         await ev('document.querySelector("#ejemplos button").click()'); await ev('TRUST.motor.pausa()')
         ok(json.loads(await ev('document.getElementById("plan-ficha").textContent'))['efecto'] == 'ola', 'los ejemplos de un clic generan el show')
-        await ev('TRUST.motor.setFicha(null)')
+        # --- regla de corte (19/10): por defecto ninguna palabra ni logo queda partido entre Corrientes y Pellegrini
+        await pg.fill('#prompt', 'El logo bien grande'); await pg.click('#generar'); await ev('TRUST.motor.pausa()')
+        c1 = await ev('[CONTENIDO.corte(), JSON.parse(document.getElementById("plan-ficha").textContent).cruzar]')
+        await pg.fill('#prompt', 'El logo bien grande, una sola pieza que cruce las dos pantallas'); await pg.click('#generar'); await ev('TRUST.motor.pausa()')
+        c2 = await ev('[CONTENIDO.corte(), JSON.parse(document.getElementById("plan-ficha").textContent).cruzar]')
+        ok(c1 == [False, False] and c2 == [True, True], f'regla de corte: el nombre no se parte entre pantallas salvo pedido explícito ({c1} → {c2})')
+        await ev('CONTENIDO.setCorte(false); TRUST.motor.setFicha(null)')
         await ev('TRUST.motor.pausa()')
         casos = [('Lanzamiento del nuevo producto, todo dorado y con mucho impacto', 'F', 'dorado', 1.12), ('Un desayuno sutil, café y medialunas', 'E', 'calido', 0.88), ('Lluvia de papas fritas', 'D', 'rojo', 1), ('Que la hamburguesa sea la protagonista', 'B', 'rojo', 1), ('El logo bien grande', 'A', 'rojo', 1)]
         res = []

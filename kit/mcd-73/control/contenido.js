@@ -171,6 +171,20 @@
     }
     c.restore();
   }
+  // REGLA DE CORTE (19/10, pedido de Fer): entre Corrientes y Pellegrini está la cúpula, así que una palabra o un logo
+  // que cruza las dos pantallas se lee partido («McD | ld's»). Por defecto ninguna palabra ni logo queda partido:
+  //   · varias palabras → se reparten por palabra (VAMOS | ARGENTINA), cada una entera en su pantalla;
+  //   · una sola palabra o el logo → entero en cada pantalla (eco), con el brillo que pasa de una a la otra.
+  // Se permite partir solo si el pedido lo dice («que cruce las dos pantallas», «de punta a punta», «una sola pieza»),
+  // o en movimiento: lo que viaja de una pantalla a otra (orbe, cinta, papas) sí puede pasar por detrás de la cúpula.
+  let CORTE = { permitido: false };
+  function setCorte(permitido) { CORTE = { permitido: !!permitido }; }
+  function marcaEnVentana(c, vn, a, brillo) {   // el nombre entero, ajustado a la ventana real de la pantalla
+    const w = (vn.x1 - vn.x0) * 0.88, h = vn.y1 - vn.y0;
+    c.save(); c.font = `800 100px ${FUENTE}`; const m = c.measureText("McDonald's").width; c.restore();
+    const tam = Math.min(h * 0.6, 100 * w / m);
+    marca(c, (vn.x0 + vn.x1) / 2, (vn.y0 + vn.y1) / 2, tam, a, brillo);
+  }
   // Producto con VOLUMEN: se dibuja aparte y se le aplica luz principal (arriba a la izquierda) y sombra propia,
   // así no queda como un dibujo plano pegado sobre la pantalla.
   const HB = document.createElement('canvas');
@@ -553,7 +567,11 @@
       fondoRojo(c, vn, t, 0.1);
       columnasLuz(c, t, 0.9 * k);
       particulas(c, vn, t, 0.5, 70);
-      if (id !== 'media') marca(c, 1240 - 40 * (t - 5) / 5, 600, 180, sv((t - 5.2) / 0.8), cl((t - 6) / 2.4, 0, 1));
+      if (id !== 'media' && CORTE.permitido) marca(c, 1240 - 40 * (t - 5) / 5, 600, 180, sv((t - 5.2) / 0.8), cl((t - 6) / 2.4, 0, 1));   // pedido: una pieza
+      else if (id !== 'media') {   // regla de corte: el nombre entero en cada pantalla; el brillo cruza de Corrientes a Pellegrini
+        const izq = id === 'corrientes';
+        marcaEnVentana(c, vn, sv((t - (izq ? 5.2 : 5.6)) / 0.8), cl((t - (izq ? 6 : 7.1)) / 1.2, 0, 1));
+      }
       else { cinta(c, 0.6, 1, t, 0.55 * k); marca(c, YM.cx, YM.cy, 64, sv((t - 5.6) / 0.8)); }
     } else {   // C · ICONIC MOMENT: el rastro del elemento se vuelve una cinta continua y la marca aparece donde aterrizó
       fondoRojo(c, vn, t, 0.08);
@@ -573,7 +591,7 @@
     ondasFirma(c, vn, t, 1);
     if (id === 'media') marca(c, YM.cx, YM.cy, 62, 1);
     else if (cr === 'B' && id === 'pellegrini') hamburguesa(c, 1648, 668, 280, t);
-    else if (cr === 'A') marca(c, 1240, 600, 160, 0.9);   // A: el mismo nombre gigante que une ambas pantallas
+    else if (cr === 'A') { if (CORTE.permitido) marca(c, 1240, 600, 160, 0.9); else marcaEnVentana(c, vn, 0.9); }   // A: una pieza solo si se pidió
     else { const g = c.createRadialGradient(1250, 470, 0, 1250, 470, 700); g.addColorStop(0, 'rgba(255,200,110,0.22)'); g.addColorStop(1, 'rgba(255,200,110,0)');
       c.save(); c.globalCompositeOperation = 'lighter'; c.fillStyle = g; c.fillRect(vn.x0, vn.y0, vn.x1 - vn.x0, vn.y1 - vn.y0); c.restore(); }
   }
@@ -690,5 +708,5 @@
     LARGO.length = 1; for (let i = 1; i < CAMINO.length; i++) LARGO.push(LARGO[i - 1] + Math.hypot(CAMINO[i][0] - CAMINO[i - 1][0], CAMINO[i][1] - CAMINO[i - 1][1]));
     return VEN;
   }
-  window.CONTENIDO = { preparar, dibujar, enCamino, ventanas: () => VEN, setMedia, hayMedia: () => !!MEDIA, recorteCubrir, setPersonal, personal: () => JSON.parse(JSON.stringify(PERSONAL)) };
+  window.CONTENIDO = { setCorte, corte: () => CORTE.permitido, preparar, dibujar, enCamino, ventanas: () => VEN, setMedia, hayMedia: () => !!MEDIA, recorteCubrir, setPersonal, personal: () => JSON.parse(JSON.stringify(PERSONAL)) };
 })();

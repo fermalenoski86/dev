@@ -20,9 +20,18 @@ Hoy la ficha la arma un intérprete local con reglas, sin IA. Más adelante la p
  "velocidad": 1,                  // 0,6–1,6
  "zonas": ["superior", "cupula"], // superior · medio · inferior · ochava · cupula; vacío = toda la fachada
  "luces": true,                   // false = «solo pantallas» (la fachada queda cálida)
- "pantallas": true                // false = «solo luces» (pantallas institucionales); nunca las dos en false
+ "pantallas": true,               // false = «solo luces» (pantallas institucionales); nunca las dos en false
+ "cruzar": false                  // regla de corte: true solo si se pide una pieza que cruce las dos pantallas
 }
 ```
+
+## Regla de corte
+
+Entre Corrientes y Pellegrini está la cúpula. Una palabra o un logo que cruza las dos pantallas se lee partido (por ejemplo «McD | ld's»). Por eso:
+
+- **Varias palabras:** se reparten por palabra, cada una entera en su pantalla (VAMOS | ARGENTINA).
+- **Una sola palabra o el logo:** va entero en cada pantalla (eco), y el brillo pasa de una a la otra.
+- **Partir:** solo si el pedido lo dice («que cruce las dos pantallas», «de punta a punta», «una sola pieza»), o con elementos en movimiento que viajan de una pantalla a otra.
 
 ## Biblioteca de efectos para las 46 luminarias
 
