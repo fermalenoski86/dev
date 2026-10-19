@@ -1,0 +1,29 @@
+{
+ "titulo": "Noche Celeste",
+ "concepto": "Un postre helado cremoso y luminoso, en celeste y blanco sobre azul noche, que refresca la noche porteña de verano.",
+ "corrientes": {
+  "prompt": "Professional advertising product photograph, wide 2:1 horizontal composition. A plain smooth white generic dessert cup, no label and no logo, centered in frame. It holds creamy ice cream dessert with a tall elegant soft-serve swirl and chunky cookie pieces on top, with a few crumbs floating mid-air. Studio lighting with a soft sky-blue rim light and crisp white highlights, high contrast. Clean, deep midnight navy blue seamless background, with generous empty dark space on both left and right sides. Subtle cold mist and a faint light-blue glow behind the cup. Fresh, luminous, readable from far away at night. No text, no letters, no numbers, no logos, no people, no faces."
+ },
+ "pellegrini": {
+  "prompt": "Professional advertising product photograph, ultra-wide 2.5:1 horizontal composition. Closer, tighter framing: a creamy white ice cream swirl with embedded dark cookie chunks, rising from the rim of a plain smooth white generic cup with no markings, centered. Droplets of condensation on the cup, a few cookie crumbs suspended in the air. Studio lighting with a pale celeste (light sky blue) backlight and bright white specular highlights, very high contrast. Clean dark midnight navy background with wide empty space left and right of the subject. Fresh, glowing summer-night mood. No text, no letters, no numbers, no logos, no people, no faces."
+ },
+ "media": {
+  "prompt": "Very panoramic 4.66:1 horizontal banner image, abstract product-photography texture. A long flowing horizon of creamy white ice cream waves and soft swirl ripples stretching across the full width, with scattered cookie chunks and fine crumbs drifting along the band. Lateral flow suggesting movement from left to right. Light sky-blue and white glossy highlights over a deep midnight navy blue background, studio lighting, high contrast, cold mist near the bottom edge. Dark clean upper area, no single dominant object, no cups with branding. No text, no letters, no numbers, no logos, no people, no faces."
+ },
+ "video": {
+  "pantalla": null,
+  "movimiento": ""
+ },
+ "ficha": {
+  "efecto": "respiracion",
+  "paleta": [
+   "#75AADB",
+   "#FFFFFF",
+   "#BFE3FF",
+   "#0A1A3A"
+  ],
+  "zonas": [],
+  "velocidad": 1,
+  "titular": "Noche de verano"
+ }
+}
