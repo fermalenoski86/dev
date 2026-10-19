@@ -1,0 +1,29 @@
+{
+ "titulo": "Lluvia Dorada",
+ "concepto": "Papas doradas y crocantes caen en cámara lenta entre chispas de sal, sobre un rojo profundo que se lee a 80 m.",
+ "corrientes": {
+  "prompt": "Premium advertising product photography, wide 2:1 landscape composition. A plain smooth glossy red paper fry container, completely blank with no printing, no logo and no text, fully visible and centered in the frame. Golden crispy french fries fall and tumble in mid-air around and above it, frozen in slow motion, with tiny sparkling salt crystals glittering like stars. Deep crimson red seamless background fading to near-black at the edges. Warm golden studio key light from the upper left with a soft rim light, high contrast, rich specular highlights on the fries. Generous empty space above and below the product and on both sides. Clean, minimal, no people, no faces, no text, no letters, no numbers, no logos."
+ },
+ "pellegrini": {
+  "prompt": "Premium advertising product photography, very wide 2.5:1 landscape composition. A plain smooth glossy red fry container, blank with no printing, no logo and no text, complete and centered, slightly small in the frame. Golden crispy french fries cascade in a graceful arc from the container, spreading symmetrically left and right in mid-air, with glittering salt sparks. Deep crimson red seamless background with a dark vignette. Warm golden studio lighting, high contrast, same lighting as a coherent campaign. Ample empty space above and below the container and wide margins on both sides, everything fully inside the frame. No people, no faces, no text, no letters, no numbers, no logos."
+ },
+ "media": {
+  "prompt": "Ultra-wide panoramic 4.66:1 banner composition, premium advertising photography. A horizontal river of golden crispy french fries floating and tumbling in slow motion across a deep crimson red background, dense texture of fries and glittering salt crystals flowing laterally from edge to edge. In the exact center, a small plain smooth red fry container with no printing, no logo and no text, fully visible. Warm golden studio light, high contrast, dark red vignette, empty dark red space above and below the band of fries. Movement and rhythm that read well from far away. No people, no faces, no text, no letters, no numbers, no logos."
+ },
+ "video": {
+  "pantalla": null,
+  "movimiento": ""
+ },
+ "ficha": {
+  "efecto": "destello",
+  "paleta": [
+   "#8B0A12",
+   "#D4141C",
+   "#FFB627",
+   "#FFE9A8"
+  ],
+  "zonas": [],
+  "velocidad": 1,
+  "titular": "Crocantes de verdad"
+ }
+}

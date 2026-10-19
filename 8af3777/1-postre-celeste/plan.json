@@ -1,0 +1,29 @@
+{
+ "titulo": "Verano Celeste y Blanco",
+ "concepto": "Un postre helado cremoso brilla como una luz fresca sobre la noche azul de Buenos Aires, con el celeste y blanco como guiño argentino.",
+ "corrientes": {
+  "prompt": "Professional advertising product photograph of a creamy frozen dessert with a tall soft-serve swirl and chunks of cookie pieces, in a plain smooth glossy white cup with no logo, no text and no label. The whole cup and the whole swirl are fully inside the frame, centered, with generous empty dark space above, below and on both sides. Deep midnight navy blue background, clean and seamless. Cool studio lighting with a soft sky-blue rim light and crisp white highlights on the cream. A few small cookie crumbs float around the cup. High contrast, fresh and luminous, sharp focus, legible from far away at night. Wide 2:1 composition, eye-level camera. No faces, no hands, no people."
+ },
+ "pellegrini": {
+  "prompt": "Professional advertising product photograph of the same creamy frozen dessert with a tall soft-serve swirl and cookie chunks, in a plain smooth glossy white cup with no logo, no text and no label. Slightly low camera angle, so the dessert looks heroic. The whole cup and swirl are fully visible, centered, small to medium in the frame, with plenty of empty dark space above, below and at both sides. Deep midnight navy blue seamless background. Cool studio lighting with a sky-blue rim light and bright white highlights, and a faint pale-blue glow behind the cup. Cookie crumbs scattered on the dark glossy surface. High contrast, fresh, luminous. Very wide 2.5:1 composition. No faces, no hands, no people."
+ },
+ "media": {
+  "prompt": "Ultra-wide panoramic texture photograph for a horizontal LED band: flowing waves of creamy frozen dessert in sky blue and pure white, with soft swirls rippling horizontally from left to right and small cookie crumbs scattered along them. The waves form a continuous horizon-like ribbon through the middle of the frame, with deep midnight navy blue dark space above and below. No cups cut off, no objects at the edges. Cool studio lighting, blue rim light, crisp white highlights, high contrast, glossy and fresh. Extremely wide 4.66:1 composition, designed for lateral movement. No text, no logos, no faces, no people."
+ },
+ "video": {
+  "pantalla": null,
+  "movimiento": ""
+ },
+ "ficha": {
+  "efecto": "degrade",
+  "paleta": [
+   "#0B1E4A",
+   "#7EC8F2",
+   "#BFE6FF",
+   "#FFFFFF"
+  ],
+  "zonas": [],
+  "velocidad": 1,
+  "titular": "Fresco como el verano"
+ }
+}
