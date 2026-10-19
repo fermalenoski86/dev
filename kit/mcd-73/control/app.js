@@ -588,7 +588,7 @@
       // cambia suave, así que se relee cada 4 cuadros mientras el show corre (siempre en pausa o en un cuadro suelto)
       if (!COLOR_MEDIO[id] || !M.animando() || (cuadroN % 4) === 0) {
         promedio.clearRect(0, 0, 1, 1); promedio.drawImage(CONT[id], 0, 0, 1, 1);
-        const d = promedio.getImageData(0, 0, 1, 1).data; COLOR_MEDIO[id] = [d[0], d[1], d[2]];
+        try { const d = promedio.getImageData(0, 0, 1, 1).data; COLOR_MEDIO[id] = [d[0], d[1], d[2]]; } catch (e) { COLOR_MEDIO[id] = COLOR_MEDIO[id] || [120, 120, 130]; }   // lienzo «sucio» (file://): no corta el dibujo
       }
       extra.pantallas.push({ nivel: sal.pantallas[id], color: COLOR_MEDIO[id], quads: G.superficies[id].quads });
     }
@@ -1113,6 +1113,44 @@
     $('plan').hidden = false;
     return it;
   }
+  // Piezas generadas con IA real (ia/generar.py → ia/empaquetar.py → piezas_ia.js): imágenes/clip por pantalla + ficha de luces.
+  // La pieza entra a las 3 pantallas en el tramo 2,2–12,8 s; el titular lo escribe el motor sobre la banda media.
+  (function armarPiezasIA() {
+    const lista = window.PIEZAS_IA || [], caja = $('piezas-ia'); if (!lista.length || !caja) return;
+    caja.hidden = false;
+    lista.forEach((pz, n) => {
+      const b = document.createElement('button'); b.textContent = `${n + 1} · ${pz.titulo}`; b.title = pz.concepto;
+      b.addEventListener('click', () => aplicarPiezaIA(pz)); caja.appendChild(b);
+    });
+  })();
+  function aplicarPiezaIA(pz) {
+    const fuentes = {}, pistas = {};
+    for (const pan of ['corrientes', 'pellegrini', 'media']) {
+      let el = null;
+      if (pz.pantallas[pan + '_video']) {
+        el = document.createElement('video'); el.muted = true; el.loop = true; el.playsInline = true; el.src = pz.pantallas[pan + '_video'];
+        el.addEventListener('loadeddata', () => { el.play().catch(() => {}); pedirCuadro(); });
+      } else if (pz.pantallas[pan]) { el = new Image(); el.onload = pedirCuadro; el.src = pz.pantallas[pan]; }
+      if (!el) continue;
+      fuentes[pan] = el;
+      pistas[pan] = [{ desde: 2.2, hasta: 12.8, modo: 'cubrir', fuente: pan, titular: pan === 'media' && pz.ficha.titular ? String(pz.ficha.titular).toUpperCase() : '' }];
+    }
+    const f = pz.ficha || {};
+    const fc = validarFicha({ creatividad: 'C', estilo: f.paleta && f.paleta.length ? 'custom' : 'rojo', intensidad: 1,
+      paleta: (f.paleta || []).filter((h) => { const n = parseInt(String(h).slice(1), 16); return ((n >> 16) & 255) + ((n >> 8) & 255) + (n & 255) > 90; }),   // las luces no «pintan» negro
+      efecto: f.efecto, velocidad: f.velocidad, zonas: f.zonas });
+    aplicarFicha(fc);
+    window.CONTENIDO.setMedia({ pistas, fuentes, sincronizar: null });
+    M.cargarShow(); M.seek(0); M.play();
+    const d = pintarPistas(fc);
+    $('plan-cab').innerHTML = `<b>Pieza generada con IA · ${pz.titulo.replace(/</g, '&lt;')}</b> · imágenes de fal (Flux 2 Pro) dirigidas por Claude; textos, luces y reglas los pone TRUST Control. SIMULACIÓN CONCEPTUAL / mockup ilustrativo, no publicar.`;
+    $('plan-entendi').innerHTML = [pz.concepto, `luces → ${M.EFECTOS[fc.efecto] ? M.EFECTOS[fc.efecto].nombre : 'persecución'} con la paleta de la pieza`, f.titular ? `texto del motor → «${String(f.titular).toUpperCase()}» en la banda media` : '']
+      .filter(Boolean).map((x) => `<li>${String(x).replace(/</g, '&lt;')}</li>`).join('');
+    const ol = $('plan-ol'); ol.innerHTML = '';
+    for (const b of M.BLOQUES) { const li = document.createElement('li'); li.innerHTML = `<b>${b.desde}–${b.hasta} s · ${b.nombre}</b> — `; li.appendChild(document.createTextNode(b.id === 'takeover' || b.id === 'revelacion' || b.id === 'firma' ? 'la pieza IA en las 3 pantallas; ' + (d.plan[b.id] || '').split('; ').pop() : d.plan[b.id] || '')); ol.appendChild(li); }
+    $('plan-ficha').textContent = JSON.stringify(fc, null, 1); $('plan').hidden = false; plegarDirector(false);
+  }
+  window.TRUST_PIEZA_IA = (n) => aplicarPiezaIA((window.PIEZAS_IA || [])[n]);
   // Ejemplos: un clic completa el pedido y genera (sirve para la demo y para descubrir qué entiende el intérprete)
   document.querySelectorAll('#ejemplos button').forEach((b) => b.addEventListener('click', () => { $('prompt').value = b.dataset.p; generarTodo(); }));
   // AI Content Studio: con material READY arma el concepto (estudio.js); sin material, IDEA FIRST = plantilla preprogramada.

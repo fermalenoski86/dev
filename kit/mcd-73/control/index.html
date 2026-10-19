@@ -77,6 +77,7 @@
           <button data-p="Latido rojo en toda la fachada, solo luces">Latido solo luces</button>
           <button data-p="Desayuno tranquilo, degradé cálido, café y medialuna">Desayuno en degradé</button>
         </div>
+        <div class="ejemplos piezas-ia" id="piezas-ia" hidden><span>Piezas IA:</span></div>
         <div class="plan" id="plan" hidden><p class="cab" id="plan-cab"></p><p class="sub">Lo que entendí</p><ul id="plan-entendi" class="lista-chica"></ul><p class="sub">Cómo queda</p><ol id="plan-ol"></ol>
           <details class="ficha"><summary>Ficha del show (lo que ejecuta el motor)</summary><pre id="plan-ficha"></pre></details></div>
         <p class="nota" id="director-nota"><b>Cómo funciona hoy:</b> el pedido se convierte en una <b>ficha del show</b> que el motor valida y ejecuta. Entiende <b>colores</b> (celeste, azul, verde, blanco…; «sin rojo» lo saca), <b>texto entre comillas</b> o después de «texto:», <b>producto</b> (hamburguesa, papas, café, McFlurry), <b>efectos de luz</b> (barrido, ola, latido, destellos, degradé, respiración), <b>zonas</b> (arriba, abajo, ochava, cúpula; «solo pantallas», «solo luces») y <b>ritmo</b>; las palabras de tema (lanzamiento, desayuno, marca…) eligen una base ya diseñada. Si subís un video o una imagen, entra solo a las pantallas. <b>No hay IA conectada</b> y nada sale de esta computadora. Más adelante se puede sumar un modelo de IA, siempre con aprobación antes de salir al aire.</p>
@@ -177,6 +178,7 @@
 <script src="luminarias.js"></script>
 <script src="motor.js"></script>
 <script src="contenido.js"></script>
+<script src="piezas_ia.js" onerror="window.PIEZAS_IA=window.PIEZAS_IA||[]"></script>
 <script src="app.js"></script>
 <script src="estudio.js"></script>
 </body>

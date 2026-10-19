@@ -689,7 +689,14 @@
     const c = cv.getContext('2d'), w = cv.width, h = cv.height, vn = VEN[id];
     c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; c.clearRect(0, 0, w, h);
     const cr = cont.creatividad || 'C';
-    if (cont.modo === 'show') { show(cv, id, vn, cont.t, cr); if (MEDIA) capaMedia(cv, id, cont.t); }
+    if (cont.modo === 'show') {
+      show(cv, id, vn, cont.t, cr);
+      const seg = MEDIA ? capaMedia(cv, id, cont.t) : null;
+      if (seg && seg.titular) {   // texto del motor SOBRE la pieza (nítido, ajustado a la pantalla; nunca generado por la IA)
+        const a = sv((cont.t - seg.desde - 0.6) / 0.5) * sv((seg.hasta - cont.t) / 0.4);
+        aMundo(c, w, h, vn); titularEn(c, seg.titular, vn, a);
+      }
+    }
     else {
       aMundo(c, w, h, vn);
       if (cont.modo === 'marca') takeover(c, id, vn, 7.6, cr);
