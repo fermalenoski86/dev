@@ -88,11 +88,11 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
 <section class="heroe">
   <div class="heroe-texto">
     <h1>EL<br>TRUST</h1>
-    <p class="bajada">Corrientes y Carlos Pellegrini, frente al Obelisco. Desde acá se diseñan, se generan y se prueban los shows del edificio antes de salir al aire.</p>
+    <p class="bajada">La esquina más vista de Buenos Aires. Acá armamos y probamos cada show antes de que se prenda el edificio.</p>
     <ul class="datos">
       <li><b>3</b><span>pantallas LED</span></li>
-      <li><b>46</b><span>luminarias RGBW</span></li>
-      <li><b>15 s</b><span>por show</span></li>
+      <li><b>46</b><span>luces de fachada</span></li>
+      <li><b>15 s</b><span>cada show</span></li>
     </ul>
   </div>
   <div class="edificio" id="edificio">
@@ -103,40 +103,40 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
 
 <main>
   <section class="tarea" aria-labelledby="t-sim">
-    <div><h2 id="t-sim">Probar un show</h2><p>El simulador muestra el edificio real con las tres pantallas y las 46 luminarias. Escribís la idea, elegís efectos y lo ves de noche o de día.</p></div>
+    <div><h2 id="t-sim">Ver un show en el edificio</h2><p>El edificio real, de noche o de día, con las pantallas y las luces funcionando juntas. Escribís una idea y la ves al instante.</p></div>
     <div><a class="boton" href="/control/">Abrir el simulador</a></div>
   </section>
 
   <section class="tarea" aria-labelledby="t-ia">
-    <div><h2 id="t-ia">Generar una pieza con IA</h2><p>Claude arma la idea para cada pantalla y fal genera las imágenes. Cada imagen pasa un control: sin textos, sin logos, sin productos cortados. Los textos y la marca los pone el sistema después.</p></div>
+    <div><h2 id="t-ia">Crear una pieza nueva</h2><p>Contá la idea en una frase. En unos minutos tenés las imágenes para las tres pantallas, listas para ver en el edificio. Los textos y la marca se suman después, con el material oficial del cliente.</p></div>
     <div>
       <ul class="ejemplos" aria-label="Ideas de ejemplo">
         <li><button type="button" data-b="Noche de verano: postre helado cremoso en vaso blanco liso, celeste y blanco sobre azul noche.">Postre celeste y blanco</button></li>
         <li><button type="button" data-b="Papas fritas doradas cayendo en cámara lenta sobre rojo profundo, envase rojo liso sin marca.">Papas doradas</button></li>
         <li><button type="button" data-b="Café humeante y medialunas al amanecer porteño, luz cálida de costado sobre madera.">Desayuno al amanecer</button></li>
       </ul>
-      <label for="brief" class="opcion" style="margin-bottom:6px">Contá la idea de la campaña</label>
-      <textarea id="brief" placeholder="Ej.: hamburguesa premium protagonista, fondo oscuro cálido, luz de estudio dramática"></textarea>
+      <label for="brief" class="opcion" style="margin-bottom:6px">¿Qué querés mostrar?</label>
+      <textarea id="brief" placeholder="Una hamburguesa bien de cerca, fondo oscuro, luz cálida"></textarea>
       <div class="controles">
-        <button class="boton" id="generar" type="button">Generar pieza</button>
-        <label class="opcion"><input type="checkbox" id="con-video"> Sumar un clip de 5 s (USD 0,35)</label>
+        <button class="boton" id="generar" type="button">Crear pieza</button>
+        <label class="opcion"><input type="checkbox" id="con-video"> Con video de 5 segundos</label>
         <span class="gasto" id="gasto" aria-live="polite"></span>
       </div>
       <ol class="progreso" id="progreso" aria-live="polite"></ol>
       <div id="resultado" hidden>
         <div class="resultado" id="miniaturas"></div>
-        <div class="resultado-acciones"><a class="boton" id="ver-sim" href="/control/">Ver en el simulador</a><button class="boton sec" type="button" id="otra">Generar otra</button></div>
+        <div class="resultado-acciones"><a class="boton" id="ver-sim" href="/control/">Ver en el simulador</a><button class="boton sec" type="button" id="otra">Crear otra</button></div>
       </div>
     </div>
   </section>
 
   <section class="tarea" aria-labelledby="t-piezas">
-    <div><h2 id="t-piezas">Piezas guardadas</h2><p>Todo lo generado queda acá. Tocá una pieza para verla en el edificio.</p></div>
+    <div><h2 id="t-piezas">Piezas guardadas</h2><p>Todo lo que se crea queda acá. Tocá una para verla en el edificio.</p></div>
     <div class="galeria" id="galeria"><p class="vacio">Cargando…</p></div>
   </section>
 </main>
 
-<footer>Affinitas. Simulación conceptual, no conectada a equipos reales. Las piezas son mockups ilustrativos: no publicar.</footer>
+<footer>Affinitas. Es una simulación: no está conectada a las pantallas ni a las luces reales. Material de trabajo, no publicar.</footer>
 
 <script src="/control/encuadres.js"></script>
 <script src="/control/luminarias.js"></script>
@@ -173,16 +173,16 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     const li = document.createElement('li'); li.textContent = txt; li.className = 'activo'; pasos.appendChild(li);
     const p = { ok: (t) => { li.className = 'hecho'; if (t) li.textContent = t; }, mal: (t) => { li.className = 'mal'; li.textContent = t; } }; actual = p; return p;
   }
-  async function actualizarGasto() { try { const g = await (await fetch('/api/gasto')).json(); $('gasto').textContent = `Hoy: USD ${g.usd.toFixed(2)} de ${g.tope}`; } catch (e) { /* sin dato */ } }
+  async function actualizarGasto() { try { const g = await (await fetch('/api/gasto')).json(); $('gasto').textContent = `Hoy van USD ${g.usd.toFixed(2).replace('.', ',')} de ${g.tope}`; } catch (e) { /* sin dato */ } }
   const NOMBRES = { corrientes: 'Corrientes', pellegrini: 'Pellegrini', media: 'la banda media' };
   async function pantalla(pid, prompt, semilla) {
     let p = prompt;
     for (let intento = 1; intento <= 3; intento++) {
-      const s = paso(`Imagen para ${NOMBRES[pid]}${intento > 1 ? ` (intento ${intento})` : ''}…`);
+      const s = paso(`Imagen para ${NOMBRES[pid]}${intento > 1 ? `, otra vez` : ''}…`);
       const url = await esperarFal(await post('/api/imagen', { pantalla: pid, prompt: p, seed: semilla + intento }));
       const qc = await post('/api/control', { url, pantalla: pid });
-      if (qc.ok) { s.ok(`Imagen para ${NOMBRES[pid]}: aprobada`); return url; }
-      s.mal(`Imagen para ${NOMBRES[pid]}: rechazada (${qc.defectos || 'no pasó el control'}). Se rehace.`);
+      if (qc.ok) { s.ok(`Imagen para ${NOMBRES[pid]}: lista`); return url; }
+      s.mal(`Imagen para ${NOMBRES[pid]}: no quedó bien${qc.defectos ? ` (${qc.defectos.replace(/\.$/, '')})` : ''}. Va de nuevo.`);
       p = prompt + ' ' + (qc.correccion || '');
       if (intento === 3) return url;   // tras 3 intentos se deja la última, marcada en el progreso
     }
@@ -191,14 +191,14 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     const brief = $('brief').value.trim(); if (brief.length < 8) { $('brief').focus(); return; }
     $('generar').disabled = true; $('resultado').hidden = true; pasos.innerHTML = ''; actual = null;
     try {
-      const s0 = paso('Claude arma el plan para las tres pantallas…');
+      const s0 = paso('Armando la idea para las tres pantallas…');
       const plan = await post('/api/plan', { brief, video: $('con-video').checked });
-      s0.ok(`Plan: ${plan.titulo}. ${plan.concepto || ''}`);
+      s0.ok(`«${plan.titulo}». ${plan.concepto || ''}`);
       const semilla = Math.floor(Math.random() * 1e6), urls = {};
       for (const pid of ['corrientes', 'pellegrini', 'media']) urls[pid] = await pantalla(pid, plan[pid].prompt, semilla);
       const v = plan.video || {};
-      if ($('con-video').checked && urls[v.pantalla]) { const s = paso(`Clip de 5 s para ${NOMBRES[v.pantalla]}…`); urls[v.pantalla + '_video'] = await esperarFal(await post('/api/video', { imagen: urls[v.pantalla], movimiento: v.movimiento })); s.ok(`Clip de 5 s para ${NOMBRES[v.pantalla]}: listo`); }
-      const sg = paso('Guardando la pieza…');
+      if ($('con-video').checked && urls[v.pantalla]) { const s = paso(`Video de 5 segundos para ${NOMBRES[v.pantalla]}…`); urls[v.pantalla + '_video'] = await esperarFal(await post('/api/video', { imagen: urls[v.pantalla], movimiento: v.movimiento })); s.ok(`Video para ${NOMBRES[v.pantalla]}: listo`); }
+      const sg = paso('Guardando…');
       const meta = await post('/api/guardar', { titulo: plan.titulo, concepto: plan.concepto, brief, ficha: plan.ficha, pantallas: urls });
       sg.ok('Pieza guardada');
       $('miniaturas').innerHTML = ['corrientes', 'pellegrini', 'media'].map((k) => `<img src="${meta.pantallas[k]}" alt="${NOMBRES[k]}">`).join('');
@@ -214,7 +214,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     const g = $('galeria');
     try {
       const l = await (await fetch('/api/piezas')).json();
-      if (!l.length) { g.innerHTML = '<p class="vacio">Todavía no hay piezas generadas acá. Las cuatro del kit se ven en el simulador.</p>'; return; }
+      if (!l.length) { g.innerHTML = '<p class="vacio">Todavía no hay piezas. Creá la primera arriba; las cuatro de la propuesta para McDonald\'s ya están en el simulador.</p>'; return; }
       g.innerHTML = '';
       for (const p of l) {
         const a = document.createElement('a'); a.className = 'pieza'; a.href = `/control/?pieza=${encodeURIComponent(p.id)}`;

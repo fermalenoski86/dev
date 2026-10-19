@@ -54,7 +54,7 @@ async function leerR2(env, k, def) { const o = await env.PIEZAS.get(k); return o
 const hoy = () => new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 10);   // día de Buenos Aires
 async function cobrar(env, concepto, usd) {
   const tope = +(env.TOPE_DIARIO_USD || 5), k = `gasto/${hoy()}.json`, g = await leerR2(env, k, { usd: 0, items: [] });
-  if (g.usd + usd > tope) throw new Tope(`Se alcanzó el tope de USD ${tope} de hoy (van USD ${g.usd.toFixed(2)}). Vuelve a estar disponible mañana.`);
+  if (g.usd + usd > tope) throw new Tope(`Por hoy se llegó al tope de USD ${tope}. Mañana se puede seguir creando.`);
   g.usd = +(g.usd + usd).toFixed(4); g.items.push([new Date().toISOString(), concepto, usd]);
   await env.PIEZAS.put(k, JSON.stringify(g)); return g.usd;
 }
@@ -85,10 +85,10 @@ async function api(req, env, ruta) {
   if (ruta === '/api/gasto') { const g = await leerR2(env, `gasto/${hoy()}.json`, { usd: 0 }); return json({ usd: g.usd, tope: +(env.TOPE_DIARIO_USD || 5) }); }
 
   if (ruta === '/api/plan') {
-    const brief = String(cuerpo.brief || '').trim().slice(0, 1200); if (brief.length < 8) return json({ error: 'Contá un poco más la idea (al menos una frase).' }, 400);
+    const brief = String(cuerpo.brief || '').trim().slice(0, 1200); if (brief.length < 8) return json({ error: 'Contá la idea en al menos una frase.' }, 400);
     await cobrar(env, 'plan', PRECIO.claude);
     const plan = await claude(env, DIRECTOR, `Brief: ${brief}\nVideo pedido: ${cuerpo.video ? 'sí' : 'no'}.`);
-    if (!plan || !plan.corrientes) return json({ error: 'El director no devolvió un plan legible. Probá de nuevo.' }, 502);
+    if (!plan || !plan.corrientes) return json({ error: 'No salió una idea clara para las pantallas. Probá de nuevo o contala distinto.' }, 502);
     return json(plan);
   }
   if (ruta === '/api/imagen') {
@@ -170,7 +170,7 @@ export default {
     if (ruta === '/login') return req.method === 'POST' ? login(req, env) : paginaLogin('');
     if (ruta === '/salir') return new Response(null, { status: 303, headers: { location: '/login', 'set-cookie': 'trust_s=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0' } });
     if (ruta === '/fondo.jpg') return env.ASSETS.fetch(new Request(new URL('/control/fotos/trust-noche-completa.jpg', url)));   // la foto del login es pública
-    if (!(await sesionValida(req, env))) return ruta.startsWith('/api/') ? json({ error: 'Sesión vencida: volvé a entrar.' }, 401) : Response.redirect(new URL('/login', url), 302);
+    if (!(await sesionValida(req, env))) return ruta.startsWith('/api/') ? json({ error: 'La sesión venció. Volvé a entrar con la clave.' }, 401) : Response.redirect(new URL('/login', url), 302);
     try {
       if (ruta.startsWith('/api/')) {
         if (req.method === 'POST' && req.headers.get('origin') && new URL(req.headers.get('origin')).host !== url.host) return json({ error: 'origen inválido' }, 403);
@@ -218,8 +218,8 @@ button:focus-visible{outline:2px solid var(--piedra);outline-offset:3px}
 </style></head><body>
 <main class="texto"><h1>EL<br>TRUST</h1>
 <p class="lugar">Corrientes y Carlos Pellegrini, frente al Obelisco.</p>
-<form method="post" action="/login"><label for="clave">Clave de acceso</label>
+<form method="post" action="/login"><label for="clave">Clave</label>
 <div class="fila"><input id="clave" name="clave" type="password" autocomplete="current-password" required autofocus><button type="submit">Entrar</button></div><!--ERROR--></form>
-<p class="pie">Affinitas. Simulación conceptual, no conectada a equipos reales.</p></main>
+<p class="pie">Affinitas. Material de trabajo, no publicar.</p></main>
 <div class="foto" role="img" aria-label="El edificio EL TRUST de noche, frente al Obelisco"></div>
 </body></html>`;
