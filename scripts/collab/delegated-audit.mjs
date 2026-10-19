@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// PoC P-06 caso 7: comentario inocuo en el validador para probar el rechazo por riesgo alto; este PR no se mergea.
 // P-06 · `delegated-audit-gate` — CLI sobre la API de GitHub (gh) y git. Reglas en
 // delegated-audit.lib.mjs; brief docs/briefs/P06_BRIDGE_POC.md §3.
 //
