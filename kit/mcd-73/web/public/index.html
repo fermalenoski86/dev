@@ -11,6 +11,7 @@
 /* Portal EL TRUST. Noche porteña: azul de cielo urbano, piedra de fachada, sodio de farola, celeste de pantalla. */
 :root { --noche: #0A1830; --noche-2: #10213F; --linea: #22355A; --piedra: #E9DFCC; --niebla: #93A0B5; --sodio: #F2A63B; --celeste: #6CACE4; --error: #FFB4A2; }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { background: var(--noche); }
 body { margin: 0; color: var(--piedra); font-family: Archivo, system-ui, sans-serif; font-size: 17px; line-height: 1.5; }
 a { color: inherit; }
@@ -34,6 +35,25 @@ h1 { margin: 0 0 22px; font-weight: 850; font-stretch: 62%; font-size: clamp(80p
 .encendida .luz { animation: encender 1.6s ease-out forwards; }
 @keyframes encender { 0% { opacity: 0; r: 4; } 35% { opacity: 1; r: 22; } 100% { opacity: .8; r: 9; } }
 @media (prefers-reduced-motion: reduce) { .encendida .luz { animation: none; opacity: .8; } }
+
+/* Relato: capítulos con imagen grande y texto al costado, alternados */
+.accesos { display: flex; gap: clamp(12px, 2vw, 28px); align-items: center; font-size: 15px; }
+.accesos a { color: var(--piedra); text-decoration: none; } .accesos a:hover { color: var(--sodio); }
+.relato { padding: clamp(24px, 6vh, 72px) clamp(16px, 4vw, 56px) 24px; }
+.capitulo { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: clamp(24px, 4vw, 72px); align-items: center; padding: clamp(28px, 6vh, 64px) 0; }
+.capitulo:nth-child(even) > :first-child { order: 2; }
+.capitulo > img, .mosaico { width: 100%; height: auto; border-radius: 6px; display: block; }
+.capitulo > img { max-height: 78vh; object-fit: cover; }
+.texto-cap h2 { font-size: clamp(32px, 3.4vw, 50px); margin-bottom: 18px; }
+.texto-cap p { margin: 0 0 14px; max-width: 44ch; font-size: clamp(17px, 1.25vw, 19px); line-height: 1.6; color: #D6CDBC; }
+.texto-cap .detalle { width: 100%; margin-top: 10px; border-radius: 4px; }
+.nota-cap { font-size: 14px !important; color: var(--niebla) !important; }
+.capitulo.final { grid-template-columns: minmax(0, 1fr); border-top: 1px solid var(--linea); }
+.capitulo.final .texto-cap p { max-width: 60ch; }
+.mosaico { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; min-height: 240px; background: var(--noche-2); }
+.mosaico img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; display: block; }
+.mosaico img:first-child { grid-row: span 2; }
+.separador { margin: 0; padding: 48px 0 0; font-size: clamp(28px, 2.6vw, 38px); }
 
 /* Lo que se puede hacer: tres filas con su acción a la derecha */
 main { padding: 0 clamp(16px, 4vw, 56px) 64px; }
@@ -87,16 +107,20 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
   .heroe-texto { padding-top: 0; margin-top: -60px; position: relative; }
   .tarea { grid-template-columns: 1fr; }
   .datos b { font-size: 32px; }
+  .capitulo { grid-template-columns: 1fr; }
+  .capitulo:nth-child(even) > :first-child { order: 0; }
+  .accesos a:not(.salir) { display: none; }
 }
 </style>
 </head>
 <body>
-<header class="barra"><a class="marca" href="/">EL TRUST</a><a class="salir" href="/salir">Salir</a></header>
+<header class="barra"><a class="marca" href="/">EL TRUST</a>
+  <nav class="accesos" aria-label="Accesos"><a href="/control/">Simulador</a><a href="#t-ia">Crear una pieza</a><a href="#t-material">Material</a><a class="salir" href="/salir">Salir</a></nav></header>
 
 <section class="heroe">
   <div class="heroe-texto">
     <h1>EL<br>TRUST</h1>
-    <p class="bajada">La esquina más vista de Buenos Aires. Acá armamos y probamos cada show antes de que se prenda el edificio.</p>
+    <p class="bajada">La esquina más vista de Buenos Aires. Acá armamos y probamos cada show antes de que se prenda el edificio. Abajo te contamos qué estamos haciendo.</p>
     <ul class="datos">
       <li><b>3</b><span>pantallas LED</span></li>
       <li><b>46</b><span>luces de fachada</span></li>
@@ -109,7 +133,68 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
   </div>
 </section>
 
+<section class="relato" aria-label="Qué estamos haciendo">
+  <article class="capitulo">
+    <img src="/img/calida.webp" alt="EL TRUST de noche con la fachada iluminada en blanco cálido" loading="lazy" width="1294" height="1175">
+    <div class="texto-cap">
+      <h2>Un edificio que ya es un medio</h2>
+      <p>EL TRUST está en la esquina de Corrientes y Carlos Pellegrini, mirando al Obelisco. Por ahí pasa medio Buenos Aires: a pie, en auto, en colectivo, de día y de noche.</p>
+      <p>Arriba tiene dos pantallas, una tercera banda abraza la esquina y 46 luminarias pueden pintar la fachada de cualquier color. La idea es que todo eso funcione junto, como una sola pieza, y no como tres carteles con unas luces alrededor.</p>
+    </div>
+  </article>
+  <article class="capitulo">
+    <img src="/img/dia.webp" alt="El mismo edificio visto de día en el simulador" loading="lazy" width="1294" height="1175">
+    <div class="texto-cap">
+      <h2>Lo vemos antes de que pase</h2>
+      <p>Un edificio así no se ensaya en vivo. Por eso armamos un simulador sobre la foto real de la esquina: cada pantalla está medida y cada luminaria está en su lugar.</p>
+      <p>Se puede mirar de noche o de día, avanzar el show segundo a segundo y ajustar las luces de a una. Lo que se arma acá es la referencia para programar el edificio después.</p>
+    </div>
+  </article>
+  <article class="capitulo">
+    <img src="/img/ola.webp" alt="La fachada en celeste y blanco con el mensaje VAMOS en una pantalla y ARGENTINA en la otra" loading="lazy" width="1294" height="1175">
+    <div class="texto-cap">
+      <h2>Las luces también cuentan</h2>
+      <p>Las luminarias no son decorado. Acompañan lo que pasa en las pantallas: si la campaña es celeste y blanca, la fachada se pone celeste y blanca; si hay tres protagonistas, cada uno tiene su color y su momento.</p>
+      <p>Hay barridos que cruzan la fachada, olas que suben desde la planta baja, latidos y destellos. Todo dentro de lo que el equipo real puede hacer.</p>
+    </div>
+  </article>
+  <article class="capitulo">
+    <img src="/img/ola-pantallas.webp" alt="VAMOS en la pantalla de Corrientes y ARGENTINA en la de Pellegrini, con la cúpula en el medio" loading="lazy" width="984" height="331">
+    <div class="texto-cap">
+      <h2>Una idea, tres pantallas</h2>
+      <p>Entre las dos pantallas de arriba está la cúpula. Parece un detalle, pero cambia mucho: una palabra que cruza de una a la otra se lee cortada.</p>
+      <p>Por eso el mensaje se reparte para que cada pantalla se entienda sola. Solo se parte cuando alguien lo pide a propósito.</p>
+    </div>
+  </article>
+  <article class="capitulo">
+    <img src="/img/piezas-ia.webp" alt="Cuatro imágenes creadas para las pantallas: postre, papas, desayuno y hamburguesa" loading="lazy" width="1212" height="492">
+    <div class="texto-cap">
+      <h2>Contar la idea y verla</h2>
+      <p>Es la parte que más nos entusiasma. Escribís en una frase lo que querés mostrar y en unos minutos tenés imágenes hechas a medida de cada pantalla, ya puestas en el edificio.</p>
+      <p>Antes de mostrar una imagen, el sistema la revisa: si aparece una letra suelta, un logo que no existe o el producto cortado, la vuelve a hacer. Los textos y la marca nunca los inventa la máquina; salen del material oficial.</p>
+      <img class="detalle" src="/img/hamburguesa-pantallas.webp" alt="Las pantallas de arriba con la hamburguesa creada para la pieza" loading="lazy" width="984" height="331">
+    </div>
+  </article>
+  <article class="capitulo" id="cap-material">
+    <div class="mosaico" id="mosaico" aria-hidden="true"></div>
+    <div class="texto-cap">
+      <h2>Con material real de la marca</h2>
+      <p>Para McDonald's armamos un show con piezas de su campaña con la Selección: el afiche de la McÁlvarez, las tres hamburguesas con sus nombres y los jugadores en el mostrador.</p>
+      <p>El simulador las anima para el formato del edificio y cambia el color de la fachada con cada jugador. No se agrega nada que la marca no haya hecho.</p>
+      <p class="nota-cap" id="nota-material"></p>
+    </div>
+  </article>
+  <article class="capitulo final">
+    <div class="texto-cap">
+      <h2>Lo que sigue</h2>
+      <p>Por ahora todo esto es una simulación: no está conectado a las pantallas ni a las luces reales. Lo próximo es sumar la tercera pantalla, trabajar con el material en alta del cliente y conectar el sistema con los equipos del edificio.</p>
+      <p><a class="boton" href="/control/">Abrir el simulador</a> <a class="boton sec" href="#t-ia">Crear una pieza</a></p>
+    </div>
+  </article>
+</section>
+
 <main>
+  <h2 class="separador" id="herramientas">Herramientas</h2>
   <section class="tarea" aria-labelledby="t-sim">
     <div><h2 id="t-sim">Ver un show en el edificio</h2><p>El edificio real, de noche o de día, con las pantallas y las luces funcionando juntas. Escribís una idea y la ves al instante.</p></div>
     <div><a class="boton" href="/control/">Abrir el simulador</a></div>
@@ -271,7 +356,17 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
   }
   $('subir').addEventListener('change', async (e) => { for (const f of e.target.files) await subir(f); e.target.value = ''; cargarMaterial(); });
 
-  cargarGaleria(); actualizarGasto(); cargarMaterial();
+  async function mosaico() {   // el capítulo de material muestra lo que está cargado (privado, en el portal)
+    try {
+      const l = (await (await fetch('/api/material')).json()).filter((m) => /\.(jpe?g|png|webp)$/.test(m.nombre));
+      const pref = ['mcalvarez-afiche.jpg', 'trio-productos.jpg', 'jugadores-mostrador.jpg'], el = l.filter((m) => pref.includes(m.nombre)).sort((a, b) => pref.indexOf(a.nombre) - pref.indexOf(b.nombre));
+      const usar = el.length ? el : l.slice(0, 3);
+      if (!usar.length) { $('mosaico').hidden = true; $('nota-material').textContent = 'Las imágenes aparecen acá cuando el material está cargado en «Material de marca», más abajo.'; return; }
+      $('mosaico').innerHTML = usar.map((m) => `<img src="${m.url}" alt="" loading="lazy">`).join('');
+      $('nota-material').innerHTML = 'Para verlo en el edificio: <a href="/control/?pieza=campana-seleccion">abrir la campaña en el simulador</a>.';
+    } catch (e) { $('mosaico').hidden = true; }
+  }
+  cargarGaleria(); actualizarGasto(); cargarMaterial(); mosaico();
 })();
 </script>
 </body>
