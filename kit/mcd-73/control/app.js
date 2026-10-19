@@ -100,13 +100,35 @@
     media: mk(960, 206),
   };
   function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+  // Rendimiento (19/10): la foto base y el relieve se reescalaban desde ~2560 px en CADA cuadro (2–3 drawImage grandes).
+  // Se escalan una vez por tamaño de lienzo (y filtro) y después se copian 1:1, que es mucho más barato. Mismo resultado visual.
+  const ESCALADAS = new Map();
+  function escalada(img, W, H, filtro) {
+    const k = (img.currentSrc || img.src) + '|' + W + 'x' + H + '|' + (filtro || '');
+    let c = ESCALADAS.get(k);
+    if (!c) {
+      if (ESCALADAS.size > 8) ESCALADAS.clear();
+      c = mk(W, H); const x = c.getContext('2d'); if (filtro) x.filter = filtro;
+      x.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, 0, 0, W, H); ESCALADAS.set(k, c);
+    }
+    return c;
+  }
 
+  // Resolución dinámica (19/10): si un cuadro tarda más de ~45 ms mientras el show corre, el lienzo baja de resolución por
+  // pasos (el CSS lo muestra al mismo tamaño) para que los controles sigan respondiendo; en pausa vuelve a la nitidez completa.
+  let ESCALA_RENDER = 1, lentos = 0, rapidos = 0;
+  function medirCuadro(ms, animando) {
+    if (!animando) { if (ESCALA_RENDER !== 1) { ESCALA_RENDER = 1; lentos = rapidos = 0; ajustarTamano(); } return; }
+    if (ms > 45) { lentos++; rapidos = 0; } else if (ms < 22) { rapidos++; lentos = 0; } else { lentos = rapidos = 0; }
+    if (lentos >= 3 && ESCALA_RENDER > 0.5) { ESCALA_RENDER = Math.max(0.5, +(ESCALA_RENDER - 0.15).toFixed(2)); lentos = 0; ajustarTamano(); }
+    else if (rapidos >= 30 && ESCALA_RENDER < 1) { ESCALA_RENDER = Math.min(1, +(ESCALA_RENDER + 0.15).toFixed(2)); rapidos = 0; ajustarTamano(); }
+  }
   function ajustarTamano() {
     const esc = $('escenario');   // área interior (sin borde): así el CSS nunca comprime el lienzo
     const FW = ENC[encuadre].ancho, FH = ENC[encuadre].alto;
     const k = Math.min(esc.clientWidth / FW, esc.clientHeight / FH);
     const cssW = Math.floor(FW * k), cssH = Math.round(cssW * FH / FW);   // alto derivado del ancho: proporción exacta al píxel
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5) * ESCALA_RENDER;   // 1,5: nítido en HiDPI; ESCALA_RENDER baja sola si el equipo no llega
     lienzo.style.width = cssW + 'px'; lienzo.style.height = cssH + 'px';
     const pw = Math.round(cssW * dpr), ph = Math.round(cssH * dpr);
     if (lienzo.width !== pw || lienzo.height !== ph) {
@@ -430,7 +452,8 @@
   }
 
   // ---------- cuadro ----------
-  let pedido = false, ultimo = null, ultimaInfo = {};
+  let pedido = false, ultimo = null, ultimaInfo = {}, cuadroN = 0; const COLOR_MEDIO = {};
+  const FPS = { on: false, ms: [], el: null };   // indicador de rendimiento: tecla F
   function pedirCuadro() { if (!pedido) { pedido = true; requestAnimationFrame(cuadro); } }
   function cuadro(ts) {
     pedido = false;
@@ -440,7 +463,15 @@
       ultimo = ts; M.avanzar(dt);
       pedirCuadro();
     } else ultimo = null;
-    dibujar();
+    const t0 = performance.now();
+    cuadroN++; dibujar();
+    const ms = performance.now() - t0; medirCuadro(ms, M.animando());
+    if (FPS.on) {
+      FPS.ms.push(ms); if (FPS.ms.length > 30) FPS.ms.shift();
+      if (!FPS.el) { FPS.el = document.createElement('div'); FPS.el.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99;background:rgba(0,0,0,.75);color:#9f9;font:12px/1.3 monospace;padding:6px 8px;border-radius:6px;pointer-events:none'; document.body.appendChild(FPS.el); }
+      const prom = FPS.ms.reduce((a, b) => a + b, 0) / FPS.ms.length;
+      FPS.el.textContent = `dibujo ${prom.toFixed(0)} ms/cuadro · ~${Math.min(60, 1000 / Math.max(prom, 16.7)).toFixed(0)} fps · resolución ${Math.round(ESCALA_RENDER * 100)} % · ${lienzo.width}×${lienzo.height}`;
+    }
   }
   function dibujar() {
     const fotoN = fotoE();
@@ -453,9 +484,7 @@
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
     const diaSimulado = dia && foto === fotoN;
     // Día simulado: la toma nocturna con luz de día (más clara, neutra, menos contraste) + cielo celeste. Rotulado en pantalla.
-    if (diaSimulado) ctx.filter = 'brightness(1.38) contrast(0.86) saturate(0.78) sepia(0.06)';
-    ctx.drawImage(foto, 0, 0, foto.naturalWidth, foto.naturalHeight, 0, 0, W, H);   // foto entera, proporción intacta
-    ctx.filter = 'none';
+    ctx.drawImage(escalada(foto, W, H, diaSimulado ? 'brightness(1.38) contrast(0.86) saturate(0.78) sepia(0.06)' : ''), 0, 0);   // foto entera, proporción intacta (escalada cacheada)
     if (diaSimulado) {
       ctx.globalCompositeOperation = 'soft-light'; ctx.fillStyle = 'rgba(170,200,235,0.35)'; ctx.fillRect(0, 0, W, H);   // luz fría de cielo
       ctx.globalCompositeOperation = 'source-over';
@@ -466,9 +495,13 @@
     const extra = { pantallas: [], zonas: sal.zonas, reloj: { nivel: sal.reloj.nivel, color: rgbDe(sal.reloj.rgbw).map((v) => Math.round(v * 255)) } };
     for (const id of M.PANTALLAS) {
       dibujarContenido(id, sal.contenido);
-      promedio.clearRect(0, 0, 1, 1); promedio.drawImage(CONT[id], 0, 0, 1, 1);
-      const d = promedio.getImageData(0, 0, 1, 1).data;
-      extra.pantallas.push({ nivel: sal.pantallas[id], color: [d[0], d[1], d[2]], quads: G.superficies[id].quads });
+      // color medio del LED para el derrame sobre la fachada: leerlo obliga a la GPU a devolver el lienzo (lento);
+      // cambia suave, así que se relee cada 4 cuadros mientras el show corre (siempre en pausa o en un cuadro suelto)
+      if (!COLOR_MEDIO[id] || !M.animando() || (cuadroN % 4) === 0) {
+        promedio.clearRect(0, 0, 1, 1); promedio.drawImage(CONT[id], 0, 0, 1, 1);
+        const d = promedio.getImageData(0, 0, 1, 1).data; COLOR_MEDIO[id] = [d[0], d[1], d[2]];
+      }
+      extra.pantallas.push({ nivel: sal.pantallas[id], color: COLOR_MEDIO[id], quads: G.superficies[id].quads });
     }
     // 2. luces
     const n = dibujarLuces(sal, capaTinte.width, capaTinte.height, extra);
@@ -479,7 +512,7 @@
       ctx.drawImage(mapaAmbiente(W, H), 0, 0);
       if (capaSuma.width !== W || capaSuma.height !== H) { capaSuma.width = W; capaSuma.height = H; }
       sctx.globalCompositeOperation = 'source-over'; sctx.globalAlpha = 1; sctx.filter = 'none';
-      sctx.drawImage(foto, 0, 0, foto.naturalWidth, foto.naturalHeight, 0, 0, W, H);
+      sctx.drawImage(escalada(foto, W, H), 0, 0);
       sctx.globalCompositeOperation = 'multiply'; sctx.drawImage(capaTinte, 0, 0, W, H);
       ctx.globalCompositeOperation = 'lighter'; ctx.drawImage(capaSuma, 0, 0);
       W = MK.W; H = MK.H; ctx.setTransform(1, 0, 0, 1, MK.ox, MK.oy);   // de acá en adelante: coordenadas de la foto base
@@ -496,7 +529,7 @@
         for (const [x, y] of SILUETA.slice(1)) ctx.lineTo(x * W, y * H);
         ctx.closePath(); ctx.clip();
         ctx.globalCompositeOperation = 'soft-light'; ctx.globalAlpha = 0.72;   // detalles de molduras más marcados
-        ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(relieve, 0, 0, WC, HC); ctx.restore();   // el relieve es del encuadre completo
+        ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(escalada(relieve, WC, HC), 0, 0); ctx.restore();   // el relieve es del encuadre completo
       }
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -926,6 +959,7 @@
   document.addEventListener('keydown', (e) => {
     if (escribiendo(e.target) || e.ctrlKey || e.metaKey || e.altKey || !$('visor').hidden) return;
     const k = e.key.toLowerCase();
+    if (k === 'f' && e.shiftKey) { FPS.on = !FPS.on; if (!FPS.on && FPS.el) { FPS.el.remove(); FPS.el = null; } pedirCuadro(); return; }   // Shift+F: indicador de rendimiento
     if (k === ' ') { e.preventDefault(); if (e.target.blur) e.target.blur(); const s = M.estado().show; s.reproduciendo ? M.pausa() : M.play(); }
     else if (k === 'r') M.resetShow();
     else if (k === 'd') M.setVista('dia');
@@ -1023,6 +1057,7 @@
   // API para las pruebas automatizadas (no cambia el comportamiento de la demo).
   window.TRUST = {
     motor: M,
+    escalaRender: () => ESCALA_RENDER,
     info: () => Object.assign({ posiciones: Object.keys(puntos).length, cssW: lienzo.getBoundingClientRect().width, cssH: lienzo.getBoundingClientRect().height }, ultimaInfo),
     dibujarYa: () => dibujar(),
     // coordenadas de la FOTO BASE (las de geometria.js / luminarias.js), en cualquier encuadre
