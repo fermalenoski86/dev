@@ -5,7 +5,7 @@ OK    rótulo «SIMULACIÓN CONCEPTUAL — NO CONECTADA A EQUIPOS REALES» visib
 OK    no dice «Sistema Online», «Enviar show» ni control.trust.local
 OK    estado del header: «Simulación offline»
 OK    geometría atada a la foto exacta (sha256 8ac8a62f0ee6…)
-OK    abre con el edificio completo y la foto sin deformar: 0.8953 vs 0.8948
+OK    abre con el edificio completo y la foto sin deformar: 0.8952 vs 0.8948
 OK    encuadre completo = misma toma que la foto base: 279 puntos en común, error mediano 1.2 px (la calibración aprobada vale tal cual)
 OK    encuadre «Fachada»: la foto base original, sin deformar
 OK    Director: prompt de ejemplo «McDonald's 15 s» precargado
@@ -61,7 +61,7 @@ OK    «Restaurar niveles» deja todo en 100 % y color de escena
 OK    blackout: pantallas, luces y reloj en 0
 OK    soltar blackout recupera los niveles
 OK    show determinista: el mismo t da exactamente la misma salida
-OK    Play avanza el reloj del show (t=1.17 s tras 1,2 s)
+OK    Play avanza el reloj del show (t=1.05 s tras 1,2 s)
 OK    Pausa congela el show
 OK    el show termina en 15 s y se detiene
 OK    a los 4 s la ola roja avanzó desde Corrientes (izquierda) hacia Pellegrini
@@ -81,7 +81,7 @@ OK    NORMAL (1 s): fachada cálida 38 % (ochava 42 %)
 OK    EXIT: el show termina exactamente en ARCHITECTURAL_WARM
 OK    RGB_DIAGNOSTIC: rotulado «DIAGNOSTIC MODE», SUP-04 azul · SUP-11 verde · MED-08 magenta (['MED-08', 'SUP-04', 'SUP-11'])
 OK    escena comercial: sin rótulo de diagnóstico
-OK    una sola composición: 3,0 s solo Corrientes · 3,9 s Corrientes + Pellegrini · 7,5 s las tres ([247, 23, 34] → [89, 184, 34] → [194, 232, 144])
+OK    una sola composición: 3,0 s solo Corrientes · 3,9 s Corrientes + Pellegrini · 7,5 s las tres ([155, 21, 19] → [87, 186, 19] → [199, 235, 157])
 OK    contenido sin textos de demo («TAKEOVER 15 s», «UN MOMENTO SINCRONIZADO»…)
 OK    creatividades A · B · C: tres variantes visuales distintas
 OK    modo cliente: 0 sliders visibles y solo ['NORMAL', 'TAKEOVER', 'SIGNATURE', 'ANTES / DESPUÉS']
@@ -89,12 +89,12 @@ OK    ANTES / DESPUÉS: sin iluminación ↔ arquitectónica cálida
 OK    modo cliente: TAKEOVER reproduce el show
 OK    modo operador: vuelve el panel completo (master, zonas, RGBW, transiciones, escenas)
 OK    ningún halo sobre el contenido LED: 72 píxeles dentro de las 3 pantallas idénticos con luces 100 % y 0 % (difieren 0)
-OK    luces apagadas: el TRUST sigue visible con la luz urbana (64% del brillo de la foto)
-OK    vecino y torre blanca no cambian; el cielo es el nocturno parejo (19/10), oscuro y azulado como el de la foto ([13, 18, 34, 255] vs [16, 22, 34, 255])
+OK    luces apagadas: el TRUST sigue visible con la luz urbana (62% del brillo de la foto)
+OK    vecino y torre blanca no cambian; el cielo es el nocturno parejo (19/10), oscuro y azulado como el de la foto ([14, 19, 34, 255] vs [16, 22, 34, 255])
 OK    un haz encendido se suma a la luz urbana (brillo ×2.1 sobre apagado)
 OK    SUP-05 al 20 %: baja su baño y el resto de la fachada no cambia
 OK    3 luminarias cambian de color: las otras 43 salidas idénticas
-OK    SUP-04 azul, SUP-11 verde, MED-08 magenta visibles en su baño ([[55, 62, 107, 255], [75, 133, 80, 255], [97, 49, 75, 255]])
+OK    SUP-04 azul, SUP-11 verde, MED-08 magenta visibles en su baño ([[46, 51, 91, 255], [79, 140, 86, 255], [81, 40, 65, 255]])
 OK    fuera de esos 3 baños la fachada no cambia (30 puntos idénticos)
 OK    takeover: el rojo cubre 19/60 puntos de la fachada (acentos, no capa uniforme)
 OK    takeover: hay acentos rojos visibles
@@ -121,10 +121,10 @@ OK    3 derivadas con derivedFromAssetId, formato real de la superficie y estado
 OK    rendered campaign assets coherentes con el contrato v1: upperMode independent → ['horizontal', 'screen_a', 'screen_b'] (no se mezclan modos)
 OK    crop sin deformar: recorte 1920×960 = 2:1 exacto para screen_a
 OK    source timeline: el rango elegido (2,0 → 9,0 s) manda sobre el sugerido
-OK    preview aplicado: Corrientes muestra el clip subido a los 3,4 s ([211, 39, 28])
-OK    Product Hero: el producto del packshot (contenido, sin estirar) al centro de Pellegrini a los 7 s ([191, 111, 41])
+OK    preview aplicado: Corrientes muestra el clip subido a los 3,4 s ([211, 39, 29])
+OK    Product Hero: el producto del packshot (contenido, sin estirar) al centro de Pellegrini a los 7 s ([194, 113, 43])
 OK    «Quitar media del preview» vuelve al contenido generado
 OK    [remove] quita el adjunto
-OK    0 pedidos de red fuera de file:// (87 pedidos locales)
+OK    0 pedidos de red fuera de file:// (93 pedidos locales)
 OK    0 errores de consola ([])
 Resultado: TODO OK

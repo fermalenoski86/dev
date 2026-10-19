@@ -281,7 +281,7 @@
     }
     c.restore();
   }
-  function institucional(c, id, vn, t) {   // NIGHT_IDLE / reposo: azul noche, horizonte dorado continuo, marca del edificio sobria
+  function institucional(c, id, vn, t, sinMarca) {   // NIGHT_IDLE / reposo: azul noche, horizonte dorado continuo, marca del edificio sobria
     const g = c.createLinearGradient(vn.x0, vn.y0, vn.x1, vn.y1);
     g.addColorStop(0, '#060d1f'); g.addColorStop(0.5, '#10224a'); g.addColorStop(1, '#060d1f');
     c.fillStyle = g; c.fillRect(vn.x0 - 4, vn.y0 - 4, vn.x1 - vn.x0 + 8, vn.y1 - vn.y0 + 8);
@@ -295,8 +295,18 @@
     const alto = vn.y1 - vn.y0, cx = (vn.x0 + vn.x1) / 2;
     c.save(); c.font = `500 ${Math.round(alto * (id === 'media' ? 0.36 : 0.2))}px ${FUENTE}`; c.textAlign = 'center'; c.textBaseline = 'middle';
     if ('letterSpacing' in c) c.letterSpacing = '0.32em';
-    c.fillStyle = '#e8c27a'; c.fillText('EL TRUST', cx + alto * 0.05, vn.y0 + alto * 0.46); c.restore();
+    if (!sinMarca) c.fillStyle = '#e8c27a', c.fillText('EL TRUST', cx + alto * 0.05, vn.y0 + alto * 0.46);
+    c.restore();
     vineta(c, vn, 0.45);
+  }
+  // Previa y salida del show (19/10, Fer: «que no diga siempre EL TRUST»): en un show de campaña las pantallas no vuelven
+  // a la marca del edificio; quedan en el clima de la campaña (rojo de marca o los colores pedidos), con el nombre en la media.
+  let CR_ACTUAL = 'C';
+  function previa(c, id, vn, t) {
+    if (CR_ACTUAL === 'P') fondoP(c, vn, t, 0.8); else fondoRojo(c, vn, t, 0.5);
+    c.fillStyle = 'rgba(0,0,0,0.45)'; c.fillRect(vn.x0 - 4, vn.y0 - 4, vn.x1 - vn.x0 + 8, vn.y1 - vn.y0 + 8);
+    if (id === 'media') marca(c, YM.cx, YM.cy, 58, 0.85);
+    vineta(c, vn, 0.4);
   }
   function diagnostico(c, id, vn) {   // carta técnica: nunca parece una propuesta comercial
     c.fillStyle = '#16181d'; c.fillRect(vn.x0 - 4, vn.y0 - 4, vn.x1 - vn.x0 + 8, vn.y1 - vn.y0 + 8);
@@ -596,11 +606,11 @@
       c.save(); c.globalCompositeOperation = 'lighter'; c.fillStyle = g; c.fillRect(vn.x0, vn.y0, vn.x1 - vn.x0, vn.y1 - vn.y0); c.restore(); }
   }
   function enMomento(c, id, vn, t, cr) {
-    if (t < 2) return institucional(c, id, vn, t);
+    if (t < 2) return previa(c, id, vn, t);
     if (t < 5) return cr === 'P' ? revelacionP(c, id, vn, t) : revelacion(c, id, vn, t);
     if (t < 10) return takeover(c, id, vn, t, cr);
     if (t < 13) return firma(c, id, vn, t, cr);
-    return institucional(c, id, vn, t);
+    return previa(c, id, vn, t);
   }
   // Fundidos entre momentos (sin cortes): el momento siguiente se dibuja en una capa auxiliar y se funde encima.
   const AUX = {};
@@ -618,11 +628,11 @@
     const c = cv.getContext('2d'), w = cv.width, h = cv.height;
     aMundo(c, w, h, vn);
     if (t >= 1.3 && t < 2.15) {   // la noche se apaga a negro antes de que nazca el elemento
-      institucional(c, id, vn, t); c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = `rgba(0,0,0,${sv((t - 1.3) / 0.75)})`; c.fillRect(0, 0, w, h); return;
+      previa(c, id, vn, t); c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = `rgba(0,0,0,${sv((t - 1.3) / 0.75)})`; c.fillRect(0, 0, w, h); return;
     }
     if (t >= 4.85 && t < 5.35) return fundir(cv, id, vn, (k) => (cr === 'P' ? revelacionP : revelacion)(k, id, vn, Math.min(t, 4.99)), (k) => takeover(k, id, vn, Math.max(t, 5), cr), sv((t - 4.85) / 0.5));
     if (t >= 9.6 && t < 10.4) return fundir(cv, id, vn, (k) => takeover(k, id, vn, t, cr), (k) => firma(k, id, vn, t, cr), sv((t - 9.6) / 0.8));
-    if (t >= 12.6 && t < 13.6) return fundir(cv, id, vn, (k) => firma(k, id, vn, t, cr), (k) => institucional(k, id, vn, t), sv((t - 12.6) / 1));
+    if (t >= 12.6 && t < 13.6) return fundir(cv, id, vn, (k) => firma(k, id, vn, t, cr), (k) => previa(k, id, vn, t), sv((t - 12.6) / 1));
     enMomento(c, id, vn, t, cr);
   }
 
@@ -688,7 +698,7 @@
   function dibujar(cv, id, cont) {
     const c = cv.getContext('2d'), w = cv.width, h = cv.height, vn = VEN[id];
     c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; c.clearRect(0, 0, w, h);
-    const cr = cont.creatividad || 'C';
+    const cr = cont.creatividad || 'C'; CR_ACTUAL = cr;
     if (cont.modo === 'show') {
       show(cv, id, vn, cont.t, cr);
       const seg = MEDIA ? capaMedia(cv, id, cont.t) : null;
@@ -702,7 +712,7 @@
       if (cont.modo === 'marca') takeover(c, id, vn, 7.6, cr);
       else if (cont.modo === 'firma') firma(c, id, vn, 11.6, cr);
       else if (cont.modo === 'diagnostico') diagnostico(c, id, vn);
-      else institucional(c, id, vn, 3);
+      else institucional(c, id, vn, 3, cont.modo !== 'institucional');   // EL TRUST solo en «Noche sin campaña»
     }
     c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
   }

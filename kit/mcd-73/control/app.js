@@ -111,11 +111,13 @@
     capaSombra.dataset.listo = '1';
     return capaSombra;
   }
+  // Nitidez del contenido LED vs. costo: 0,75 de la resolución nativa (antes 0,5). Con ?nitidez=1 se dibuja nativo.
+  const ESC_CONT = Math.min(1, Math.max(0.5, +(new URLSearchParams(location.search).get('nitidez') || 0.75)));
   const promedio = document.createElement('canvas').getContext('2d', { willReadFrequently: true });   // color medio de cada contenido LED
   const CONT = {
-    corrientes: mk(576, 288),
-    pellegrini: mk(720, 288),
-    media: mk(960, 206),
+    corrientes: mk(Math.round(1152 * ESC_CONT), Math.round(576 * ESC_CONT)),   // 1 = resolución nativa del LED (building.ts)
+    pellegrini: mk(Math.round(1440 * ESC_CONT), Math.round(576 * ESC_CONT)),
+    media: mk(Math.round(1920 * ESC_CONT), Math.round(412 * ESC_CONT)),
   };
   function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
   // Rendimiento (19/10): la foto base y el relieve se reescalaban desde ~2560 px en CADA cuadro (2–3 drawImage grandes).
@@ -209,16 +211,23 @@
   function medirCuadro(ms, animando) {
     if (!animando) { if (ESCALA_RENDER !== 1) { ESCALA_RENDER = 1; lentos = rapidos = 0; ajustarTamano(); } return; }
     if (ms > 45) { lentos++; rapidos = 0; } else if (ms < 22) { rapidos++; lentos = 0; } else { lentos = rapidos = 0; }
-    if (lentos >= 3 && ESCALA_RENDER > 0.5) { ESCALA_RENDER = Math.max(0.5, +(ESCALA_RENDER - 0.15).toFixed(2)); lentos = 0; ajustarTamano(); }
+    if (lentos >= 3 && ESCALA_RENDER > 0.65) { ESCALA_RENDER = Math.max(0.65, +(ESCALA_RENDER - 0.15).toFixed(2)); lentos = 0; ajustarTamano(); }
     else if (rapidos >= 30 && ESCALA_RENDER < 1) { ESCALA_RENDER = Math.min(1, +(ESCALA_RENDER + 0.15).toFixed(2)); rapidos = 0; ajustarTamano(); }
   }
   function ajustarTamano() {
     const esc = $('escenario');   // área interior (sin borde): así el CSS nunca comprime el lienzo
     const FW = ENC[encuadre].ancho, FH = ENC[encuadre].alto;
-    const k = Math.min(esc.clientWidth / FW, esc.clientHeight / FH);
+    // Edificio más grande (19/10): en «Edificio completo» la toma se acerca ×1,2 centrada en el edificio (se recorta algo de
+    // cielo y de calle); el lienzo queda más grande que el escenario y se desplaza para que el edificio quede al centro.
+    const Z = encuadre === 'completo' ? 1.2 : 1, ANCLA = [0.48, 0.43];
+    const k = Math.min(esc.clientWidth / FW, esc.clientHeight / FH) * Z;
     const cssW = Math.floor(FW * k), cssH = Math.round(cssW * FH / FW);   // alto derivado del ancho: proporción exacta al píxel
-    const dpr = Math.min(window.devicePixelRatio || 1, 1.5) * ESCALA_RENDER;   // 1,5: nítido en HiDPI; ESCALA_RENDER baja sola si el equipo no llega
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5) * ESCALA_RENDER;   // hasta 1,5: nítido en HiDPI; ESCALA_RENDER baja sola si el equipo no llega
     lienzo.style.width = cssW + 'px'; lienzo.style.height = cssH + 'px';
+    const lim = (v, m) => Math.max(-m, Math.min(m, v));
+    const dx = lim(-(ANCLA[0] - 0.5) * cssW, Math.max(0, (cssW - esc.clientWidth) / 2)), dy = lim(-(ANCLA[1] - 0.5) * cssH, Math.max(0, (cssH - esc.clientHeight) / 2));
+    lienzo.style.transform = Z > 1 ? `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` : '';
+    lienzo.style.flex = 'none';
     const pw = Math.round(cssW * dpr), ph = Math.round(cssH * dpr);
     if (lienzo.width !== pw || lienzo.height !== ph) {
       lienzo.width = pw; lienzo.height = ph;
@@ -286,10 +295,10 @@
   //  · el negro de un LED no es negro puro (piso de luz de los módulos y reflejos de la calle);
   //  · se ven los gabinetes (módulos de 0,5 m) como una retícula muy tenue y un leve oscurecimiento en los bordes;
   //  · las pantallas superiores tienen espesor: se ve la panza del gabinete desde la vereda.
-  const CONTB = { corrientes: mk(576, 288), pellegrini: mk(720, 288), media: mk(960, 206) };
+  const CONTB = { corrientes: mk(CONT.corrientes.width, CONT.corrientes.height), pellegrini: mk(CONT.pellegrini.width, CONT.pellegrini.height), media: mk(CONT.media.width, CONT.media.height) };
   function dibujarContenido(id, cont) {
     window.CONTENIDO.dibujar(CONT[id], id, cont);
-    const b = CONTB[id].getContext('2d'); b.setTransform(1, 0, 0, 1, 0, 0); b.globalCompositeOperation = 'source-over'; b.filter = 'blur(0.55px)';
+    const b = CONTB[id].getContext('2d'); b.setTransform(1, 0, 0, 1, 0, 0); b.globalCompositeOperation = 'source-over'; b.filter = 'blur(0.8px)';
     b.clearRect(0, 0, CONTB[id].width, CONTB[id].height); b.drawImage(CONT[id], 0, 0); b.filter = 'none';
     b.globalCompositeOperation = 'lighten'; b.fillStyle = 'rgb(17,17,21)'; b.fillRect(0, 0, CONTB[id].width, CONTB[id].height);   // piso de negro del LED
     b.globalCompositeOperation = 'multiply'; b.drawImage(texturaLED(id), 0, 0); b.globalCompositeOperation = 'source-over';
@@ -548,7 +557,7 @@
     pedido = false;
     const est = M.estado();
     if (M.animando()) {   // show en reproducción o transición entre presets
-      const dt = ultimo == null ? 0 : Math.min(0.5, (ts - ultimo) / 1000);   // el show sigue el reloj REAL aunque baje el fps
+      const dt = ultimo == null ? 0 : Math.min(1, (ts - ultimo) / 1000);   // el show sigue el reloj REAL aunque baje el fps
       ultimo = ts; M.avanzar(dt);
       pedirCuadro();
     } else ultimo = null;
@@ -846,9 +855,9 @@
 
   // timeline
   const PISTAS = [
-    { id: 'corrientes', nombre: 'Pantalla Corrientes', color: '#c0392b', clips: [[0, 2, 'Noche institucional'], [2, 5, 'Nace la luz →'], [5, 10, 'Takeover · una pieza'], [10, 13, 'Firma dorada'], [13, 15, 'Salida']] },
-    { id: 'pellegrini', nombre: 'Pantalla Pellegrini', color: '#2f6fd6', clips: [[0, 2, 'Noche institucional'], [2, 5, 'La luz cruza →'], [5, 10, 'Takeover · una pieza'], [10, 13, 'Firma dorada'], [13, 15, 'Salida']] },
-    { id: 'media', nombre: 'Pantalla media', color: '#8e44ad', clips: [[0, 2, 'EL TRUST'], [2, 5, 'Aterriza · ← revela'], [5, 10, 'Marca'], [10, 13, 'Firma'], [13, 15, 'Salida']] },
+    { id: 'corrientes', nombre: 'Pantalla Corrientes', color: '#c0392b', clips: [[0, 2, 'Previa de campaña'], [2, 5, 'Nace la luz →'], [5, 10, 'Takeover · una pieza'], [10, 13, 'Firma dorada'], [13, 15, 'Salida']] },
+    { id: 'pellegrini', nombre: 'Pantalla Pellegrini', color: '#2f6fd6', clips: [[0, 2, 'Previa de campaña'], [2, 5, 'La luz cruza →'], [5, 10, 'Takeover · una pieza'], [10, 13, 'Firma dorada'], [13, 15, 'Salida']] },
+    { id: 'media', nombre: 'Pantalla media', color: '#8e44ad', clips: [[0, 2, 'Marca'], [2, 5, 'Aterriza · ← revela'], [5, 10, 'Marca'], [10, 13, 'Firma'], [13, 15, 'Salida']] },
     { id: 'superior', nombre: 'Fachada superior', color: '#b8892d', clips: [[0, 2, 'Cálida 38 %'], [2, 5, 'Rojo 55 % →'], [5, 10, 'Rojo 70 · oro 40 · cálido 20'], [10, 13, 'Oro + cálido'], [13, 15, 'A cálida']] },
     { id: 'medio', nombre: 'Fachada media', color: '#c96f22', clips: [[0, 2, 'Cálida 38 %'], [2, 5, 'Rojo 55 % →'], [5, 10, 'Rojo 70 · oro 40 · cálido 20'], [10, 13, 'Oro + cálido'], [13, 15, 'A cálida']] },
     { id: 'inferior', nombre: 'Fachada inferior', color: '#a35b1f', clips: [[0, 2, 'Cálida 38 %'], [2, 5, 'Rojo 55 % →'], [5, 10, 'Rojo 70 · oro 40 · cálido 20'], [10, 13, 'Oro + cálido'], [13, 15, 'A cálida']] },
@@ -1063,7 +1072,7 @@
     const luz = !fc.luces ? 'la fachada queda en cálido' : `${ef} en ${c12}${dnd}${fc.zonas.includes('cupula') ? ' y la cúpula pulsa en ' + c1 : ''}`;
     return {
       plan: {
-        normal: 'el edificio en su luz cálida; las pantallas con la imagen del TRUST',
+        normal: 'el edificio en su luz cálida; las pantallas ya en el clima de la campaña',
         revelacion: `la campaña entra en Corrientes y pasa a Pellegrini; ${fc.luces ? 'la fachada acompaña con ' + cr : 'la fachada sigue cálida'}`,
         takeover: `${pant}; ${luz}`,
         firma: `cierre ${fc.creatividad === 'P' ? 'con ' + (cols[1] || c1) : 'de marca con dorados'}; la fachada vuelve a la calma`,

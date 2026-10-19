@@ -64,7 +64,7 @@ main { display: grid; grid-template-columns: minmax(0, 1fr) 452px; gap: 14px; pa
   position: relative; border-radius: var(--radio); overflow: hidden; background: #050913; border: 1px solid var(--borde);
   box-shadow: var(--sombra); min-height: 0; display: flex; align-items: center; justify-content: center;
 }
-#lienzo { display: block; max-width: 100%; max-height: 100%; position: relative;
+#lienzo { display: block; position: relative;
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 7%, #000 93%, transparent 100%); }
 /* Entorno: eco difuso de la escena a los costados (reacciona a las luces y las pantallas), en vez de franjas negras */
 #terminacion { position: absolute; pointer-events: none; z-index: 0;
