@@ -973,7 +973,13 @@
     [/(?:ochava|esquina)/, 'ochava', 'esquina / ochava'],
     [/(?:c[uú]pula|torre)/, 'cupula', 'cúpula'],
   ];
-  const nombreColor = (hex) => (COLORES_ES.find((c) => c[1] === hex) || [0, 0, hex])[2];
+  const nombreColor = (hex) => {   // el nombre más cercano (las fichas de la IA traen hex libres: #FFB347 → «naranja»)
+    const exacto = COLORES_ES.find((c) => c[1] === String(hex).toUpperCase()); if (exacto) return exacto[2];
+    const rgb = (h) => { const n = parseInt(String(h).slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+    const a = rgb(hex); let mejor = 'color', d0 = 1e9;
+    for (const [, h, nom] of COLORES_ES) { const b = rgb(h), d = (a[0] - b[0]) ** 2 * 0.3 + (a[1] - b[1]) ** 2 * 0.59 + (a[2] - b[2]) ** 2 * 0.11; if (d < d0) { d0 = d; mejor = nom; } }
+    return mejor;
+  };
   function validarFicha(f) {
     const hex = (h) => (/^#[0-9a-f]{6}$/i.test(String(h)) ? String(h).toUpperCase() : null);
     const v = {

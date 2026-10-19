@@ -480,7 +480,7 @@
     if (!txt) return;
     const w = (vn.x1 - vn.x0) * 0.88, h = vn.y1 - vn.y0, cx = (vn.x0 + vn.x1) / 2, cy = (vn.y0 + vn.y1) / 2;
     const pal = txt.split(/\s+/).filter(Boolean);
-    if (pal.length >= 3 && txt.length > 14) {
+    if (pal.length >= 3 && txt.length > 14 && (vn.x1 - vn.x0) / h < 3.5) {   // la banda media (muy panorámica) siempre en una línea
       const [l1, l2] = partirTitular(txt);
       const px = Math.min(tamQueEntra(c, l1, w, h * 0.36), tamQueEntra(c, l2, w, h * 0.36));   // las dos líneas con el mismo cuerpo
       titular(c, l1, cx, cy - h * 0.2, w, px, a, desliz, px); titular(c, l2, cx, cy + h * 0.2, w, px, a, -(desliz || 0), px);
