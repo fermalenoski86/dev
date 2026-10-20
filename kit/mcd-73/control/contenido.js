@@ -731,7 +731,8 @@
       show(cv, id, vn, cont.t, cr);
       const seg = MEDIA ? capaMedia(cv, id, cont.t) : null;
       if (seg && seg.titular) {   // texto del motor SOBRE la pieza (nítido, ajustado a la pantalla; nunca generado por la IA)
-        const a = sv((cont.t - seg.desde - 0.6) / 0.5) * sv((seg.hasta - cont.t) / 0.4);
+        const r0 = seg.retardo == null ? 0.6 : seg.retardo, sube = seg.retardo == null ? 0.5 : Math.max(0.05, seg.retardo || 0.1);   // «retardo» corto: contadores (p. ej. 1986 → 2026)
+        const a = sv((cont.t - seg.desde - r0) / sube) * sv((seg.hasta - cont.t) / (seg.retardo == null ? 0.4 : 0.1));
         aMundo(c, w, h, vn); titularEn(c, seg.titular, vn, a);
       }
     }
