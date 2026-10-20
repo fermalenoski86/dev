@@ -159,6 +159,13 @@ async function api(req, env, ruta) {
     await env.PIEZAS.put(`piezas/${id}/meta.json`, JSON.stringify(meta));
     return json(meta);
   }
+  if (ruta === '/api/programa') {   // grilla semanal de programación (prototipo: no se envía al edificio)
+    if (req.method !== 'POST') return json(await leerR2(env, 'programa/semana.json', null));
+    const P = validarPrograma(cuerpo); if (!P) return json({ error: 'La programación no tiene un formato válido.' }, 400);
+    P.actualizado = new Date().toISOString();
+    await env.PIEZAS.put('programa/semana.json', JSON.stringify(P));
+    return json(P);
+  }
   if (ruta === '/api/piezas') {   // las creadas con IA + los shows de material de marca ya cargado (McÁlvarez, McAllister, McFernández…)
     const faltan = [], mat = (await piezasMaterial(env, req.url, faltan)).map((p) => {
       const mi = p.miniatura && p.fuentes[p.miniatura.fuente] ? { url: p.fuentes[p.miniatura.fuente], rect: p.miniatura.rect } : null;
@@ -209,6 +216,24 @@ async function piezasMaterial(env, origen, incompletas) {
     else if (incompletas) incompletas.push({ id: p.id, titulo: p.titulo, material: true, creada: p.creada, faltan: [...usadas].filter((k) => !fuentes[k]).map((k) => (cfg.archivos[k] || {}).nombre || (cfg.archivos[k] || {}).que || k) });
   }
   return out;
+}
+
+const DIAS = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'], HORA = /^([01]\d|2[0-3]):[0-5]\d$/, ID = /^[a-z0-9-]{1,60}$/;
+function validarPrograma(c) {
+  if (!c || typeof c !== 'object') return null;
+  const franja = (f) => (f && HORA.test(f.desde) && HORA.test(f.hasta) ? { desde: f.desde, hasta: f.hasta } : null);
+  const operacion = franja(c.operacion), noche = franja(c.noche); if (!operacion || !noche) return null;
+  const semana = {};
+  for (const d of DIAS) {
+    semana[d] = {};
+    for (const [h, slots] of Object.entries((c.semana || {})[d] || {})) {
+      if (!/^([01]\d|2[0-3])$/.test(h) || !Array.isArray(slots)) return null;
+      const l = slots.slice(0, 12).map(String); if (!l.every((x) => ID.test(x))) return null;
+      semana[d][h] = l;
+    }
+  }
+  const out = { operacion, noche, semana };
+  return JSON.stringify(out).length < 200000 ? out : null;
 }
 
 async function listarPiezas(env) {
