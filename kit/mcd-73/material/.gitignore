@@ -3,3 +3,6 @@
 !.gitignore
 !material.json
 !LEEME.md
+# Carpeta oculta: el material va CIFRADO (no se puede ver sin el secret del portal). Ver web/material_privado.py
+!privado/
+!privado/*.enc
