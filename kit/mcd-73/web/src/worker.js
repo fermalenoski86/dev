@@ -188,7 +188,11 @@ async function piezasMaterial(env, origen, incompletas) {
   let cfg; try { cfg = await (await env.ASSETS.fetch(new Request(new URL('/control/material.json', origen)))).json(); } catch { return []; }
   const subidos = new Set((await env.PIEZAS.list({ prefix: 'material/', limit: 500 })).objects.map((o) => o.key.slice(9)));
   const out = [];
-  for (const p of cfg.piezas || []) {
+  const hayArch = (k) => cfg.archivos[k] && subidos.has(cfg.archivos[k].archivo);
+  for (const p0 of cfg.piezas || []) {
+    const pistas = {};   // una pista con «alt» usa otra fuente si la suya no está subida (p. ej. McÁlvarez sin el afiche usa el tríptico)
+    for (const [pant, l] of Object.entries(p0.pistas)) pistas[pant] = l.map((x) => (x.alt && !hayArch(x.fuente) && hayArch(x.alt.fuente) ? { ...x, ...x.alt, alt: undefined } : x));
+    const p = { ...p0, pistas };
     const usadas = new Set(Object.values(p.pistas).flat().map((x) => x.fuente)), fuentes = {};
     for (const k of usadas) { const arch = cfg.archivos[k] && cfg.archivos[k].archivo; if (arch && subidos.has(arch)) fuentes[k] = '/material/' + arch; }
     if (Object.keys(fuentes).length === usadas.size) out.push({ ...p, fuentes, material: true });
