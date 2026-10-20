@@ -990,12 +990,12 @@
    "id": "aniversario-40",
    "titulo": "40 años en Argentina · propuesta",
    "creada": "2026-10-20T18:30:00-03:00",
-   "concepto": "Propuesta conceptual para el aniversario: «40 años» y «1986 · 2026» en las tres pantallas, el Cuarto de Libra como clásico y las hamburguesas de la Selección como el hoy, con la fachada en rojo, dorado y blanco. Textos del simulador; sin logo oficial del aniversario.",
+   "concepto": "Propuesta conceptual para el aniversario: los años corren de 1986 a 2026 mientras la luz sube por la fachada como velas, aparece el clásico (Cuarto de Libra y los Arcos Dorados) y cierra con un «40» gigante entre las dos pantallas. Textos del simulador; sin logo oficial del aniversario.",
    "ficha": {
-    "efecto": "tramos",
+    "efecto": "ola",
     "paleta": [
-     "#DA291C",
      "#FFC72C",
+     "#DA291C",
      "#FFFFFF"
     ],
     "velocidad": 1,
@@ -1014,17 +1014,17 @@
     "corrientes": [
      {
       "desde": 2.2,
-      "hasta": 5.3,
+      "hasta": 6.6,
       "modo": "paleta",
       "paleta": [
        "#DA291C",
        "#FFC72C"
       ],
-      "titular": "40 AÑOS"
+      "titular": "DESDE"
      },
      {
-      "desde": 5.0,
-      "hasta": 7.6,
+      "desde": 6.4,
+      "hasta": 9.7,
       "modo": "contener",
       "fuente": "cuarto",
       "rect": [
@@ -1039,127 +1039,128 @@
       "kb": {
        "z": [
         0.98,
-        1.04
+        1.05
        ]
       }
      },
      {
-      "desde": 7.3,
-      "hasta": 10.4,
-      "modo": "contener",
-      "fuente": "afiche",
-      "rect": [
-       0,
-       0.02,
-       1,
-       0.31
-      ],
-      "escala": 0.98,
-      "fondo": "#DA291C",
-      "entra": "izq",
-      "kb": {
-       "z": [
-        0.96,
-        1.02
-       ]
-      }
-     },
-     {
-      "desde": 10.1,
+      "desde": 9.5,
       "hasta": 12.9,
       "modo": "paleta",
       "paleta": [
-       "#DA291C",
-       "#FFC72C"
+       "#FFC72C",
+       "#DA291C"
       ],
-      "titular": "40 AÑOS"
+      "titular": "40"
      }
     ],
     "pellegrini": [
      {
       "desde": 2.6,
-      "hasta": 5.3,
+      "hasta": 3.43,
       "modo": "paleta",
       "paleta": [
        "#DA291C",
        "#FFC72C"
       ],
-      "titular": "EN ARGENTINA"
+      "titular": "1986",
+      "fundido": 0.12,
+      "retardo": 0.05
      },
      {
-      "desde": 5.0,
-      "hasta": 7.6,
-      "modo": "contener",
-      "fuente": "combo",
-      "rect": [
-       0,
-       0,
-       1,
-       1
+      "desde": 3.35,
+      "hasta": 4.18,
+      "modo": "paleta",
+      "paleta": [
+       "#DA291C",
+       "#FFC72C"
       ],
-      "escala": 0.96,
-      "fondo": "#FFFFFF",
+      "titular": "1996",
+      "fundido": 0.12,
+      "retardo": 0.05
+     },
+     {
+      "desde": 4.1,
+      "hasta": 4.93,
+      "modo": "paleta",
+      "paleta": [
+       "#DA291C",
+       "#FFC72C"
+      ],
+      "titular": "2006",
+      "fundido": 0.12,
+      "retardo": 0.05
+     },
+     {
+      "desde": 4.85,
+      "hasta": 5.68,
+      "modo": "paleta",
+      "paleta": [
+       "#DA291C",
+       "#FFC72C"
+      ],
+      "titular": "2016",
+      "fundido": 0.12,
+      "retardo": 0.05
+     },
+     {
+      "desde": 5.6,
+      "hasta": 6.95,
+      "modo": "paleta",
+      "paleta": [
+       "#FFC72C",
+       "#DA291C"
+      ],
+      "titular": "2026",
+      "fundido": 0.12,
+      "retardo": 0.05
+     },
+     {
+      "desde": 6.4,
+      "hasta": 9.7,
+      "modo": "contener",
+      "fuente": "cuarto",
+      "rect": [
+       0.07,
+       0.36,
+       0.88,
+       0.38
+      ],
+      "escala": 0.98,
+      "fondo": "#DA291C",
       "entra": "der",
       "kb": {
        "z": [
         0.96,
-        1.04
+        1.06
        ]
       }
      },
      {
-      "desde": 7.3,
-      "hasta": 10.4,
-      "modo": "cubrir",
-      "fuente": "mostrador",
-      "rect": [
-       0,
-       0.08,
-       1,
-       0.37
-      ],
-      "kb": {
-       "z": [
-        1.45,
-        1.45
-       ],
-       "f": [
-        [
-         0,
-         0.45
-        ],
-        [
-         1,
-         0.45
-        ]
-       ]
-      }
-     },
-     {
-      "desde": 10.1,
+      "desde": 9.5,
       "hasta": 12.9,
       "modo": "paleta",
       "paleta": [
-       "#DA291C",
-       "#FFC72C"
+       "#FFC72C",
+       "#DA291C"
       ],
-      "titular": "1986 · 2026"
+      "titular": "AÑOS"
      }
     ],
     "media": [
      {
       "desde": 2.2,
-      "hasta": 5.3,
+      "hasta": 6.6,
       "modo": "paleta",
       "paleta": [
        "#DA291C",
        "#FFC72C"
       ],
-      "titular": "1986 · 2026"
+      "titular": "EL PRIMER LOCAL ABRIÓ EN BELGRANO EN 1986"
      },
      {
-      "desde": 5.0,
-      "hasta": 7.6,
+      "desde": 6.4,
+      "hasta": 9.7,
       "modo": "contener",
       "fuente": "cuarto",
       "rect": [
@@ -1170,15 +1171,15 @@
       ],
       "escala": 0.9,
       "fondo": "#DA291C",
+      "entra": "izq",
       "caja": [
        0,
        0.36
-      ],
-      "entra": "izq"
+      ]
      },
      {
-      "desde": 5.0,
-      "hasta": 7.6,
+      "desde": 6.4,
+      "hasta": 9.7,
       "modo": "contener",
       "fuente": "cuarto",
       "rect": [
@@ -1189,20 +1190,20 @@
       ],
       "escala": 0.96,
       "fondo": "#DA291C",
-      "caja": [
-       0.36,
-       0.4
-      ],
       "kb": {
        "z": [
         0.96,
         1.04
        ]
-      }
+      },
+      "caja": [
+       0.36,
+       0.4
+      ]
      },
      {
-      "desde": 5.0,
-      "hasta": 7.6,
+      "desde": 6.4,
+      "hasta": 9.7,
       "modo": "contener",
       "fuente": "combo",
       "rect": [
@@ -1213,147 +1214,21 @@
       ],
       "escala": 0.94,
       "fondo": "#FFFFFF",
+      "entra": "der",
       "caja": [
        0.76,
        0.24
-      ],
-      "entra": "der"
-     },
-     {
-      "desde": 7.3,
-      "hasta": 10.4,
-      "modo": "contener",
-      "fuente": "trio",
-      "rect": [
-       0,
-       0.36,
-       0.27,
-       0.15
-      ],
-      "escala": 0.92,
-      "fondo": "#DA291C",
-      "caja": [
-       0.0,
-       0.16666666666666666
       ]
      },
      {
-      "desde": 7.3,
-      "hasta": 10.4,
-      "modo": "contener",
-      "fuente": "trio",
-      "rect": [
-       0,
-       0.56,
-       0.27,
-       0.34
-      ],
-      "escala": 0.96,
-      "fondo": "#DA291C",
-      "kb": {
-       "z": [
-        0.96,
-        1.04
-       ]
-      },
-      "caja": [
-       0.16666666666666666,
-       0.16666666666666666
-      ]
-     },
-     {
-      "desde": 7.3,
-      "hasta": 10.4,
-      "modo": "contener",
-      "fuente": "trio",
-      "rect": [
-       0.285,
-       0.24,
-       0.41,
-       0.15
-      ],
-      "escala": 0.92,
-      "fondo": "#FFC72C",
-      "caja": [
-       0.3333333333333333,
-       0.16666666666666666
-      ]
-     },
-     {
-      "desde": 7.3,
-      "hasta": 10.4,
-      "modo": "contener",
-      "fuente": "trio",
-      "rect": [
-       0.27,
-       0.46,
-       0.43,
-       0.46
-      ],
-      "escala": 0.96,
-      "fondo": "#FFC72C",
-      "kb": {
-       "z": [
-        0.96,
-        1.04
-       ]
-      },
-      "caja": [
-       0.5,
-       0.16666666666666666
-      ]
-     },
-     {
-      "desde": 7.3,
-      "hasta": 10.4,
-      "modo": "contener",
-      "fuente": "trio",
-      "rect": [
-       0.7,
-       0.37,
-       0.3,
-       0.12
-      ],
-      "escala": 0.92,
-      "fondo": "#FFFFFF",
-      "caja": [
-       0.6666666666666666,
-       0.16666666666666666
-      ]
-     },
-     {
-      "desde": 7.3,
-      "hasta": 10.4,
-      "modo": "contener",
-      "fuente": "trio",
-      "rect": [
-       0.7,
-       0.55,
-       0.3,
-       0.36
-      ],
-      "escala": 0.96,
-      "fondo": "#FFFFFF",
-      "kb": {
-       "z": [
-        0.96,
-        1.04
-       ]
-      },
-      "caja": [
-       0.8333333333333333,
-       0.16666666666666666
-      ]
-     },
-     {
-      "desde": 10.1,
+      "desde": 9.5,
       "hasta": 12.9,
       "modo": "paleta",
       "paleta": [
        "#DA291C",
        "#FFC72C"
       ],
-      "titular": "40 AÑOS EN ARGENTINA"
+      "titular": "40 AÑOS EN ARGENTINA · 1986 – 2026"
      }
     ]
    }
