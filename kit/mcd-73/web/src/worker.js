@@ -242,7 +242,7 @@ async function login(req, env) {
   }
   await env.PIEZAS.delete(k);
   const exp = String(Date.now() + SESION_H * 3600e3);
-  return new Response(null, { status: 303, headers: { location: '/', 'set-cookie': `trust_s=${exp}.${await hmac(env, exp)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESION_H * 3600}` } });
+  return new Response(null, { status: 303, headers: { location: '/?entrada=1', 'set-cookie': `trust_s=${exp}.${await hmac(env, exp)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESION_H * 3600}` } });
 }
 
 export default {
@@ -252,6 +252,7 @@ export default {
     if (ruta === '/login') return req.method === 'POST' ? login(req, env) : paginaLogin('');
     if (ruta === '/salir') return new Response(null, { status: 303, headers: { location: '/login', 'set-cookie': 'trust_s=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0' } });
     if (ruta === '/fondo.jpg') return env.ASSETS.fetch(new Request(new URL('/control/fotos/trust-noche-completa.jpg', url)));   // la foto del login es pública
+    if (!(await sesionValida(req, env)) && ruta === '/' && url.searchParams.get('entrada')) return paginaLogin('La clave es correcta, pero este navegador no guardó la sesión (bloquea las cookies). Habilitá las cookies o probá con otro navegador.');
     if (!(await sesionValida(req, env))) return ruta.startsWith('/api/') ? json({ error: 'La sesión venció. Volvé a entrar con la clave.' }, 401) : Response.redirect(new URL('/login', url), 302);
     try {
       if (ruta.startsWith('/api/')) {
@@ -291,21 +292,23 @@ const LOGIN_HTML = `<!doctype html><html lang="es"><head><meta charset="utf-8"><
 :root{--noche:#0A1830;--piedra:#E9DFCC;--sodio:#F2A63B;--celeste:#6CACE4;--niebla:#93A0B5}
 *{box-sizing:border-box}html,body{margin:0;height:100%}
 body{background:var(--noche);color:var(--piedra);font-family:Archivo,system-ui,sans-serif;font-stretch:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);min-height:100vh}
-.texto{padding:clamp(28px,6vw,88px);display:flex;flex-direction:column;justify-content:center;gap:28px;position:relative;z-index:1}
-h1{margin:0;font-weight:850;font-stretch:62%;font-size:clamp(84px,14vw,210px);line-height:.82;letter-spacing:-.01em}
-.lugar{margin:0;color:var(--niebla);font-size:17px;line-height:1.5;max-width:30ch}
-form{display:flex;flex-direction:column;gap:10px;max-width:340px}
+.texto{padding:64px;padding:clamp(28px,6vw,88px);display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1}
+.texto>*+*{margin-top:28px}
+h1{margin:0;font-weight:850;font-stretch:62%;font-size:150px;font-size:clamp(64px,min(14vw,24vh),210px);line-height:.82;letter-spacing:-.01em}
+.lugar{margin:20px 0 0;color:var(--niebla);font-size:17px;line-height:1.5;max-width:30ch}
+form{display:flex;flex-direction:column;max-width:340px}
+form>*+*{margin-top:10px}
 label{font-size:14px;color:var(--niebla)}
-.fila{display:flex;gap:8px}
+.fila{display:flex}.fila>*+*{margin-left:8px}
 input{flex:1;min-width:0;font:inherit;font-size:18px;padding:12px 14px;border-radius:6px;border:1px solid #2B3D5C;background:#0E2040;color:var(--piedra)}
 input:focus{outline:2px solid var(--sodio);outline-offset:2px;border-color:transparent}
 button{font:inherit;font-weight:700;font-size:16px;padding:12px 20px;border:0;border-radius:6px;background:var(--sodio);color:#1D1205;cursor:pointer}
 button:focus-visible{outline:2px solid var(--piedra);outline-offset:3px}
 .error{margin:0;color:#FFB4A2;font-size:14px}
-.by{margin:-12px 0 0;font-size:15px;letter-spacing:.3em;text-transform:uppercase;color:var(--sodio)}
+.texto>.by{margin-top:10px}.by{margin:10px 0 0;font-size:15px;letter-spacing:.3em;text-transform:uppercase;color:var(--sodio)}
 .foto{background:url(/fondo.jpg) center 30%/cover no-repeat;position:relative}
 .foto::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--noche) 0%,rgba(10,24,48,.35) 28%,rgba(10,24,48,0) 60%)}
-.pie{position:absolute;left:clamp(28px,6vw,88px);bottom:22px;font-size:12px;color:#5E6E88}
+.pie{position:absolute;left:64px;left:clamp(28px,6vw,88px);bottom:22px;font-size:12px;color:#5E6E88}
 @media (max-width:760px){body{grid-template-columns:1fr;grid-template-rows:42vh auto}.foto{grid-row:1}.foto::after{background:linear-gradient(0deg,var(--noche),rgba(10,24,48,0) 55%)}.texto{grid-row:2;padding-top:0}.pie{position:static;margin-top:8px}}
 </style></head><body>
 <main class="texto"><h1>EL<br>TRUST</h1><p class="by">by Affinitas</p>
