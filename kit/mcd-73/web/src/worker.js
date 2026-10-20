@@ -157,6 +157,14 @@ async function api(req, env, ruta) {
     });
     return json([...mat, ...faltan, ...(await listarPiezas(env))]);
   }
+  if (ruta === '/api/material/asignar') {   // usa un archivo ya subido (con otro nombre) para un lugar de material.json: lo copia con el nombre que espera el show
+    const de = String(cuerpo.de || '').replace(/[^a-z0-9.-]/g, ''), a = String(cuerpo.a || '');
+    let cfg; try { cfg = await (await env.ASSETS.fetch(new Request(new URL('/control/material.json', req.url)))).json(); } catch { cfg = { archivos: {} }; }
+    if (!Object.values(cfg.archivos).some((x) => x.archivo === a)) return json({ error: 'Lugar inválido.' }, 400);
+    const o = await env.PIEZAS.get('material/' + de); if (!o) return json({ error: 'Ese archivo no está subido.' }, 404);
+    await env.PIEZAS.put('material/' + a, await o.arrayBuffer(), { httpMetadata: { contentType: o.httpMetadata?.contentType || 'image/jpeg' } });
+    return json({ ok: true, nombre: a });
+  }
   if (ruta === '/api/material' && req.method === 'GET') {   // lo subido + los lugares que pide material.json
     const l = await env.PIEZAS.list({ prefix: 'material/', limit: 500 });
     return json(l.objects.map((o) => ({ nombre: o.key.slice(9), bytes: o.size, url: '/' + o.key })));
