@@ -670,7 +670,14 @@
   // f: [[fx, fy], [fx, fy]]} (zoom y foco que viajan durante el tramo); entra = 'izq' | 'der' | 'abajo' (deslizamiento de
   // 0,5 s). Los tramos que se solapan se funden entre sí (antes se dibujaba uno solo y el cruce pasaba por el fondo).
   const lerp2 = (p, q, u) => [p[0] + (q[0] - p[0]) * u, p[1] + (q[1] - p[1]) * u];
-  function tramoMedia(c, w, h, seg, t) {
+  // La marquesina se ve mucho más alargada en el edificio que su lienzo (1920×412): la foto la estira ~k veces a lo ancho.
+  // Para que lo que se ve en la calle no quede deformado, la media se compone «pre-comprimida» por ese factor (medido de la geometría).
+  function estiramiento(id) {
+    const m = VEN.media; if (id !== 'media' || !m || !(m.y1 > m.y0)) return 1;
+    return Math.max(1, Math.min(4, ((m.x1 - m.x0) / (m.y1 - m.y0)) / (1920 / 412)));
+  }
+  function tramoMedia(c, w, h, seg, t, id) {
+    const k = estiramiento(id), wa = w * k;   // ancho «aparente» con el que se compone
     const dur = Math.max(0.01, seg.hasta - seg.desde), u = cl((t - seg.desde) / dur, 0, 1);
     const fi = seg.fundido == null ? 0.35 : seg.fundido, a = sv((t - seg.desde) / fi) * sv((seg.hasta - t) / fi);
     if (seg.modo === 'paleta' || seg.modo === 'logo') paletaMov(c, w, h, t, seg.paleta, a);
@@ -683,7 +690,7 @@
     const dx = seg.entra === 'izq' ? -w * e : seg.entra === 'der' ? w * e : 0, dy = seg.entra === 'abajo' ? h * e : 0;
     c.save(); c.globalAlpha = a; c.translate(dx, dy);
     if (seg.modo === 'cubrir') {
-      let cw = R[2], ch = R[2] / (w / h); if (ch > R[3]) { ch = R[3]; cw = R[3] * (w / h); }
+      let cw = R[2], ch = R[2] / (wa / h); if (ch > R[3]) { ch = R[3]; cw = R[3] * (wa / h); }
       cw /= z; ch /= z;
       const x = R[0] + (R[2] - cw) * cl(foco[0], 0, 1), y = R[1] + (R[3] - ch) * cl(foco[1], 0, 1);
       c.drawImage(el, x, y, cw, ch, 0, 0, w, h);
@@ -692,13 +699,14 @@
       const sub = seg.parte === 'a' ? [r[0], r[1], r[2] * fa, r[3]] : [r[0] + r[2] * fa, r[1], r[2] * (1 - fa), r[3]];
       c.drawImage(el, sub[0], sub[1], sub[2], sub[3], 0, 0, w, h);
     } else if (seg.modo === 'contener') {   // el recorte entero + el mismo material desenfocado de fondo (o el color del tramo)
+      const cx0 = seg.caja ? w * seg.caja[0] : 0, cw0 = seg.caja ? w * seg.caja[1] : w;   // «caja»: franja horizontal de destino [x, ancho] (pantallas muy anchas, como la media)
       if (seg.sinFondo) { /* capa encima de otra del mismo tramo */ }
-      else if (seg.fondo) { c.fillStyle = seg.fondo; c.fillRect(0, 0, w, h); }
+      else if (seg.fondo) { c.fillStyle = seg.fondo; c.fillRect(cx0, 0, cw0, h); }
       else {
         let cw = R[2], ch = R[2] / (w / h); if (ch > R[3]) { ch = R[3]; cw = R[3] * (w / h); }
         c.filter = `blur(${Math.round(h * 0.06)}px) brightness(0.45)`; c.drawImage(el, R[0] + (R[2] - cw) / 2, R[1] + (R[3] - ch) / 2, cw, ch, -w * 0.04, -h * 0.08, w * 1.08, h * 1.16); c.filter = 'none';
       }
-      const anch = seg.lado ? w * 0.5 : w, k = Math.min(anch / R[2], h / R[3]) * (seg.escala || 0.94) * z, dw = R[2] * k, dh = R[3] * k, px = seg.lado === 'izq' ? w * 0.26 : seg.lado === 'der' ? w * 0.74 : w / 2;
+      const anch = (seg.caja ? cw0 : seg.lado ? w * 0.5 : w) * k, ka = Math.min(anch / R[2], h / R[3]) * (seg.escala || 0.94) * z, dw = R[2] * ka / k, dh = R[3] * ka, px = seg.caja ? cx0 + cw0 / 2 : seg.lado === 'izq' ? w * 0.26 : seg.lado === 'der' ? w * 0.74 : w / 2;
       c.drawImage(el, R[0], R[1], R[2], R[3], px - dw / 2, (h - dh) / 2, dw, dh);
     } else if (seg.modo === 'logo') {
       const k = Math.min(w * 0.8 / R[2], h * 0.74 / R[3]), dw = R[2] * k, dh = R[3] * k; c.drawImage(el, R[0], R[1], R[2], R[3], (w - dw) / 2, (h - dh) / 2, dw, dh);
@@ -709,7 +717,7 @@
     const segs = (MEDIA.pistas[id] || []).filter((x) => t >= x.desde && t < x.hasta); if (!segs.length) return null;
     const c = cv.getContext('2d'), w = cv.width, h = cv.height;
     c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-over';
-    for (const seg of segs) tramoMedia(c, w, h, seg, t);
+    for (const seg of segs) tramoMedia(c, w, h, seg, t, id);
     c.restore();
     return segs[segs.length - 1];
   }
