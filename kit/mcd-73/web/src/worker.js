@@ -52,9 +52,26 @@ async function hmac(env, txt) {
 function igual(a, b) { if (a.length !== b.length) return false; let r = 0; for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i); return r === 0; }
 const cookie = (req, n) => (req.headers.get('cookie') || '').split(/;\s*/).map((c) => c.split('=')).find(([k]) => k === n)?.[1];
 async function sesionValida(req, env) {
-  const v = cookie(req, 'trust_s'); if (!v) return false;
-  const [exp, firma] = v.split('.'); if (!exp || !firma || Date.now() > +exp) return false;
-  return igual(firma, await hmac(env, exp));
+  const v = cookie(req, 'trust_s');
+  if (v) { const [exp, firma] = v.split('.'); if (exp && firma && Date.now() <= +exp && igual(firma, await hmac(env, exp))) return true; }
+  return sesionSinCookies(req, env);
+}
+// Navegadores que no guardan cookies (p. ej. el de una tele): después de entrar con la clave, esa conexión
+// (la IP pública) queda habilitada por SIN_COOKIES_H horas. Solo se activa si el navegador demostró que no guarda la cookie.
+const SIN_COOKIES_H = 3, MEMO_IP = new Map();
+async function sesionSinCookies(req, env) {
+  const k = await ipHash(req), m = MEMO_IP.get(k);
+  if (m && m > Date.now()) return true;
+  const o = await leerR2(env, `sincookies/${k}.json`, null);
+  if (o && o.hasta > Date.now()) { MEMO_IP.set(k, Math.min(o.hasta, Date.now() + 60e3)); return true; }
+  return false;
+}
+async function activarSinCookies(req, env) {   // solo si esta IP entró con la clave hace menos de 2 minutos
+  const k = await ipHash(req), pend = await leerR2(env, `pendiente/${k}.json`, null);
+  if (!pend || Date.now() - pend.t > 120e3) return false;
+  await env.PIEZAS.put(`sincookies/${k}.json`, JSON.stringify({ hasta: Date.now() + SIN_COOKIES_H * 3600e3 }));
+  await env.PIEZAS.delete(`pendiente/${k}.json`); MEMO_IP.delete(k);
+  return true;
 }
 const ipHash = async (req) => hex(await crypto.subtle.digest('SHA-256', enc.encode('ip|' + (req.headers.get('cf-connecting-ip') || '?')))).slice(0, 24);
 async function leerR2(env, k, def) { const o = await env.PIEZAS.get(k); return o ? o.json() : def; }
@@ -217,6 +234,7 @@ async function login(req, env) {
   }
   await env.PIEZAS.delete(k);
   const exp = String(Date.now() + SESION_H * 3600e3);
+  await env.PIEZAS.put(`pendiente/${await ipHash(req)}.json`, JSON.stringify({ t: Date.now() }));
   return new Response(null, { status: 303, headers: { location: '/?entrada=1', 'set-cookie': `trust_s=${exp}.${await hmac(env, exp)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESION_H * 3600}` } });
 }
 
@@ -225,9 +243,14 @@ export default {
     const url = new URL(req.url), ruta = url.pathname;
     if (ruta === '/robots.txt') return new Response('User-agent: *\nDisallow: /\n', { headers: { 'content-type': 'text/plain' } });
     if (ruta === '/login') return req.method === 'POST' ? login(req, env) : paginaLogin('');
+    if (ruta === '/salir') { const k = await ipHash(req); MEMO_IP.delete(k); await env.PIEZAS.delete(`sincookies/${k}.json`); }   // también cierra el modo sin cookies de esta conexión
     if (ruta === '/salir') return new Response(null, { status: 303, headers: { location: '/login', 'set-cookie': 'trust_s=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0' } });
     if (ruta === '/fondo.jpg') return env.ASSETS.fetch(new Request(new URL('/control/fotos/trust-noche-completa.jpg', url)));   // la foto del login es pública
-    if (!(await sesionValida(req, env)) && ruta === '/' && url.searchParams.get('entrada')) return paginaLogin('La clave es correcta, pero este navegador no guardó la sesión (bloquea las cookies). Habilitá las cookies o probá con otro navegador.');
+    if (ruta === '/' && url.searchParams.get('entrada') && (await sesionValida(req, env))) await env.PIEZAS.delete(`pendiente/${await ipHash(req)}.json`);   // ya hay sesión: no queda nada pendiente
+    if (ruta === '/' && url.searchParams.get('entrada') && !(await sesionValida(req, env))) {   // la clave estaba bien pero no volvió la cookie
+      if (await activarSinCookies(req, env)) return Response.redirect(new URL('/', url), 302);
+      return paginaLogin('No se pudo abrir la sesión en este navegador. Volvé a escribir la clave.');
+    }
     if (!(await sesionValida(req, env))) return ruta.startsWith('/api/') ? json({ error: 'La sesión venció. Volvé a entrar con la clave.' }, 401) : Response.redirect(new URL('/login', url), 302);
     try {
       if (ruta.startsWith('/api/')) {
@@ -279,7 +302,7 @@ input{flex:1;min-width:0;font:inherit;font-size:18px;padding:12px 14px;border-ra
 input:focus{outline:2px solid var(--sodio);outline-offset:2px;border-color:transparent}
 button{font:inherit;font-weight:700;font-size:16px;padding:12px 20px;border:0;border-radius:6px;background:var(--sodio);color:#1D1205;cursor:pointer}
 button:focus-visible{outline:2px solid var(--piedra);outline-offset:3px}
-.error{margin:0;color:#FFB4A2;font-size:14px}
+.error{margin:14px 0 0;max-width:340px;padding:10px 12px;border-radius:6px;background:rgba(255,180,162,.1);border:1px solid rgba(255,180,162,.35);color:#FFB4A2;font-size:14px;line-height:1.45}
 .texto>.by{margin-top:10px}.by{margin:10px 0 0;font-size:15px;letter-spacing:.3em;text-transform:uppercase;color:var(--sodio)}
 .foto{background:url(/fondo.jpg) center 30%/cover no-repeat;position:relative}
 .foto::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--noche) 0%,rgba(10,24,48,.35) 28%,rgba(10,24,48,0) 60%)}
