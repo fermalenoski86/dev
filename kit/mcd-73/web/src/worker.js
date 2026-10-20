@@ -193,7 +193,7 @@ async function piezasMaterial(env, origen, incompletas) {
     const pistas = {};   // una pista con «alt» usa otra fuente si la suya no está subida (p. ej. McÁlvarez sin el afiche usa el tríptico)
     for (const [pant, l] of Object.entries(p0.pistas)) pistas[pant] = l.map((x) => (x.alt && !hayArch(x.fuente) && hayArch(x.alt.fuente) ? { ...x, ...x.alt, alt: undefined } : x));
     const p = { ...p0, pistas };
-    const usadas = new Set(Object.values(p.pistas).flat().map((x) => x.fuente)), fuentes = {};
+    const usadas = new Set(Object.values(p.pistas).flat().map((x) => x.fuente).filter(Boolean)), fuentes = {};   // las de «paleta» no usan archivo
     for (const k of usadas) { const arch = cfg.archivos[k] && cfg.archivos[k].archivo; if (arch && subidos.has(arch)) fuentes[k] = '/material/' + arch; }
     if (Object.keys(fuentes).length === usadas.size) out.push({ ...p, fuentes, material: true });
     else if (incompletas) incompletas.push({ id: p.id, titulo: p.titulo, material: true, creada: p.creada, faltan: [...usadas].filter((k) => !fuentes[k]).map((k) => (cfg.archivos[k] || {}).nombre || (cfg.archivos[k] || {}).que || k) });
