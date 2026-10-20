@@ -54,8 +54,8 @@ Fuente: `kit/mcd-73/web/public/index.html` y la pantalla de entrada en `src/work
 - **P-42** (h2): De una frase a un show
 - **P-43** (p): Se escribe la idea como se la contarías a alguien. El sistema la convierte en una ficha con los colores, el efecto, las zonas y el texto, y muestra lo que entendió antes de mover nada.
 - **P-44** (p): Esa ficha pasa por un control: si algo no existe en el edificio, no entra. Recién después el motor la ejecuta.
-- **P-45** (h2): Contar la idea y verla
-- **P-46** (p): Es la parte que más nos entusiasma. Escribís en una frase lo que querés mostrar y en unos minutos tenés imágenes hechas a medida de cada pantalla, ya puestas en el edificio.
+- P-45: sacado (el capítulo «Contar la idea y verla» se juntó con «De una frase a un show»).
+- **P-46** (p, ahora en «De una frase a un show»): Si el show necesita imágenes nuevas, en unos minutos están hechas a medida de cada pantalla y ya puestas en el edificio.
 - **P-47** (p): Antes de mostrar una imagen, el sistema la revisa: si aparece una letra suelta, un logo que no existe o el producto cortado, la vuelve a hacer. Los textos y la marca nunca los inventa la máquina; salen del material oficial.
 - **P-48** (h2): Con material real de la marca
 - **P-49** (p): Para McDonald's armamos un show con piezas de su campaña con la Selección: el afiche de la McÁlvarez, las tres hamburguesas con sus nombres y los jugadores en el mostrador.
@@ -97,10 +97,22 @@ Fuente: `kit/mcd-73/web/public/index.html` y la pantalla de entrada en `src/work
 Agregados el 19/10/2026 (el material subido ahora se ve como un show en el edificio, no como fotos sueltas):
 - **P-86** (capítulo material, rótulo sobre el show): Campaña de la Selección, animada en el edificio · simulación
 - **P-87** (capítulo material, nota si falta material): Cuando el material de la campaña esté cargado en «Material de marca», acá se ve su show.
-- **P-88** (Material de marca, resumen): Las 6 piezas de la campaña están cargadas y se ven animadas en el edificio.
-- **P-89** (Material de marca, resumen si faltan): Hay 4 de 6 piezas de la campaña cargadas. Las que faltan se suben abajo.
+- **P-88** (Material de marca, resumen): Los 6 archivos de material están cargados; los de la campaña se ven animados en el edificio.
+- **P-89** (Material de marca, resumen si faltan): Hay 4 de 6 archivos de material cargados. Los que faltan se suben abajo.
 - **P-90** (Material de marca, botón): Ver el show de la campaña
 - **P-91** (Material de marca, desplegable): Cargar o reemplazar archivos
+
+Agregados en la mejora visual (rama portal/73-visual, orden de ChatGPT del 19/10/2026):
+- **P-92** (inicio, botón): Ver simulador
+- **P-93** (inicio, botón): Ver la campaña
+- **P-94** (inicio, aclaración): Simulación, no conectada a los equipos reales.
+- **P-95** (inicio, pie de foto): Foto de referencia · luces animadas sobre la foto
+- **P-96** (campaña, rótulo de las piezas): Material oficial cargado en el portal. El show usa el afiche, las tres hamburguesas y los jugadores en el mostrador.
+- **P-97** (pies de foto): Foto de referencia · De día · Atardecer · De noche · La misma toma, de noche y de día · Simulación
+- **P-98** (título de grupo): Cómo funciona el edificio
+- **P-99** (colores, pies): Blanco cálido · Blanco arquitectónico · Celeste · Rojo y dorado · Simulación · la fachada con cada receta, pantallas apagadas
+- **P-100** (simulador, pies): Captura del simulador · takeover, segundo 7 · noche sin campaña · luz cálida
+- **P-101** (De una frase a un show, pie y botón): Piezas de prueba creadas para las pantallas · Simulación · Crear pieza
 
 ## Cómo devolver los cambios
 
