@@ -1,5 +1,7 @@
 # Textos del portal EL TRUST (trust.affinitas.com.ar)
 
+Versión formal del 20/10/2026 (tono para gerencia de marketing): los textos de la presentación se reescribieron más formales y explicativos, con los mismos datos.
+
 Fuente: `kit/mcd-73/web/public/index.html` y la pantalla de entrada en `src/worker.js`. Cada línea tiene un código (P-01, P-02…) para poder devolver los cambios por código.
 
 **Lo que no se cambia** (son datos verificados):
@@ -14,66 +16,66 @@ Fuente: `kit/mcd-73/web/public/index.html` y la pantalla de entrada en `src/work
 - **P-02** (a): Crear una pieza
 - **P-03** (a): Material
 - **P-04** (a): Salir
-- **P-05** (p): La esquina más vista de Buenos Aires. Acá armamos y probamos cada show antes de que se prenda el edificio. Abajo te contamos qué estamos haciendo.
+- **P-05** (p): EL TRUST está frente al Obelisco, en Corrientes y Carlos Pellegrini, con tres pantallas LED y 46 luminarias de fachada. En este portal mostramos cómo se diseña, se simula y se valida cada show antes de llevarlo al edificio.
 - **P-06** (li): 3 pantallas LED
 - **P-07** (li): 46 luces de fachada
 - **P-08** (li): 15 s cada show
-- **P-09** (h2): Un edificio que ya es un medio
-- **P-10** (p): EL TRUST está en la esquina de Corrientes y Carlos Pellegrini, mirando al Obelisco. Por ahí pasa medio Buenos Aires: a pie, en auto, en colectivo, de día y de noche.
-- **P-11** (p): Arriba tiene dos pantallas, una tercera banda abraza la esquina y 46 luminarias pueden pintar la fachada de cualquier color. La idea es que todo eso funcione junto, como una sola pieza, y no como tres carteles con unas luces alrededor.
-- **P-12** (h2): Tres pantallas, cada una con su forma
-- **P-13** (p): La de Corrientes mide 7,68 por 3,84 metros y la de Pellegrini 9,60 por 3,84. Están apoyadas sobre la cornisa, una a cada lado de la cúpula. Abajo, la banda corre de punta a punta por encima del primer piso.
-- **P-14** (p): Son formatos raros: muy anchos, nada que ver con un video común. Por eso cada pieza se arma para su pantalla y nunca se estira una imagen pensada para otra cosa.
-- **P-15** (h2): Cuarenta y seis luces, de a una
-- **P-16** (p): Las luminarias están repartidas en tres filas y en la ochava. Cada una se puede prender, apagar y teñir por separado, o en grupo: arriba, en el medio, abajo, la esquina, la cúpula.
-- **P-17** (p): En el simulador cada haz sube por la piedra como lo haría en la realidad, se corta en las cornisas y nunca cae sobre las pantallas. Así lo que se ve en la prueba se parece a lo que va a pasar en la calle.
+- **P-09** (h2): Un edificio que funciona como medio
+- **P-10** (p): EL TRUST está en la esquina de Corrientes y Carlos Pellegrini, frente al Obelisco: un punto de circulación peatonal y vehicular constante, de día y de noche.
+- **P-11** (p): El edificio combina tres pantallas LED con 46 luminarias que pueden teñir la fachada. La propuesta es operarlos como un único soporte: pantallas e iluminación cuentan la misma historia en simultáneo, en lugar de funcionar como carteles independientes.
+- **P-12** (h2): Tres pantallas con formatos propios
+- **P-13** (p): La pantalla de Corrientes mide 7,68 × 3,84 m y la de Pellegrini, 9,60 × 3,84 m. Ambas están sobre la cornisa, una a cada lado de la cúpula. La tercera es una banda que recorre la fachada de punta a punta, por encima del primer piso.
+- **P-14** (p): Son formatos muy panorámicos, distintos de los de un video estándar. Por eso cada pieza se produce en la proporción exacta de su pantalla: no se estiran ni se recortan contenidos pensados para otro formato.
+- **P-15** (h2): 46 luminarias con control individual
+- **P-16** (p): Las luminarias están distribuidas en tres niveles de la fachada y en la ochava. Cada una puede encenderse, apagarse y cambiar de color por separado o en grupos: nivel superior, medio e inferior, esquina y cúpula.
+- **P-17** (p): El simulador reproduce cómo se proyecta cada haz: sube por la piedra, se interrumpe en las cornisas y no invade las pantallas. De este modo, lo que se aprueba en la simulación se aproxima a lo que se verá en el edificio.
 - **P-18** (button): Barrido
 - **P-19** (button): Ola
 - **P-20** (button): Latido
 - **P-21** (button): Destellos
 - **P-22** (button): Degradé
 - **P-23** (button): Tramos
-- **P-24** (h2): Probá los efectos
-- **P-25** (p): Cada punto es una luminaria real, en su lugar. Elegí un efecto y mirá cómo se mueve la luz por la fachada: es el mismo motor que usa el simulador, corriendo acá.
-- **P-26** (p): Un barrido cruza de Corrientes a Pellegrini. La ola sube desde la planta baja. El latido golpea dos veces, como un corazón. Los tramos le dan a cada protagonista su color y su momento.
-- **P-27** (h2): Colores que el equipo puede hacer
-- **P-28** (p): Las luminarias son RGBW: rojo, verde, azul y un blanco propio. Para que los colores salgan limpios usamos dos canales de color más el blanco, nunca los tres juntos.
-- **P-29** (p): Así sale, por ejemplo, el celeste de la camiseta: nada de rojo, un poco de verde, bastante azul y la mitad de blanco. Cada color de una campaña se traduce a esa receta antes de llegar a la fachada.
-- **P-30** (h2): El simulador por dentro
-- **P-31** (p): TRUST Control es el programa donde se arma cada show. A la izquierda, el edificio; a la derecha, las pantallas, las zonas de luz y cada luminaria; abajo, la línea de tiempo con una pista para cada cosa.
-- **P-32** (p): Un show dura 15 segundos y tiene cinco momentos: la previa, la entrada de la marca, el takeover con todo al máximo, el cierre y la vuelta a la calma. Se puede frenar en cualquier segundo y ver exactamente qué hace cada pantalla y cada luz.
+- **P-24** (h2): Biblioteca de efectos
+- **P-25** (p): Cada punto representa una luminaria en su posición real. Al seleccionar un efecto, el movimiento de la luz se reproduce con el mismo motor que utiliza el simulador.
+- **P-26** (p): Barrido: la luz cruza de Corrientes a Pellegrini. Ola: sube desde la planta baja. Latido: dos pulsos, como un corazón. Destellos: luminarias sueltas destellan sobre una base suave. Degradé: los colores se funden a lo largo de la fachada. Tramos: cada protagonista de la campaña tiene su color y su momento.
+- **P-27** (h2): Colores precisos en la fachada
+- **P-28** (p): Las luminarias son RGBW: combinan rojo, verde, azul y un canal de blanco propio. Para obtener colores limpios se usan, como máximo, dos canales de color más el blanco; nunca los tres a la vez.
+- **P-29** (p): Por ejemplo, el celeste de la camiseta se obtiene con 0 % de rojo, 28 % de verde, 53 % de azul y 51 % de blanco. Cada color de una campaña se traduce a una receta de este tipo antes de llegar a la fachada.
+- **P-30** (h2): TRUST Control, el simulador
+- **P-31** (p): TRUST Control es la herramienta en la que se diseña y se revisa cada show. Muestra el edificio, los controles de pantallas, zonas de luz y luminarias, y una línea de tiempo con una pista para cada elemento.
+- **P-32** (p): Cada show dura 15 segundos y se organiza en cinco momentos: previa, entrada de la marca, takeover con todos los elementos al máximo, cierre y regreso al estado base. La reproducción puede detenerse en cualquier segundo para verificar qué muestra cada pantalla y cada luminaria.
 - **P-33** (h2): De noche y de día
-- **P-34** (p): De noche mandan las luces. De día casi no se ven y las pantallas tienen que pelear contra el sol. El simulador muestra las dos situaciones con la misma toma, para decidir qué funciona en cada horario.
-- **P-35** (h2): Una idea, tres pantallas
-- **P-36** (p): Entre las dos pantallas de arriba está la cúpula. Parece un detalle, pero cambia mucho: una palabra que cruza de una a la otra se lee cortada.
-- **P-37** (p): Por eso el mensaje se reparte para que cada pantalla se entienda sola. Solo se parte cuando alguien lo pide a propósito.
+- **P-34** (p): La visibilidad cambia según el horario. De noche, la iluminación de la fachada tiene un protagonismo alto; de día, el impacto depende sobre todo de las pantallas, que compiten con la luz solar. El simulador muestra la misma pieza en ambas condiciones para definir qué contenido conviene en cada franja.
+- **P-35** (h2): Un mensaje, tres pantallas
+- **P-36** (p): La cúpula separa las dos pantallas superiores. Una palabra o un logo que cruce de una a otra se lee interrumpido.
+- **P-37** (p): Por eso, como regla, cada pantalla lleva un mensaje completo y legible por sí solo. Un mensaje se divide entre pantallas únicamente cuando la pieza está diseñada con ese fin.
 - **P-38** (li): Una frase «Ola celeste y blanca, que diga VAMOS ARGENTINA»
 - **P-39** (li): La ficha del show colores, efecto, zonas, texto y tiempos, revisados contra lo que el edificio puede hacer
 - **P-40** (li): El motor arma cada cuadro para las tres pantallas y las 46 luces
-- **P-41** (li): El edificio hoy en el simulador; mañana, en los equipos reales
-- **P-42** (h2): De una frase a un show
-- **P-43** (p): Se escribe la idea como se la contarías a alguien. El sistema la convierte en una ficha con los colores, el efecto, las zonas y el texto, y muestra lo que entendió antes de mover nada.
-- **P-44** (p): Esa ficha pasa por un control: si algo no existe en el edificio, no entra. Recién después el motor la ejecuta.
+- **P-41** (li): El edificio hoy, en el simulador; en una etapa posterior, en los equipos del edificio
+- **P-42** (h2): De la idea al show
+- **P-43** (p): La idea se escribe en lenguaje natural, como en un brief. El sistema la traduce en una ficha técnica —colores, efecto, zonas y texto— y la muestra antes de ejecutar cualquier cambio.
+- **P-44** (p): La ficha se valida contra las capacidades del edificio: lo que el equipamiento no puede hacer no se acepta. Recién entonces el motor genera el show.
 - P-45: sacado (el capítulo «Contar la idea y verla» se juntó con «De una frase a un show»).
-- **P-46** (p, ahora en «De una frase a un show»): Si el show necesita imágenes nuevas, en unos minutos están hechas a medida de cada pantalla y ya puestas en el edificio.
-- **P-47** (p): Antes de mostrar una imagen, el sistema la revisa: si aparece una letra suelta, un logo que no existe o el producto cortado, la vuelve a hacer. Los textos y la marca nunca los inventa la máquina; salen del material oficial.
-- **P-48** (h2): Con material real de la marca
-- **P-49** (p): Para McDonald's armamos un show con piezas de su campaña con la Selección: el afiche de la McÁlvarez, las tres hamburguesas con sus nombres y los jugadores en el mostrador.
-- **P-50** (p): El simulador las anima para el formato del edificio y cambia el color de la fachada con cada jugador. No se agrega nada que la marca no haya hecho.
-- **P-51** (h2): La plataforma que estamos armando
-- **P-52** (p): El simulador es la primera pieza. Alrededor estamos construyendo el resto, paso a paso y con cada parte revisada antes de pasar a la siguiente.
-- **P-53** (li): Previs El edificio en 3D, medido, para ver los shows desde cualquier esquina y no solo desde una foto. En desarrollo
-- **P-54** (li): Control La operación diaria: qué campaña sale, a qué hora, quién la aprobó. En desarrollo
-- **P-55** (li): Edge El equipo instalado en el edificio, que ejecuta el show aunque se corte internet. Próximo
-- **P-56** (li): Creative Studio Un editor para que el equipo de marketing del cliente arme sus propias piezas. Próximo
-- **P-57** (li): Audiencia Un conteo de personas con cámaras, primero como reporte interno. Próximo
-- **P-58** (h2): Lo que sigue
-- **P-59** (p): Por ahora todo esto es una simulación: no está conectado a las pantallas ni a las luces reales. Lo próximo es sumar la tercera pantalla, trabajar con el material en alta del cliente y conectar el sistema con los equipos del edificio.
+- **P-46** (p, ahora en «De una frase a un show»): Si el show requiere imágenes nuevas, el sistema las produce en pocos minutos, en la proporción de cada pantalla, y las ubica en el edificio.
+- **P-47** (p): Cada imagen pasa por un control de calidad automático: si detecta letras sueltas, logos inexistentes o productos cortados, la descarta y la genera de nuevo. Los textos y los elementos de marca no se generan automáticamente: provienen siempre del material oficial.
+- **P-48** (h2): La campaña de la Selección, en el edificio
+- **P-49** (p): Como caso de prueba, armamos un show con piezas oficiales de la campaña de McDonald's con la Selección Argentina: el afiche de la McÁlvarez, las tres hamburguesas con sus nombres y los jugadores en el mostrador.
+- **P-50** (p): El simulador adapta cada pieza a la proporción de cada pantalla y sincroniza la iluminación de la fachada con el color de cada producto. No se agregan productos, textos ni elementos de marca que no formen parte del material oficial.
+- **P-51** (h2): Plataforma en desarrollo
+- **P-52** (p): El simulador es el primer módulo de una plataforma más amplia. El resto se construye por etapas, y cada una se revisa antes de avanzar a la siguiente.
+- **P-53** (li): Previs Modelo 3D medido del edificio, para revisar los shows desde distintos puntos de vista y no solo desde una fotografía. En desarrollo
+- **P-54** (li): Control Operación diaria: programación de campañas, horarios y registro de aprobaciones. En desarrollo
+- **P-55** (li): Edge Equipo instalado en el edificio que ejecuta el show aun sin conexión a internet. Próximo
+- **P-56** (li): Creative Studio Editor para que el equipo de marketing del cliente arme sus propias piezas. Próximo
+- **P-57** (li): Audiencia Conteo de personas mediante cámaras, inicialmente como reporte interno. Próximo
+- **P-58** (h2): Próximos pasos
+- **P-59** (p): Todo lo presentado es una simulación: el sistema todavía no está conectado a las pantallas ni a la iluminación del edificio. Los próximos pasos son incorporar la tercera pantalla, trabajar con el material del cliente en alta resolución y conectar el sistema con los equipos.
 - **P-60** (p): Abrir el simulador Crear una pieza
 - **P-61** (h2): Herramientas
 - P-62, P-63 y P-64: sacados (la fila «Ver un show en el edificio» repetía el botón del final).
 - **P-65** (h2): Crear una pieza nueva
-- **P-66** (p): Contá la idea en una frase. En unos minutos tenés las imágenes para las tres pantallas, listas para ver en el edificio. Los textos y la marca se suman después, con el material oficial del cliente.
+- **P-66** (p): Se describe la idea en una frase y, en pocos minutos, se obtienen las imágenes para las tres pantallas, listas para revisarlas en el edificio. Los textos y la marca se incorporan después, con el material oficial del cliente.
 - **P-67** (li): Postre celeste y blanco
 - **P-68** (li): Papas doradas
 - **P-69** (li): Desayuno al amanecer
@@ -83,10 +85,10 @@ Fuente: `kit/mcd-73/web/public/index.html` y la pantalla de entrada en `src/work
 - **P-73** (a): Ver en el simulador
 - **P-74** (button): Crear otra
 - **P-75** (h2): Material de marca
-- **P-76** (p): Fotos, logos y piezas oficiales del cliente. Queda guardado acá, sin publicar, y se usa para armar los shows: nada se inventa.
+- **P-76** (p): Fotos, logos y piezas oficiales del cliente. El material queda guardado en el portal, sin publicar, y es la única fuente de elementos de marca para los shows.
 - **P-77** (label): Subir otro archivo
 - **P-78** (h2): Piezas guardadas
-- **P-79** (p): Todo lo que se crea queda acá. Tocá una para verla en el edificio.
+- **P-79** (p): Los shows creados y los armados con material de la marca. Cada uno se abre directamente en el edificio.
 - **P-80** (p): Cargando…
 - **P-81** (entrada, h1): EL TRUST
 - **P-82** (entrada, p): Corrientes y Carlos Pellegrini, frente al Obelisco.
@@ -113,6 +115,11 @@ Agregados en la mejora visual (rama portal/73-visual, orden de ChatGPT del 19/10
 - **P-99** (colores, pies): Blanco cálido · Blanco arquitectónico · Celeste · Rojo y dorado · Simulación · la fachada con cada receta, pantallas apagadas
 - **P-100** (simulador, pies): Captura del simulador · takeover, segundo 7 · noche sin campaña · luz cálida
 - **P-101** (De una frase a un show, pie y botón): Piezas de prueba creadas para las pantallas · Simulación · Crear pieza
+
+Agregados el 20/10/2026:
+- **P-102** (Biblioteca de efectos, pie del show): Simulación · el efecto sobre la foto real del edificio, con las pantallas apagadas
+- **P-103** (Biblioteca de efectos, debajo de los botones): la descripción de cada efecto sale del simulador (p. ej. «Destellos: luminarias sueltas destellan sobre una base suave.»)
+- **P-104** (Piezas guardadas, tarjetas de material): Show con material de la marca
 
 ## Cómo devolver los cambios
 

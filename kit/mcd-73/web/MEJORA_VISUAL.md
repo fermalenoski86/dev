@@ -54,6 +54,12 @@ errores []
 ```
 Las capturas antes/después (1440 px y 390 px) van en el ZIP aparte porque muestran material de McDonald's, que no se sube al repo público.
 
+## Cambios del 20/10/2026 (pedidos de Fer y hallazgo de Codex)
+- **Textos en tono formal y explicativo** para gerencia de marketing: se reescribieron todos los de la presentación y las herramientas con los mismos datos (medidas, 3/46/15 s, receta del celeste, estados de los módulos, campaña). Detalle por código en `TEXTOS.md`.
+- **Biblioteca de efectos**: en lugar de los puntos sobre fondo oscuro, el efecto corre en el simulador mismo, sobre la foto real del edificio (encuadre de fachada, pantallas apagadas), en bucle del tramo 5–10 s. Debajo, la descripción de cada efecto. El portal maneja el simulador por la misma pestaña (`iframe.contentWindow.MOTOR`): no se cambió el código del simulador.
+- **Codex P2 (index.html:539)**: la grilla de piezas oficiales se rehace después de cada subida o reemplazo (`piezasOficiales()`), con `?v=<bytes>` para no mostrar la versión vieja.
+- Se sumó `kit/73-mcd` (shows de McÁlvarez, McAllister y McFernández en «Piezas guardadas»).
+
 ## Para decidir (Fer)
 - Fer había pedido no mostrar las imágenes sueltas; la orden pide mostrar las 6. Quedaron **chicas y debajo del show**, que es el protagonista. Si no las quiere, se saca el bloque `#piezas-of`.
 - Siguen en algunas simulaciones (`luminarias.webp`, captura del takeover) las letras «McDonald's» que dibuja el simulador en la banda. Ya estaban publicadas; si se prefiere, se cambian por capturas sin texto.
