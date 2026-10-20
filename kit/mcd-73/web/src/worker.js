@@ -333,7 +333,7 @@ button{font:inherit;font-weight:700;font-size:16px;padding:12px 20px;border:0;bo
 button:focus-visible{outline:2px solid var(--piedra);outline-offset:3px}
 .error{margin:14px 0 0;max-width:340px;padding:10px 12px;border-radius:6px;background:rgba(255,180,162,.1);border:1px solid rgba(255,180,162,.35);color:#FFB4A2;font-size:14px;line-height:1.45}
 .texto>.by{margin-top:10px}.by{margin:10px 0 0;font-size:15px;letter-spacing:.3em;text-transform:uppercase;color:var(--sodio)}
-.foto{background:#050b18 url(/fondo.jpg?v=2) center 42%/cover no-repeat;position:relative}
+.foto{background:#050b18 url(/fondo.jpg?v=3) center 42%/cover no-repeat;position:relative}
 .foto::after{content:"";position:absolute;top:0;right:0;bottom:0;left:0;background:linear-gradient(90deg,var(--noche) 0%,rgba(10,24,48,.35) 28%,rgba(10,24,48,0) 60%)}
 .pie{position:absolute;left:64px;left:clamp(28px,6vw,88px);bottom:22px;font-size:12px;color:#5E6E88}
 @media (max-width:760px){body{grid-template-columns:1fr;grid-template-rows:42vh auto}.foto{grid-row:1}.foto::after{background:linear-gradient(0deg,var(--noche),rgba(10,24,48,0) 55%)}.texto{grid-row:2;padding-top:0}.pie{position:static;margin-top:8px}}
