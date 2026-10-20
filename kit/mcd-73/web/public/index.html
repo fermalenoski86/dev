@@ -254,7 +254,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     <p class="aclaracion">Simulación, no conectada a los equipos reales.</p>
   </div>
   <div class="edificio" id="edificio">
-    <img src="/control/fotos/trust-noche-completa.jpg" alt="El edificio EL TRUST de noche, con sus pantallas y la fachada iluminada" fetchpriority="high">
+    <img src="/img/heroe.jpg" alt="El edificio EL TRUST de noche, con sus pantallas y la fachada iluminada" fetchpriority="high">
     <svg id="luces" viewBox="0 0 2570 2872" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
     <span class="pie-heroe">Foto de referencia · luces animadas sobre la foto</span>
   </div>
@@ -514,6 +514,8 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
 (function () {
   'use strict';
   const $ = (id) => document.getElementById(id);
+  const MEMO = {}, pedir = (u) => (MEMO[u] = MEMO[u] || fetch(u).then((r) => r.json()).catch((e) => { delete MEMO[u]; throw e; }));   // una consulta por recurso al cargar
+  const olvidar = () => { delete MEMO['/api/material']; delete MEMO['/api/piezas']; };
   // 46 luminarias sobre la foto completa: sus posiciones están calibradas sobre la foto base, ubicada dentro del encuadre «completo»
   (function luces() {
     const L = window.LUMINARIAS, E = window.ENCUADRES && window.ENCUADRES.completo; if (!L || !E) return;
@@ -573,7 +575,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       sg.ok('Pieza guardada');
       $('miniaturas').innerHTML = ['corrientes', 'pellegrini', 'media'].map((k) => `<img src="${meta.pantallas[k]}" alt="${NOMBRES[k]}">`).join('');
       $('ver-sim').href = `/control/?pieza=${encodeURIComponent(meta.id)}`; $('resultado').hidden = false;
-      cargarGaleria();
+      olvidar(); cargarGaleria();
     } catch (e) { (actual || paso('')).mal(e.message); }
     finally { $('generar').disabled = false; actualizarGasto(); }
   });
@@ -583,7 +585,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
   async function cargarGaleria() {
     const g = $('galeria');
     try {
-      const l = await (await fetch('/api/piezas')).json();
+      const l = await pedir('/api/piezas');
       if (!l.length) { g.innerHTML = '<p class="vacio">Todavía no hay piezas guardadas. Las cuatro piezas de la propuesta para McDonald\'s ya están disponibles en el simulador.</p>'; return; }
       g.innerHTML = '';
       for (const p of l) {
@@ -602,12 +604,13 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     const fd = new FormData(); fd.append('archivo', archivo); if (nombre) fd.append('nombre', nombre);
     $('estado-material').textContent = `Subiendo ${archivo.name}…`;
     const r = await fetch('/api/material', { method: 'POST', body: fd }), d = await r.json().catch(() => ({}));
+    olvidar();
     $('estado-material').textContent = r.ok ? `Listo: ${d.nombre}` : (d.error || 'No se pudo subir.');
   }
   async function cargarMaterial() {
     try {
       if (!CFG) CFG = await (await fetch('/control/material.json')).json();
-      const subidos = await (await fetch('/api/material')).json(), hay = new Map(subidos.map((x) => [x.nombre, x]));
+      const subidos = await pedir('/api/material'), hay = new Map(subidos.map((x) => [x.nombre, x]));
       const ul = $('lugares'); ul.innerHTML = '';
       const nombresSlot = new Set(Object.values(CFG.archivos).map((x) => x.archivo)), libres = subidos.filter((x) => !nombresSlot.has(x.nombre) && /\.(jpe?g|png|webp)$/.test(x.nombre));
       for (const [clave, a] of Object.entries(CFG.archivos)) {
@@ -645,11 +648,11 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
 
   async function piezasOficiales(lista) {   // las piezas oficiales cargadas, chicas y debajo del show; se rehace después de cada subida
     try {
-      if (!lista) lista = await (await fetch('/api/material')).json();
+      if (!lista) lista = await pedir('/api/material');
       if (!CFG) CFG = await (await fetch('/control/material.json')).json();
       const of = Object.values(CFG.archivos).map((a) => [a, lista.find((m) => m.nombre === a.archivo)]).filter(([, m]) => m), ul = $('piezas-of-lista');
       ul.innerHTML = '';
-      for (const [a, m] of of) { const li = document.createElement('li'), im = document.createElement('img'); im.src = `${m.url}?v=${m.bytes}`; im.alt = a.que; im.title = a.que; im.loading = 'lazy'; li.appendChild(im); ul.appendChild(li); }
+      for (const [a, m] of of) { const li = document.createElement('li'), im = document.createElement('img'); im.src = m.url; im.alt = a.que; im.title = a.que; im.loading = 'lazy'; li.appendChild(im); ul.appendChild(li); }
       $('piezas-of').hidden = !of.length;
     } catch (e) {}
   }
@@ -657,7 +660,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     const caja = $('show-material'), pie = $('pie-material');
     let pieza = '4-hamburguesa-hero', texto = 'Pieza creada para las pantallas · simulación';
     try {
-      const lista = await (await fetch('/api/material')).json(), l = new Set(lista.map((m) => m.nombre));
+      const lista = await pedir('/api/material'), l = new Set(lista.map((m) => m.nombre));
       await piezasOficiales(lista);
       if (['mcalvarez-afiche.jpg', 'trio-productos.jpg', 'jugadores-mostrador.jpg'].every((n) => l.has(n))) { pieza = 'campana-seleccion'; texto = 'Campaña de McDonald\'s y la Selección Argentina: visualización de prueba sobre el edificio · Simulación'; }
 
@@ -668,8 +671,9 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     const io = new IntersectionObserver(([e]) => {   // corre solo mientras se ve, para no gastar batería
       if (e.isIntersecting && !fr) { fr = document.createElement('iframe'); fr.title = texto; fr.src = url; fr.setAttribute('loading', 'lazy'); caja.prepend(fr); }
       else if (!e.isIntersecting && fr) { fr.remove(); fr = null; }
-    }, { rootMargin: '200px' });
-    io.observe(caja);
+    }, { rootMargin: '0px' });
+    const arrancar = () => setTimeout(() => io.observe(caja), 1200);   // primero la página; el show en vivo, después
+    if (document.readyState === 'complete') arrancar(); else addEventListener('load', arrancar, { once: true });
   }
   // ---------- probador de efectos: el simulador mismo (modo vitrina, misma pestaña) con el efecto elegido sobre el edificio ----------
   (function probador() {
@@ -698,8 +702,9 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
         }, 500));
         caja.prepend(fr);
       } else if (!e.isIntersecting && fr) { if (quitar) quitar(); fr.remove(); fr = null; M = null; quitar = null; }
-    }, { rootMargin: '200px' });
-    io.observe(caja);
+    }, { rootMargin: '0px' });
+    const arrancar = () => setTimeout(() => io.observe(caja), 1200);   // primero la página; el show en vivo, después
+    if (document.readyState === 'complete') arrancar(); else addEventListener('load', arrancar, { once: true });
   })();
   // ---------- recetas de color RGBW ----------
   (function colores() {
@@ -815,7 +820,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       sel.clear(); loop = []; pintarGrilla(); editor(); guardar();
     });
     (async () => {
-      try { const l = await (await fetch('/api/piezas')).json(); piezas = [...l.filter((p) => !p.faltan).map((p) => ({ id: p.id, titulo: p.titulo })), ...ESPECIALES]; } catch (e) {}
+      try { const l = await pedir('/api/piezas'); piezas = [...l.filter((p) => !p.faltan).map((p) => ({ id: p.id, titulo: p.titulo })), ...ESPECIALES]; } catch (e) {}
       try { P = await (await fetch('/api/programa')).json(); } catch (e) { P = null; }
       if (P && P.operacion) { $('op-desde').value = P.operacion.desde; $('op-hasta').value = P.operacion.hasta; $('no-desde').value = P.noche.desde; $('no-hasta').value = P.noche.hasta; }
       else porDefecto();

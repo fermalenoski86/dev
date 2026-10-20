@@ -238,7 +238,7 @@ function validarPrograma(c) {
 
 async function listarPiezas(env) {
   const l = await env.PIEZAS.list({ prefix: 'piezas/', limit: 1000 }), metas = l.objects.filter((o) => o.key.endsWith('/meta.json')).map((o) => o.key);
-  const out = []; for (const k of metas.slice(-60)) { const m = await leerR2(env, k, null); if (m) out.push(m); }
+  const out = (await Promise.all(metas.slice(-60).map((k) => leerR2(env, k, null)))).filter(Boolean);   // en paralelo (antes, una por una)
   return out.sort((a, b) => (a.creada < b.creada ? 1 : -1));
 }
 
@@ -299,9 +299,8 @@ export default {
         const o = await env.PIEZAS.get(ruta.slice(1)); if (!o) return new Response('no existe', { status: 404 });
         return new Response(o.body, { headers: { 'content-type': o.httpMetadata?.contentType || 'application/octet-stream', 'cache-control': 'private, max-age=86400' } });
       }
-      if (ruta === '/control/piezas_ia.js') {   // las del kit + las guardadas en R2
-        const base = await (await env.ASSETS.fetch(req)).text(), extra = await listarPiezas(env);
-        return new Response(base + `\nwindow.PIEZAS_IA = (window.PIEZAS_IA || []).concat(${JSON.stringify(extra)});\n`, { headers: { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-store' } });
+      if (ruta === '/control/piezas_guardadas.js') {   // solo las guardadas en R2 (chico, sin caché); piezas_ia.js (1 MB, fijo) se sirve como archivo y queda en caché
+        return new Response(`window.PIEZAS_IA = (window.PIEZAS_IA || []).concat(${JSON.stringify(await listarPiezas(env))});\n`, { headers: { 'content-type': 'text/javascript; charset=utf-8', 'cache-control': 'no-store' } });
       }
       const r = await env.ASSETS.fetch(req), h = new Headers(r.headers); h.set('x-robots-tag', 'noindex');
       return new Response(r.body, { status: r.status, headers: h });
@@ -333,7 +332,7 @@ button{font:inherit;font-weight:700;font-size:16px;padding:12px 20px;border:0;bo
 button:focus-visible{outline:2px solid var(--piedra);outline-offset:3px}
 .error{margin:14px 0 0;max-width:340px;padding:10px 12px;border-radius:6px;background:rgba(255,180,162,.1);border:1px solid rgba(255,180,162,.35);color:#FFB4A2;font-size:14px;line-height:1.45}
 .texto>.by{margin-top:10px}.by{margin:10px 0 0;font-size:15px;letter-spacing:.3em;text-transform:uppercase;color:var(--sodio)}
-.foto{background:#050b18 url(/fondo.jpg?v=5) center 8%/cover no-repeat;position:relative}
+.foto{background:#050b18 url(/fondo.jpg?v=6) center 8%/cover no-repeat;position:relative}
 .foto::after{content:"";position:absolute;top:0;right:0;bottom:0;left:0;background:linear-gradient(90deg,var(--noche) 0%,rgba(10,24,48,.35) 28%,rgba(10,24,48,0) 60%)}
 .pie{position:absolute;left:64px;left:clamp(28px,6vw,88px);bottom:22px;font-size:12px;color:#5E6E88}
 @media (max-width:760px){body{grid-template-columns:1fr;grid-template-rows:42vh auto}.foto{grid-row:1}.foto::after{background:linear-gradient(0deg,var(--noche),rgba(10,24,48,0) 55%)}.texto{grid-row:2;padding-top:0}.pie{position:static;margin-top:8px}}
