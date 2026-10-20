@@ -178,6 +178,44 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
   .dos-capturas { grid-template-columns: 1fr; }
   .pie-heroe { bottom: 70px; }
 }
+
+/* Programación: un día de operación y la grilla semanal */
+.dia-24 { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 10px 14px; align-items: center; margin-top: 8px; padding: 0 14px 0 0; }
+.dia-24 .nom { font-size: 14px; color: #D6CDBC; }
+.dia-24 .eje { position: relative; height: 26px; border-radius: 5px; background: #071226; box-shadow: inset 0 0 0 1px var(--linea); overflow: hidden; }
+.dia-24 .seg { position: absolute; top: 0; bottom: 0; }
+.dia-24 .seg.op { background: var(--sodio); }
+.dia-24 .seg.ilum { background: var(--celeste); }
+.dia-24 .reglas { position: relative; height: 18px; grid-column: 2; }
+.dia-24 .marca-h { position: absolute; top: 0; font-size: 12px; color: var(--niebla); transform: translateX(-50%); }
+.programacion { grid-template-columns: minmax(0, 0.55fr) minmax(0, 1.75fr); }
+.prog-ajustes { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; font-size: 15px; color: var(--niebla); margin-bottom: 12px; }
+.prog-ajustes input { font: inherit; font-size: 15px; background: var(--noche-2); color: var(--piedra); border: 1px solid var(--linea); border-radius: 4px; padding: 3px 6px; color-scheme: dark; }
+.prog-grilla-caja { overflow-x: auto; border: 1px solid var(--linea); border-radius: 6px; }
+.prog-grilla { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 13px; user-select: none; }
+.prog-grilla th { font-weight: 600; color: var(--niebla); padding: 6px 4px; text-align: center; position: sticky; top: 0; background: var(--noche); }
+.prog-grilla th.h { text-align: right; padding-right: 8px; white-space: nowrap; }
+.prog-grilla th.h.noche::after { content: " ☾"; color: var(--celeste); }
+.prog-grilla td { border: 1px solid var(--linea); height: 24px; padding: 2px; cursor: pointer; vertical-align: middle; }
+.prog-grilla td.cerrado { background: repeating-linear-gradient(45deg, transparent 0 4px, rgba(147,160,181,.08) 4px 8px); cursor: default; }
+.prog-grilla td.sel { outline: 2px solid var(--sodio); outline-offset: -2px; }
+.prog-grilla .chips { display: flex; height: 16px; border-radius: 3px; overflow: hidden; }
+.prog-grilla .chips span { flex: 1; }
+.prog-editor { margin-top: 14px; padding: 14px; border: 1px solid var(--linea); border-radius: 6px; }
+.prog-sel { margin: 0 0 10px !important; color: var(--piedra) !important; }
+.prog-atajos { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.boton.chico { padding: 6px 12px; font-size: 14px; font-weight: 600; }
+.prog-slots { margin: 0; padding: 0 0 0 22px; display: grid; gap: 6px; }
+.prog-slots li { color: var(--niebla); }
+.prog-slots select { font: inherit; font-size: 15px; background: var(--noche-2); color: var(--piedra); border: 1px solid var(--linea); border-radius: 4px; padding: 4px 6px; max-width: calc(100% - 44px); }
+.prog-slots button { margin-left: 6px; background: none; border: 0; color: var(--niebla); cursor: pointer; font-size: 16px; }
+.prog-sub { margin: 22px 0 8px; font-size: 18px; font-weight: 700; }
+.prog-resumen { width: 100%; border-collapse: collapse; font-size: 14px; }
+.prog-resumen th, .prog-resumen td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--linea); }
+.prog-resumen th:first-child, .prog-resumen td:first-child { text-align: left; }
+.prog-resumen th { color: var(--niebla); font-weight: 600; }
+.prog-resumen i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 8px; }
+@media (max-width: 860px) { .programacion { grid-template-columns: minmax(0, 1fr); } .prog-grilla th.h small { display: none; } .dia-24 { grid-template-columns: 1fr; } .dia-24 .reglas { grid-column: 1; } }
 </style>
 </head>
 <body>
@@ -192,6 +230,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       <li><b>3</b><span>pantallas LED</span></li>
       <li><b>46</b><span>luces de fachada</span></li>
       <li><b>15 s</b><span>cada show</span></li>
+      <li><b>20,5 h</b><span>de operación diaria</span></li>
     </ul>
     <p class="acciones-heroe"><a class="boton" href="/control/">Ver simulador</a> <a class="boton sec" href="#cap-material">Ver la campaña</a></p>
     <p class="aclaracion">Simulación, no conectada a los equipos reales.</p>
@@ -329,6 +368,18 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     </div>
   </article>
 
+  <article class="ancho" id="cap-programacion">
+    <div class="cabeza">
+      <h2>Una programación de 20,5 horas por día</h2>
+      <div>
+        <p>Cada pieza dura 15 segundos, pero el edificio opera 20,5 horas por día. Por eso los contenidos se organizan en una grilla semanal: cada hora de cada día tiene su propia secuencia de piezas, que se repite en loop hasta la hora siguiente.</p>
+        <p>La grilla define qué se ve en cada franja, cuántas veces sale cada pieza por hora, por día y por semana, y en qué horario se enciende la iluminación de fachada. Así se puede planificar la presencia de cada campaña y verificar que se cumpla lo acordado.</p>
+      </div>
+    </div>
+    <div class="dia-24" id="dia-24" aria-label="Un día de operación del edificio"></div>
+    <p class="rotulo-img">Propuesta inicial: horario de operación y franja de iluminación editables en «Programación», más abajo.</p>
+  </article>
+
   <article class="capitulo">
     <div class="pila">
       <ol class="flujo" aria-label="Cómo una idea llega al edificio">
@@ -394,6 +445,26 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
         <div class="resultado" id="miniaturas"></div>
         <div class="resultado-acciones"><a class="boton" id="ver-sim" href="/control/">Ver en el simulador</a><button class="boton sec" type="button" id="otra">Crear otra</button></div>
       </div>
+    </div>
+  </section>
+
+  <section class="tarea programacion" aria-labelledby="t-prog" id="programacion">
+    <div><h2 id="t-prog">Programación</h2><p>Grilla semanal del edificio: qué secuencia de piezas sale en cada hora de cada día. Se eligen una o varias horas, se arma la secuencia y se aplica. Es un prototipo: la grilla todavía no se envía al edificio.</p></div>
+    <div>
+      <div class="prog-ajustes">
+        <label>Operación <input type="time" id="op-desde" value="06:00"> a <input type="time" id="op-hasta" value="02:30"></label>
+        <label>Luces de fachada <input type="time" id="no-desde" value="19:30"> a <input type="time" id="no-hasta" value="06:30"></label>
+        <span class="gasto" id="prog-total"></span>
+      </div>
+      <div class="prog-grilla-caja"><table class="prog-grilla" id="prog-grilla" aria-label="Grilla semanal: horas por día"></table></div>
+      <div class="prog-editor" id="prog-editor">
+        <p class="prog-sel" id="prog-sel">Elegí una o varias horas en la grilla (se puede arrastrar).</p>
+        <div class="prog-atajos"><button type="button" class="boton sec chico" data-sel="dia">Todo el día</button><button type="button" class="boton sec chico" data-sel="semana">Toda la semana</button><button type="button" class="boton sec chico" data-sel="nada">Ninguna</button></div>
+        <ol class="prog-slots" id="prog-slots" aria-label="Secuencia del loop"></ol>
+        <div class="controles"><button type="button" class="boton sec" id="prog-mas">Sumar pieza al loop</button><button type="button" class="boton" id="prog-aplicar">Aplicar a las horas elegidas</button><span class="gasto" id="prog-estado" aria-live="polite"></span></div>
+      </div>
+      <h3 class="prog-sub">Salidas por pieza</h3>
+      <table class="prog-resumen" id="prog-resumen"></table>
     </div>
   </section>
 
@@ -604,6 +675,119 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     const can = [['r', 'Rojo', '#ff4b3a'], ['g', 'Verde', '#3fd27a'], ['b', 'Azul', '#4a8cff'], ['w', 'Blanco', '#f4efe4']];
     caja.innerHTML = lista.map(([n, h]) => { const q = M.hexARGBW(h);
       return `<div class="color"><div class="muestra" style="--c:${h}"></div><div><strong>${n}</strong><div class="canales">${can.map(([k, nom, col]) => `<div class="canal">${nom} ${Math.round(q[k] * 100)} %<div><span style="width:${Math.round(q[k] * 100)}%;background:${col}"></span></div></div>`).join('')}</div></div></div>`; }).join('');
+  })();
+
+
+  // ---------- programación: grilla semanal de loops por hora (prototipo, se guarda en el portal) ----------
+  (function programacion() {
+    const DIAS = [['lun', 'Lun'], ['mar', 'Mar'], ['mie', 'Mié'], ['jue', 'Jue'], ['vie', 'Vie'], ['sab', 'Sáb'], ['dom', 'Dom']];
+    const SLOT = 15, ESPECIALES = [{ id: 'institucional', titulo: 'Institucional del edificio' }, { id: 'reposo', titulo: 'Pantallas en reposo' }];
+    const COLOR = { 'campana-seleccion': '#DA291C', mcalvarez: '#B81F14', mcallister: '#FFC72C', mcfernandez: '#F4F4F4', institucional: '#5E6E88', reposo: '#22355A' };
+    const OTROS = ['#6CACE4', '#8FD18B', '#C79BF2', '#F28C6B', '#5CC8C2', '#E6B0C9'];
+    const min = (h) => { const [a, b] = h.split(':').map(Number); return a * 60 + b; }, hh = (n) => String(n).padStart(2, '0');
+    let P = null, piezas = [...ESPECIALES], sel = new Set(), arrastrando = false, loop = [];
+    const color = (id) => COLOR[id] || OTROS[[...id].reduce((a, c) => a + c.charCodeAt(0), 0) % OTROS.length];
+    const titulo = (id) => (piezas.find((p) => p.id === id) || { titulo: id }).titulo;
+    function horas() {   // horas de operación con sus minutos (la franja cruza la medianoche)
+      const d = min(P.operacion.desde), h = min(P.operacion.hasta), tot = ((h - d + 1440) % 1440) || 1440, out = [];
+      for (let m = d; m < d + tot; ) { const hora = Math.floor(m / 60) % 24, fin = Math.min((Math.floor(m / 60) + 1) * 60, d + tot); out.push({ h: hh(hora), min: fin - m }); m = fin; }
+      return { lista: out, total: tot };
+    }
+    function enNoche(h) { const a = min(P.noche.desde), b = min(P.noche.hasta), m = Number(h) * 60 + 30; return a <= b ? m >= a && m < b : m >= a || m < b; }
+    function porDefecto() {
+      const base = ['campana-seleccion', 'mcalvarez', 'mcallister', 'mcfernandez'].filter((id) => piezas.some((p) => p.id === id));
+      const l = base.length ? base : ['institucional'], semana = {};
+      P = { operacion: { desde: $('op-desde').value, hasta: $('op-hasta').value }, noche: { desde: $('no-desde').value, hasta: $('no-hasta').value }, semana };
+      for (const [d] of DIAS) { semana[d] = {}; for (const x of horas().lista) semana[d][x.h] = [...l]; }
+    }
+    function pintarGrilla() {
+      const { lista } = horas(), t = $('prog-grilla');
+      t.innerHTML = '<thead><tr><th></th>' + DIAS.map(([, n]) => `<th>${n}</th>`).join('') + '</tr></thead>';
+      const tb = document.createElement('tbody'), activas = new Set(lista.map((x) => x.h));
+      for (let k = 0; k < 24; k++) {
+        const h = hh((Number(P.operacion.desde.slice(0, 2)) + k) % 24), tr = document.createElement('tr'), x = lista.find((y) => y.h === h);
+        tr.innerHTML = `<th class="h${enNoche(h) ? ' noche' : ''}">${h}:00${x && x.min < 60 ? ` <small>(${x.min} min)</small>` : ''}</th>`;
+        for (const [d] of DIAS) {
+          const td = document.createElement('td'), clave = d + '|' + h;
+          if (!activas.has(h)) { td.className = 'cerrado'; td.title = 'Fuera del horario de operación'; tr.appendChild(td); continue; }
+          const l = (P.semana[d] || {})[h] || [];
+          td.innerHTML = `<div class="chips">${l.map((id) => `<span style="background:${color(id)}"></span>`).join('')}</div>`;
+          td.title = `${d} ${h}:00 · ${l.length ? l.map(titulo).join(' → ') : 'sin programar'}`;
+          td.dataset.k = clave; if (sel.has(clave)) td.classList.add('sel');
+          td.addEventListener('pointerdown', (e) => { e.preventDefault(); arrastrando = !sel.has(clave); alternar(clave, arrastrando); document.addEventListener('pointerup', () => { arrastrando = null; }, { once: true }); });
+          td.addEventListener('pointerover', (e) => { if (e.buttons === 1 && typeof arrastrando === 'boolean') alternar(clave, arrastrando); });
+          tr.appendChild(td);
+        }
+        tb.appendChild(tr);
+      }
+      t.appendChild(tb); pintarDia(); resumen();
+    }
+    function alternar(k, on) { if (on) sel.add(k); else sel.delete(k); const td = document.querySelector(`.prog-grilla td[data-k="${k}"]`); if (td) td.classList.toggle('sel', on); editor(); }
+    function editor() {
+      const n = sel.size;
+      $('prog-sel').textContent = n ? `${n} hora${n > 1 ? 's' : ''} elegida${n > 1 ? 's' : ''}. Armá la secuencia y aplicala.` : 'Elegí una o varias horas en la grilla (se puede arrastrar).';
+      if (n && !loop.length) { const [d, h] = [...sel][0].split('|'); loop = [...((P.semana[d] || {})[h] || [])]; }
+      pintarSlots();
+    }
+    function pintarSlots() {
+      const ol = $('prog-slots'); ol.innerHTML = '';
+      loop.forEach((id, i) => {
+        const li = document.createElement('li'), s2 = document.createElement('select');
+        s2.innerHTML = piezas.map((p) => `<option value="${p.id}">${p.titulo.replace(/</g, '&lt;')}</option>`).join(''); s2.value = id;
+        s2.addEventListener('change', () => { loop[i] = s2.value; });
+        const b = document.createElement('button'); b.type = 'button'; b.textContent = '✕'; b.title = 'Quitar del loop'; b.addEventListener('click', () => { loop.splice(i, 1); pintarSlots(); });
+        li.append(s2, b); ol.appendChild(li);
+      });
+      const seg = loop.length * SLOT; $('prog-estado').textContent = loop.length ? `Loop de ${seg} s · cada pieza sale ${Math.round(3600 / seg)} veces por hora por cada lugar en el loop` : '';
+    }
+    async function guardar() {
+      $('prog-estado').textContent = 'Guardando…';
+      try { const r = await fetch('/api/programa', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(P) }); const d = await r.json(); if (!r.ok) throw new Error(d.error); P = d; $('prog-estado').textContent = 'Guardado.'; }
+      catch (e) { $('prog-estado').textContent = 'No se pudo guardar: ' + e.message; }
+    }
+    function resumen() {
+      const { lista, total } = horas(), sem = {}, dia = {};
+      for (const [d] of DIAS) for (const x of lista) {
+        const l = (P.semana[d] || {})[x.h] || []; if (!l.length) continue;
+        const vueltas = (x.min * 60) / (l.length * SLOT);
+        for (const id of l) { sem[id] = (sem[id] || 0) + vueltas; if (d === 'lun') dia[id] = (dia[id] || 0) + vueltas; }
+      }
+      const ids = Object.keys(sem).sort((a, b) => sem[b] - sem[a]), segSem = total * 60 * 7;
+      $('prog-resumen').innerHTML = '<tr><th>Pieza</th><th>Salidas lunes</th><th>Salidas semana</th><th>Tiempo al aire</th></tr>' +
+        ids.map((id) => `<tr><td><i style="background:${color(id)}"></i>${titulo(id).replace(/</g, '&lt;')}</td><td>${Math.round(dia[id] || 0).toLocaleString('es-AR')}</td><td>${Math.round(sem[id]).toLocaleString('es-AR')}</td><td>${(sem[id] * SLOT / segSem * 100).toLocaleString('es-AR', { maximumFractionDigits: 1 })} %</td></tr>`).join('');
+      $('prog-total').textContent = `${(total / 60).toLocaleString('es-AR')} h por día · ${(total * 7 / 60).toLocaleString('es-AR')} h por semana`;
+    }
+    function pintarDia() {   // la barra de 24 h del capítulo de presentación
+      const c = $('dia-24'); if (!c) return;
+      const pct = (m) => (m / 1440) * 100, seg = (a, b, cls) => { a = min(a); b = min(b); const l = b > a ? [[a, b]] : [[a, 1440], [0, b]]; return l.map(([x, y]) => `<div class="seg ${cls}" style="left:${pct(x)}%;width:${pct(y - x)}%"></div>`).join(''); };
+      c.innerHTML = `<span class="nom">Pantallas · ${P.operacion.desde} a ${P.operacion.hasta} (${(horas().total / 60).toLocaleString('es-AR')} h)</span><div class="eje">${seg(P.operacion.desde, P.operacion.hasta, 'op')}</div>` +
+        `<span class="nom">Iluminación de fachada · ${P.noche.desde} a ${P.noche.hasta}</span><div class="eje">${seg(P.noche.desde, P.noche.hasta, 'ilum')}</div>` +
+        `<div class="reglas">${[0, 3, 6, 9, 12, 15, 18, 21, 24].map((h) => `<span class="marca-h" style="left:${pct(h * 60)}%">${hh(h % 24)}</span>`).join('')}</div>`;
+    }
+    function elegir(que) {
+      const { lista } = horas();
+      if (que === 'nada') sel.clear();
+      else { const dias = que === 'semana' ? DIAS.map(([d]) => d) : [...new Set([...sel].map((k) => k.split('|')[0]))]; if (!dias.length) dias.push('lun'); for (const d of dias) for (const x of lista) sel.add(d + '|' + x.h); }
+      loop = []; pintarGrilla(); editor();
+    }
+    document.querySelectorAll('[data-sel]').forEach((b) => b.addEventListener('click', () => elegir(b.dataset.sel)));
+    $('prog-mas').addEventListener('click', () => { if (loop.length < 12) { loop.push(piezas[0].id); pintarSlots(); } });
+    $('prog-aplicar').addEventListener('click', () => {
+      if (!sel.size) { $('prog-estado').textContent = 'Primero elegí horas en la grilla.'; return; }
+      for (const k of sel) { const [d, h] = k.split('|'); (P.semana[d] = P.semana[d] || {})[h] = [...loop]; }
+      pintarGrilla(); guardar();
+    });
+    for (const id of ['op-desde', 'op-hasta', 'no-desde', 'no-hasta']) $(id).addEventListener('change', () => {
+      P.operacion = { desde: $('op-desde').value, hasta: $('op-hasta').value }; P.noche = { desde: $('no-desde').value, hasta: $('no-hasta').value };
+      sel.clear(); loop = []; pintarGrilla(); editor(); guardar();
+    });
+    (async () => {
+      try { const l = await (await fetch('/api/piezas')).json(); piezas = [...l.filter((p) => !p.faltan).map((p) => ({ id: p.id, titulo: p.titulo })), ...ESPECIALES]; } catch (e) {}
+      try { P = await (await fetch('/api/programa')).json(); } catch (e) { P = null; }
+      if (P && P.operacion) { $('op-desde').value = P.operacion.desde; $('op-hasta').value = P.operacion.hasta; $('no-desde').value = P.noche.desde; $('no-hasta').value = P.noche.hasta; }
+      else porDefecto();
+      pintarGrilla(); editor();
+    })();
   })();
 
   cargarGaleria(); actualizarGasto(); cargarMaterial(); showMaterial();

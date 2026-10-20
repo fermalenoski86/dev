@@ -60,6 +60,13 @@ Las capturas antes/después (1440 px y 390 px) van en el ZIP aparte porque muest
 - **Codex P2 (index.html:539)**: la grilla de piezas oficiales se rehace después de cada subida o reemplazo (`piezasOficiales()`), con `?v=<bytes>` para no mostrar la versión vieja.
 - Se sumó `kit/73-mcd` (shows de McÁlvarez, McAllister y McFernández en «Piezas guardadas»).
 
+## Programación de 20,5 h (20/10/2026, pedido de Fer)
+- **Capítulo nuevo** «Una programación de 20,5 horas por día» (después del simulador) con la barra del día: pantallas en operación e iluminación de fachada.
+- **Herramienta nueva «Programación»**: grilla semanal (7 días × horas de operación). Se eligen horas (clic o arrastre, «Todo el día», «Toda la semana»), se arma la secuencia del loop con las piezas guardadas (más «Institucional del edificio» y «Pantallas en reposo») y se aplica. Calcula salidas por pieza (lunes y semana) y porcentaje del tiempo al aire. La hora parcial (02:00–02:30) cuenta 30 minutos.
+- **Guardado**: `GET/POST /api/programa` en el worker, en R2 (`programa/semana.json`), con validación de formato (horas HH:MM, días, hasta 12 piezas por loop, ids `[a-z0-9-]`, < 200 KB). Es un prototipo: no se envía al edificio.
+- Cálculo verificado: loop de 4 piezas × 15 s = 60 s → 60 salidas por hora → 1.230 por día en 20,5 h.
+- Valores iniciales a confirmar por Affinitas: operación 06:00–02:30, luces 19:30–06:30.
+
 ## Para decidir (Fer)
 - Fer había pedido no mostrar las imágenes sueltas; la orden pide mostrar las 6. Quedaron **chicas y debajo del show**, que es el protagonista. Si no las quiere, se saca el bloque `#piezas-of`.
 - Siguen en algunas simulaciones (`luminarias.webp`, captura del takeover) las letras «McDonald's» que dibuja el simulador en la banda. Ya estaban publicadas; si se prefiere, se cambian por capturas sin texto.

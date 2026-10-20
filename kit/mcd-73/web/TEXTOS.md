@@ -121,6 +121,18 @@ Agregados el 20/10/2026:
 - **P-103** (Biblioteca de efectos, debajo de los botones): la descripción de cada efecto sale del simulador (p. ej. «Destellos: luminarias sueltas destellan sobre una base suave.»)
 - **P-104** (Piezas guardadas, tarjetas de material): Show con material de la marca
 
+Agregados el 20/10/2026 (programación de 20,5 h):
+- **P-105** (inicio, dato): 20,5 h de operación diaria
+- **P-106** (h2): Una programación de 20,5 horas por día
+- **P-107** (p): Cada pieza dura 15 segundos, pero el edificio opera 20,5 horas por día. Por eso los contenidos se organizan en una grilla semanal: cada hora de cada día tiene su propia secuencia de piezas, que se repite en loop hasta la hora siguiente.
+- **P-108** (p): La grilla define qué se ve en cada franja, cuántas veces sale cada pieza por hora, por día y por semana, y en qué horario se enciende la iluminación de fachada. Así se puede planificar la presencia de cada campaña y verificar que se cumpla lo acordado.
+- **P-109** (barra del día): Pantallas · 06:00 a 02:30 (20,5 h) · Iluminación de fachada · 19:30 a 06:30 · Propuesta inicial: horario de operación y franja de iluminación editables en «Programación», más abajo.
+- **P-110** (h2 herramienta): Programación
+- **P-111** (p): Grilla semanal del edificio: qué secuencia de piezas sale en cada hora de cada día. Se eligen una o varias horas, se arma la secuencia y se aplica. Es un prototipo: la grilla todavía no se envía al edificio.
+- **P-112** (controles): Operación · Luces de fachada · Todo el día · Toda la semana · Ninguna · Sumar pieza al loop · Aplicar a las horas elegidas · Salidas por pieza (Pieza, Salidas lunes, Salidas semana, Tiempo al aire) · Institucional del edificio · Pantallas en reposo
+
+**A confirmar por Affinitas** (valores de la propuesta inicial, editables en la grilla): horario de operación 06:00 a 02:30 y franja de iluminación de fachada 19:30 a 06:30.
+
 ## Cómo devolver los cambios
 
 Para textos: una línea por código, `P-xx: texto nuevo`. Solo los que cambian.
