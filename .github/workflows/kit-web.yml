@@ -4,9 +4,10 @@
 # El resultado se informa como anotaciones del check (visibles por la API de checks).
 name: kit-web
 on:
+  workflow_dispatch:
   push:
     branches: [kit/73-mcd]
-    paths: [kit/mcd-73/web/**, kit/mcd-73/control/**, kit/mcd-73/material/material.json, .github/workflows/kit-web.yml]
+    paths: [kit/mcd-73/web/**, kit/mcd-73/control/**, kit/mcd-73/material/material.json, kit/mcd-73/material/privado/**, .github/workflows/kit-web.yml]
 permissions:
   contents: read
 concurrency:
@@ -56,6 +57,23 @@ jobs:
             printf '%s' "${!n}" | $W secret put "$n" >/tmp/s.log 2>&1 || { echo "::error title=secret $n::$(tail -c 400 /tmp/s.log | tr '\n' ' ')"; exit 1; }
           done
           echo "::notice title=secrets::CLAVE, ANTHROPIC_API_KEY y FAL_KEY cargados"
+      - name: Material de marca (carpeta oculta, cifrada → R2 privado)
+        working-directory: kit/mcd-73/web
+        env:
+          CLAVE: ${{ secrets.TRUST_CLAVE }}
+        run: |
+          pip install -q pynacl >/dev/null 2>&1
+          echo "::notice title=clave-material::$(python3 material_privado.py clave)"
+          python3 material_privado.py descifrar /tmp/mat > /tmp/mat.log 2>&1 || { echo "::error title=material::$(tail -c 400 /tmp/mat.log | tr '\n' ' ')"; exit 1; }
+          W="npx --yes wrangler@4.20.0"; n=0
+          for f in /tmp/mat/*; do
+            [ -f "$f" ] || continue
+            case "$f" in *.png) t=image/png;; *.webp) t=image/webp;; *.mp4) t=video/mp4;; *) t=image/jpeg;; esac
+            $W r2 object put "trust-piezas/material/$(basename "$f")" --file "$f" --content-type "$t" --remote >/tmp/put.log 2>&1 || { echo "::error title=r2 put::$(tail -c 400 /tmp/put.log | tr '\n' ' ')"; exit 1; }
+            n=$((n+1))
+          done
+          rm -rf /tmp/mat
+          echo "::notice title=material::$n archivos cargados en el portal"
       - name: Probar
         run: |
           for u in https://trust.affinitas.com.ar/login https://trust.affinitas.com.ar/; do
