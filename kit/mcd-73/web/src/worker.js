@@ -245,7 +245,11 @@ export default {
     if (ruta === '/login') return req.method === 'POST' ? login(req, env) : paginaLogin('');
     if (ruta === '/salir') { const k = await ipHash(req); MEMO_IP.delete(k); await env.PIEZAS.delete(`sincookies/${k}.json`); }   // también cierra el modo sin cookies de esta conexión
     if (ruta === '/salir') return new Response(null, { status: 303, headers: { location: '/login', 'set-cookie': 'trust_s=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0' } });
-    if (ruta === '/fondo.jpg') return env.ASSETS.fetch(new Request(new URL('/control/fotos/trust-noche-completa.jpg', url)));   // la foto del login es pública
+    if (ruta === '/fondo.jpg') {   // la imagen del login es pública: el edificio con las pantallas y la fachada dorada (sale de la carpeta oculta); si no está, la foto
+      const o = await env.PIEZAS.get('material/login-fondo.jpg');
+      if (o) return new Response(o.body, { headers: { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=3600' } });
+      return env.ASSETS.fetch(new Request(new URL('/control/fotos/trust-noche-completa.jpg', url)));
+    }
     if (ruta === '/' && url.searchParams.get('entrada') && (await sesionValida(req, env))) await env.PIEZAS.delete(`pendiente/${await ipHash(req)}.json`);   // ya hay sesión: no queda nada pendiente
     if (ruta === '/' && url.searchParams.get('entrada') && !(await sesionValida(req, env))) {   // la clave estaba bien pero no volvió la cookie
       if (await activarSinCookies(req, env)) return Response.redirect(new URL('/', url), 302);
@@ -314,5 +318,5 @@ button:focus-visible{outline:2px solid var(--piedra);outline-offset:3px}
 <form method="post" action="/login"><label for="clave">Clave</label>
 <div class="fila"><input id="clave" name="clave" type="password" autocomplete="current-password" required autofocus><button type="submit">Entrar</button></div><!--ERROR--></form>
 <p class="pie">Affinitas. Material de trabajo, no publicar.</p></main>
-<div class="foto" role="img" aria-label="El edificio EL TRUST de noche, frente al Obelisco"></div>
+<div class="foto" role="img" aria-label="Simulación: EL TRUST de noche, con las pantallas encendidas y la fachada en dorado"></div>
 </body></html>`;
