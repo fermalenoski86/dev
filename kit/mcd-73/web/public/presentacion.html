@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>EL TRUST · Presentación</title>
+<style>
+/* Modo presentación: pensado para la tele y el control remoto. El show ocupa la pantalla; abajo, los shows en botones grandes. */
+:root { --noche: #0A1830; --noche-2: #10213F; --linea: #22355A; --piedra: #E9DFCC; --niebla: #93A0B5; --sodio: #F2A63B; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #050b18; color: var(--piedra); font-family: Archivo, system-ui, sans-serif; overflow: hidden; }
+.pres { display: flex; flex-direction: column; height: 100%; }
+.cab { display: flex; align-items: center; justify-content: space-between; padding: 14px 32px; background: var(--noche); border-bottom: 1px solid var(--linea); }
+.marca { font-weight: 800; font-size: 26px; letter-spacing: .01em; }
+.marca span { font-weight: 500; font-size: 14px; letter-spacing: .16em; text-transform: uppercase; color: var(--sodio); margin-left: 10px; }
+.cab a { color: var(--niebla); font-size: 18px; text-decoration: none; padding: 8px 12px; border-radius: 6px; }
+.cab a:focus, .cab a:hover { color: var(--piedra); outline: 3px solid var(--sodio); }
+.escena { position: relative; flex: 1 1 auto; min-height: 0; }
+.escena iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; display: block; background: #050b18; }
+.rotulo { position: absolute; left: 24px; bottom: 18px; font-size: 15px; padding: 6px 12px; border-radius: 6px; background: rgba(36,23,12,.85); color: #ffd9a8; letter-spacing: .06em; }
+.titulo-show { position: absolute; left: 24px; top: 18px; font-size: 26px; font-weight: 700; padding: 8px 16px; border-radius: 8px; background: rgba(5,11,24,.72); }
+.barra { padding: 14px 32px 18px; background: var(--noche); border-top: 1px solid var(--linea); }
+.lista { display: flex; overflow-x: auto; padding: 4px 2px 6px; }
+.lista button { flex: 0 0 auto; margin-right: 14px; min-width: 220px; padding: 16px 22px; border-radius: 10px; border: 2px solid var(--linea); background: var(--noche-2); color: var(--piedra); font: inherit; font-size: 20px; font-weight: 600; text-align: left; cursor: pointer; }
+.lista button small { display: block; font-size: 14px; font-weight: 400; color: var(--niebla); margin-top: 4px; }
+.lista button[aria-pressed="true"] { border-color: var(--sodio); background: #2a2010; }
+.lista button:focus { outline: 4px solid var(--sodio); outline-offset: 2px; }
+.mandos { display: flex; align-items: center; margin-top: 10px; font-size: 16px; color: var(--niebla); }
+.mandos button { margin-right: 12px; padding: 10px 18px; border-radius: 8px; border: 2px solid var(--linea); background: none; color: var(--piedra); font: inherit; font-size: 17px; cursor: pointer; }
+.mandos button:focus { outline: 4px solid var(--sodio); }
+.mandos .ayuda { margin-left: auto; }
+</style>
+</head>
+<body>
+<div class="pres">
+  <header class="cab"><div class="marca">EL TRUST<span>by Affinitas</span></div><a href="/">Volver al portal</a></header>
+  <div class="escena" id="escena"><iframe id="cuadro" title="El show en el edificio"></iframe><div class="titulo-show" id="titulo-show"></div><div class="rotulo">SIMULACIÓN CONCEPTUAL · NO CONECTADA A EQUIPOS REALES</div></div>
+  <div class="barra">
+    <div class="lista" id="lista" role="group" aria-label="Shows"></div>
+    <div class="mandos"><button type="button" id="auto" aria-pressed="true">Recorrido automático: sí</button><span class="ayuda">Con el control: ◀ ▶ para elegir, OK para ver</span></div>
+  </div>
+</div>
+<script>
+(function () {
+  var SHOWS = [{ id: '', titulo: 'Takeover McDonald\'s', sub: 'Show base · 15 s' }];
+  var actual = 0, auto = true, reloj = null, DUR = 16000;
+  var $ = function (id) { return document.getElementById(id); };
+  function pintar() {
+    var l = $('lista'); l.innerHTML = '';
+    SHOWS.forEach(function (s, i) {
+      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-pressed', String(i === actual));
+      b.appendChild(document.createTextNode(s.titulo)); var sm = document.createElement('small'); sm.textContent = s.sub; b.appendChild(sm);
+      b.addEventListener('click', function () { ver(i, true); });
+      l.appendChild(b);
+    });
+  }
+  function ver(i, aMano) {
+    actual = (i + SHOWS.length) % SHOWS.length; var s = SHOWS[actual];
+    $('cuadro').src = '/control/?vitrina=1' + (s.id ? '&pieza=' + encodeURIComponent(s.id) : '');
+    $('titulo-show').textContent = s.titulo;
+    var bs = $('lista').querySelectorAll('button'); for (var k = 0; k < bs.length; k++) bs[k].setAttribute('aria-pressed', String(k === actual));
+    if (bs[actual] && aMano) bs[actual].focus();
+    programar();
+  }
+  function programar() { clearTimeout(reloj); if (auto) reloj = setTimeout(function () { ver(actual + 1, false); }, DUR); }
+  $('auto').addEventListener('click', function () { auto = !auto; this.setAttribute('aria-pressed', String(auto)); this.textContent = 'Recorrido automático: ' + (auto ? 'sí' : 'no'); programar(); });
+  document.addEventListener('keydown', function (e) {   // control remoto de la tele: flechas y OK
+    var bs = $('lista').querySelectorAll('button'), i = Array.prototype.indexOf.call(bs, document.activeElement);
+    if (e.key === 'ArrowRight' || e.keyCode === 39) { e.preventDefault(); (bs[(i < 0 ? actual : i) + 1] || bs[0]).focus(); }
+    else if (e.key === 'ArrowLeft' || e.keyCode === 37) { e.preventDefault(); (bs[(i < 0 ? actual : i) - 1] || bs[bs.length - 1]).focus(); }
+  });
+  var x = new XMLHttpRequest(); x.open('GET', '/api/piezas');
+  x.onload = function () {
+    try { JSON.parse(x.responseText).forEach(function (p) { if (!p.faltan) SHOWS.push({ id: p.id, titulo: p.titulo.replace(/ · propuesta$/, ''), sub: p.material ? 'Con material de la marca' : 'Pieza creada para las pantallas' }); }); } catch (e) {}
+    pintar(); ver(SHOWS.length > 1 ? 1 : 0, true);
+  };
+  x.onerror = function () { pintar(); ver(0, true); };
+  x.send();
+})();
+</script>
+</body>
+</html>

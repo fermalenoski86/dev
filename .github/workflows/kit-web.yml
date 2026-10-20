@@ -36,6 +36,11 @@ jobs:
           cp $C/fotos/trust-noche-completa.jpg $C/fotos/trust-relieve-completa.jpg $C/fotos/trust-cielo-completa.png \
              $C/fotos/trust-noche.jpg $C/fotos/trust-relieve.jpg $C/fotos/trust-cielo.png $W/public/control/fotos/
           du -sh $W/public
+      - name: Compatibilidad con navegadores viejos (tele)
+        working-directory: kit/mcd-73/web
+        run: |
+          npm i --no-save --silent esbuild@0.23.1 >/dev/null 2>&1
+          node compat.mjs public
       - name: Publicar
         working-directory: kit/mcd-73/web
         run: |
