@@ -659,7 +659,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     try {
       const lista = await (await fetch('/api/material')).json(), l = new Set(lista.map((m) => m.nombre));
       await piezasOficiales(lista);
-      if (['mcalvarez-afiche.jpg', 'trio-productos.jpg', 'jugadores-mostrador.jpg'].every((n) => l.has(n))) { pieza = 'campana-seleccion'; texto = 'Campaña de McDonald's y la Selección Argentina: visualización de prueba sobre el edificio · Simulación'; }
+      if (['mcalvarez-afiche.jpg', 'trio-productos.jpg', 'jugadores-mostrador.jpg'].every((n) => l.has(n))) { pieza = 'campana-seleccion'; texto = 'Campaña de McDonald\'s y la Selección Argentina: visualización de prueba sobre el edificio · Simulación'; }
 
     } catch (e) {}
     pie.textContent = texto;
