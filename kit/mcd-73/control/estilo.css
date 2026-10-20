@@ -358,3 +358,42 @@ body.vitrina .app { grid-template-rows: minmax(0, 1fr); }
 body.vitrina main { grid-template-columns: minmax(0, 1fr); padding: 0; }
 body.vitrina .escenario { border: 0; border-radius: 0; box-shadow: none; }
 body.vitrina .guion, body.vitrina .chip-modo, body.vitrina .diag, body.vitrina .antes-despues { display: none !important; }
+
+/* by Affinitas */
+.portada .by { margin-top: -14px; font-size: 14px; letter-spacing: .28em; text-transform: uppercase; color: var(--texto-3); }
+.marca h1 .by-h { font-style: normal; font-size: 12px; font-weight: 500; color: var(--texto-3); letter-spacing: .08em; margin-left: 6px; }
+
+/* ---------- celular: una columna, el edificio arriba y los controles debajo, con scroll ---------- */
+@media (max-width: 760px) {
+  body { overflow: auto; overflow-x: hidden; }
+  .app { height: auto; min-height: 100vh; grid-template-rows: auto auto auto auto; }
+  header { flex-wrap: wrap; gap: 8px 12px; padding: 10px 14px; }
+  header .sep, header .dato, .marca small, .estado small, .espacio { display: none; }
+  .marca h1 { font-size: 18px; }
+  .estado { padding: 6px 10px; } .btn-guion { padding: 7px 10px; font-size: 13px; }
+  .rotulo { font-size: 10px; letter-spacing: .08em; padding: 6px 10px; text-align: center; } .rotulo em { display: none; }
+  main { grid-template-columns: minmax(0, 1fr); padding: 10px 10px 0; gap: 10px; }
+  .escenario { height: min(120vw, 72vh); }
+  aside { overflow: visible; padding-bottom: 0; }
+  footer { grid-template-columns: minmax(0, 1fr); padding: 10px; }
+  .timeline { overflow-x: auto; }
+  .pistas { grid-template-columns: 92px minmax(0, 1fr); font-size: 12px; }
+  .mandos { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .escenas, footer .escenas, .escenas-tec { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fila { grid-template-columns: 96px minmax(0, 1fr) 44px; gap: 8px; }
+  .equipos { grid-template-columns: repeat(6, 1fr); }
+  .muestras { grid-template-columns: repeat(5, 1fr); }
+  body.cliente .cliente-bar { grid-template-columns: minmax(0, 1fr); padding: 10px; }
+  .portada { padding: 24px; gap: 14px; text-align: center; }
+  .portada .logo { font-size: 44px; } .portada .by { margin-top: -8px; font-size: 12px; }
+  .portada .cliente { font-size: 26px; } .portada p { font-size: 15px; max-width: 34ch; }
+  .portada .rot { font-size: 10px; letter-spacing: .08em; }
+  .vista-toggle button, .encuadre-toggle button { padding: 6px 9px; font-size: 12px; }
+  .chip-modo, .etiqueta { display: none !important; }
+  .encuadre-toggle { max-width: 46%; } .encuadre-toggle button, .vista-toggle button, .guion .b { white-space: nowrap; } .encuadre-toggle button { font-size: 11px; padding: 6px 7px; }
+  .guion { left: 8px; right: 8px; top: auto; bottom: 8px; font-size: 12px; gap: 6px; padding: 6px 6px 6px 10px; }
+  .guion .b { padding: 5px 8px; }
+  .aviso { left: 8px; right: 8px; bottom: 8px; max-width: none; font-size: 11px; padding: 6px 9px; }
+  .guion.on ~ .aviso { bottom: 64px; }
+  .tl-cab { flex-wrap: wrap; gap: 4px 10px; } .tl-cab .esp, .tl-cab .bloque:last-child { display: none; }
+}
