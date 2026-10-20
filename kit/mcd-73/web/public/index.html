@@ -148,6 +148,20 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
   .capitulo:nth-child(even) > :first-child { order: 0; }
   .accesos a:not(.salir) { display: none; }
 }
+
+/* Navegadores viejos (TV): sin clamp() ni aspect-ratio. Valores fijos equivalentes, para que nada quede cortado. */
+@supports not (font-size: clamp(1px, 1vw, 2px)) {
+  .barra { padding: 18px 48px; } .heroe-texto { padding: 0 48px 56px; } h1 { font-size: 150px; } .bajada { font-size: 20px; }
+  .datos li + li, .accesos > * + * { margin-left: 28px; }
+  .relato { padding: 48px 48px 24px; } .capitulo { grid-gap: 48px; padding: 48px 0; } .tarea { grid-gap: 48px; }
+  .texto-cap h2, .ancho .cabeza h2 { font-size: 42px; } .texto-cap p, .ancho .cabeza p { font-size: 18px; }
+  .separador, h2 { font-size: 34px; } .grupo { font-size: 56px; padding-top: 56px; } .ancho { padding: 48px 0; } .ancho .cabeza { grid-gap: 48px; }
+  main { padding: 0 48px 64px; } footer { padding: 24px 48px 40px; }
+}
+@supports not (aspect-ratio: 1 / 1) {
+  .show-vivo { height: 0; padding-top: 80%; } .show-vivo.grande { padding-top: 56.25%; max-height: none; }
+  .pieza .mini { height: 0; padding-top: 40%; }
+}
 </style>
 </head>
 <body>
