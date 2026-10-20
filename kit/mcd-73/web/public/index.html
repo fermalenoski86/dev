@@ -345,7 +345,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     <div><h2 id="t-material">Material de marca</h2><p>Fotos, logos y piezas oficiales del cliente. Queda guardado acá, sin publicar, y se usa para armar los shows: nada se inventa.</p></div>
     <div>
       <p id="resumen-material" class="nota-cap">Revisando el material…</p>
-      <p><a class="boton" href="/control/?pieza=campana-seleccion">Ver el show de la campaña</a></p>
+      <p id="acciones-material"><label class="boton" for="subir" id="subir-grande" hidden>Subir las imágenes de la campaña</label> <a class="boton" href="/control/?pieza=campana-seleccion" id="ver-campana">Ver el show de la campaña</a></p>
       <details class="material-det">
         <summary>Cargar o reemplazar archivos</summary>
         <ul class="lugares" id="lugares" aria-label="Material que usa la campaña de la Selección"></ul>
@@ -469,7 +469,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
         const li = document.createElement('li'), ok = hay.get(a.archivo), id = 'slot-' + clave;
         li.innerHTML = `${ok ? `<img src="${ok.url}" alt="">` : '<div class="sin"></div>'}<div><strong></strong><span>${ok ? 'Cargado' : 'Falta'}</span></div><label for="${id}">${ok ? 'Reemplazar' : 'Subir'}</label><input type="file" id="${id}" accept="image/jpeg" hidden>`;
         li.querySelector('strong').textContent = a.que.charAt(0).toUpperCase() + a.que.slice(1);
-        li.querySelector('input').addEventListener('change', async (e) => { const f = e.target.files[0]; if (f) { await subir(f, a.archivo.replace(/\.jpg$/, '')); cargarMaterial(); } });
+        li.querySelector('input').addEventListener('change', async (e) => { const f = e.target.files[0]; if (f) { await subir(f, a.archivo.replace(/\.jpg$/, '')); cargarMaterial(); cargarGaleria(); } });
         if (!ok && libres.length) {   // ya subido con otro nombre: se elige tocando la imagen
           const el = document.createElement('div'); el.className = 'elegir-subido';
           el.innerHTML = '<span>O elegí uno ya subido:</span>';
@@ -488,13 +488,15 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
         }
         ul.appendChild(li);
       }
+      const nCarg = Object.values(CFG.archivos).filter((x) => hay.has(x.archivo)).length;   // sin material: el botón de subir va adelante, a la vista
+      $('subir-grande').hidden = nCarg > 0; $('ver-campana').className = nCarg > 0 ? 'boton' : 'boton sec';
       const det = document.querySelector('.material-det'); if (det && libres.length && Object.values(CFG.archivos).some((x) => !hay.has(x.archivo))) det.open = true;   // hay subidos sin asignar: se muestra para elegirlos
       const usados = new Set(Object.values(CFG.archivos).map((a) => a.archivo)), total = Object.keys(CFG.archivos).length;
       const cargados = Object.values(CFG.archivos).filter((a) => hay.has(a.archivo)).length, otros = subidos.filter((x) => !usados.has(x.nombre)).length;
-      $('resumen-material').textContent = (cargados === total ? `Las ${total} piezas de la campaña están cargadas y se ven animadas en el edificio.` : `Hay ${cargados} de ${total} piezas de la campaña cargadas. Las que faltan se suben abajo.`) + (otros ? ` Además hay ${otros} archivo${otros > 1 ? 's' : ''} más guardado${otros > 1 ? 's' : ''} para próximos shows.` : '');
+      $('resumen-material').textContent = (cargados === total ? `Las ${total} piezas de la campaña están cargadas y se ven animadas en el edificio.` : cargados === 0 ? 'Todavía no hay imágenes de la campaña en el portal. Subilas con el botón amarillo: se pueden elegir las 6 juntas.' : `Hay ${cargados} de ${total} piezas de la campaña cargadas. Las que faltan se suben abajo.`) + (otros ? ` Además hay ${otros} archivo${otros > 1 ? 's' : ''} más guardado${otros > 1 ? 's' : ''} para próximos shows.` : '');
     } catch (e) { $('estado-material').textContent = 'No se pudo cargar el material. Recargá la página.'; }
   }
-  $('subir').addEventListener('change', async (e) => { for (const f of e.target.files) await subir(f); e.target.value = ''; cargarMaterial(); });
+  $('subir').addEventListener('change', async (e) => { for (const f of e.target.files) await subir(f); e.target.value = ''; cargarMaterial(); cargarGaleria(); });
 
   async function showMaterial() {   // el material subido se ve como un show más, en el edificio, no como fotos sueltas
     const caja = $('show-material'), pie = $('pie-material');
