@@ -142,7 +142,14 @@ async function api(req, env, ruta) {
     await env.PIEZAS.put(`piezas/${id}/meta.json`, JSON.stringify(meta));
     return json(meta);
   }
-  if (ruta === '/api/piezas') return json(await listarPiezas(env));
+  if (ruta === '/api/piezas') {   // las creadas con IA + los shows de material de marca ya cargado (McÁlvarez, McAllister, McFernández…)
+    const mat = (await piezasMaterial(env, req.url)).map((p) => {
+      const mi = p.miniatura && p.fuentes[p.miniatura.fuente] ? { url: p.fuentes[p.miniatura.fuente], rect: p.miniatura.rect } : null;
+      const pr = (p.pistas.corrientes || [])[0], foto = pr && p.fuentes[pr.fuente];
+      return { id: p.id, titulo: p.titulo, concepto: p.concepto, creada: p.creada || '2026-10-19T12:00:00-03:00', material: true, miniatura: mi, pantallas: { pellegrini: foto, corrientes: foto } };
+    });
+    return json([...mat, ...(await listarPiezas(env))]);
+  }
   if (ruta === '/api/material' && req.method === 'GET') {   // lo subido + los lugares que pide material.json
     const l = await env.PIEZAS.list({ prefix: 'material/', limit: 500 });
     return json(l.objects.map((o) => ({ nombre: o.key.slice(9), bytes: o.size, url: '/' + o.key })));
