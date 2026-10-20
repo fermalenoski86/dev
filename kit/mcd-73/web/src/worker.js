@@ -302,12 +302,13 @@ input:focus{outline:2px solid var(--sodio);outline-offset:2px;border-color:trans
 button{font:inherit;font-weight:700;font-size:16px;padding:12px 20px;border:0;border-radius:6px;background:var(--sodio);color:#1D1205;cursor:pointer}
 button:focus-visible{outline:2px solid var(--piedra);outline-offset:3px}
 .error{margin:0;color:#FFB4A2;font-size:14px}
+.by{margin:-12px 0 0;font-size:15px;letter-spacing:.3em;text-transform:uppercase;color:var(--sodio)}
 .foto{background:url(/fondo.jpg) center 30%/cover no-repeat;position:relative}
 .foto::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--noche) 0%,rgba(10,24,48,.35) 28%,rgba(10,24,48,0) 60%)}
 .pie{position:absolute;left:clamp(28px,6vw,88px);bottom:22px;font-size:12px;color:#5E6E88}
 @media (max-width:760px){body{grid-template-columns:1fr;grid-template-rows:42vh auto}.foto{grid-row:1}.foto::after{background:linear-gradient(0deg,var(--noche),rgba(10,24,48,0) 55%)}.texto{grid-row:2;padding-top:0}.pie{position:static;margin-top:8px}}
 </style></head><body>
-<main class="texto"><h1>EL<br>TRUST</h1>
+<main class="texto"><h1>EL<br>TRUST</h1><p class="by">by Affinitas</p>
 <p class="lugar">Corrientes y Carlos Pellegrini, frente al Obelisco.</p>
 <form method="post" action="/login"><label for="clave">Clave</label>
 <div class="fila"><input id="clave" name="clave" type="password" autocomplete="current-password" required autofocus><button type="submit">Entrar</button></div><!--ERROR--></form>

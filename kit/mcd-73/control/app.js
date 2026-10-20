@@ -140,7 +140,7 @@
   const fondoAmb = $('fondo-amb'), fctx = fondoAmb ? fondoAmb.getContext('2d') : null;
   let fondoT = 0, fondoTO = null;
   function actualizarFondo() {   // eco de la escena a los costados del lienzo (no deja franjas negras)
-    if (!fctx) return;
+    if (!fctx || !lienzo.width || !lienzo.height) return;   // al arrancar en el celular el lienzo puede medir 0 un instante
     const e = $('escenario'), w = 96, h = Math.max(24, Math.round(96 * e.clientHeight / Math.max(1, e.clientWidth)));
     if (fondoAmb.width !== w || fondoAmb.height !== h) { fondoAmb.width = w; fondoAmb.height = h; }
     const r = lienzo.width / lienzo.height, rc = w / h;   // «cubrir»: la escena entera estirada al área, centrada

@@ -18,6 +18,7 @@ a { color: inherit; }
 :focus-visible { outline: 2px solid var(--sodio); outline-offset: 3px; }
 .barra { display: flex; justify-content: space-between; align-items: center; padding: 18px clamp(16px, 4vw, 56px); }
 .marca { font-weight: 850; font-stretch: 62%; font-size: 26px; letter-spacing: .01em; text-decoration: none; }
+.marca .by { font-weight: 500; font-stretch: 100%; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--sodio); margin-left: 6px; }
 .salir { color: var(--niebla); font-size: 15px; }
 
 /* Héroe: el edificio de noche con sus 46 luminarias, que se encienden una vez de abajo hacia arriba */
@@ -223,7 +224,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
 </style>
 </head>
 <body>
-<header class="barra"><a class="marca" href="/">EL TRUST</a>
+<header class="barra"><a class="marca" href="/">EL TRUST <span class="by">by Affinitas</span></a>
   <nav class="accesos" aria-label="Accesos"><a href="/control/">Simulador</a><a href="#t-ia">Crear una pieza</a><a class="salir" href="/salir">Salir</a></nav></header>
 
 <section class="heroe">
