@@ -339,7 +339,7 @@ button:focus-visible{outline:2px solid var(--piedra);outline-offset:3px}
 @media (max-width:760px){body{grid-template-columns:1fr;grid-template-rows:42vh auto}.foto{grid-row:1}.foto::after{background:linear-gradient(0deg,var(--noche),rgba(10,24,48,0) 55%)}.texto{grid-row:2;padding-top:0}.pie{position:static;margin-top:8px}}
 </style></head><body>
 <main class="texto"><h1>EL<br>TRUST</h1><p class="by">by Affinitas</p>
-<p class="lugar">Corrientes y Carlos Pellegrini, frente al Obelisco.</p>
+<p class="lugar">Av. Corrientes y Carlos Pellegrini.<br>Una esquina, millones de miradas.</p>
 <form method="post" action="/login"><label for="clave">Clave</label>
 <div class="fila"><input id="clave" name="clave" type="password" autocomplete="current-password" required autofocus><button type="submit">Entrar</button></div><!--ERROR--></form>
 <p class="pie">Affinitas. Material de trabajo, no publicar.</p></main>

@@ -91,7 +91,7 @@ Fuente: `kit/mcd-73/web/public/index.html` y la pantalla de entrada en `src/work
 - **P-79** (p): Los shows creados y los armados con material de la marca. Cada uno se abre directamente en el edificio.
 - **P-80** (p): Cargando…
 - **P-81** (entrada, h1): EL TRUST
-- **P-82** (entrada, p): Corrientes y Carlos Pellegrini, frente al Obelisco.
+- **P-82** (entrada, p): Av. Corrientes y Carlos Pellegrini. Una esquina, millones de miradas.
 - **P-83** (entrada, label): Clave
 - **P-84** (entrada, button): Entrar
 - **P-85** (entrada, p): Affinitas. Material de trabajo, no publicar.
