@@ -143,12 +143,12 @@ async function api(req, env, ruta) {
     return json(meta);
   }
   if (ruta === '/api/piezas') {   // las creadas con IA + los shows de material de marca ya cargado (McÁlvarez, McAllister, McFernández…)
-    const mat = (await piezasMaterial(env, req.url)).map((p) => {
+    const faltan = [], mat = (await piezasMaterial(env, req.url, faltan)).map((p) => {
       const mi = p.miniatura && p.fuentes[p.miniatura.fuente] ? { url: p.fuentes[p.miniatura.fuente], rect: p.miniatura.rect } : null;
       const pr = (p.pistas.corrientes || [])[0], foto = pr && p.fuentes[pr.fuente];
       return { id: p.id, titulo: p.titulo, concepto: p.concepto, creada: p.creada || '2026-10-19T12:00:00-03:00', material: true, miniatura: mi, pantallas: { pellegrini: foto, corrientes: foto } };
     });
-    return json([...mat, ...(await listarPiezas(env))]);
+    return json([...mat, ...faltan, ...(await listarPiezas(env))]);
   }
   if (ruta === '/api/material' && req.method === 'GET') {   // lo subido + los lugares que pide material.json
     const l = await env.PIEZAS.list({ prefix: 'material/', limit: 500 });
@@ -169,7 +169,7 @@ async function subirMaterial(req, env) {
 }
 async function borrarMaterial(env, nombre) { await env.PIEZAS.delete('material/' + nombre.replace(/[^a-z0-9.-]/g, '')); return json({ ok: true }); }
 // Piezas de material animado (material.json del kit) con las fuentes que ya estén subidas
-async function piezasMaterial(env, origen) {
+async function piezasMaterial(env, origen, incompletas) {
   let cfg; try { cfg = await (await env.ASSETS.fetch(new Request(new URL('/control/material.json', origen)))).json(); } catch { return []; }
   const subidos = new Set((await env.PIEZAS.list({ prefix: 'material/', limit: 500 })).objects.map((o) => o.key.slice(9)));
   const out = [];
@@ -177,6 +177,7 @@ async function piezasMaterial(env, origen) {
     const usadas = new Set(Object.values(p.pistas).flat().map((x) => x.fuente)), fuentes = {};
     for (const k of usadas) { const arch = cfg.archivos[k] && cfg.archivos[k].archivo; if (arch && subidos.has(arch)) fuentes[k] = '/material/' + arch; }
     if (Object.keys(fuentes).length === usadas.size) out.push({ ...p, fuentes, material: true });
+    else if (incompletas) incompletas.push({ id: p.id, titulo: p.titulo, material: true, creada: p.creada, faltan: [...usadas].filter((k) => !fuentes[k]).map((k) => (cfg.archivos[k] || {}).que || k) });
   }
   return out;
 }
