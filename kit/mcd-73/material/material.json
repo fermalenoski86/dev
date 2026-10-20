@@ -12,7 +12,16 @@
   "fuentes": [
    "https://www.losandes.com.ar/empresas-y-negocios/mcdonalds-presenta-tres-nuevas-hamburguesas-junto-figuras-la-seleccion-argentina-vivir-el-mundial-2026-n5988468",
    "https://www.iprofesional.com/recreo/465529-mcdonalds-revive-tres-hamburguesas-que-habian-sido-edicion-limitada-cuales-son.amp"
-  ]
+  ],
+  "aniversario": {
+   "verificado": [
+    "McDonald's abrió su primer local en Argentina en 1986, en Belgrano; en 2026 cumple 40 años y Arcos Dorados lo celebra en ese restaurante con la recreación de la primera mesa y un museo (Mercado, 1/9/2026)."
+   ],
+   "fuentes": [
+    "https://mercado.com.ar/marketing/mcdonalds-celebra-40-anos-en-argentina-con-un-espacio-que-invita-a-reencontrarse-con-su-historia"
+   ],
+   "nota": "Sin logo ni sello oficial de los 40 años: los textos los dibuja el simulador (no la IA) y la pieza es una propuesta conceptual. Con el material oficial del aniversario se reemplaza."
+  }
  },
  "archivos": {
   "afiche": {
@@ -68,6 +77,15 @@
     554
    ],
    "nombre": "Cuarto de Libra"
+  },
+  "combo": {
+   "archivo": "combo-cuarto-de-libra.jpg",
+   "que": "combo Cuarto de Libra con papas y Coca-Cola Zero (baja resolución)",
+   "px": [
+    320,
+    256
+   ],
+   "nombre": "Combo Cuarto de Libra"
   }
  },
  "piezas": [
@@ -965,6 +983,378 @@
      0.2,
      1,
      0.533
+    ]
+   }
+  },
+  {
+   "id": "aniversario-40",
+   "titulo": "40 años en Argentina · propuesta",
+   "creada": "2026-10-20T18:30:00-03:00",
+   "concepto": "Propuesta conceptual para el aniversario: «40 años» y «1986 · 2026» en las tres pantallas, el Cuarto de Libra como clásico y las hamburguesas de la Selección como el hoy, con la fachada en rojo, dorado y blanco. Textos del simulador; sin logo oficial del aniversario.",
+   "ficha": {
+    "efecto": "tramos",
+    "paleta": [
+     "#DA291C",
+     "#FFC72C",
+     "#FFFFFF"
+    ],
+    "velocidad": 1,
+    "titular": ""
+   },
+   "miniatura": {
+    "fuente": "cuarto",
+    "rect": [
+     0.07,
+     0.38,
+     0.85,
+     0.34
+    ]
+   },
+   "pistas": {
+    "corrientes": [
+     {
+      "desde": 2.2,
+      "hasta": 5.3,
+      "modo": "paleta",
+      "paleta": [
+       "#DA291C",
+       "#FFC72C"
+      ],
+      "titular": "40 AÑOS"
+     },
+     {
+      "desde": 5.0,
+      "hasta": 7.6,
+      "modo": "contener",
+      "fuente": "cuarto",
+      "rect": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "escala": 0.98,
+      "fondo": "#DA291C",
+      "entra": "izq",
+      "kb": {
+       "z": [
+        0.98,
+        1.04
+       ]
+      }
+     },
+     {
+      "desde": 7.3,
+      "hasta": 10.4,
+      "modo": "contener",
+      "fuente": "afiche",
+      "rect": [
+       0,
+       0.02,
+       1,
+       0.31
+      ],
+      "escala": 0.98,
+      "fondo": "#DA291C",
+      "entra": "izq",
+      "kb": {
+       "z": [
+        0.96,
+        1.02
+       ]
+      }
+     },
+     {
+      "desde": 10.1,
+      "hasta": 12.9,
+      "modo": "paleta",
+      "paleta": [
+       "#DA291C",
+       "#FFC72C"
+      ],
+      "titular": "40 AÑOS"
+     }
+    ],
+    "pellegrini": [
+     {
+      "desde": 2.6,
+      "hasta": 5.3,
+      "modo": "paleta",
+      "paleta": [
+       "#DA291C",
+       "#FFC72C"
+      ],
+      "titular": "EN ARGENTINA"
+     },
+     {
+      "desde": 5.0,
+      "hasta": 7.6,
+      "modo": "contener",
+      "fuente": "combo",
+      "rect": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "escala": 0.96,
+      "fondo": "#FFFFFF",
+      "entra": "der",
+      "kb": {
+       "z": [
+        0.96,
+        1.04
+       ]
+      }
+     },
+     {
+      "desde": 7.3,
+      "hasta": 10.4,
+      "modo": "cubrir",
+      "fuente": "mostrador",
+      "rect": [
+       0,
+       0.08,
+       1,
+       0.37
+      ],
+      "kb": {
+       "z": [
+        1.45,
+        1.45
+       ],
+       "f": [
+        [
+         0,
+         0.45
+        ],
+        [
+         1,
+         0.45
+        ]
+       ]
+      }
+     },
+     {
+      "desde": 10.1,
+      "hasta": 12.9,
+      "modo": "paleta",
+      "paleta": [
+       "#DA291C",
+       "#FFC72C"
+      ],
+      "titular": "1986 · 2026"
+     }
+    ],
+    "media": [
+     {
+      "desde": 2.2,
+      "hasta": 5.3,
+      "modo": "paleta",
+      "paleta": [
+       "#DA291C",
+       "#FFC72C"
+      ],
+      "titular": "1986 · 2026"
+     },
+     {
+      "desde": 5.0,
+      "hasta": 7.6,
+      "modo": "contener",
+      "fuente": "cuarto",
+      "rect": [
+       0.1,
+       0.76,
+       0.52,
+       0.17
+      ],
+      "escala": 0.9,
+      "fondo": "#DA291C",
+      "caja": [
+       0,
+       0.36
+      ],
+      "entra": "izq"
+     },
+     {
+      "desde": 5.0,
+      "hasta": 7.6,
+      "modo": "contener",
+      "fuente": "cuarto",
+      "rect": [
+       0.07,
+       0.36,
+       0.88,
+       0.38
+      ],
+      "escala": 0.96,
+      "fondo": "#DA291C",
+      "caja": [
+       0.36,
+       0.4
+      ],
+      "kb": {
+       "z": [
+        0.96,
+        1.04
+       ]
+      }
+     },
+     {
+      "desde": 5.0,
+      "hasta": 7.6,
+      "modo": "contener",
+      "fuente": "combo",
+      "rect": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "escala": 0.94,
+      "fondo": "#FFFFFF",
+      "caja": [
+       0.76,
+       0.24
+      ],
+      "entra": "der"
+     },
+     {
+      "desde": 7.3,
+      "hasta": 10.4,
+      "modo": "contener",
+      "fuente": "trio",
+      "rect": [
+       0,
+       0.36,
+       0.27,
+       0.15
+      ],
+      "escala": 0.92,
+      "fondo": "#DA291C",
+      "caja": [
+       0.0,
+       0.16666666666666666
+      ]
+     },
+     {
+      "desde": 7.3,
+      "hasta": 10.4,
+      "modo": "contener",
+      "fuente": "trio",
+      "rect": [
+       0,
+       0.56,
+       0.27,
+       0.34
+      ],
+      "escala": 0.96,
+      "fondo": "#DA291C",
+      "kb": {
+       "z": [
+        0.96,
+        1.04
+       ]
+      },
+      "caja": [
+       0.16666666666666666,
+       0.16666666666666666
+      ]
+     },
+     {
+      "desde": 7.3,
+      "hasta": 10.4,
+      "modo": "contener",
+      "fuente": "trio",
+      "rect": [
+       0.285,
+       0.24,
+       0.41,
+       0.15
+      ],
+      "escala": 0.92,
+      "fondo": "#FFC72C",
+      "caja": [
+       0.3333333333333333,
+       0.16666666666666666
+      ]
+     },
+     {
+      "desde": 7.3,
+      "hasta": 10.4,
+      "modo": "contener",
+      "fuente": "trio",
+      "rect": [
+       0.27,
+       0.46,
+       0.43,
+       0.46
+      ],
+      "escala": 0.96,
+      "fondo": "#FFC72C",
+      "kb": {
+       "z": [
+        0.96,
+        1.04
+       ]
+      },
+      "caja": [
+       0.5,
+       0.16666666666666666
+      ]
+     },
+     {
+      "desde": 7.3,
+      "hasta": 10.4,
+      "modo": "contener",
+      "fuente": "trio",
+      "rect": [
+       0.7,
+       0.37,
+       0.3,
+       0.12
+      ],
+      "escala": 0.92,
+      "fondo": "#FFFFFF",
+      "caja": [
+       0.6666666666666666,
+       0.16666666666666666
+      ]
+     },
+     {
+      "desde": 7.3,
+      "hasta": 10.4,
+      "modo": "contener",
+      "fuente": "trio",
+      "rect": [
+       0.7,
+       0.55,
+       0.3,
+       0.36
+      ],
+      "escala": 0.96,
+      "fondo": "#FFFFFF",
+      "kb": {
+       "z": [
+        0.96,
+        1.04
+       ]
+      },
+      "caja": [
+       0.8333333333333333,
+       0.16666666666666666
+      ]
+     },
+     {
+      "desde": 10.1,
+      "hasta": 12.9,
+      "modo": "paleta",
+      "paleta": [
+       "#DA291C",
+       "#FFC72C"
+      ],
+      "titular": "40 AÑOS EN ARGENTINA"
+     }
     ]
    }
   }
