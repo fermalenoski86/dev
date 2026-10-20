@@ -128,6 +128,10 @@ textarea:focus { outline: 2px solid var(--sodio); outline-offset: 2px; border-co
 .lugares img, .lugares .sin { width: 64px; height: 40px; object-fit: cover; border-radius: 3px; background: var(--noche-2); }
 .lugares strong { display: block; font-weight: 650; font-size: 15px; } .lugares span { font-size: 13px; color: var(--niebla); }
 .lugares label { font-size: 14px; color: var(--sodio); cursor: pointer; text-decoration: underline; }
+.elegir-subido { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; color: var(--niebla); }
+.elegir-subido button { padding: 0; border: 1px solid var(--linea); border-radius: 4px; background: none; cursor: pointer; line-height: 0; }
+.elegir-subido button:hover { border-color: var(--sodio); }
+.elegir-subido img { width: 64px; height: 44px; object-fit: cover; border-radius: 3px; }
 .galeria.chica { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); margin-top: 14px; }
 .galeria.chica figure { margin: 0; } .galeria.chica img, .galeria.chica video { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 4px; background: var(--noche-2); display: block; }
 .galeria.chica figcaption { font-size: 12px; color: var(--niebla); margin-top: 4px; overflow-wrap: anywhere; }
@@ -460,13 +464,31 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       if (!CFG) CFG = await (await fetch('/control/material.json')).json();
       const subidos = await (await fetch('/api/material')).json(), hay = new Map(subidos.map((x) => [x.nombre, x]));
       const ul = $('lugares'); ul.innerHTML = '';
+      const nombresSlot = new Set(Object.values(CFG.archivos).map((x) => x.archivo)), libres = subidos.filter((x) => !nombresSlot.has(x.nombre) && /\.(jpe?g|png|webp)$/.test(x.nombre));
       for (const [clave, a] of Object.entries(CFG.archivos)) {
         const li = document.createElement('li'), ok = hay.get(a.archivo), id = 'slot-' + clave;
         li.innerHTML = `${ok ? `<img src="${ok.url}" alt="">` : '<div class="sin"></div>'}<div><strong></strong><span>${ok ? 'Cargado' : 'Falta'}</span></div><label for="${id}">${ok ? 'Reemplazar' : 'Subir'}</label><input type="file" id="${id}" accept="image/jpeg" hidden>`;
         li.querySelector('strong').textContent = a.que.charAt(0).toUpperCase() + a.que.slice(1);
         li.querySelector('input').addEventListener('change', async (e) => { const f = e.target.files[0]; if (f) { await subir(f, a.archivo.replace(/\.jpg$/, '')); cargarMaterial(); } });
+        if (!ok && libres.length) {   // ya subido con otro nombre: se elige tocando la imagen
+          const el = document.createElement('div'); el.className = 'elegir-subido';
+          el.innerHTML = '<span>O elegí uno ya subido:</span>';
+          for (const m of libres) {
+            const b = document.createElement('button'); b.type = 'button'; b.title = `Usar ${m.nombre} para «${a.nombre || a.que}»`;
+            b.innerHTML = `<img src="${m.url}" alt="">`; b.querySelector('img').alt = m.nombre;
+            b.addEventListener('click', async () => {
+              $('estado-material').textContent = 'Asignando…';
+              const r = await fetch('/api/material/asignar', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ de: m.nombre, a: a.archivo }) });
+              $('estado-material').textContent = r.ok ? `Listo: ${a.nombre || a.que}` : ((await r.json().catch(() => ({}))).error || 'No se pudo asignar.');
+              cargarMaterial(); if (typeof cargarGaleria === 'function') cargarGaleria(); if (typeof piezasOficiales === 'function') piezasOficiales();
+            });
+            el.appendChild(b);
+          }
+          li.appendChild(el);
+        }
         ul.appendChild(li);
       }
+      const det = document.querySelector('.material-det'); if (det && libres.length && Object.values(CFG.archivos).some((x) => !hay.has(x.archivo))) det.open = true;   // hay subidos sin asignar: se muestra para elegirlos
       const usados = new Set(Object.values(CFG.archivos).map((a) => a.archivo)), total = Object.keys(CFG.archivos).length;
       const cargados = Object.values(CFG.archivos).filter((a) => hay.has(a.archivo)).length, otros = subidos.filter((x) => !usados.has(x.nombre)).length;
       $('resumen-material').textContent = (cargados === total ? `Las ${total} piezas de la campaña están cargadas y se ven animadas en el edificio.` : `Hay ${cargados} de ${total} piezas de la campaña cargadas. Las que faltan se suben abajo.`) + (otros ? ` Además hay ${otros} archivo${otros > 1 ? 's' : ''} más guardado${otros > 1 ? 's' : ''} para próximos shows.` : '');
