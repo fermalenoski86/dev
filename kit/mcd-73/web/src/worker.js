@@ -184,7 +184,7 @@ async function piezasMaterial(env, origen, incompletas) {
     const usadas = new Set(Object.values(p.pistas).flat().map((x) => x.fuente)), fuentes = {};
     for (const k of usadas) { const arch = cfg.archivos[k] && cfg.archivos[k].archivo; if (arch && subidos.has(arch)) fuentes[k] = '/material/' + arch; }
     if (Object.keys(fuentes).length === usadas.size) out.push({ ...p, fuentes, material: true });
-    else if (incompletas) incompletas.push({ id: p.id, titulo: p.titulo, material: true, creada: p.creada, faltan: [...usadas].filter((k) => !fuentes[k]).map((k) => (cfg.archivos[k] || {}).que || k) });
+    else if (incompletas) incompletas.push({ id: p.id, titulo: p.titulo, material: true, creada: p.creada, faltan: [...usadas].filter((k) => !fuentes[k]).map((k) => (cfg.archivos[k] || {}).nombre || (cfg.archivos[k] || {}).que || k) });
   }
   return out;
 }

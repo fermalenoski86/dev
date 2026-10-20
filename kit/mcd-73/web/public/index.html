@@ -119,7 +119,7 @@ textarea:focus { outline: 2px solid var(--sodio); outline-offset: 2px; border-co
 .pieza span { font-size: 13px; color: var(--niebla); }
 .pieza:hover strong { color: var(--sodio); }
 .pieza .mini { position: relative; aspect-ratio: 2.5 / 1; overflow: hidden; border-radius: 4px; background: var(--noche-2); }
-.pieza .mini.sin-material { display: grid; place-items: center; border: 1px dashed var(--linea); background: none; } .pieza .mini.sin-material span { color: var(--niebla); font-size: 14px; }
+.pieza .mini.sin-material { display: grid; place-items: center; border: 1px dashed var(--linea); background: none; text-decoration: none; } .pieza .mini.sin-material span { color: var(--sodio); font-size: 14px; } .pieza .mini.sin-material:hover { border-color: var(--sodio); }
 .pieza.falta strong { color: var(--niebla); }
 .pieza .mini img { position: absolute; max-width: none; aspect-ratio: auto; height: auto; border-radius: 0; }
 .vacio { color: var(--niebla); grid-column: 1 / -1; margin: 0; }
@@ -571,8 +571,8 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       for (const p of l) {
         if (p.faltan) {   // show de material que todavía no se puede armar: se ve, con lo que falta subir
           const d = document.createElement('div'); d.className = 'pieza falta';
-          d.innerHTML = '<div class="mini sin-material"><span>Falta material</span></div><strong></strong><span class="que-falta"></span>';
-          d.querySelector('strong').textContent = p.titulo; d.querySelector('.que-falta').textContent = 'Subir en «Material de marca»: ' + p.faltan.join(', ') + '.';
+          d.innerHTML = `<a class="mini sin-material" href="#t-material"><span>${p.faltan.length === 1 ? 'Falta 1 archivo' : 'Faltan ' + p.faltan.length + ' archivos'} · Subir material</span></a><strong></strong><span class="que-falta"></span>`;
+          d.querySelector('strong').textContent = p.titulo; d.querySelector('.que-falta').textContent = 'Falta: ' + p.faltan.join(', ') + '.';
           g.appendChild(d); continue;
         }
         const a = document.createElement('a'); a.className = 'pieza'; a.href = `/control/?pieza=${encodeURIComponent(p.id)}`;
