@@ -21,7 +21,8 @@
    "px": [
     495,
     619
-   ]
+   ],
+   "nombre": "Afiche McÁlvarez"
   },
   "trio": {
    "archivo": "trio-productos.jpg",
@@ -29,7 +30,8 @@
    "px": [
     800,
     600
-   ]
+   ],
+   "nombre": "Trío de hamburguesas"
   },
   "mostrador": {
    "archivo": "jugadores-mostrador.jpg",
@@ -37,7 +39,8 @@
    "px": [
     399,
     501
-   ]
+   ],
+   "nombre": "Jugadores en el mostrador"
   },
   "triptico": {
    "archivo": "triptico.jpg",
@@ -45,7 +48,8 @@
    "px": [
     440,
     246
-   ]
+   ],
+   "nombre": "Tríptico de jugadores"
   },
   "triptico_productos": {
    "archivo": "triptico-productos.jpg",
@@ -53,7 +57,8 @@
    "px": [
     436,
     458
-   ]
+   ],
+   "nombre": "Tríptico con productos"
   },
   "cuarto": {
    "archivo": "cuarto-de-libra.jpg",
@@ -61,7 +66,8 @@
    "px": [
     554,
     554
-   ]
+   ],
+   "nombre": "Cuarto de Libra"
   }
  },
  "piezas": [
