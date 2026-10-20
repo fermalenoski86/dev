@@ -438,12 +438,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       if (!l.length) { g.innerHTML = '<p class="vacio">Todavía no hay piezas. Creá la primera arriba; las cuatro de la propuesta para McDonald\'s ya están en el simulador.</p>'; return; }
       g.innerHTML = '';
       for (const p of l) {
-        if (p.faltan) {   // show de material que todavía no se puede armar: se ve, con lo que falta subir
-          const d = document.createElement('div'); d.className = 'pieza falta';
-          d.innerHTML = `<a class="mini sin-material" href="#t-material"><span>${p.faltan.length === 1 ? 'Falta 1 archivo' : 'Faltan ' + p.faltan.length + ' archivos'} · Subir material</span></a><strong></strong><span class="que-falta"></span>`;
-          d.querySelector('strong').textContent = p.titulo; d.querySelector('.que-falta').textContent = 'Falta: ' + p.faltan.join(', ') + '.';
-          g.appendChild(d); continue;
-        }
+        if (p.faltan) continue;   // show de material sin todos sus archivos: aparece solo, con su miniatura, cuando se suben
         const a = document.createElement('a'); a.className = 'pieza'; a.href = `/control/?pieza=${encodeURIComponent(p.id)}`;
         const fecha = new Date(p.creada).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
         const mi = p.miniatura, r = mi && mi.rect;   // shows de material: recorte del cartel de cada hamburguesa (2,5:1, como la tarjeta)
