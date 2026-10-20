@@ -118,6 +118,8 @@ textarea:focus { outline: 2px solid var(--sodio); outline-offset: 2px; border-co
 .pieza strong { display: block; margin-top: 8px; font-weight: 650; font-size: 16px; }
 .pieza span { font-size: 13px; color: var(--niebla); }
 .pieza:hover strong { color: var(--sodio); }
+.pieza .mini { position: relative; aspect-ratio: 2.5 / 1; overflow: hidden; border-radius: 4px; background: var(--noche-2); }
+.pieza .mini img { position: absolute; max-width: none; aspect-ratio: auto; height: auto; border-radius: 0; }
 .vacio { color: var(--niebla); grid-column: 1 / -1; margin: 0; }
 .lugares { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 8px; }
 .lugares li { display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center; padding: 8px; border: 1px solid var(--linea); border-radius: 6px; }
@@ -495,7 +497,8 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       for (const p of l) {
         const a = document.createElement('a'); a.className = 'pieza'; a.href = `/control/?pieza=${encodeURIComponent(p.id)}`;
         const fecha = new Date(p.creada).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
-        a.innerHTML = `<img src="${p.pantallas.pellegrini}" alt="" loading="lazy"><strong></strong><span>${fecha}</span>`;
+        const mi = p.miniatura, r = mi && mi.rect;   // shows de material: recorte del cartel de cada hamburguesa (2,5:1, como la tarjeta)
+        a.innerHTML = (r ? `<div class="mini"><img src="${mi.url}" alt="" loading="lazy" style="width:${100 / r[2]}%;left:${-r[0] / r[2] * 100}%;top:${-r[1] / r[3] * 100}%"></div>` : `<img src="${p.pantallas.pellegrini}" alt="" loading="lazy">`) + `<strong></strong><span>${p.material ? 'Show con material de la marca' : fecha}</span>`;
         a.querySelector('strong').textContent = p.titulo; g.appendChild(a);
       }
     } catch (e) { g.innerHTML = '<p class="vacio">No se pudieron cargar las piezas. Recargá la página.</p>'; }
