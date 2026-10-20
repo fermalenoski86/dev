@@ -91,7 +91,7 @@ Fuente: `kit/mcd-73/web/public/index.html` y la pantalla de entrada en `src/work
 - **P-79** (p): Acá se reúnen las propuestas generadas y los shows preparados con material de marca. Cada uno puede abrirse en el simulador para revisar cómo se vería sobre el edificio.
 - **P-80** (p): Cargando…
 - **P-81** (entrada, h1): EL TRUST
-- **P-82** (entrada, p): Av. Corrientes y Carlos Pellegrini, frente al Obelisco. Una esquina emblemática de Buenos Aires.
+- **P-82** (entrada, p): Av. Corrientes y Carlos Pellegrini. Una esquina, millones de miradas. (texto pedido por Fer, no se cambia)
 - **P-83** (entrada, label): Clave
 - **P-84** (entrada, button): Entrar
 - **P-85** (entrada, p): Affinitas. Material de trabajo, no publicar.
