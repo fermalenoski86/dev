@@ -224,7 +224,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
 </head>
 <body>
 <header class="barra"><a class="marca" href="/">EL TRUST</a>
-  <nav class="accesos" aria-label="Accesos"><a href="/control/">Simulador</a><a href="#t-ia">Crear una pieza</a><a href="#t-material">Material</a><a class="salir" href="/salir">Salir</a></nav></header>
+  <nav class="accesos" aria-label="Accesos"><a href="/control/">Simulador</a><a href="#t-ia">Crear una pieza</a><a class="salir" href="/salir">Salir</a></nav></header>
 
 <section class="heroe">
   <div class="heroe-texto">
@@ -472,7 +472,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     </div>
   </section>
 
-  <section class="tarea" aria-labelledby="t-material">
+  <section class="tarea" aria-labelledby="t-material" hidden>   <!-- sacado de la web a pedido de Fer (20/10); la API de material sigue -->
     <div><h2 id="t-material">Material de marca</h2><p>Fotos, logos y piezas oficiales del cliente. El material queda guardado en el portal, sin publicar, y es la única fuente de elementos de marca para los shows.</p></div>
     <div>
       <p id="resumen-material" class="nota-cap">Revisando el material…</p>
@@ -646,7 +646,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       const lista = await (await fetch('/api/material')).json(), l = new Set(lista.map((m) => m.nombre));
       await piezasOficiales(lista);
       if (['mcalvarez-afiche.jpg', 'trio-productos.jpg', 'jugadores-mostrador.jpg'].every((n) => l.has(n))) { pieza = 'campana-seleccion'; texto = 'Campaña de la Selección, animada en el edificio · simulación'; }
-      else $('nota-material').textContent = 'Cuando el material de la campaña esté cargado en «Material de marca», acá se ve su show.';
+
     } catch (e) {}
     pie.textContent = texto;
     const url = `/control/?vitrina=1&pieza=${encodeURIComponent(pieza)}`;
