@@ -295,7 +295,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
   <article class="capitulo final" id="cap-propuesta-mcd">
     <div class="texto-cap">
       <h2>Una propuesta para las campañas y los momentos especiales de McDonald's</h2>
-      <p>EL TRUST permitiría combinar presencia publicitaria programada con intervenciones especiales de 15 segundos en las que la marca ocupe visualmente las pantallas y acompañe la fachada con iluminación. Es un formato para explorar lanzamientos, promociones, campañas vinculadas con la Selección y otras fechas de alto interés, siempre con piezas y mensajes aprobados por McDonald's.</p>
+      <p>EL TRUST permitiría combinar presencia publicitaria programada con intervenciones especiales de duración flexible, definidas según el objetivo, el contenido y la campaña, en las que la marca ocupe visualmente las pantallas y acompañe la fachada con iluminación. Es un formato para explorar lanzamientos, promociones, campañas vinculadas con la Selección y otras fechas de alto interés, siempre con piezas y mensajes aprobados por McDonald's.</p>
     </div>
   </article>
 
@@ -404,7 +404,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       <h2>TRUST Control: una vista previa de toda la experiencia</h2>
       <div>
         <p>TRUST Control reúne en una línea de tiempo el contenido de las pantallas y los cambios de iluminación de la fachada. El equipo puede detener la secuencia, revisar un instante concreto y comparar distintas propuestas antes de aprobar una versión creativa. Actualmente se trata de una herramienta de simulación, sin conexión con los equipos del edificio.</p>
-        <p>El formato de referencia dura 15 segundos. Incluye una entrada, el desarrollo del mensaje, un momento central de máxima presencia visual —o takeover— y un cierre que devuelve la fachada a su estado inicial. En ese momento central, una marca puede plantear una composición coordinada entre pantallas y luces: un recurso para lanzamientos, celebraciones y activaciones puntuales.</p>
+        <p>Cada show puede configurarse con la duración que requiera la campaña. Puede incluir una entrada, el desarrollo del mensaje, un momento central de máxima presencia visual —o takeover— y un cierre que devuelve la fachada a su estado inicial. La estructura y los tiempos se adaptan a cada contenido, lanzamiento, celebración o activación.</p>
       </div>
     </div>
     <figure class="foto captura"><img src="/img/sim-takeover.webp" alt="TRUST Control en el segundo 7 del show: el edificio en rojo y dorado, los controles y la línea de tiempo" loading="lazy" width="1920" height="1080"><figcaption>Captura del simulador · takeover, segundo 7</figcaption></figure>
@@ -418,7 +418,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     <div class="cabeza">
       <h2>Programación propuesta: 20,5 horas por día</h2>
       <div>
-        <p>Se propone organizar shows de 15 segundos dentro de una grilla de exhibición de 20,5 horas diarias. La programación puede variar según el día y la franja horaria: por ejemplo, una presencia regular de producto durante la jornada y una secuencia especial para un lanzamiento o una fecha relevante. Los horarios son una propuesta inicial pendiente de confirmación.</p>
+        <p>Se propone organizar shows de duración configurable dentro de una grilla de exhibición de 20,5 horas diarias. Cada pieza puede tener el tiempo que requieran su contenido y su objetivo. La programación puede variar según el día y la franja horaria: por ejemplo, una presencia regular de producto durante la jornada y una secuencia especial para un lanzamiento o una fecha relevante. Los horarios son una propuesta inicial pendiente de confirmación.</p>
         <p>La grilla permite calcular la cantidad prevista de reproducciones por hora, día y semana, ordenar la convivencia entre campañas y definir cuándo participaría la iluminación de fachada. Son estimaciones de programación, no mediciones de audiencia ni constancias de emisión real.</p>
       </div>
     </div>
@@ -495,7 +495,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
   </section>
 
   <section class="tarea programacion" aria-labelledby="t-prog" id="programacion">
-    <div><h2 id="t-prog">Programación</h2><p>Esta herramienta de prueba permite organizar una programación semanal por día y franja horaria. Se seleccionan las horas, se arma el orden de las piezas y se calcula su cantidad estimada de reproducciones. La grilla todavía no envía instrucciones al edificio ni acredita exhibiciones efectivamente realizadas.</p></div>
+    <div><h2 id="t-prog">Programación</h2><p>Esta herramienta de prueba permite organizar una programación semanal por día y franja horaria. Se seleccionan las horas y se arma el orden de las piezas. La duración y la frecuencia de cada contenido se definen según la campaña y la pieza; la grilla todavía no envía instrucciones al edificio ni acredita exhibiciones efectivamente realizadas.</p></div>
     <div>
       <div class="prog-ajustes">
         <label>Operación <input type="time" id="op-desde" value="06:00"> a <input type="time" id="op-hasta" value="02:30"></label>
@@ -746,7 +746,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
   // ---------- programación: grilla semanal de loops por hora (prototipo, se guarda en el portal) ----------
   (function programacion() {
     const DIAS = [['lun', 'Lun'], ['mar', 'Mar'], ['mie', 'Mié'], ['jue', 'Jue'], ['vie', 'Vie'], ['sab', 'Sáb'], ['dom', 'Dom']];
-    const SLOT = 15, ESPECIALES = [{ id: 'institucional', titulo: 'Institucional del edificio' }, { id: 'reposo', titulo: 'Pantallas en reposo' }];
+    const ESPECIALES = [{ id: 'institucional', titulo: 'Institucional del edificio' }, { id: 'reposo', titulo: 'Pantallas en reposo' }];
     const COLOR = { 'campana-seleccion': '#DA291C', mcalvarez: '#B81F14', mcallister: '#FFC72C', mcfernandez: '#F4F4F4', institucional: '#5E6E88', reposo: '#22355A' };
     const OTROS = ['#6CACE4', '#8FD18B', '#C79BF2', '#F28C6B', '#5CC8C2', '#E6B0C9'];
     const min = (h) => { const [a, b] = h.split(':').map(Number); return a * 60 + b; }, hh = (n) => String(n).padStart(2, '0');
@@ -803,7 +803,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
         const b = document.createElement('button'); b.type = 'button'; b.textContent = '✕'; b.title = 'Quitar del loop'; b.addEventListener('click', () => { loop.splice(i, 1); pintarSlots(); });
         li.append(s2, b); ol.appendChild(li);
       });
-      const seg = loop.length * SLOT; $('prog-estado').textContent = loop.length ? `Loop de ${seg} s · cada pieza sale ${Math.round(3600 / seg)} veces por hora por cada lugar en el loop` : '';
+      $('prog-estado').textContent = loop.length ? `Secuencia de ${loop.length} pieza${loop.length > 1 ? 's' : ''} · la duración se define para cada contenido` : '';
     }
     async function guardar() {
       $('prog-estado').textContent = 'Guardando…';
@@ -814,13 +814,12 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       const { lista, total } = horas(), sem = {}, dia = {};
       for (const [d] of DIAS) for (const x of lista) {
         const l = (P.semana[d] || {})[x.h] || []; if (!l.length) continue;
-        const vueltas = (x.min * 60) / (l.length * SLOT);
-        for (const id of l) { sem[id] = (sem[id] || 0) + vueltas; if (d === 'lun') dia[id] = (dia[id] || 0) + vueltas; }
+        for (const id of new Set(l)) { sem[id] = (sem[id] || 0) + 1; if (d === 'lun') dia[id] = (dia[id] || 0) + 1; }
       }
-      const ids = Object.keys(sem).sort((a, b) => sem[b] - sem[a]), segSem = total * 60 * 7;
-      $('prog-resumen').innerHTML = '<tr><th>Pieza</th><th>Salidas lunes</th><th>Salidas semana</th><th>Tiempo al aire</th></tr>' +
-        ids.map((id) => `<tr><td><i style="background:${color(id)}"></i>${titulo(id).replace(/</g, '&lt;')}</td><td>${Math.round(dia[id] || 0).toLocaleString('es-AR')}</td><td>${Math.round(sem[id]).toLocaleString('es-AR')}</td><td>${(sem[id] * SLOT / segSem * 100).toLocaleString('es-AR', { maximumFractionDigits: 1 })} %</td></tr>`).join('');
-      $('prog-total').textContent = `${(total / 60).toLocaleString('es-AR')} h por día · ${(total * 7 / 60).toLocaleString('es-AR')} h por semana`;
+      const ids = Object.keys(sem).sort((a, b) => sem[b] - sem[a]);
+      $('prog-resumen').innerHTML = '<tr><th>Pieza</th><th>Bloques lunes</th><th>Bloques semana</th></tr>' +
+        ids.map((id) => `<tr><td><i style="background:${color(id)}"></i>${titulo(id).replace(/</g, '&lt;')}</td><td>${(dia[id] || 0).toLocaleString('es-AR')}</td><td>${sem[id].toLocaleString('es-AR')}</td></tr>`).join('');
+      $('prog-total').textContent = `${(total / 60).toLocaleString('es-AR')} h por día · ${(total * 7 / 60).toLocaleString('es-AR')} h por semana · duración de piezas configurable`;
     }
     function pintarDia() {   // la barra de 24 h del capítulo de presentación
       const c = $('dia-24'); if (!c) return;
