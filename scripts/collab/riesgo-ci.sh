@@ -16,6 +16,12 @@
 #   4. publica el final; si fue success, relee otra vez y, si cambió, lo pisa con
 #      `failure` "caducado". El evento que causó el cambio vuelve a evaluar (carril serial).
 # Exit: 0 si todos quedaron success; 1 si alguno no.
+# Con RIESGO_OBJETIVO definido (lo pasa riesgo.yml; hallazgo 3 de #54): el exit SOLO clasifica
+# al PR objetivo del evento (0 si su último `riesgo` publicado quedó success) y, sin objetivo
+# (push a main, `closed`, workflow viejo: RIESGO_OBJETIVO vacío), ningún PR decide el exit.
+# Los veredictos de los demás PR van SOLO en su propio check-run (un rechazo de #95 ya no pinta
+# de rojo el job del evento de #90); un error de infraestructura (POST o re-listado que fallan
+# tras los reintentos) sí da exit 1, porque puede dejar un verde viejo sin invalidar.
 #
 # Aislamiento por base (AUDIT: CAMBIOS @ 94bad43, P2): el check es por SHA y un PR hacia
 # otra base (rama de fase) puede compartir HEAD con uno hacia main. Su veredicto se publica
@@ -106,11 +112,13 @@ publicar() { # $1 sha, $2 status|conclusion, $3 título, $4 archivo de resumen
     sleep "$i"
   done
   echo "riesgo-ci: no se pudo publicar el check sobre $1 tras 3 intentos" >&2
+  INFRA=1
   return 1
 }
 
 
 total=0
+INFRA=0                        # 1 si falló un POST o el re-listado (no es el veredicto de un PR)
 VERDES=()
 # Antes de evaluar ninguno, TODOS los HEAD de la foto pasan a en_progreso: en una
 # re-evaluación global (política endurecida en main) un PR que espera su turno no puede
@@ -197,7 +205,7 @@ if [ "${RIESGO_GLOBAL:-0}" = 1 ]; then
       total=1
     done <<< "$LISTA"
   else
-    echo "riesgo-ci: no se pudo volver a listar los PR hacia main tras 3 intentos: los verdes de este lote quedan sin veredicto" | tee "$TMP/out" >&2; total=1
+    echo "riesgo-ci: no se pudo volver a listar los PR hacia main tras 3 intentos: los verdes de este lote quedan sin veredicto" | tee "$TMP/out" >&2; total=1; INFRA=1
     for v in "${VERDES[@]+"${VERDES[@]}"}"; do
       IFS='|' read -r _ hv cv _ <<< "$v"
       [ "$cv" = "$CHECK_MAIN" ] || continue
@@ -289,4 +297,23 @@ for H in "${!SALIO_OTRA[@]}"; do
     total=1
   fi
 done
+# Exit por objetivo (hallazgo 3 de #54): con RIESGO_OBJETIVO definido, solo el PR del evento
+# decide; los demás ya tienen su veredicto en su propio check-run.
+if [ -n "${RIESGO_OBJETIVO+x}" ]; then
+  RC_OBJ=$INFRA
+  if [ -n "$RIESGO_OBJETIVO" ]; then
+    OK_OBJ=0
+    for v in "${VERDES[@]+"${VERDES[@]}"}"; do
+      IFS='|' read -r pv hv cv _ <<< "$v"
+      [ "$pv" = "$RIESGO_OBJETIVO" ] || continue
+      [ -z "${CADUCO_FINAL[$pv|$hv]:-}" ] || continue
+      if [ "$cv" = "$CHECK_MAIN" ]; then u=${ULTIMO[$hv]:-}; else u=${ULTIMO_OTRA[$hv]:-}; fi
+      [ "$u" = success ] && OK_OBJ=1
+    done
+    [ "$OK_OBJ" = 1 ] || RC_OBJ=1
+    echo "riesgo-ci: objetivo #$RIESGO_OBJETIVO → $([ "$OK_OBJ" = 1 ] && echo success || echo 'no success')"
+  fi
+  [ "$total" = 0 ] || [ "$RC_OBJ" != 0 ] || echo "riesgo-ci: otros PR del lote quedaron rechazados o sin veredicto en su propio check (no cambian el resultado de esta ejecución)"
+  exit "$RC_OBJ"
+fi
 exit "$total"

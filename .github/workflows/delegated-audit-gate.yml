@@ -1,5 +1,6 @@
-# P-06 · PoC de firma delegada — check `delegated-audit-gate` (REPORT-ONLY).
-# Brief: docs/briefs/P06_BRIDGE_POC.md §3; decisión de #54 (2026-10-12 18:15).
+# P-06 · PoC — check `delegated-audit-gate` (REPORT-ONLY). Desde la decisión A de #54
+# (2026-10-20): adaptador de preauditoría sobre el marcador codex-review-state:v1 + badges,
+# solo riesgo bajo; nunca aprobación formal. Brief: docs/briefs/P06_BRIDGE_POC.md §3.
 #
 # Modelo de confianza: este workflow NUNCA corre con YAML ni código del PR.
 #   - `workflow_run` y `push` a main cargan SIEMPRE el YAML de la rama por defecto (main).

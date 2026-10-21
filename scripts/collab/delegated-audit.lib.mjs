@@ -4,6 +4,9 @@
 // Sin E/S: recibe lo que el CLI (delegated-audit.mjs) leyó de la API de GitHub y de git
 // con la revisión de main, y devuelve un veredicto. REPORT-ONLY: el veredicto se publica
 // como check `neutral`; nunca habilita un merge ni reemplaza el AUDIT de ChatGPT.
+// Decisión A del auditor (#54, 2026-10-20 23:53): adaptador fail-closed sobre lo que Codex
+// SÍ emite (marcador codex-review-state:v1 + badges), solo riesgo bajo, preauditoría: no
+// acredita brief, A/B/C, negativos ni gates y nunca es una aprobación formal.
 //
 // Fail-closed: cualquier dato ausente, ambiguo o que no se pudo leer es un motivo de
 // FAIL. `pass` solo si no hay ningún motivo.
@@ -33,7 +36,9 @@ const PLANTILLA = [
 ];
 
 /**
- * Parser estricto del bloque de §2. Exactamente UNA aparición de `AUDIT:` en todo el
+ * Parser estricto del bloque de §2. Desde la decisión A (#54) el gate NO lo usa: Codex no
+ * emite el bloque (3/3 muestras). Queda exportado para el formato de AGENTS.md; retirarlo
+ * va en BACKLOG. Exactamente UNA aparición de `AUDIT:` en todo el
  * cuerpo (prosa incluida) y, a partir de esa línea, las 8 líneas de la plantilla seguidas.
  * Se toleran espacios al principio/fin de cada línea y un \r (CRLF); nada más.
  * @returns {{ ok: true, bloque: object } | { ok: false, error: string }}
@@ -117,11 +122,48 @@ const esCodex = (r, allowlist) => r?.user?.type === 'Bot' && Number.isSafeIntege
 const orden = (a, b) => (Date.parse(a.submitted_at) || 0) - (Date.parse(b.submitted_at) || 0) || a.id - b.id;
 
 /**
- * Veredicto del gate para un PR.
+ * Adaptador fail-closed (decisión A del auditor, #54 2026-10-20 23:53): Codex NO emite el
+ * bloque `AUDIT:`. Sin hallazgos no publica review: deja el comentario de resumen con el
+ * marcador `<!-- codex-review-state:v1 {json} -->`; con hallazgos publica una review con
+ * comentarios en línea que llevan el badge P0/P1/P2. Se lee eso, nada más.
+ */
+export const MARCADOR = 'codex-review-state:v1';
+const MARCADOR_RE = /<!-- codex-review-state:v1 (\{.*?\}) -->/s;
+/** Badge de severidad de Codex (`![P1 Badge](https://img.shields.io/badge/P1-…)`). */
+const BADGE_RE = /!\[(P[0-2]) Badge\]\(https:\/\/img\.shields\.io\/badge\/P[0-2]-/g;
+export const badges = (texto) => [...String(texto ?? '').matchAll(BADGE_RE)].map((m) => m[1]);
+
+/**
+ * Parser estricto del marcador. Una sola aparición de la cadena en el cuerpo, JSON válido,
+ * `code_review` con los cuatro campos y tipos exactos. Cualquier otra cosa → error.
+ * @returns {{ ok: true, estado: object } | { ok: false, error: string }}
+ */
+export function parsearMarcador(cuerpo) {
+  if (typeof cuerpo !== 'string') return { ok: false, error: 'comentario sin cuerpo' };
+  const n = cuerpo.split(MARCADOR).length - 1;
+  if (n !== 1) return { ok: false, error: `${n} apariciones de "${MARCADOR}" en el comentario (debe haber una)` };
+  const m = MARCADOR_RE.exec(cuerpo);
+  if (!m) return { ok: false, error: 'marcador sin el formato <!-- codex-review-state:v1 {json} -->' };
+  let j;
+  try { j = JSON.parse(m[1]); } catch { return { ok: false, error: 'JSON del marcador ilegible' }; }
+  const cr = j?.code_review;
+  if (!cr || typeof cr !== 'object') return { ok: false, error: 'marcador sin code_review' };
+  if (!esSha(cr.commit_sha)) return { ok: false, error: 'code_review.commit_sha no es un sha de 40' };
+  if (typeof cr.status !== 'string') return { ok: false, error: 'code_review.status ilegible' };
+  if (typeof cr.has_any_findings !== 'boolean' || typeof cr.has_unresolved_findings !== 'boolean') return { ok: false, error: 'code_review.has_*_findings no son booleanos' };
+  const sr = j.security_review ?? null;
+  if (sr !== null && typeof sr !== 'object') return { ok: false, error: 'security_review ilegible' };
+  return { ok: true, estado: { code_review: cr, security_review: sr } };
+}
+
+/**
+ * Veredicto del gate para un PR (preauditoría report-only: nunca es una aprobación formal).
  * @param {object} e
  * @param {string} e.repo                 owner/nombre
  * @param {{number:number, head_sha:string, base_ref:string, state:string}} e.pr  leído por API en el momento
- * @param {object[]|null} e.reviews       reviews REST del PR (todas las páginas) + `editada` (bool|null, GraphQL lastEditedAt)
+ * @param {object[]|null} e.reviews       reviews REST del PR (todas las páginas; null = lectura incompleta)
+ * @param {object[]|null} e.comentarios   comentarios de issue del PR (todas las páginas; null = incompleta)
+ * @param {object[]|null} e.hilos         comentarios en línea de review (todas las páginas; null = incompleta)
  * @param {{nivel:string, calculado:string, declarado:string|null, errores:string[]}|null} e.riesgo
  *        risk.mjs verificar (política de main) sobre el diff real contra `main` y el CUERPO del
  *        PR: `nivel` = riesgo efectivo (máx. de declarado y calculado). null = sin veredicto.
@@ -134,11 +176,11 @@ const orden = (a, b) => (Date.parse(a.submitted_at) || 0) - (Date.parse(b.submit
  * @param {string[]} e.jobsEsperados      jobsDeGates(gates.yml de main)
  * @param {number[]} [e.allowlist]
  */
-export function evaluar({ repo, pr, reviews, riesgo, main = null, ejecutada = null, estabilidad = null, gates, jobsEsperados, allowlist = CODEX_BOT_IDS }) {
+export function evaluar({ repo, pr, reviews, comentarios, hilos, riesgo, main = null, ejecutada = null, estabilidad = null, gates, jobsEsperados, allowlist = CODEX_BOT_IDS }) {
   const motivos = [];
   // Tupla del veredicto (AUDIT: CAMBIOS @ 9332156): (pr, head, main evaluado, riesgo efectivo,
   // run/attempt) + base y merge probados. PASS solo si cada componente se COMPROBÓ.
-  const info = { pr: pr?.number ?? null, sha: pr?.head_sha ?? null, main: esSha(main) ? main : null, politica: esSha(ejecutada) ? ejecutada : null, review_id: null, author_id: null, riesgo: riesgo?.nivel ?? null, calculado: riesgo?.calculado ?? null, declarado: riesgo?.declarado ?? null, run: gates?.id ?? null, attempt: gates?.attempt ?? null, probado: gates?.probado ?? null, base_probada: gates?.base_probada ?? null, rondas: 0, ignoradas: [] };
+  const info = { pr: pr?.number ?? null, sha: pr?.head_sha ?? null, main: esSha(main) ? main : null, politica: esSha(ejecutada) ? ejecutada : null, marcador_id: null, author_id: null, riesgo: riesgo?.nivel ?? null, calculado: riesgo?.calculado ?? null, declarado: riesgo?.declarado ?? null, run: gates?.id ?? null, attempt: gates?.attempt ?? null, probado: gates?.probado ?? null, base_probada: gates?.base_probada ?? null, rondas: 0, ignoradas: [] };
   const fin = () => ({ veredicto: motivos.length ? 'fail' : 'pass', motivos, ...info });
 
   if (!pr || !Number.isSafeInteger(pr.number) || !new RegExp(`^${SHA}$`).test(pr.head_sha ?? '')) {
@@ -157,58 +199,65 @@ export function evaluar({ repo, pr, reviews, riesgo, main = null, ejecutada = nu
   else if (esSha(main) && ejecutada !== main) motivos.push(`política: los scripts en ejecución son de ${corto(ejecutada)} y el main evaluado es ${corto(main)} (checkout desactualizado: sin PASS hasta una corrida con la política vigente)`);
 
   // 4. Elegibilidad: riesgo EFECTIVO de la política de main (diff real + declaración del
-  // cuerpo del PR). Declaración ausente/inválida → fail; elevación a alto → formal; nunca
-  // rebajar el calculado (AUDIT: CAMBIOS @ 9332156, P2 1).
+  // cuerpo del PR). Declaración ausente/inválida → fail; nunca rebajar el calculado (AUDIT:
+  // CAMBIOS @ 9332156, P2 1). Decisión A (#54, 2026-10-20): el adaptador es SOLO para riesgo
+  // bajo durante la PoC/piloto; medio y alto → auditoría formal de ChatGPT.
   if (!riesgo || !NIVELES.includes(riesgo.nivel) || !NIVELES.includes(riesgo.calculado)) {
     motivos.push('elegibilidad: sin clasificación de riesgo (risk.mjs no dio veredicto) → requiere auditoría formal');
   } else {
     if (rango(riesgo.nivel) < rango(riesgo.calculado)) motivos.push(`elegibilidad: riesgo efectivo ${riesgo.nivel} < calculado ${riesgo.calculado} (nunca se rebaja)`);
     if (!Array.isArray(riesgo.errores)) motivos.push('elegibilidad: no se pudo validar la declaración de riesgo del PR');
     else for (const e of riesgo.errores) motivos.push(`elegibilidad: declaración de riesgo rechazada — ${e}`);
-    if (riesgo.nivel === 'alto') motivos.push(`elegibilidad: riesgo efectivo alto${riesgo.calculado !== 'alto' ? ` (declarado; calculado ${riesgo.calculado})` : ''} → requiere auditoría formal de ChatGPT (sin delegación, #54)`);
+    if (riesgo.nivel !== 'bajo') motivos.push(`elegibilidad: riesgo efectivo ${riesgo.nivel}${riesgo.calculado !== riesgo.nivel ? ` (declarado; calculado ${riesgo.calculado})` : ''} → requiere auditoría formal de ChatGPT (el adaptador solo cubre riesgo bajo, #54)`);
   }
 
-  // 1–3, 6, 7. Review real del bot allowlisted sobre el HEAD exacto, con bloque válido
-  if (!Array.isArray(reviews)) {
-    motivos.push('reviews: no se pudieron leer por API');
+  // 1–3. Señal de Codex sobre el HEAD exacto (adaptador A). Lectura incompleta → FAIL.
+  if (!Array.isArray(reviews) || !Array.isArray(comentarios) || !Array.isArray(hilos)) {
+    const faltan = [[reviews, 'reviews'], [comentarios, 'comentarios del PR'], [hilos, 'comentarios de review']].filter(([x]) => !Array.isArray(x)).map(([, n]) => n);
+    motivos.push(`codex: no se pudieron leer completas (todas las páginas) por API: ${faltan.join(', ')}`);
   } else {
-    for (const r of reviews) {
-      if (!esCodex(r, allowlist) && typeof r?.body === 'string' && r.body.includes('AUDIT:')) {
-        info.ignoradas.push(`review ${r.id} de ${r.user?.login ?? '?'} (id ${r.user?.id ?? '?'}, ${r.user?.type ?? '?'}): identidad no allowlisted`);
+    // 1. Marcador: exactamente UN comentario del bot allowlisted con el marcador.
+    for (const c of comentarios) {
+      if (!esCodex(c, allowlist) && typeof c?.body === 'string' && c.body.includes(MARCADOR)) {
+        info.ignoradas.push(`comentario ${c.id} de ${c.user?.login ?? '?'} (id ${c.user?.id ?? '?'}, ${c.user?.type ?? '?'}): marcador de identidad no allowlisted`);
       }
     }
-    const codex = reviews.filter((r) => esCodex(r, allowlist)).sort(orden);
-    info.rondas = codex.filter((r) => typeof r.body === 'string' && r.body.includes('AUDIT:')).length;
-    if (info.rondas > MAX_RONDAS) motivos.push(`rondas: ${info.rondas} > ${MAX_RONDAS} → corresponde bridge-paused (report-only: no se etiqueta)`);
-    const sobreHead = codex.filter((r) => r.commit_id === pr.head_sha);
-    const r = sobreHead.at(-1);
-    if (!r) {
-      const viejas = codex.filter((x) => x.commit_id !== pr.head_sha).length;
-      motivos.push(`review: ninguna review de Codex sobre el HEAD ${pr.head_sha.slice(0, 12)}${viejas ? ` (${viejas} sobre shas anteriores: inválidas)` : ''}`);
-    } else {
-      info.review_id = r.id;
-      info.author_id = r.user.id;
-      if (!['COMMENTED', 'APPROVED'].includes(r.state)) motivos.push(`review ${r.id}: estado ${r.state} (solo cuenta COMMENTED/APPROVED; DISMISSED/PENDING/CHANGES_REQUESTED → fail)`);
-      if (r.editada !== false) motivos.push(`review ${r.id}: ${r.editada === true ? 'editada después de emitida' : 'no se pudo verificar si fue editada'}`);
-      const p = parsearBloque(r.body);
-      if (!p.ok) {
-        motivos.push(`review ${r.id}: marcador — ${p.error}`);
-      } else {
-        const b = p.bloque;
-        if (b.veredicto !== 'APROBADO') motivos.push(`review ${r.id}: AUDIT: ${b.veredicto}`);
-        if (b.repo !== repo) motivos.push(`bloque: repo ${b.repo} ≠ ${repo}`);
-        if (b.pr !== pr.number) motivos.push(`bloque: pr #${b.pr} ≠ #${pr.number}`);
-        if (b.head !== pr.head_sha) motivos.push(`bloque: head ${b.head.slice(0, 12)} ≠ HEAD actual ${pr.head_sha.slice(0, 12)}`);
-        if (b.gatesSha !== pr.head_sha) motivos.push(`bloque: gates sobre ${b.gatesSha.slice(0, 12)} ≠ HEAD`);
-        if (b.veredicto === 'APROBADO') {
-          if (b.criterios[1] === 0 || b.criterios[0] !== b.criterios[1]) motivos.push(`bloque: criterios ${b.criterios.join('/')} (APROBADO exige todos revisados)`);
-          if (b.jobs[1] === 0 || b.jobs[0] !== b.jobs[1]) motivos.push(`bloque: gates ${b.jobs.join('/')} (APROBADO exige todos verdes)`);
-          if (!b.abc.every(Boolean)) motivos.push('bloque: A/B/C incompleto');
-          if (b.hallazgos.some((x) => x !== 0)) motivos.push(`bloque: hallazgos P0 ${b.hallazgos[0]} · P1 ${b.hallazgos[1]} · P2 ${b.hallazgos[2]} (APROBADO exige 0 · 0 · 0)`);
-          if (b.noEjecutado !== 'nada') motivos.push(`bloque: no-ejecutado "${b.noEjecutado}" (APROBADO exige "nada")`);
+    const marcas = comentarios.filter((c) => esCodex(c, allowlist) && typeof c?.body === 'string' && c.body.includes(MARCADOR));
+    if (marcas.length === 0) motivos.push('codex: sin comentario con el marcador codex-review-state:v1 del bot allowlisted');
+    else if (marcas.length > 1) motivos.push(`codex: ${marcas.length} comentarios con el marcador (ambiguo: ${marcas.map((c) => c.id).join(', ')})`);
+    else {
+      const c = marcas[0];
+      info.marcador_id = c.id;
+      info.author_id = c.user.id;
+      const p = parsearMarcador(c.body);
+      if (!p.ok) motivos.push(`codex: marcador ${c.id} — ${p.error}`);
+      else {
+        const { code_review: cr, security_review: sr } = p.estado;
+        if (cr.commit_sha !== pr.head_sha) motivos.push(`codex: el marcador es del commit ${corto(cr.commit_sha)}, no del HEAD ${corto(pr.head_sha)} (review vieja o pendiente)`);
+        if (cr.status !== 'completed') motivos.push(`codex: code_review ${cr.status} (solo cuenta completed)`);
+        if (cr.has_unresolved_findings !== false) motivos.push('codex: el marcador declara hallazgos sin resolver');
+        // estados contradictorios (hallazgos que el marcador da por resueltos sin una review
+        // limpia del HEAD) no se interpretan: FAIL
+        if (cr.has_any_findings !== false) motivos.push('codex: el marcador declara hallazgos en la review (has_any_findings) → no hay preauditoría limpia');
+        if (sr && (sr.has_unresolved_findings === true || sr.has_any_findings === true || (sr.status !== null && sr.status !== undefined && sr.status !== 'completed'))) {
+          motivos.push(`codex: security_review ${sr.status ?? '—'} con hallazgos o sin terminar`);
         }
-        if (gates && (b.run !== gates.id || b.attempt !== gates.attempt)) motivos.push(`bloque: cita run ${b.run} attempt ${b.attempt}; el último run de gates del HEAD es ${gates.id} attempt ${gates.attempt}`);
       }
+    }
+    // 2. Reviews e hilos del bot sobre el HEAD: Codex solo publica review cuando tiene
+    // sugerencias, así que CUALQUIER review suya sobre el HEAD, o un hilo con badge P0–P2
+    // cuyo commit vigente es el HEAD, es un hallazgo abierto → FAIL (no se interpreta si está
+    // resuelto: REST no lo expone; fail-closed).
+    const codexRv = reviews.filter((r) => esCodex(r, allowlist)).sort(orden);
+    info.rondas = new Set(codexRv.map((r) => r.commit_id)).size;
+    if (info.rondas > MAX_RONDAS) motivos.push(`rondas: ${info.rondas} commits revisados por Codex > ${MAX_RONDAS} → corresponde bridge-paused (report-only: no se etiqueta)`);
+    for (const r of codexRv.filter((x) => x.commit_id === pr.head_sha)) {
+      const b = badges(r.body);
+      motivos.push(`codex: review ${r.id} (${r.state}) sobre el HEAD${b.length ? ` con ${[...new Set(b)].join('/')}` : ''} → Codex publicó sugerencias`);
+    }
+    for (const h of hilos.filter((x) => esCodex(x, allowlist) && (x.commit_id === pr.head_sha || x.original_commit_id === pr.head_sha))) {
+      const b = badges(h.body);
+      if (b.length) motivos.push(`codex: hilo ${h.id} con ${[...new Set(b)].join('/')} en ${h.path ?? '?'}:${h.line ?? '?'} sobre el HEAD`);
     }
   }
 
@@ -221,13 +270,23 @@ export function evaluar({ repo, pr, reviews, riesgo, main = null, ejecutada = nu
     else if (gates.conclusion !== 'success') motivos.push(`gates: run ${gates.id} attempt ${gates.attempt} → ${gates.conclusion}`);
     if (!Array.isArray(jobsEsperados) || jobsEsperados.length === 0) motivos.push('gates: no se pudo leer la lista de jobs de gates.yml de main');
     else {
-      const jobs = Array.isArray(gates.jobs) ? gates.jobs : [];
-      for (const j of jobsEsperados) {
-        const hay = jobs.filter((x) => x.name === j);
-        if (hay.length === 0) motivos.push(`gates: falta el job ${j}`);
-        else if (hay.some((x) => x.conclusion !== 'success')) motivos.push(`gates: job ${j} → ${hay.map((x) => x.conclusion ?? 'pendiente').join(',')}`);
+      // Hallazgo 4 (#54): la API de jobs del run también devuelve los check-runs publicados por
+      // API sobre el mismo commit (este gate, `riesgo`, `paralelo`, con todo su historial).
+      // Se deduplica por nombre y se excluye el propio check: ver estadoJobs().
+      const est = estadoJobs(gates.jobs);
+      if (!est) motivos.push('gates: lista de jobs del run ilegible');
+      else {
+        for (const j of jobsEsperados) {
+          const e = est.get(j);
+          if (!e) motivos.push(`gates: falta el job ${j}`);
+          else if (e.pendiente) motivos.push(`gates: job ${j} → pendiente`);
+          else if (e.conclusion !== 'success') motivos.push(`gates: job ${j} → ${e.conclusion}`);
+        }
+        for (const [nombre, e] of est) {
+          if (jobsEsperados.includes(nombre) || !e.terminal) continue; // un extra solo pendiente no cuenta
+          if (!EXTRA_OK.includes(e.conclusion)) motivos.push(`gates: job extra ${nombre} → ${e.conclusion}`);
+        }
       }
-      for (const x of jobs) if (!jobsEsperados.includes(x.name) && x.conclusion !== 'success') motivos.push(`gates: job extra ${x.name} → ${x.conclusion ?? 'pendiente'}`);
     }
     // Procedencia (AUDIT: CAMBIOS @ 9332156, P2 2): el run tiene que haber probado el merge
     // de ESTE HEAD con ESTE main. Un timestamp no alcanza (un re-run ejecuta el merge viejo):
@@ -253,11 +312,43 @@ export function evaluar({ repo, pr, reviews, riesgo, main = null, ejecutada = nu
   return fin();
 }
 
+/** Nombre del check que publica este gate: nunca cuenta como job de gates (hallazgo 4). */
+export const CHECK_PROPIO = 'delegated-audit-gate';
+const EXTRA_OK = ['success', 'neutral', 'skipped'];
+const idNum = (x) => (Number.isSafeInteger(x?.id) ? x.id : -1);
+
+/**
+ * Estado vigente por nombre de los jobs/checks que la API asocia al run (hallazgo 4, #54):
+ * por cada nombre (menos CHECK_PROPIO) se toma el ÚLTIMO resultado terminal (mayor id: los
+ * ids de check-run son crecientes) y se marca `pendiente` si hay una entrada no terminal más
+ * nueva que ese terminal (para un job esperado, eso es FAIL). El historial republicado,
+ * pendientes o neutrales viejos no cuentan. Entrada ilegible → null (FAIL).
+ * @returns {Map<string, {conclusion: string|null, terminal: boolean, pendiente: boolean}>|null}
+ */
+export function estadoJobs(jobs) {
+  if (!Array.isArray(jobs)) return null;
+  const por = new Map();
+  for (const j of jobs) {
+    if (typeof j?.name !== 'string') return null;
+    if (j.name === CHECK_PROPIO) continue;
+    por.set(j.name, [...(por.get(j.name) ?? []), j]);
+  }
+  const out = new Map();
+  for (const [nombre, xs] of por) {
+    const terminal = (x) => (x.status === undefined ? x.conclusion != null : x.status === 'completed' && x.conclusion != null);
+    const term = xs.filter(terminal).sort((a, b) => idNum(a) - idNum(b)).at(-1);
+    const nuevoPendiente = xs.some((x) => !terminal(x) && (!term || idNum(x) > idNum(term)));
+    out.set(nombre, { conclusion: term ? term.conclusion : null, terminal: Boolean(term), pendiente: !term || nuevoPendiente });
+  }
+  return out;
+}
+
 /**
  * Orquestación de UNA evaluación (antes en el CLI; acá con E/S inyectada para poder probar el
  * CLI con respuestas controladas). `io`:
  *   repo, ejecutada (sha de la revisión en ejecución, fijado al arrancar el proceso, o null),
  *   ejecutadaAhora() (relectura al terminar), mainActual(), leerPr(n), leerReviews(n),
+ *   leerComentarios(n), leerHilos(n) (todas las páginas o excepción),
  *   verificarRiesgo(n, head, main, cuerpo), leerGates(head), gatesYml() (gates.yml de la
  *   revisión ejecutada).
  * Un error de leerPr al empezar se propaga (cicloCi publica FAIL "sin veredicto"); el resto
@@ -274,6 +365,8 @@ export function evaluarPrCon(n, io) {
     main,
     ejecutada: esSha(io.ejecutada) ? io.ejecutada : null,
     reviews: ok ? t(() => io.leerReviews(n)) : null,
+    comentarios: ok ? t(() => io.leerComentarios(n)) : null,
+    hilos: ok ? t(() => io.leerHilos(n)) : null,
     riesgo: ok && main ? t(() => io.verificarRiesgo(n, pr.head_sha, main, pr.body)) : null,
     gates: ok ? t(() => io.leerGates(pr.head_sha)) : null,
     jobsEsperados: t(() => jobsDeGates(io.gatesYml())) ?? [],
@@ -286,11 +379,11 @@ export function evaluarPrCon(n, io) {
 /** Check-run para el HEAD. Report-only: conclusión siempre `neutral`; el veredicto va en el título. */
 export function checkRun(v) {
   const titulo = v.veredicto === 'pass'
-    ? `report-only: PASS — firma delegada válida para #${v.pr} @ ${corto(v.sha)} sobre main ${corto(v.main)} (no habilita merge; manda el AUDIT de ChatGPT)`
+    ? `report-only: PASS — preauditoría Codex sin hallazgos para #${v.pr} @ ${corto(v.sha)} sobre main ${corto(v.main)} (no es aprobación: manda el AUDIT de ChatGPT)`
     : `report-only: FAIL — ${v.motivos[0]}${v.motivos.length > 1 ? ` (+${v.motivos.length - 1})` : ''}`;
   const resumen = [
-    `veredicto: **${v.veredicto.toUpperCase()}** (report-only, PoC P-06: nunca habilita merge)`,
-    `pr: #${v.pr} · sha: ${v.sha} · review_id: ${v.review_id ?? '—'} · author_id: ${v.author_id ?? '—'}`,
+    `veredicto: **${v.veredicto.toUpperCase()}** (report-only, PoC P-06: preauditoría, nunca aprobación formal ni habilita merge)`,
+    `pr: #${v.pr} · sha: ${v.sha} · marcador_id: ${v.marcador_id ?? '—'} · author_id: ${v.author_id ?? '—'}`,
     `tupla: pr #${v.pr} · head ${v.sha} · main ${v.main ?? '—'} · política ${v.politica ?? '—'} · riesgo efectivo ${v.riesgo ?? '—'} · run ${v.run ?? '—'} attempt ${v.attempt ?? '—'}`,
     `riesgo: efectivo ${v.riesgo ?? '—'} · calculado ${v.calculado ?? '—'} · declarado ${v.declarado ?? '—'} · probado ${v.probado ?? '—'} sobre main ${v.base_probada ?? '—'} · rondas: ${v.rondas}`,
     '',
@@ -311,7 +404,7 @@ export function sinVeredicto({ number, head_sha }, error) {
   return failSobre({ number, head_sha }, motivo);
 }
 
-const failSobre = ({ number, head_sha }, motivo) => ({ veredicto: 'fail', motivos: [motivo], pr: number, sha: head_sha, main: null, politica: null, review_id: null, author_id: null, riesgo: null, calculado: null, declarado: null, run: null, attempt: null, probado: null, base_probada: null, rondas: 0, ignoradas: [] });
+const failSobre = ({ number, head_sha }, motivo) => ({ veredicto: 'fail', motivos: [motivo], pr: number, sha: head_sha, main: null, politica: null, marcador_id: null, author_id: null, riesgo: null, calculado: null, declarado: null, run: null, attempt: null, probado: null, base_probada: null, rondas: 0, ignoradas: [] });
 
 /**
  * HEAD compartido (AUDIT: CAMBIOS @ 9332156, P2 3): el check tiene alcance de commit, no de
@@ -364,7 +457,7 @@ export function cicloCi(prs, { evaluarPr, publicar, relistar, abiertos = prs, lo
       }
     }
     const url = publicar(v);
-    const linea = `#${p.number} @ ${String(v.sha).slice(0, 12)}: ${v.veredicto.toUpperCase()} (report-only) — riesgo ${v.riesgo ?? '—'} · review ${v.review_id ?? '—'} · gates ${v.run ?? '—'}/${v.attempt ?? '—'}${v.motivos.length ? ` · ${v.motivos.join(' | ')}` : ''}`;
+    const linea = `#${p.number} @ ${String(v.sha).slice(0, 12)}: ${v.veredicto.toUpperCase()} (report-only) — riesgo ${v.riesgo ?? '—'} · marcador ${v.marcador_id ?? '—'} · gates ${v.run ?? '—'}/${v.attempt ?? '—'}${v.motivos.length ? ` · ${v.motivos.join(' | ')}` : ''}`;
     log(`::notice title=delegated-audit-gate #${p.number}::${linea.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`);
     if (!url) { log(`::error title=delegated-audit-gate #${p.number}::no se pudo publicar el check tras 3 intentos`); rc = 1; }
   }

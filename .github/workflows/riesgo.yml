@@ -125,12 +125,18 @@ jobs:
           fi
           # sin PR abiertos grep sale 1: no es un error (Codex #82, P2)
           PRS=$(printf '%s\n' "$PRS" | { grep -E '^[0-9]+(:[0-9a-f]{40}(:otra)?)?$' || true; } | awk -F: '!visto[$1]++' | tr '\n' ' ')
+          # hallazgo 3 (#54): el resultado de ESTA ejecución clasifica solo al PR del evento; los
+          # demás PR re-evaluados reciben su veredicto en su propio check-run. Sin PR objetivo
+          # (push a main, `closed` o workflow viejo) solo un error de infraestructura da rojo.
+          export RIESGO_OBJETIVO=""
+          if [ -n "$PR_EVT" ] && [ "${WF_VIEJO:-1}" = 0 ] && [ "${EVT_ACTION:-}" != closed ]; then RIESGO_OBJETIVO=$PR_EVT; fi
+          echo "PR objetivo: ${RIESGO_OBJETIVO:-ninguno}"
           echo "PR a evaluar: ${PRS:-ninguno}"
           [ -n "$PRS" ] || exit 0
           set +e
           scripts/collab/riesgo-ci.sh $PRS 2>&1 | tee "$RUNNER_TEMP/riesgo.out"; RC=${PIPESTATUS[0]}
           set -e
           ENC=$(tail -n 40 "$RUNNER_TEMP/riesgo.out" | sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g')
-          if [ "$RC" = 0 ]; then echo "::notice title=riesgo OK::$ENC"; else echo "::error title=riesgo: algún PR rechazado, caducado o sin veredicto::$ENC"; fi
+          if [ "$RC" = 0 ]; then echo "::notice title=riesgo OK::$ENC"; else echo "::error title=riesgo: el PR del evento quedó rechazado, caducado o sin veredicto, o falló la API::$ENC"; fi
           [ "${WF_VIEJO:-1}" = 0 ] || RC=1
           exit "$RC"
