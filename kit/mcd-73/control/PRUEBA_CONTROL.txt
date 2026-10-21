@@ -61,7 +61,7 @@ OK    «Restaurar niveles» deja todo en 100 % y color de escena
 OK    blackout: pantallas, luces y reloj en 0
 OK    soltar blackout recupera los niveles
 OK    show determinista: el mismo t da exactamente la misma salida
-OK    Play avanza el reloj del show (t=1.08 s tras 1,2 s)
+OK    Play avanza el reloj del show (t=1.12 s tras 1,2 s)
 OK    Pausa congela el show
 OK    el show termina en 15 s y se detiene
 OK    a los 4 s la ola roja avanzó desde Corrientes (izquierda) hacia Pellegrini

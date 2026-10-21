@@ -881,7 +881,7 @@
     const regla = p.querySelector('#regla');
     for (let s = 0; s <= D; s++) { const sp = document.createElement('span'); sp.style.left = (s / D * 100) + '%'; sp.textContent = s + 's'; if (s === 0) sp.style.transform = 'none'; if (s === D) sp.style.transform = 'translateX(-100%)'; regla.appendChild(sp); }
     for (const t of PISTAS) {
-      const nom = document.createElement('div'); nom.className = 'nom'; nom.innerHTML = `<i style="background:${t.color}"></i>${t.nombre}`; p.appendChild(nom);
+      const nom = document.createElement('div'); nom.className = 'nom'; nom.innerHTML = `<i style="background:${t.color}"></i><span>${t.nombre}</span>`; nom.title = t.nombre; p.appendChild(nom);
       const pista = document.createElement('div'); pista.className = 'pista';
       t.dom = [];
       for (const [a, b, txt] of t.clips) {

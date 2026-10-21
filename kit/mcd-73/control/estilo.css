@@ -425,3 +425,16 @@ body.vitrina .app { height: 100vh !important; min-height: 0 !important; }
 body.vitrina main { height: 100vh !important; padding: 0 !important; }
 body.vitrina .escenario { height: 100vh !important; }
 @media (max-width: 1100px) { .shows-lista { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); } }
+/* Línea de tiempo: los nombres de pista en una sola línea (en tablet/celular se partían en dos y se encimaban) */
+.pistas .nom { white-space: nowrap; overflow: hidden; min-width: 0; }
+.pistas .nom i { flex: none; }
+.pistas .nom span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+@media (max-width: 1100px) {
+  .pistas { grid-template-columns: 128px minmax(0, 1fr); row-gap: 5px; }
+  .pistas .nom, .pista { height: 20px; } .pistas .nom { font-size: 12px; }
+}
+/* Aviso «Cargá el show…»: cubre toda la línea de tiempo y se lee en un recuadro (antes quedaba corrido y encima del texto de las pistas) */
+.vacio-tl { left: -8px !important; top: 0 !important; background: rgba(11, 18, 32, .86) !important; z-index: 3; }
+.vacio-tl { font-size: 14px; font-weight: 600; color: var(--texto); }
+
+@media (max-width: 1100px) { .vacio-tl { left: -28px !important; } }
