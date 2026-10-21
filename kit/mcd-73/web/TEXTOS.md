@@ -6,7 +6,7 @@ Fuente: `kit/mcd-73/web/public/index.html` y la pantalla de entrada en `src/work
 
 **Lo que no se cambia** (son datos verificados):
 - las medidas: Corrientes 7,68 × 3,84 m y Pellegrini 9,60 × 3,84 m;
-- 3 pantallas, 46 luminarias y 15 segundos por show;
+- 3 pantallas y 46 luminarias;
 - la receta del celeste: 0 % rojo, 28 % verde, 53 % azul, 51 % blanco;
 - que es una simulación, no conectada a los equipos reales;
 - los estados de los módulos: «en desarrollo» o «próximo»;
@@ -19,7 +19,7 @@ Fuente: `kit/mcd-73/web/public/index.html` y la pantalla de entrada en `src/work
 - **P-05** (p): Frente al Obelisco, EL TRUST propone una experiencia publicitaria integrada: dos nuevas pantallas LED exteriores P5, la pantalla central existente y 46 luminarias arquitectónicas. Su propuesta de valor: coordinar imagen, movimiento e iluminación para que cada marca ocupe la esquina con una sola pieza. Este portal permite conocer la propuesta y visualizar campañas en una simulación, antes de su implementación real.
 - **P-06** (li): 3 pantallas LED
 - **P-07** (li): 46 luces de fachada
-- **P-08** (retirado): el dato «15 s cada show» se sacó del inicio a pedido de Fer (21/10/2026).
+- **P-08** (retirado): se eliminó del inicio toda referencia a una duración fija por show a pedido de Fer (21/10/2026).
 - **P-09** (h2): Una esquina emblemática, una nueva forma de comunicar
 - **P-10** (p): Av. Corrientes y Carlos Pellegrini es una de las esquinas más reconocibles del entorno del Obelisco. La propuesta aprovecha esa ubicación y las distintas perspectivas desde la calle para incorporar la fachada a la comunicación de las marcas, tanto durante el día como por la noche.
 - **P-11** (p): EL TRUST reúne soportes digitales e iluminación arquitectónica en una misma propuesta creativa. Las marcas podrán plantear campañas habituales y momentos especiales en los que imágenes, colores y movimientos acompañen toda la fachada. La intención es que cada intervención se reconozca como una experiencia del edificio, y no como una suma de avisos independientes.
@@ -43,7 +43,7 @@ Fuente: `kit/mcd-73/web/public/index.html` y la pantalla de entrada en `src/work
 - **P-29** (p): Como ejemplo, el celeste de la camiseta se representa con esta configuración: 0 % rojo, 28 % verde, 53 % azul y 51 % blanco. Definir estas combinaciones permite mantener un criterio de color a lo largo de la propuesta, sujeto a los ajustes que requieran las luminarias reales.
 - **P-30** (h2): TRUST Control: una vista previa de toda la experiencia
 - **P-31** (p): TRUST Control reúne en una línea de tiempo el contenido de las pantallas y los cambios de iluminación de la fachada. El equipo puede detener la secuencia, revisar un instante concreto y comparar distintas propuestas antes de aprobar una versión creativa. Actualmente se trata de una herramienta de simulación, sin conexión con los equipos del edificio.
-- **P-32** (p): El formato de referencia dura 15 segundos. Incluye una entrada, el desarrollo del mensaje, un momento central de máxima presencia visual —o takeover— y un cierre que devuelve la fachada a su estado inicial. En ese momento central, una marca puede plantear una composición coordinada entre pantallas y luces: un recurso para lanzamientos, celebraciones y activaciones puntuales.
+- **P-32** (p): Cada show puede configurarse con la duración que requiera la campaña. Puede incluir una entrada, el desarrollo del mensaje, un momento central de máxima presencia visual —o takeover— y un cierre que devuelve la fachada a su estado inicial. La estructura y los tiempos se adaptan a cada contenido, lanzamiento, celebración o activación.
 - **P-33** (h2): Una propuesta para verse de día y de noche
 - **P-34** (p): Las nuevas pantallas P5 se proyectan para uso exterior, con luminosidad adecuada para entornos de alta luz ambiente; sus valores definitivos deben validarse en la ficha técnica del equipo seleccionado. Durante el día se priorizan mensajes de lectura rápida y contraste. Por la noche, la iluminación arquitectónica puede ampliar la presencia de la campaña sobre la fachada. El simulador permite comparar ambas situaciones, pero no reemplaza las pruebas de brillo en el edificio.
 - **P-35** (h2): Tres superficies, un relato pensado para cada mirada
@@ -124,7 +124,7 @@ Agregados el 20/10/2026:
 Agregados el 20/10/2026 (programación de 20,5 h):
 - **P-105** (inicio, dato): 20,5 h de operación diaria propuestas
 - **P-106** (h2): Programación propuesta: 20,5 horas por día
-- **P-107** (p): Se propone organizar shows de 15 segundos dentro de una grilla de exhibición de 20,5 horas diarias. La programación puede variar según el día y la franja horaria: por ejemplo, una presencia regular de producto durante la jornada y una secuencia especial para un lanzamiento o una fecha relevante. Los horarios son una propuesta inicial pendiente de confirmación.
+- **P-107** (p): Se propone organizar shows de duración configurable dentro de una grilla de exhibición de 20,5 horas diarias. Cada pieza puede tener el tiempo que requieran su contenido y su objetivo. La programación puede variar según el día y la franja horaria: por ejemplo, una presencia regular de producto durante la jornada y una secuencia especial para un lanzamiento o una fecha relevante. Los horarios son una propuesta inicial pendiente de confirmación.
 - **P-108** (p): La grilla permite calcular la cantidad prevista de reproducciones por hora, día y semana, ordenar la convivencia entre campañas y definir cuándo participaría la iluminación de fachada. Son estimaciones de programación, no mediciones de audiencia ni constancias de emisión real.
 - **P-109** (barra del día): Pantallas · 06:00 a 02:30 (20,5 h) · Iluminación de fachada · 19:30 a 06:30 · Propuesta inicial: horario de operación y franja de iluminación editables en «Programación», más abajo.
 - **P-110** (h2 herramienta): Programación
@@ -140,7 +140,7 @@ Nuevos capítulos editoriales (revisión P5 y contenido anamórfico, 20/10/2026)
 - **P-114** (p, capítulo de 3D anamórfico): Con las nuevas pantallas exteriores P5 se prevé desarrollar piezas tridimensionales con perspectiva forzada: por ejemplo, un producto que parezca adquirir volumen o sobresalir visualmente del marco de la pantalla. No se trata de reproducir cualquier video 3D. Cada animación debe modelarse y renderizarse para el tamaño de las pantallas, su disposición y el punto desde el cual se quiere producir el efecto.
 - **P-115** (p, capítulo de 3D anamórfico): El efecto anamórfico funciona mejor desde ángulos de observación definidos; desde otros lugares puede verse distinto. Por eso se propone validar los encuadres con Previs y realizar pruebas de lectura, contraste y movimiento antes de la producción final. La pantalla P5 aporta definición, pero es el diseño de perspectiva el que genera la ilusión.
 - **P-116** (h2, nuevo capítulo después de la demostración de campaña): Una propuesta para las campañas y los momentos especiales de McDonald's
-- **P-117** (p, capítulo de propuesta comercial): EL TRUST permitiría combinar presencia publicitaria programada con intervenciones especiales de 15 segundos en las que la marca ocupe visualmente las pantallas y acompañe la fachada con iluminación. Es un formato para explorar lanzamientos, promociones, campañas vinculadas con la Selección y otras fechas de alto interés, siempre con piezas y mensajes aprobados por McDonald's.
+- **P-117** (p, capítulo de propuesta comercial): EL TRUST permitiría combinar presencia publicitaria programada con intervenciones especiales de duración flexible, definidas según el objetivo, el contenido y la campaña, en las que la marca ocupe visualmente las pantallas y acompañe la fachada con iluminación. Es un formato para explorar lanzamientos, promociones, campañas vinculadas con la Selección y otras fechas de alto interés, siempre con piezas y mensajes aprobados por McDonald's.
 - **P-118** (retirado): sin texto; párrafo eliminado del portal a pedido de Affinitas.
 
 ## Cómo devolver los cambios
