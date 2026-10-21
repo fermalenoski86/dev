@@ -123,15 +123,15 @@ Agregados el 20/10/2026:
 
 Agregados el 20/10/2026 (programación de 20,5 h):
 - **P-105** (inicio, dato): 20,5 h de operación diaria propuestas
-- **P-106** (h2): Programación propuesta: 20,5 horas por día
-- **P-107** (p): Se propone organizar shows de duración configurable dentro de una grilla de exhibición de 20,5 horas diarias. Cada pieza puede tener el tiempo que requieran su contenido y su objetivo. La programación puede variar según el día y la franja horaria: por ejemplo, una presencia regular de producto durante la jornada y una secuencia especial para un lanzamiento o una fecha relevante. Los horarios son una propuesta inicial pendiente de confirmación.
-- **P-108** (p): La grilla permite calcular la cantidad prevista de reproducciones por hora, día y semana, ordenar la convivencia entre campañas y definir cuándo participaría la iluminación de fachada. Son estimaciones de programación, no mediciones de audiencia ni constancias de emisión real.
-- **P-109** (barra del día): Pantallas · 06:00 a 02:30 (20,5 h) · Iluminación de fachada · 19:30 a 06:30 · Propuesta inicial: horario de operación y franja de iluminación editables en «Programación», más abajo.
+- **P-106** (h2): 20,5 horas de operación · mayor valor entre las 19:00 y las 02:00
+- **P-107** (p): Las pantallas están previstas para operar de 06:00 a 02:30. Esa amplitud permite cubrir desayuno, jornada laboral, turismo, teatro, gastronomía y actividad nocturna. No todas las horas tienen el mismo valor comercial: proponemos considerar de 19:00 a 02:00 como franja premium y, dentro de ella, de 20:00 a 00:30 como el núcleo de mayor intensidad para lanzamientos, takeovers y contenidos de alto impacto.
+- **P-108** (p): La iluminación arquitectónica puede acompañar desde el atardecer hasta el cierre operativo —como referencia inicial, de 19:00 a 02:30— y extenderse en eventos especiales. Todos los horarios son editables y deberán ajustarse según la época del año, la programación y las condiciones operativas del edificio.
+- **P-109** (barra del día): Pantallas · 06:00 a 02:30 (20,5 h) · Franja premium propuesta · 19:00 a 02:00 · pico 20:00 a 00:30 · Iluminación de fachada · 19:00 a 02:30 · Referencia comercial preliminar; horarios editables.
 - **P-110** (h2 herramienta): Programación
 - **P-111** (p): Esta herramienta de prueba permite organizar una programación semanal por día y franja horaria. Se seleccionan las horas, se arma el orden de las piezas y se calcula su cantidad estimada de reproducciones. La grilla todavía no envía instrucciones al edificio ni acredita exhibiciones efectivamente realizadas.
 - **P-112** (controles): Operación · Luces de fachada · Todo el día · Toda la semana · Ninguna · Sumar pieza al loop · Aplicar a las horas elegidas · Salidas por pieza (Pieza, Salidas lunes, Salidas semana, Tiempo al aire) · Institucional del edificio · Pantallas en reposo
 
-**A confirmar por Affinitas** (valores de la propuesta inicial, editables en la grilla): horario de operación 06:00 a 02:30 y franja de iluminación de fachada 19:30 a 06:30.
+**A confirmar por Affinitas** (valores iniciales editables): horario de operación 06:00 a 02:30; franja premium comercial 19:00 a 02:00, con núcleo propuesto 20:00 a 00:30; iluminación de fachada desde el atardecer, con referencia inicial 19:00 a 02:30 y extensión posible en eventos especiales.
 
 
 
