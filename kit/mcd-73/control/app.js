@@ -207,9 +207,13 @@
 
   // Resolución dinámica (19/10): si un cuadro tarda más de ~45 ms mientras el show corre, el lienzo baja de resolución por
   // pasos (el CSS lo muestra al mismo tamaño) para que los controles sigan respondiendo; en pausa vuelve a la nitidez completa.
-  let ESCALA_RENDER = 1, lentos = 0, rapidos = 0;
+  let ESCALA_RENDER = 1, lentos = 0, rapidos = 0, quietoDesde = 0, volverTO = null;
   function medirCuadro(ms, animando) {
-    if (!animando) { if (ESCALA_RENDER !== 1) { ESCALA_RENDER = 1; lentos = rapidos = 0; ajustarTamano(); } return; }
+    if (!animando) {   // vuelve a nitidez completa solo si queda quieto 1,5 s (en los shows que se repiten no sube y baja en cada vuelta)
+      if (ESCALA_RENDER !== 1 && !volverTO) volverTO = setTimeout(() => { volverTO = null; if (ESCALA_RENDER !== 1 && !(M.estado().show.reproduciendo)) { ESCALA_RENDER = 1; lentos = rapidos = 0; ajustarTamano(); } }, 1500);
+      return;
+    }
+    if (volverTO) { clearTimeout(volverTO); volverTO = null; }
     if (ms > 45) { lentos++; rapidos = 0; } else if (ms < 22) { rapidos++; lentos = 0; } else { lentos = rapidos = 0; }
     if (lentos >= 3 && ESCALA_RENDER > 0.65) { ESCALA_RENDER = Math.max(0.65, +(ESCALA_RENDER - 0.15).toFixed(2)); lentos = 0; ajustarTamano(); }
     else if (rapidos >= 30 && ESCALA_RENDER < 1) { ESCALA_RENDER = Math.min(1, +(ESCALA_RENDER + 0.15).toFixed(2)); rapidos = 0; ajustarTamano(); }
@@ -230,7 +234,12 @@
     lienzo.style.flex = 'none';
     const pw = Math.round(cssW * dpr), ph = Math.round(cssH * dpr);
     if (lienzo.width !== pw || lienzo.height !== ph) {
+      // Cambiar el tamaño de un canvas lo borra: sin esto, cada ajuste de resolución (que el motor hace solo
+      // al reproducir en equipos lentos, y al terminar el show) mostraba un cuadro negro, como un «pestañeo».
+      let foto = null;
+      if (lienzo.width && lienzo.height) { foto = mk(lienzo.width, lienzo.height); foto.getContext('2d').drawImage(lienzo, 0, 0); }
       lienzo.width = pw; lienzo.height = ph;
+      if (foto) ctx.drawImage(foto, 0, 0, pw, ph);
       // los mapas de luz son suaves: se calculan a MEDIA resolución y se escalan (interpolación bilineal = más suavidad)
       capaLuz.width = Math.ceil(pw / 2); capaLuz.height = Math.ceil(ph / 2); capaTinte.width = capaLuz.width; capaTinte.height = capaLuz.height;
     }
