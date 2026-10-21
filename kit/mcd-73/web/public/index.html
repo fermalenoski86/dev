@@ -189,6 +189,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
 .dia-24 .seg { position: absolute; top: 0; bottom: 0; }
 .dia-24 .seg.op { background: var(--sodio); }
 .dia-24 .seg.ilum { background: var(--celeste); }
+.dia-24 .seg.premium { background: linear-gradient(90deg, #F2A63B, #FFD36A); box-shadow: 0 0 12px rgba(242,166,59,.35); }
 .dia-24 .reglas { position: relative; height: 18px; grid-column: 2; }
 .dia-24 .marca-h { position: absolute; top: 0; font-size: 12px; color: var(--niebla); transform: translateX(-50%); }
 .programacion { grid-template-columns: minmax(0, 0.55fr) minmax(0, 1.75fr); }
@@ -416,14 +417,14 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
 
   <article class="ancho" id="cap-programacion">
     <div class="cabeza">
-      <h2>Programación propuesta: 20,5 horas por día</h2>
+      <h2>20,5 horas de operación · mayor valor entre las 19:00 y las 02:00</h2>
       <div>
-        <p>Se propone organizar shows de duración configurable dentro de una grilla de exhibición de 20,5 horas diarias. Cada pieza puede tener el tiempo que requieran su contenido y su objetivo. La programación puede variar según el día y la franja horaria: por ejemplo, una presencia regular de producto durante la jornada y una secuencia especial para un lanzamiento o una fecha relevante. Los horarios son una propuesta inicial pendiente de confirmación.</p>
-        <p>La grilla permite calcular la cantidad prevista de reproducciones por hora, día y semana, ordenar la convivencia entre campañas y definir cuándo participaría la iluminación de fachada. Son estimaciones de programación, no mediciones de audiencia ni constancias de emisión real.</p>
+        <p>Las pantallas están previstas para operar de 06:00 a 02:30. Esa amplitud permite cubrir desayuno, jornada laboral, turismo, teatro, gastronomía y actividad nocturna. No todas las horas tienen el mismo valor comercial: proponemos considerar de 19:00 a 02:00 como franja premium y, dentro de ella, de 20:00 a 00:30 como el núcleo de mayor intensidad para lanzamientos, takeovers y contenidos de alto impacto.</p>
+        <p>La iluminación arquitectónica puede acompañar desde el atardecer hasta el cierre operativo —como referencia inicial, de 19:00 a 02:30— y extenderse en eventos especiales. Todos los horarios son editables y deberán ajustarse según la época del año, la programación y las condiciones operativas del edificio.</p>
       </div>
     </div>
     <div class="dia-24" id="dia-24" aria-label="Un día de operación del edificio"></div>
-    <p class="rotulo-img">Propuesta inicial: horario de operación y franja de iluminación editables en «Programación», más abajo.</p>
+    <p class="rotulo-img">Referencia comercial preliminar. Operación, franja de iluminación y programación son editables.</p>
   </article>
 
   <article class="capitulo">
@@ -499,7 +500,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     <div>
       <div class="prog-ajustes">
         <label>Operación <input type="time" id="op-desde" value="06:00"> a <input type="time" id="op-hasta" value="02:30"></label>
-        <label>Luces de fachada <input type="time" id="no-desde" value="19:30"> a <input type="time" id="no-hasta" value="06:30"></label>
+        <label>Luces de fachada <input type="time" id="no-desde" value="19:00"> a <input type="time" id="no-hasta" value="02:30"></label>
         <span class="gasto" id="prog-total"></span>
       </div>
       <div class="prog-grilla-caja"><table class="prog-grilla" id="prog-grilla" aria-label="Grilla semanal: horas por día"></table></div>
@@ -825,6 +826,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       const c = $('dia-24'); if (!c) return;
       const pct = (m) => (m / 1440) * 100, seg = (a, b, cls) => { a = min(a); b = min(b); const l = b > a ? [[a, b]] : [[a, 1440], [0, b]]; return l.map(([x, y]) => `<div class="seg ${cls}" style="left:${pct(x)}%;width:${pct(y - x)}%"></div>`).join(''); };
       c.innerHTML = `<span class="nom">Pantallas · ${P.operacion.desde} a ${P.operacion.hasta} (${(horas().total / 60).toLocaleString('es-AR')} h)</span><div class="eje">${seg(P.operacion.desde, P.operacion.hasta, 'op')}</div>` +
+        `<span class="nom">Franja premium propuesta · 19:00 a 02:00 · pico 20:00 a 00:30</span><div class="eje">${seg('19:00', '02:00', 'premium')}</div>` +
         `<span class="nom">Iluminación de fachada · ${P.noche.desde} a ${P.noche.hasta}</span><div class="eje">${seg(P.noche.desde, P.noche.hasta, 'ilum')}</div>` +
         `<div class="reglas">${[0, 3, 6, 9, 12, 15, 18, 21, 24].map((h) => `<span class="marca-h" style="left:${pct(h * 60)}%">${hh(h % 24)}</span>`).join('')}</div>`;
     }
@@ -848,8 +850,10 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     (async () => {
       try { const l = await pedir('/api/piezas'); piezas = [...l.filter((p) => !p.faltan).map((p) => ({ id: p.id, titulo: p.titulo })), ...ESPECIALES]; } catch (e) {}
       try { P = await (await fetch('/api/programa')).json(); } catch (e) { P = null; }
-      if (P && P.operacion) { $('op-desde').value = P.operacion.desde; $('op-hasta').value = P.operacion.hasta; $('no-desde').value = P.noche.desde; $('no-hasta').value = P.noche.hasta; }
-      else porDefecto();
+      if (P && P.operacion) {
+        if (P.noche && P.noche.desde === '19:30' && P.noche.hasta === '06:30') P.noche = { desde: '19:00', hasta: '02:30' };
+        $('op-desde').value = P.operacion.desde; $('op-hasta').value = P.operacion.hasta; $('no-desde').value = P.noche.desde; $('no-hasta').value = P.noche.hasta;
+      } else porDefecto();
       pintarGrilla(); editor();
     })();
   })();
