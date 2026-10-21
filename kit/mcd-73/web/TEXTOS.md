@@ -16,10 +16,10 @@ Fuente: `kit/mcd-73/web/public/index.html` y la pantalla de entrada en `src/work
 - **P-02** (a): Crear una pieza
 - **P-03** (a): Material
 - **P-04** (a): Salir
-- **P-05** (p): Frente al Obelisco, EL TRUST propone una experiencia publicitaria integrada: dos nuevas pantallas LED exteriores P5, la pantalla central existente y 46 luminarias arquitectónicas. El objetivo es coordinar imagen, movimiento e iluminación en shows de 15 segundos. Este portal permite conocer la propuesta y visualizar campañas en una simulación, antes de su implementación real.
+- **P-05** (p): Frente al Obelisco, EL TRUST propone una experiencia publicitaria integrada: dos nuevas pantallas LED exteriores P5, la pantalla central existente y 46 luminarias arquitectónicas. Su propuesta de valor: coordinar imagen, movimiento e iluminación para que cada marca ocupe la esquina con una sola pieza. Este portal permite conocer la propuesta y visualizar campañas en una simulación, antes de su implementación real.
 - **P-06** (li): 3 pantallas LED
 - **P-07** (li): 46 luces de fachada
-- **P-08** (li): 15 s cada show
+- **P-08** (retirado): el dato «15 s cada show» se sacó del inicio a pedido de Fer (21/10/2026).
 - **P-09** (h2): Una esquina emblemática, una nueva forma de comunicar
 - **P-10** (p): Av. Corrientes y Carlos Pellegrini es una de las esquinas más reconocibles del entorno del Obelisco. La propuesta aprovecha esa ubicación y las distintas perspectivas desde la calle para incorporar la fachada a la comunicación de las marcas, tanto durante el día como por la noche.
 - **P-11** (p): EL TRUST reúne soportes digitales e iluminación arquitectónica en una misma propuesta creativa. Las marcas podrán plantear campañas habituales y momentos especiales en los que imágenes, colores y movimientos acompañen toda la fachada. La intención es que cada intervención se reconozca como una experiencia del edificio, y no como una suma de avisos independientes.
