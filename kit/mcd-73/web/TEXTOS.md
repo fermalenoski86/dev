@@ -1,6 +1,6 @@
 # Textos del portal EL TRUST (trust.affinitas.com.ar)
 
-Versión formal del 20/10/2026 (tono para gerencia de marketing): los textos de la presentación se reescribieron más formales y explicativos, con los mismos datos.
+Revisión editorial del 20/10/2026 para marketing de McDonald's: LED exterior P5, contenidos 3D anamórficos y propuesta comercial, con capacidades presentes y futuras diferenciadas.
 
 Fuente: `kit/mcd-73/web/public/index.html` y la pantalla de entrada en `src/worker.js`. Cada línea tiene un código (P-01, P-02…) para poder devolver los cambios por código.
 
@@ -16,66 +16,66 @@ Fuente: `kit/mcd-73/web/public/index.html` y la pantalla de entrada en `src/work
 - **P-02** (a): Crear una pieza
 - **P-03** (a): Material
 - **P-04** (a): Salir
-- **P-05** (p): EL TRUST es una propuesta para transformar el edificio de Av. Corrientes y Carlos Pellegrini, frente al Obelisco, en un espacio de comunicación para marcas. En esta presentación mostramos cómo se pueden combinar tres pantallas LED y 46 luminarias de fachada para desarrollar, visualizar y revisar una campaña antes de su implementación.
+- **P-05** (p): Frente al Obelisco, EL TRUST propone una experiencia publicitaria integrada: dos nuevas pantallas LED exteriores P5, la pantalla central existente y 46 luminarias arquitectónicas. El objetivo es coordinar imagen, movimiento e iluminación en shows de 15 segundos. Este portal permite conocer la propuesta y visualizar campañas en una simulación, antes de su implementación real.
 - **P-06** (li): 3 pantallas LED
 - **P-07** (li): 46 luces de fachada
 - **P-08** (li): 15 s cada show
-- **P-09** (h2): Un edificio, una experiencia de marca integrada
-- **P-10** (p): En la esquina de Av. Corrientes y Carlos Pellegrini, frente al Obelisco, EL TRUST ocupa una ubicación emblemática de Buenos Aires. Su exposición al movimiento peatonal y vehicular permite pensar la fachada como un espacio de comunicación visible desde distintos puntos del entorno.
-- **P-11** (p): La propuesta reúne tres pantallas LED y 46 luminarias de fachada bajo una misma dirección creativa. En lugar de presentar anuncios aislados, permite coordinar imágenes, mensajes y colores sobre la arquitectura del edificio para que cada campaña tenga una identidad visual coherente.
-- **P-12** (h2): Tres pantallas para comunicar una misma campaña
-- **P-13** (p): Las dos pantallas superiores se ubican a cada lado de la cúpula: la de Corrientes mide 7,68 × 3,84 m y la de Pellegrini, 9,60 × 3,84 m. Una tercera pantalla, de formato horizontal, se extiende sobre la fachada por encima del primer piso. Cada ubicación cumple una función dentro del conjunto.
-- **P-14** (p): Como las pantallas tienen proporciones diferentes a las de un video convencional, cada contenido debe prepararse para su formato. Esto permite conservar la legibilidad de los mensajes, respetar las imágenes de producto y evitar recortes que alteren la identidad de la campaña.
-- **P-15** (h2): 46 luminarias para integrar la fachada a la campaña
-- **P-16** (p): Las 46 luminarias se distribuyen en tres niveles de la fachada y en la ochava. Se pueden organizar por sectores o trabajar de manera individual para acompañar los colores de una marca, destacar partes del edificio y generar cambios de iluminación durante una pieza.
-- **P-17** (p): La simulación permite anticipar cómo se verían los haces de luz sobre la piedra y las cornisas, y cómo convivirían con las pantallas. Es una herramienta de revisión visual: la apariencia definitiva deberá comprobarse y ajustarse sobre el edificio y sus equipos reales.
+- **P-09** (h2): Una esquina emblemática, una nueva forma de comunicar
+- **P-10** (p): Av. Corrientes y Carlos Pellegrini es una de las esquinas más reconocibles del entorno del Obelisco. La propuesta aprovecha esa ubicación y las distintas perspectivas desde la calle para incorporar la fachada a la comunicación de las marcas, tanto durante el día como por la noche.
+- **P-11** (p): EL TRUST reúne soportes digitales e iluminación arquitectónica en una misma propuesta creativa. Las marcas podrán plantear campañas habituales y momentos especiales en los que imágenes, colores y movimientos acompañen toda la fachada. La intención es que cada intervención se reconozca como una experiencia del edificio, y no como una suma de avisos independientes.
+- **P-12** (h2): Pantallas LED exteriores P5 para campañas de alto impacto
+- **P-13** (p): Las dos nuevas pantallas superiores utilizarán tecnología LED outdoor P5, con una separación de 5 mm entre píxeles, pensada para contenidos detallados y exhibición exterior. La de Corrientes mide 7,68 × 3,84 m y la de Pellegrini, 9,60 × 3,84 m. Se complementan con la pantalla horizontal existente, ubicada por encima del primer piso. Las tres superficies se conciben como partes de una misma campaña, aunque no tengan el mismo formato ni necesariamente la misma tecnología.
+- **P-14** (p): El paso de píxel P5 permite trabajar con detalle en productos, texturas, tipografías y animaciones. Cada pieza se preparará en la proporción de su pantalla, sin estirar videos convencionales ni cortar logotipos. Esa precisión también es una buena base para producir contenido 3D anamórfico, diseñado especialmente para la arquitectura y los puntos de observación del entorno.
+- **P-15** (h2): La fachada también forma parte del mensaje
+- **P-16** (p): Las 46 luminarias RGBW proyectadas se distribuyen en tres niveles y en la ochava. Podrán acompañar los colores de cada campaña, destacar cornisas y volúmenes o generar movimientos por sectores. La arquitectura de control prevista permitirá coordinar esos cambios con los contenidos de las pantallas; la integración con el equipamiento real sigue siendo una etapa pendiente.
+- **P-17** (p): La simulación permite ensayar cómo se distribuye la luz sobre los materiales y relieves de la fachada, sin perder de vista las pantallas. Sirve para discutir decisiones creativas y anticipar ajustes de dirección, intensidad y color. El resultado final deberá calibrarse y comprobarse con las luminarias instaladas.
 - **P-18** (button): Barrido
 - **P-19** (button): Ola
 - **P-20** (button): Latido
 - **P-21** (button): Destellos
 - **P-22** (button): Degradé
 - **P-23** (button): Tramos
-- **P-24** (h2): Efectos de iluminación disponibles para las campañas
-- **P-25** (p): Esta sección permite probar distintos movimientos de luz sobre una representación del edificio. Cada punto corresponde a una luminaria y cada efecto muestra una alternativa de animación que puede combinarse con el contenido de las pantallas.
+- **P-24** (h2): Movimientos de luz para cada momento de una campaña
+- **P-25** (p): Los efectos de esta sección muestran cómo puede participar la arquitectura de una pieza publicitaria. Se prueba un movimiento a la vez sobre la representación del edificio, para evaluar qué recorrido acompaña mejor el producto, el mensaje o el ritmo de una campaña.
 - **P-26** (p): Barrido: la iluminación recorre la fachada de Corrientes a Pellegrini. Ola: la luz asciende desde los niveles inferiores. Latido: dos pulsos consecutivos. Destellos: se encienden luminarias puntuales sobre una iluminación de base. Degradé: los colores cambian progresivamente a lo largo del edificio. Tramos: distintos sectores se activan por turnos para acompañar los momentos de una campaña.
 - **P-27** (h2): Los colores de la marca, también en la arquitectura
 - **P-28** (p): El sistema de iluminación utiliza luminarias RGBW, que combinan rojo, verde, azul y un canal independiente de blanco. Para representar cada color se define una combinación controlada de canales: como máximo, dos colores más el blanco, sin utilizar los tres colores simultáneamente.
 - **P-29** (p): Como ejemplo, el celeste de la camiseta se representa con esta configuración: 0 % rojo, 28 % verde, 53 % azul y 51 % blanco. Definir estas combinaciones permite mantener un criterio de color a lo largo de la propuesta, sujeto a los ajustes que requieran las luminarias reales.
-- **P-30** (h2): TRUST Control: visualizar una campaña antes de implementarla
-- **P-31** (p): TRUST Control es el entorno de simulación del proyecto. Permite observar el edificio, revisar el contenido previsto para cada pantalla, elegir sectores de iluminación y recorrer una línea de tiempo para comprobar cómo se combinan todos los elementos del show.
-- **P-32** (p): Cada show tiene una duración de 15 segundos. La secuencia se organiza en cinco momentos: preparación, entrada de la marca, momento central de mayor presencia visual (takeover), cierre y retorno a la configuración inicial. Se puede detener la reproducción en cualquier instante para revisar la coordinación de pantallas y luces.
-- **P-33** (h2): Una presencia visual pensada para el día y la noche
-- **P-34** (p): La lectura de una campaña cambia con la luz ambiente. Durante el día, las pantallas concentran la mayor parte de la comunicación; por la noche, la iluminación arquitectónica adquiere más protagonismo. El simulador ayuda a comparar ambos escenarios y a elegir cómo presentar cada pieza según la franja horaria.
-- **P-35** (h2): Una campaña coordinada, con mensajes legibles
-- **P-36** (p): Las dos pantallas superiores están separadas por la cúpula. Si una palabra, un producto o un logotipo depende de la continuidad entre ambas, una parte del mensaje puede perderse desde determinados puntos de vista.
-- **P-37** (p): Por eso se propone que cada pantalla presente una imagen o un mensaje comprensible por sí solo. Cuando se busque una composición entre pantallas, deberá diseñarse específicamente para esa disposición arquitectónica.
+- **P-30** (h2): TRUST Control: una vista previa de toda la experiencia
+- **P-31** (p): TRUST Control reúne en una línea de tiempo el contenido de las pantallas y los cambios de iluminación de la fachada. El equipo puede detener la secuencia, revisar un instante concreto y comparar distintas propuestas antes de aprobar una versión creativa. Actualmente se trata de una herramienta de simulación, sin conexión con los equipos del edificio.
+- **P-32** (p): El formato de referencia dura 15 segundos. Incluye una entrada, el desarrollo del mensaje, un momento central de máxima presencia visual —o takeover— y un cierre que devuelve la fachada a su estado inicial. En ese momento central, una marca puede plantear una composición coordinada entre pantallas y luces: un recurso para lanzamientos, celebraciones y activaciones puntuales.
+- **P-33** (h2): Una propuesta para verse de día y de noche
+- **P-34** (p): Las nuevas pantallas P5 se proyectan para uso exterior, con luminosidad adecuada para entornos de alta luz ambiente; sus valores definitivos deben validarse en la ficha técnica del equipo seleccionado. Durante el día se priorizan mensajes de lectura rápida y contraste. Por la noche, la iluminación arquitectónica puede ampliar la presencia de la campaña sobre la fachada. El simulador permite comparar ambas situaciones, pero no reemplaza las pruebas de brillo en el edificio.
+- **P-35** (h2): Tres superficies, un relato pensado para cada mirada
+- **P-36** (p): La cúpula divide las dos pantallas superiores. Desde la calle, una palabra o una imagen extendida de una a otra podría quedar interrumpida, y el ángulo de observación modifica la lectura de cada contenido.
+- **P-37** (p): Por eso, cada pantalla debe comunicar con claridad por sí sola. Las composiciones que aprovechen ambas caras, especialmente las animaciones 3D y anamórficas, deberán diseñarse para los puntos de vista elegidos y probarse con el modelo del edificio antes de producirse.
 - **P-38** (li): La idea inicial, expresada en una frase: «Ola celeste y blanca que termine con VAMOS ARGENTINA».
 - **P-39** (li): Una ficha de revisión con el contenido, los colores, los efectos, las zonas de iluminación y los tiempos previstos.
 - **P-40** (li): Una secuencia visual preparada para coordinar las tres pantallas y las 46 luminarias.
 - **P-41** (li): Primero, una vista previa en el simulador; en una etapa posterior, la ejecución a través del equipamiento del edificio.
-- **P-42** (h2): De una idea creativa a una presentación visual
-- **P-43** (p): El punto de partida puede ser una instrucción escrita en lenguaje cotidiano, como un brief de campaña. La herramienta interpreta esa idea y propone una ficha con los textos, colores, movimientos, sectores de iluminación y tiempos que se utilizarían en la simulación.
+- **P-42** (h2): De una idea de marketing a una pieza visual
+- **P-43** (p): El equipo puede partir de un brief sencillo: qué producto quiere destacar, qué emoción busca transmitir y qué colores o imágenes oficiales debe respetar. La herramienta traduce esa idea en una propuesta de tiempos, sectores de luz y contenidos para revisar en el simulador.
 - **P-44** (p): Antes de generar la secuencia, la propuesta se contrasta con las capacidades contempladas para el edificio. Esta revisión permite detectar efectos o combinaciones que no estén previstos y ajustar la idea antes de avanzar con su visualización.
 - P-45: sacado (el capítulo «Contar la idea y verla» se juntó con «De una frase a un show»).
-- **P-46** (p, ahora en «De una frase a un show»): Cuando una propuesta necesita imágenes nuevas, la herramienta permite generar piezas de prueba adaptadas al formato de cada pantalla. Esas imágenes sirven para evaluar la composición en el edificio antes de preparar una versión definitiva.
-- **P-47** (p): Las imágenes generadas pasan por controles automáticos para detectar problemas visuales, como textos deformados, marcas incorrectas o productos recortados. Los nombres, logotipos y demás elementos identificatorios de McDonald's se toman del material oficial y deben revisarse antes de aprobar una pieza.
-- **P-48** (h2): McDonald's y la Selección Argentina: una campaña en EL TRUST
-- **P-49** (p): Para mostrar cómo funcionaría el proyecto con una marca real, se preparó una simulación a partir de piezas oficiales de la campaña de McDonald's vinculada con la Selección Argentina. El ejemplo incluye el afiche de la McÁlvarez, las tres hamburguesas con sus nombres y las imágenes de los jugadores en el mostrador.
-- **P-50** (p): La demostración distribuye ese material entre las pantallas y utiliza la iluminación de fachada para acompañar los colores de los productos. El objetivo es visualizar una posible presentación de la campaña en el edificio, sin incorporar mensajes, productos ni elementos de marca ajenos a los archivos oficiales.
-- **P-51** (h2): Una plataforma que se desarrolla por etapas
-- **P-52** (p): El simulador es el primer paso de un sistema pensado para preparar contenidos, revisarlos, programarlos y, más adelante, reproducirlos en el edificio. Cada módulo tiene un alcance y una etapa de desarrollo diferentes; la presentación distingue lo que puede probarse hoy de lo que todavía está previsto.
+- **P-46** (p, ahora en «De una frase a un show»): Para explorar una idea pueden generarse imágenes de prueba con las proporciones de cada pantalla. Las producciones finales, incluidos los videos 3D anamórficos, requerirán una etapa específica de dirección de arte, animación y verificación visual desde los puntos de observación definidos.
+- **P-47** (p): Los controles automáticos ayudan a detectar defectos en las imágenes de prueba, como texto deformado, productos cortados o elementos inexistentes. Los logotipos, nombres de producto, leyendas y otros activos de McDonald's deben tomarse del material oficial y contar con la revisión correspondiente. La generación automática no sustituye la aprobación de marca.
+- **P-48** (h2): McDonald's en EL TRUST: una campaña llevada a la fachada
+- **P-49** (p): Para mostrar la aplicación concreta del proyecto se preparó una simulación con piezas oficiales de la campaña de McDonald's vinculada con la Selección Argentina. Se utilizan el afiche de McÁlvarez, las tres hamburguesas identificadas por sus nombres y las imágenes de los jugadores en el mostrador. Son los mismos elementos de marca del material proporcionado.
+- **P-50** (p): La demostración permite ver cómo se repartirían esas piezas entre las pantallas y cómo la iluminación podría acompañar los colores de cada producto. No busca reemplazar la creatividad de la campaña, sino mostrar una nueva manera de exhibirla y revisar el resultado antes de una posible puesta en marcha.
+- **P-51** (h2): Una plataforma concebida para operar y crecer
+- **P-52** (p): El portal muestra el simulador y herramientas de prueba para crear piezas y organizar una programación. El plan de desarrollo contempla además un modelo 3D del entorno, control de operación, reproducción local, edición creativa y reportes. También se estudia integrar el reloj del edificio a futuras secuencias. Son etapas diferentes: ninguna función pendiente debe confundirse con un sistema instalado o conectado.
 - **P-53** (li): Previs — Modelo 3D del edificio, basado en sus medidas, para evaluar las piezas desde distintos puntos de observación y no solamente sobre una fotografía. En desarrollo
 - **P-54** (li): Control — Herramientas para organizar campañas y horarios de exhibición y dejar registro de las revisiones y aprobaciones. En desarrollo
 - **P-55** (li): Edge — Equipo previsto para ejecutar la programación directamente en el edificio, incluso cuando no haya conexión a internet. Próximo
 - **P-56** (li): Creative Studio — Espacio de edición previsto para que el equipo de marketing pueda preparar y revisar contenidos adaptados a las pantallas. Próximo
 - **P-57** (li): Audiencia — Módulo previsto para elaborar reportes internos de circulación de personas a partir de cámaras, sujeto a su implementación y a las condiciones aplicables. Próximo
-- **P-58** (h2): Qué falta para llevar la propuesta al edificio
-- **P-59** (p): Todo lo que se presenta en este portal es una simulación: todavía no está conectado a las pantallas ni a la iluminación real. Los siguientes pasos contemplan integrar la tercera pantalla en la simulación, trabajar con los archivos de McDonald's en alta resolución, completar las pruebas y conectar progresivamente el sistema con el equipamiento instalado.
+- **P-58** (h2): Del simulador a una operación real
+- **P-59** (p): La demostración es una simulación: actualmente no transmite contenidos ni órdenes a las pantallas o luminarias del edificio. Para avanzar será necesario completar la representación de la tercera pantalla, incorporar los archivos finales en alta resolución, validar las piezas desde los puntos de observación y ensayar la sincronización con el equipamiento real. La integración del reloj se considera una etapa posterior.
 - **P-60** (p): Abrir el simulador · Crear una pieza
 - **P-61** (h2): Herramientas
 - P-62, P-63 y P-64: sacados (la fila «Ver un show en el edificio» repetía el botón del final).
 - **P-65** (h2): Crear una pieza de prueba
-- **P-66** (p): Escribí una idea para una campaña y la herramienta generará imágenes de prueba adaptadas a las tres pantallas. Podrás ver cómo se distribuirían sobre el edificio antes de avanzar con una producción final. Los textos, logotipos y demás elementos de marca se incorporan desde los archivos oficiales del cliente.
+- **P-66** (p): Describí un producto, una escena o un concepto y la herramienta preparará imágenes de prueba adaptadas a las tres pantallas. Podrás ver cómo se distribuirían en la fachada antes de encargar una pieza final. Las marcas, los textos y los productos oficiales se incorporan desde el material autorizado; esta función no genera por sí sola una producción anamórfica terminada.
 - **P-67** (li): Postre celeste y blanco
 - **P-68** (li): Papas doradas
 - **P-69** (li): Desayuno al amanecer
@@ -111,7 +111,7 @@ Agregados en la mejora visual (rama portal/73-visual, orden de ChatGPT del 19/10
 - **P-95** (inicio, pie de foto): Foto de referencia · luces animadas sobre la foto
 - **P-96** (campaña, rótulo de las piezas): La simulación utiliza el material oficial cargado en el portal: el afiche, las tres hamburguesas y los jugadores en el mostrador. No se incorporan elementos de campaña ajenos a esos archivos.
 - **P-97** (pies de foto): Foto de referencia · De día · Atardecer · De noche · La misma toma, de noche y de día · Simulación
-- **P-98** (título de grupo): Cómo se integran las pantallas y la iluminación
+- **P-98** (título de grupo): Cómo funcionan las pantallas P5 y la iluminación
 - **P-99** (colores, pies): Blanco cálido · Blanco arquitectónico · Celeste · Rojo y dorado · Simulación · la fachada con cada receta, pantallas apagadas
 - **P-100** (simulador, pies): Captura del simulador · takeover, segundo 7 · noche sin campaña · luz cálida
 - **P-101** (De una frase a un show, pie y botón): Piezas de prueba creadas para las pantallas · Simulación · Crear pieza
@@ -124,14 +124,24 @@ Agregados el 20/10/2026:
 Agregados el 20/10/2026 (programación de 20,5 h):
 - **P-105** (inicio, dato): 20,5 h de operación diaria propuestas
 - **P-106** (h2): Programación propuesta: 20,5 horas por día
-- **P-107** (p): Las piezas publicitarias duran 15 segundos y se organizan en secuencias que se repiten durante las horas de exhibición. Como punto de partida, se propone una operación de 20,5 horas diarias. La grilla semanal permite definir contenidos diferentes para cada día y horario, según las necesidades de la campaña.
-- **P-108** (p): La herramienta permite estimar cuántas veces aparecería cada pieza por hora, por día y por semana, y establecer horarios para la iluminación de fachada. Esta planificación sirve para comparar alternativas de presencia publicitaria y revisar la distribución de los contenidos antes de la operación real.
+- **P-107** (p): Se propone organizar shows de 15 segundos dentro de una grilla de exhibición de 20,5 horas diarias. La programación puede variar según el día y la franja horaria: por ejemplo, una presencia regular de producto durante la jornada y una secuencia especial para un lanzamiento o una fecha relevante. Los horarios son una propuesta inicial pendiente de confirmación.
+- **P-108** (p): La grilla permite calcular la cantidad prevista de reproducciones por hora, día y semana, ordenar la convivencia entre campañas y definir cuándo participaría la iluminación de fachada. Son estimaciones de programación, no mediciones de audiencia ni constancias de emisión real.
 - **P-109** (barra del día): Pantallas · 06:00 a 02:30 (20,5 h) · Iluminación de fachada · 19:30 a 06:30 · Propuesta inicial: horario de operación y franja de iluminación editables en «Programación», más abajo.
 - **P-110** (h2 herramienta): Programación
 - **P-111** (p): Esta herramienta de prueba permite organizar una programación semanal por día y franja horaria. Se seleccionan las horas, se arma el orden de las piezas y se calcula su cantidad estimada de reproducciones. La grilla todavía no envía instrucciones al edificio ni acredita exhibiciones efectivamente realizadas.
 - **P-112** (controles): Operación · Luces de fachada · Todo el día · Toda la semana · Ninguna · Sumar pieza al loop · Aplicar a las horas elegidas · Salidas por pieza (Pieza, Salidas lunes, Salidas semana, Tiempo al aire) · Institucional del edificio · Pantallas en reposo
 
 **A confirmar por Affinitas** (valores de la propuesta inicial, editables en la grilla): horario de operación 06:00 a 02:30 y franja de iluminación de fachada 19:30 a 06:30.
+
+
+
+Nuevos capítulos editoriales (revisión P5 y contenido anamórfico, 20/10/2026):
+- **P-113** (h2, nuevo capítulo después de las pantallas): Contenido 3D anamórfico: imágenes diseñadas para esta esquina
+- **P-114** (p, capítulo de 3D anamórfico): Con las nuevas pantallas exteriores P5 se prevé desarrollar piezas tridimensionales con perspectiva forzada: por ejemplo, un producto que parezca adquirir volumen o sobresalir visualmente del marco de la pantalla. No se trata de reproducir cualquier video 3D. Cada animación debe modelarse y renderizarse para el tamaño de las pantallas, su disposición y el punto desde el cual se quiere producir el efecto.
+- **P-115** (p, capítulo de 3D anamórfico): El efecto anamórfico funciona mejor desde ángulos de observación definidos; desde otros lugares puede verse distinto. Por eso se propone validar los encuadres con Previs y realizar pruebas de lectura, contraste y movimiento antes de la producción final. La pantalla P5 aporta definición, pero es el diseño de perspectiva el que genera la ilusión.
+- **P-116** (h2, nuevo capítulo después de la demostración de campaña): Una propuesta para las campañas y los momentos especiales de McDonald's
+- **P-117** (p, capítulo de propuesta comercial): EL TRUST permitiría combinar presencia publicitaria programada con intervenciones especiales de 15 segundos en las que la marca ocupe visualmente las pantallas y acompañe la fachada con iluminación. Es un formato para explorar lanzamientos, promociones, campañas vinculadas con la Selección y otras fechas de alto interés, siempre con piezas y mensajes aprobados por McDonald's.
+- **P-118** (p, capítulo de propuesta comercial): La participación comercial —incluida una posible exclusividad de marca o de categoría— deberá definirse en una propuesta específica. Este portal no fija condiciones, alcance ni métricas de audiencia: muestra el potencial creativo y las herramientas previstas para planificar y revisar la exhibición.
 
 ## Cómo devolver los cambios
 
