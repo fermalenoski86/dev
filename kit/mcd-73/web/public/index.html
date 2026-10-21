@@ -166,8 +166,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
 .foto figcaption { font-size: 13px; color: var(--niebla); margin-top: 6px; }
 .foto.vertical-g img { max-height: min(82vh, 860px); width: auto; max-width: 100%; margin: 0 auto; object-fit: contain; }
 .foto.vertical-g figcaption { text-align: center; }
-.tres-fotos { display: grid; grid-template-columns: repeat(3, minmax(0, 0.6fr)) minmax(0, 1.25fr); gap: 14px; align-items: end; }
-.tres-fotos .foto:not(.sim) img { aspect-ratio: 709 / 1536; object-fit: cover; }
+.tres-fotos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: end; }
 .grupo { margin: 0; padding: clamp(36px, 7vh, 72px) 0 0; border-top: 1px solid var(--linea); font-size: clamp(38px, 4.6vw, 68px); font-stretch: 70%; font-weight: 850; color: var(--sodio); }
 .colores-par { display: grid; grid-template-columns: minmax(0, 0.6fr) minmax(0, 1.4fr); gap: clamp(20px, 4vw, 64px); align-items: center; }
 .cuatro-colores { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -177,8 +176,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
   .ancho .cabeza, .colores-par { grid-template-columns: 1fr; }
   .show-vivo.grande { aspect-ratio: 4 / 5; }
   .piezas-of ul { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .tres-fotos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .tres-fotos .sim { grid-column: 1 / -1; }
+  .tres-fotos { grid-template-columns: minmax(0, 1fr); }
   .cuatro-colores { grid-template-columns: 1fr 1fr; }
   .dos-capturas { grid-template-columns: 1fr; }
   .pie-heroe { bottom: 70px; }
@@ -254,9 +252,8 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     <p class="aclaracion">Simulación, no conectada a los equipos reales.</p>
   </div>
   <div class="edificio" id="edificio">
-    <img src="/img/heroe.jpg" alt="El edificio EL TRUST de noche, con sus pantallas y la fachada iluminada" fetchpriority="high">
-    <svg id="luces" viewBox="0 0 2570 2872" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
-    <span class="pie-heroe">Foto de referencia · luces animadas sobre la foto</span>
+    <img src="/fondo.jpg?v=6" alt="Simulación: EL TRUST de noche con la campaña de la Selección en las tres pantallas y la fachada iluminada en dorado" fetchpriority="high" style="object-position: 50% 8%">
+    <span class="pie-heroe">Simulación sobre la foto del edificio</span>
   </div>
 </section>
 
@@ -279,7 +276,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
   </article>
 
   <article class="capitulo">
-    <figure class="foto vertical-g"><img src="/img/foto-obelisco-noche.webp" alt="El Obelisco de noche con EL TRUST detrás, en la esquina de Corrientes y Carlos Pellegrini" loading="lazy" width="710" height="1536"><figcaption>Foto de referencia</figcaption></figure>
+    <figure class="foto vertical-g"><img src="/material/render-aniversario.jpg" alt="Simulación: EL TRUST con «40 años» en las pantallas superiores y la fachada en dorado" loading="lazy" width="1100" height="1153"><figcaption>Simulación sobre la foto del edificio</figcaption></figure>
     <div class="texto-cap">
       <h2>Un edificio, una experiencia de marca integrada</h2>
       <p>En la esquina de Av. Corrientes y Carlos Pellegrini, frente al Obelisco, EL TRUST ocupa una ubicación emblemática de Buenos Aires. Su exposición al movimiento peatonal y vehicular permite pensar la fachada como un espacio de comunicación visible desde distintos puntos del entorno.</p>
@@ -293,9 +290,8 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       <div><p>La lectura de una campaña cambia con la luz ambiente. Durante el día, las pantallas concentran la mayor parte de la comunicación; por la noche, la iluminación arquitectónica adquiere más protagonismo. El simulador ayuda a comparar ambos escenarios y a elegir cómo presentar cada pieza según la franja horaria.</p></div>
     </div>
     <div class="tres-fotos">
-      <figure class="foto"><img src="/img/foto-fachada-dia.webp" alt="La fachada de EL TRUST de día, con cielo celeste" loading="lazy" width="709" height="1536"><figcaption>De día · Foto de referencia</figcaption></figure>
-      <figure class="foto"><img src="/img/foto-fachada-atardecer.webp" alt="La cúpula y la fachada de EL TRUST al atardecer" loading="lazy" width="709" height="1536"><figcaption>Atardecer · Foto de referencia</figcaption></figure>
-      <figure class="foto"><img src="/img/foto-fachada-noche.webp" alt="EL TRUST de noche, con el tránsito de la avenida delante" loading="lazy" width="710" height="1536"><figcaption>De noche · Foto de referencia</figcaption></figure>
+      <figure class="foto"><img src="/material/render-noche.jpg" alt="Simulación de noche: McFernández en las pantallas y la fachada iluminada" loading="lazy" width="1300" height="1203"><figcaption>De noche · Simulación</figcaption></figure>
+      <figure class="foto"><img src="/material/render-dia.jpg" alt="Simulación de día: el mismo momento del show con cielo celeste" loading="lazy" width="1300" height="1203"><figcaption>De día · Simulación</figcaption></figure>
       <figure class="foto sim"><img src="/img/dia-noche.webp" alt="El edificio partido al medio en el simulador: la mitad izquierda de noche y la derecha de día" loading="lazy" width="1294" height="1175"><figcaption>La misma toma, de noche y de día · Simulación</figcaption></figure>
     </div>
   </article>
@@ -338,7 +334,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       </div>
     </div>
     <div class="probador" id="probador">
-      <div class="show-vivo grande" id="show-efectos"><span class="pie" id="pie-efectos">Simulación · el efecto sobre la foto real del edificio, con las pantallas apagadas</span></div>
+      <div class="show-vivo grande" id="show-efectos"><span class="pie" id="pie-efectos">Simulación · el efecto de luz sobre la foto del edificio, junto con las pantallas</span></div>
       <div class="efectos" role="group" aria-label="Elegir un efecto">
         <button type="button" data-ef="barrido" aria-pressed="true">Barrido</button>
         <button type="button" data-ef="ola">Ola</button>
@@ -362,11 +358,11 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     <div class="colores-par">
       <div class="colores" id="colores" aria-label="Cómo se arma cada color con los canales del equipo"></div>
       <div class="cuatro-colores">
-        <figure class="foto"><img src="/img/color-calido.webp" alt="La fachada en blanco cálido, con las pantallas apagadas" loading="lazy" width="800" height="775"><figcaption>Blanco cálido</figcaption></figure>
-        <figure class="foto"><img src="/img/color-blanco.webp" alt="La fachada en blanco arquitectónico, con las pantallas apagadas" loading="lazy" width="800" height="775"><figcaption>Blanco arquitectónico</figcaption></figure>
-        <figure class="foto"><img src="/img/color-celeste.webp" alt="La fachada en celeste, con las pantallas apagadas" loading="lazy" width="800" height="775"><figcaption>Celeste</figcaption></figure>
-        <figure class="foto"><img src="/img/color-rojo.webp" alt="La fachada en rojo y dorado, con las pantallas apagadas" loading="lazy" width="800" height="775"><figcaption>Rojo y dorado</figcaption></figure>
-        <p class="rotulo-img">Simulación · la fachada con cada receta, pantallas apagadas</p>
+        <figure class="foto"><img src="/img/color-calido.webp" alt="La fachada en blanco cálido, con el takeover en las pantallas" loading="lazy" width="800" height="775"><figcaption>Blanco cálido</figcaption></figure>
+        <figure class="foto"><img src="/img/color-blanco.webp" alt="La fachada en blanco arquitectónico, con el takeover en las pantallas" loading="lazy" width="800" height="775"><figcaption>Blanco arquitectónico</figcaption></figure>
+        <figure class="foto"><img src="/img/color-celeste.webp" alt="La fachada en celeste, con el takeover en las pantallas" loading="lazy" width="800" height="775"><figcaption>Celeste</figcaption></figure>
+        <figure class="foto"><img src="/img/color-rojo.webp" alt="La fachada en rojo y dorado, con el takeover en las pantallas" loading="lazy" width="800" height="775"><figcaption>Rojo y dorado</figcaption></figure>
+        <p class="rotulo-img">Simulación · la fachada con cada receta de color, con el takeover en las pantallas</p>
       </div>
     </div>
   </article>
@@ -518,7 +514,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
   const olvidar = () => { delete MEMO['/api/material']; delete MEMO['/api/piezas']; };
   // 46 luminarias sobre la foto completa: sus posiciones están calibradas sobre la foto base, ubicada dentro del encuadre «completo»
   (function luces() {
-    const L = window.LUMINARIAS, E = window.ENCUADRES && window.ENCUADRES.completo; if (!L || !E) return;
+    const L = window.LUMINARIAS, E = window.ENCUADRES && window.ENCUADRES.completo; if (!L || !E || !$('luces')) return;   // el inicio ya muestra el edificio iluminado
     const [rx, ry, rw, rh] = E.rect, svg = $('luces'), ns = 'http://www.w3.org/2000/svg';
     const pts = Object.entries(L.puntos).map(([id, [x, y]]) => ({ id, x: (rx + x * rw) * E.ancho, y: (ry + y * rh) * E.alto }));
     const ymax = Math.max(...pts.map((p) => p.y)), ymin = Math.min(...pts.map((p) => p.y));
@@ -683,7 +679,6 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     function aplicar() {
       if (!M) return;
       M.pausa(); M.setPaletaShow(PAL[ef]); M.setEstiloShow('custom', 1); M.setFicha({ efecto: ef }); M.cargarShow();
-      for (const k of M.PANTALLAS) M.setPantalla(k, 0);   // la luz es la protagonista: pantallas apagadas
       M.seek(5); M.play();
     }
     const desc = (e) => { const E = window.MOTOR && window.MOTOR.EFECTOS && window.MOTOR.EFECTOS[e]; $('desc-efecto').textContent = E ? E.nombre.charAt(0).toUpperCase() + E.nombre.slice(1) + ': ' + E.txt + '.' : ''; };
