@@ -326,6 +326,9 @@ form{display:flex;flex-direction:column;max-width:340px}
 form>*+*{margin-top:10px}
 label{font-size:14px;color:var(--niebla)}
 .fila{display:flex}.fila>*+*{margin-left:8px}
+.campo{position:relative;flex:1;min-width:0;display:flex}.campo input{padding-right:52px;width:100%}
+.campo .ojo{position:absolute;right:4px;top:50%;margin-top:-22px;width:44px;height:44px;padding:0;border:0;border-radius:6px;background:none;color:var(--niebla);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.campo .ojo:hover,.campo .ojo:focus-visible{color:var(--piedra)}.campo .ojo[aria-pressed="true"]{color:var(--sodio)}
 input{flex:1;min-width:0;font:inherit;font-size:18px;padding:12px 14px;border-radius:6px;border:1px solid #2B3D5C;background:#0E2040;color:var(--piedra)}
 input:focus{outline:2px solid var(--sodio);outline-offset:2px;border-color:transparent}
 button{font:inherit;font-weight:700;font-size:16px;padding:12px 20px;border:0;border-radius:6px;background:var(--sodio);color:#1D1205;cursor:pointer}
@@ -340,7 +343,8 @@ button:focus-visible{outline:2px solid var(--piedra);outline-offset:3px}
 <main class="texto"><h1>EL<br>TRUST</h1><p class="by">by Affinitas</p>
 <p class="lugar">Av. Corrientes y Carlos Pellegrini.<br>Una esquina, millones de miradas.</p>
 <form method="post" action="/login"><label for="clave">Clave</label>
-<div class="fila"><input id="clave" name="clave" type="password" autocomplete="current-password" required autofocus><button type="submit">Entrar</button></div><!--ERROR--></form>
+<div class="fila"><div class="campo"><input id="clave" name="clave" type="password" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false" required autofocus><button type="button" class="ojo" id="ojo" aria-label="Mostrar la clave" aria-pressed="false" title="Mostrar la clave"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div><button type="submit">Entrar</button></div><!--ERROR--></form>
+<script>(function(){var b=document.getElementById('ojo'),i=document.getElementById('clave');if(!b||!i)return;b.addEventListener('click',function(){var ver=i.type==='password';i.type=ver?'text':'password';b.setAttribute('aria-pressed',ver?'true':'false');b.setAttribute('aria-label',ver?'Ocultar la clave':'Mostrar la clave');b.title=b.getAttribute('aria-label');i.focus();});})();</script>
 <p class="pie">Affinitas. Material de trabajo, no publicar.</p></main>
 <div class="foto" role="img" aria-label="Simulación: EL TRUST de noche, con las pantallas encendidas y la fachada en dorado"></div>
 </body></html>`;
