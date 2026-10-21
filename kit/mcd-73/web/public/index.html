@@ -51,7 +51,7 @@ h1 { margin: 0 0 22px; font-weight: 850; font-stretch: 62%; font-size: clamp(80p
 .nota-cap { font-size: 14px !important; color: var(--niebla) !important; }
 .capitulo.final { grid-template-columns: minmax(0, 1fr); border-top: 1px solid var(--linea); }
 .capitulo.final .texto-cap p { max-width: 60ch; }
-.show-vivo { position: relative; aspect-ratio: 5 / 4; border-radius: 6px; overflow: hidden; background: #050b18; }
+.show-vivo { position: relative; aspect-ratio: 5 / 4; border-radius: 6px; overflow: hidden; background: transparent; }
 .show-vivo iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
 .show-vivo .pie { position: absolute; left: 10px; bottom: 8px; font-size: 12px; color: #c9d3e6; background: rgba(5,11,24,.7); padding: 3px 8px; border-radius: 3px; pointer-events: none; }
 .material-det summary { cursor: pointer; color: var(--sodio); font-size: 15px; margin-top: 4px; }
@@ -59,7 +59,7 @@ h1 { margin: 0 0 22px; font-weight: 850; font-stretch: 62%; font-size: clamp(80p
 .pila { display: grid; gap: 10px; } .pila img { width: 100%; height: auto; border-radius: 6px; display: block; }
 .pila img.vertical { max-width: 320px; justify-self: end; box-shadow: 0 12px 40px rgba(0,0,0,.45); }
 .capitulo.solo { grid-template-columns: minmax(0, 1fr); }
-.probador { background: #071226; border-radius: 6px; padding: 10px 10px 14px; }
+.probador { background: transparent; border-radius: 6px; padding: 0 0 14px; }
 .desc-efecto { margin: 10px 2px 0; font-size: 15px; color: #D6CDBC; min-height: 1.5em; }
 .efectos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .efectos button { font: inherit; font-size: 14px; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--linea); background: none; color: var(--piedra); cursor: pointer; }
@@ -232,6 +232,22 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
   .show-vivo { height: 0; padding-top: 80%; } .show-vivo.grande { padding-top: 56.25%; max-height: none; }
   .pieza .mini { height: 0; padding-top: 40%; }
 }
+
+/* Campaña: video, animación y texto en una misma pantalla (cómodo en la tele: sin bajar) */
+.show-vivo.con-texto { aspect-ratio: auto; height: min(88vh, 860px); max-height: none; }
+.show-vivo.con-texto iframe { left: 30%; width: 70%; }
+.show-vivo.con-texto .sobre { position: absolute; z-index: 2; top: 0; bottom: 0; left: 0; width: 44%; padding: clamp(20px, 3vw, 48px); padding-right: 8%; display: flex; flex-direction: column; justify-content: center;
+  background: linear-gradient(90deg, var(--noche) 0%, var(--noche) 62%, rgba(10,24,48,0) 100%); }
+.show-vivo.con-texto .sobre h2 { font-size: clamp(24px, min(3vw, 4.6vh), 46px); margin: 0 0 16px; }
+.show-vivo.con-texto .sobre p { margin: 0 0 10px; font-size: clamp(14px, min(1.1vw, 2.2vh), 18px); line-height: 1.55; color: #D6CDBC; max-width: 46ch; }
+.show-vivo.con-texto .pie { left: auto; right: 12px; }
+@media (max-width: 860px) {
+  .show-vivo.con-texto { height: auto; padding-top: 0; display: flex; flex-direction: column; }
+  .show-vivo.con-texto .sobre { order: -1; }
+  .show-vivo.con-texto .sobre { position: static; width: auto; padding: 0 0 16px; background: none; }
+  .show-vivo.con-texto iframe { position: relative; left: 0; width: 100%; height: 100vw; display: block; }
+}
+@supports not (font-size: clamp(1px, 1vw, 2px)) { .show-vivo.con-texto { height: 760px; } .show-vivo.con-texto .sobre { padding: 40px; } .show-vivo.con-texto .sobre h2 { font-size: 40px; } .show-vivo.con-texto .sobre p { font-size: 17px; } }
 </style>
 </head>
 <body>
@@ -258,15 +274,17 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
 
 <section class="relato" aria-label="Qué estamos haciendo">
   <article class="ancho" id="cap-material">
-    <div class="cabeza">
-      <h2>McDonald's en EL TRUST: una campaña llevada a la fachada</h2>
-      <div>
-        <p>Para mostrar la aplicación concreta del proyecto se preparó una simulación con piezas oficiales de la campaña de McDonald's vinculada con la Selección Argentina. Se utilizan el afiche de McÁlvarez, las tres hamburguesas identificadas por sus nombres y las imágenes de los jugadores en el mostrador. Son los mismos elementos de marca del material proporcionado.</p>
-        <p>La demostración permite ver cómo se repartirían esas piezas entre las pantallas y cómo la iluminación podría acompañar los colores de cada producto. No busca reemplazar la creatividad de la campaña, sino mostrar una nueva manera de exhibirla y revisar el resultado antes de una posible puesta en marcha.</p>
-        <p>Esto permite evaluar, antes de salir al aire, cómo se ve la campaña sobre el edificio y en qué orden aparece cada pieza.</p>
+    <div class="show-vivo grande con-texto" id="show-material">
+    <div class="sobre">
+        <h2>McDonald's en EL TRUST: la Selección en la esquina del Obelisco</h2>
+        <div>
+          <p>Para mostrar la aplicación concreta del proyecto se preparó una simulación con piezas oficiales de la campaña de McDonald's vinculada con la Selección Argentina. Se utilizan el afiche de McÁlvarez, las tres hamburguesas identificadas por sus nombres y las imágenes de los jugadores en el mostrador. Son los mismos elementos de marca del material proporcionado.</p>
+          <p>La demostración permite ver cómo se repartirían esas piezas entre las pantallas y cómo la iluminación podría acompañar los colores de cada producto. No busca reemplazar la creatividad de la campaña, sino mostrar una nueva manera de exhibirla y revisar el resultado antes de una posible puesta en marcha.</p>
+          <p>Esto permite evaluar, antes de salir al aire, cómo se ve la campaña sobre el edificio y en qué orden aparece cada pieza.</p>
+        </div>
       </div>
+      <span class="pie" id="pie-material">Cargando el show…</span>
     </div>
-    <div class="show-vivo grande" id="show-material"><span class="pie" id="pie-material">Cargando el show…</span></div>
     <div class="piezas-of" id="piezas-of" hidden>
       <p class="rotulo-img">La simulación utiliza el material oficial cargado en el portal: el afiche, las tres hamburguesas y los jugadores en el mostrador. No se incorporan elementos de campaña ajenos a esos archivos.</p>
       <ul id="piezas-of-lista"></ul>
@@ -679,7 +697,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     const url = `/control/?vitrina=1&pieza=${encodeURIComponent(pieza)}`;
     let fr = null;
     const io = new IntersectionObserver(([e]) => {   // corre solo mientras se ve, para no gastar batería
-      if (e.isIntersecting && !fr) { fr = document.createElement('iframe'); fr.title = texto; fr.src = url; fr.setAttribute('loading', 'lazy'); caja.prepend(fr); }
+      if (e.isIntersecting && !fr) { fr = document.createElement('iframe'); fr.setAttribute('allowtransparency', 'true'); fr.tabIndex = -1; fr.title = texto; fr.src = url; fr.setAttribute('loading', 'lazy'); caja.prepend(fr); }
       else if (!e.isIntersecting && fr) { fr.remove(); fr = null; }
     }, { rootMargin: '0px' });
     const arrancar = () => setTimeout(() => io.observe(caja), 1200);   // primero la página; el show en vivo, después
@@ -701,7 +719,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     document.querySelectorAll('.efectos button').forEach((b) => b.addEventListener('click', () => elegir(b.dataset.ef)));
     const io = new IntersectionObserver(([e]) => {   // corre solo mientras se ve
       if (e.isIntersecting && !fr) {
-        fr = document.createElement('iframe'); fr.title = 'Las 46 luminarias de la fachada con el efecto elegido'; fr.src = '/control/?vitrina=1';
+        fr = document.createElement('iframe'); fr.setAttribute('allowtransparency', 'true'); fr.tabIndex = -1; fr.title = 'Las 46 luminarias de la fachada con el efecto elegido'; fr.src = '/control/?vitrina=1';
         fr.addEventListener('load', () => setTimeout(() => {
           try {
             const cerca = fr.contentDocument.querySelector('#encuadre [data-e="cerca"]'); if (cerca) cerca.click();   // encuadre de fachada: la luz se ve más grande
@@ -835,6 +853,20 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       else porDefecto();
       pintarGrilla(); editor();
     })();
+  })();
+
+  // ---------- control remoto (tele): ▲ ▼ saltan de sección en sección; en un campo de texto no interfiere ----------
+  (function remoto() {
+    const secs = () => Array.prototype.slice.call(document.querySelectorAll('.heroe, .relato > article, .relato > h2.grupo, main > .tarea, footer'));
+    document.addEventListener('keydown', (e) => {
+      const k = e.key || '', abajo = k === 'ArrowDown' || e.keyCode === 40 || k === 'PageDown', arriba = k === 'ArrowUp' || e.keyCode === 38 || k === 'PageUp';
+      if (!abajo && !arriba) return;
+      const t = document.activeElement; if (t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) return;
+      const y = window.pageYOffset || document.documentElement.scrollTop, l = secs().map((el) => el.getBoundingClientRect().top + y - 12);
+      const dest = abajo ? l.find((v) => v > y + 80) : l.filter((v) => v < y - 80).pop();
+      if (dest === undefined) return; e.preventDefault();
+      try { window.scrollTo({ top: dest, behavior: 'smooth' }); } catch (err) { window.scrollTo(0, dest); }
+    });
   })();
 
   cargarGaleria(); actualizarGasto(); cargarMaterial(); showMaterial();
