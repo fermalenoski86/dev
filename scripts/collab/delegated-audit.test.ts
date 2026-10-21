@@ -267,6 +267,18 @@ describe('P-06 · publicación y workflows', () => {
     expect(y).toContain('persist-credentials: false');
     expect(y).toContain('git checkout -q --detach origin/main');
   });
+  it('un marcador de Codex que llega después de gates/riesgo re-evalúa: issue_comment created/edited filtrado por bot + marcador (Codex #98, P1)', () => {
+    const y = readFileSync(path.join(ROOT, '.github/workflows/delegated-audit-gate.yml'), 'utf8').replace(/^\s*#.*$/gm, '');
+    expect(y).toMatch(/issue_comment:\s*\n\s*types: \[created, edited\]/);
+    const si = /^\s*if: (.*)$/m.exec(y)?.[1] ?? '';
+    expect(si).toContain("github.event_name != 'issue_comment' ||");
+    expect(si).toContain(`github.event.comment.user.id == ${CODEX_BOT_IDS[0]}`);
+    expect(si).toContain("contains(github.event.comment.body, 'codex-review-state:v1')");
+    expect(si).toContain('github.event.issue.pull_request');
+    // el carril serial va en el job: un run salteado no puede desplazar al pendiente real
+    expect(y).not.toMatch(/^concurrency:/m);
+    expect(y).toMatch(/^ {4}concurrency:\s*\n\s+group: delegated-audit-gate\s*\n\s+cancel-in-progress: false/m);
+  });
   it('un retarget hacia main re-evalúa: escucha el fin de `riesgo`, que corre con pull_request_target edited (Codex #88, P2)', () => {
     const r = readFileSync(path.join(ROOT, '.github/workflows/riesgo.yml'), 'utf8').replace(/^\s*#.*$/gm, '');
     expect(r).toMatch(/^name: riesgo$/m);
