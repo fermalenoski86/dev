@@ -1211,7 +1211,8 @@
   window.TRUST_PIEZA_IA = (n) => aplicarPiezaIA((window.PIEZAS_IA || [])[n]);
   (function vitrina() {   // ?vitrina=1: el portal embebe solo el edificio con el show en bucle (sin controles)
     if (!new URLSearchParams(location.search).get('vitrina')) return;
-    document.body.classList.add('vitrina'); const pg = $('portada'); if (pg) pg.classList.add('fuera');
+    document.body.classList.add('vitrina'); if (window.top !== window.self) document.body.classList.add('embebida');   // fondo transparente solo dentro del portal
+    const pg = $('portada'); if (pg) pg.classList.add('fuera');
     setTimeout(() => { ajustarTamano(); if (!new URLSearchParams(location.search).get('pieza')) { M.setCreatividad('A'); M.cargarShow(); M.play(); } }, 250);
     M.suscribir((st) => { if (st.show.cargado && !st.show.reproduciendo && st.show.t >= M.DUR - 0.01) setTimeout(() => { M.seek(0); M.play(); pedirCuadro(); }, 600); });
   })();

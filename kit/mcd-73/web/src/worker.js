@@ -199,6 +199,20 @@ async function subirMaterial(req, env) {
   await env.PIEZAS.put('material/' + nombre, await a.arrayBuffer(), { httpMetadata: { contentType: a.type } });
   return json({ nombre, url: '/material/' + nombre });
 }
+// Pieza propia: un video o una imagen subidos desde «Crear una pieza» se guardan como show (las tres pantallas, recortadas a su formato). Sin costo de IA.
+async function piezaPropia(req, env) {
+  const f = await req.formData(), a = f.get('archivo'); if (!a || typeof a === 'string') return json({ error: 'Elegí un video o una imagen.' }, 400);
+  const ext = { 'video/mp4': 'mp4', 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[a.type];
+  if (!ext) return json({ error: 'Formato no admitido: subí un MP4, JPG, PNG o WEBP.' }, 400);
+  if (a.size > 25e6) return json({ error: 'El archivo pesa más de 25 MB. Para la web conviene un MP4 corto (10 a 20 s, 1080p).' }, 400);
+  const id = `${hoy()}-propia-${crypto.randomUUID().slice(0, 6)}`, key = `piezas/${id}/fuente.${ext}`, url = '/' + key;
+  await env.PIEZAS.put(key, await a.arrayBuffer(), { httpMetadata: { contentType: a.type } });
+  const pantallas = {}; for (const k of ['corrientes', 'pellegrini', 'media']) pantallas[ext === 'mp4' ? k + '_video' : k] = url;
+  const titulo = String(f.get('titulo') || a.name || 'Pieza propia').replace(/\.[a-z0-9]+$/i, '').slice(0, 60);
+  const meta = { id, titulo, concepto: 'Pieza subida desde el portal: el mismo contenido en las tres pantallas, recortado al formato de cada una.', brief: '', ficha: { efecto: 'barrido', paleta: [], zonas: [], velocidad: 1, titular: '' }, pantallas, propia: true, tipo: ext === 'mp4' ? 'video' : 'imagen', creada: new Date().toISOString() };
+  await env.PIEZAS.put(`piezas/${id}/meta.json`, JSON.stringify(meta));
+  return json(meta);
+}
 async function borrarMaterial(env, nombre) { await env.PIEZAS.delete('material/' + nombre.replace(/[^a-z0-9.-]/g, '')); return json({ ok: true }); }
 // Piezas de material animado (material.json del kit) con las fuentes que ya estén subidas
 async function piezasMaterial(env, origen, incompletas) {
@@ -285,6 +299,7 @@ export default {
       if (ruta.startsWith('/api/')) {
         if (req.method !== 'GET' && req.headers.get('origin') && new URL(req.headers.get('origin')).host !== url.host) return json({ error: 'origen inválido' }, 403);
         if (ruta === '/api/material' && req.method === 'POST') return await subirMaterial(req, env);
+        if (ruta === '/api/pieza-propia' && req.method === 'POST') return await piezaPropia(req, env);
         if (ruta.startsWith('/api/material/') && req.method === 'DELETE') return await borrarMaterial(env, decodeURIComponent(ruta.slice(14)));
         return await api(req, env, ruta);
       }

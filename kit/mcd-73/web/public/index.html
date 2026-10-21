@@ -119,6 +119,9 @@ textarea:focus { outline: 2px solid var(--sodio); outline-offset: 2px; border-co
 .pieza strong { display: block; margin-top: 8px; font-weight: 650; font-size: 16px; }
 .pieza span { font-size: 13px; color: var(--niebla); }
 .pieza:hover strong { color: var(--sodio); }
+.pieza video { width: 100%; aspect-ratio: 2.5 / 1; object-fit: cover; border-radius: 4px; display: block; background: var(--noche-2); }
+.subir-propia { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--linea); color: var(--niebla); font-size: 15px; }
+.subir-propia .gasto { margin-left: 0; }
 .pieza .mini { position: relative; aspect-ratio: 2.5 / 1; overflow: hidden; border-radius: 4px; background: var(--noche-2); }
 .pieza .mini.sin-material { display: grid; place-items: center; border: 1px dashed var(--linea); background: none; text-decoration: none; } .pieza .mini.sin-material span { color: var(--sodio); font-size: 14px; } .pieza .mini.sin-material:hover { border-color: var(--sodio); }
 .pieza.falta strong { color: var(--niebla); }
@@ -485,7 +488,12 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       <div class="controles">
         <button class="boton" id="generar" type="button">Crear pieza</button>
         <label class="opcion"><input type="checkbox" id="con-video"> Incluir un video de 5 segundos</label>
-        <span class="gasto" id="gasto" aria-live="polite"></span>
+        <span class="gasto" id="gasto" aria-live="polite" hidden></span>
+      </div>
+      <div class="subir-propia">
+        <span>¿Ya tenés la pieza?</span>
+        <label class="boton sec" for="propia">Subir video o imagen</label><input type="file" id="propia" accept="video/mp4,image/jpeg,image/png,image/webp" hidden>
+        <span class="gasto" id="estado-propia" aria-live="polite">MP4 de 10 a 20 s en 1080p (hasta 25 MB), JPG o PNG. Se ve en las tres pantallas.</span>
       </div>
       <ol class="progreso" id="progreso" aria-live="polite"></ol>
       <div id="resultado" hidden>
@@ -574,7 +582,7 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     const li = document.createElement('li'); li.textContent = txt; li.className = 'activo'; pasos.appendChild(li);
     const p = { ok: (t) => { li.className = 'hecho'; if (t) li.textContent = t; }, activo: () => { li.className = 'activo'; }, mal: (t) => { li.className = 'mal'; li.textContent = t; } }; actual = p; return p;
   }
-  async function actualizarGasto() { try { const g = await (await fetch('/api/gasto')).json(); $('gasto').textContent = `Hoy van USD ${g.usd.toFixed(2).replace('.', ',')} de ${g.tope}`; } catch (e) { /* sin dato */ } }
+  async function actualizarGasto() { try { const g = await (await fetch('/api/gasto')).json(); $('gasto').textContent = g.usd >= g.tope ? 'Se alcanzó el límite de creación de hoy; mañana se puede seguir.' : ''; $('gasto').hidden = !(g.usd >= g.tope); } catch (e) { /* sin dato; el gasto no se muestra, solo el aviso si se llegó al tope diario */ } }
   const NOMBRES = { corrientes: 'Corrientes', pellegrini: 'Pellegrini', media: 'la banda media' };
   async function pantalla(pid, prompt, semilla) {   // hasta 2 intentos: solo se rehace si el control encuentra algo grave
     const s = paso(`Imagen para ${NOMBRES[pid]}…`);
@@ -622,7 +630,8 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
         const a = document.createElement('a'); a.className = 'pieza'; a.href = `/control/?pieza=${encodeURIComponent(p.id)}`;
         const fecha = new Date(p.creada).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
         const mi = p.miniatura, r = mi && mi.rect;   // shows de material: recorte del cartel de cada hamburguesa (2,5:1, como la tarjeta)
-        a.innerHTML = (r ? `<div class="mini"><img src="${mi.url}" alt="" loading="lazy" style="width:${100 / r[2]}%;left:${-r[0] / r[2] * 100}%;top:${-r[1] / r[3] * 100}%"></div>` : `<img src="${p.pantallas.pellegrini}" alt="" loading="lazy">`) + `<strong></strong><span>${p.material ? 'Show preparado con material oficial de marca' : fecha}</span>`;
+        const vid = p.pantallas && p.pantallas.pellegrini_video;
+        a.innerHTML = (r ? `<div class="mini"><img src="${mi.url}" alt="" loading="lazy" style="width:${100 / r[2]}%;left:${-r[0] / r[2] * 100}%;top:${-r[1] / r[3] * 100}%"></div>` : vid ? `<video src="${vid}#t=1" muted playsinline preload="metadata"></video>` : `<img src="${p.pantallas.pellegrini}" alt="" loading="lazy">`) + `<strong></strong><span>${p.material ? 'Show preparado con material oficial de marca' : p.propia ? (p.tipo === 'video' ? 'Video subido · ' : 'Imagen subida · ') + fecha : fecha}</span>`;
         a.querySelector('strong').textContent = p.titulo; g.appendChild(a);
       }
     } catch (e) { g.innerHTML = '<p class="vacio">No se pudieron cargar las piezas. Recargá la página.</p>'; }
@@ -871,6 +880,21 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       try { window.scrollTo({ top: dest, behavior: 'smooth' }); } catch (err) { window.scrollTo(0, dest); }
     });
   })();
+
+  // ---------- pieza propia: subir un video o una imagen y verlo en el edificio (sin IA, sin costo) ----------
+  $('propia').addEventListener('change', async (e) => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    const est = $('estado-propia');
+    if (f.size > 25e6) { est.textContent = 'El archivo pesa más de 25 MB. Probá con un MP4 más corto o comprimido.'; return; }
+    est.textContent = `Subiendo ${f.name}…`;
+    try {
+      const fd = new FormData(); fd.append('archivo', f); fd.append('titulo', f.name);
+      const r = await fetch('/api/pieza-propia', { method: 'POST', body: fd }), d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || 'No se pudo subir.');
+      olvidar(); cargarGaleria();
+      est.innerHTML = 'Listo. <a href="/control/?pieza=' + encodeURIComponent(d.id) + '">Verla en el edificio</a> · quedó en «Piezas guardadas».';
+    } catch (err) { est.textContent = err.message; }
+  });
 
   cargarGaleria(); actualizarGasto(); cargarMaterial(); showMaterial();
 })();

@@ -411,10 +411,10 @@ body.vitrina .guion, body.vitrina .chip-modo, body.vitrina .diag, body.vitrina .
 .show-item b { display: block; font-size: 12px; font-weight: 600; padding: 6px 8px 0; line-height: 1.25; }
 .show-item small { display: block; font-size: 11px; color: var(--texto-3); padding: 2px 8px 7px; }
 /* Vitrina (show embebido en el portal): sin marcos oscuros a los costados; el edificio se funde en degradé con la página */
-html:has(body.vitrina), body.vitrina { background: transparent !important; }
-body.vitrina .escenario { background: transparent !important; }
-body.vitrina #fondo-amb, body.vitrina #terminacion { display: none !important; }
-body.vitrina #lienzo {
+html:has(body.vitrina.embebida), body.vitrina.embebida { background: transparent !important; }
+body.vitrina.embebida .escenario { background: transparent !important; }
+body.vitrina.embebida #fondo-amb, body.vitrina.embebida #terminacion { display: none !important; }
+body.vitrina.embebida #lienzo {
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%), linear-gradient(0deg, transparent 0, #000 10%);
   mask-image: linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%), linear-gradient(0deg, transparent 0, #000 10%);
   -webkit-mask-composite: source-in; mask-composite: intersect; }
