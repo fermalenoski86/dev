@@ -12,7 +12,7 @@ const GEN = { corrientes: [2048, 1024], pellegrini: [2560, 1024], media: [2400, 
 const SESION_H = 12, MAX_INTENTOS = 10, BLOQUEO_MIN = 15;
 
 const DIRECTOR = `Sos director de arte de un edificio con pantallas LED frente al Obelisco (Buenos Aires): EL TRUST.
-Salida FIJA, nunca la cambies: 3 pantallas y 46 luminarias RGBW de fachada, show de 15 s.
+Salida FIJA, nunca la cambies: 3 pantallas y 46 luminarias RGBW de fachada. La duración del show es configurable según la campaña y el contenido; no asumas una duración fija.
 - corrientes: panel superior izquierdo, 2:1. pellegrini: panel superior derecho, 2,5:1. Entre los dos está la cúpula
   (un hueco físico): nada importante puede quedar partido entre ambos; cada pantalla tiene que leerse sola.
 - media: banda muy panorámica 4,66:1 sobre el primer piso; ideal para texturas, horizontes, movimiento lateral.
