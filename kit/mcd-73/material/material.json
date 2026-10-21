@@ -104,6 +104,24 @@
     495
    ],
    "nombre": "McFlurry KitKat"
+  },
+  "cuarenta": {
+   "archivo": "cuarenta.jpg",
+   "que": "gráfica «40 años en Argentina» para Pellegrini (diseño propio, sin logo)",
+   "px": [
+    2880,
+    1152
+   ],
+   "nombre": "Gráfica 40 años"
+  },
+  "banda40": {
+   "archivo": "banda-40.jpg",
+   "que": "gráfica «40 años en Argentina · 1986 – 2026» para la banda (diseño propio)",
+   "px": [
+    5040,
+    400
+   ],
+   "nombre": "Banda 40 años"
   }
  },
  "piezas": [
@@ -1013,8 +1031,8 @@
     "efecto": "ola",
     "paleta": [
      "#FFC72C",
-     "#DA291C",
-     "#FFFFFF"
+     "#FFB627",
+     "#DA291C"
     ],
     "velocidad": 1,
     "titular": ""
@@ -1064,12 +1082,24 @@
      {
       "desde": 9.5,
       "hasta": 12.9,
-      "modo": "paleta",
-      "paleta": [
-       "#FFC72C",
-       "#DA291C"
+      "modo": "cubrir",
+      "fuente": "cuarto",
+      "rect": [
+       0,
+       0,
+       1,
+       0.74
       ],
-      "titular": "40"
+      "foco": [
+       0.62,
+       0.3
+      ],
+      "kb": {
+       "z": [
+        1,
+        1.06
+       ]
+      }
      }
     ],
     "pellegrini": [
@@ -1157,12 +1187,20 @@
      {
       "desde": 9.5,
       "hasta": 12.9,
-      "modo": "paleta",
-      "paleta": [
-       "#FFC72C",
-       "#DA291C"
+      "modo": "cubrir",
+      "fuente": "cuarenta",
+      "rect": [
+       0,
+       0,
+       1,
+       1
       ],
-      "titular": "AÑOS"
+      "kb": {
+       "z": [
+        1.04,
+        1
+       ]
+      }
      }
     ],
     "media": [
@@ -1241,12 +1279,14 @@
      {
       "desde": 9.5,
       "hasta": 12.9,
-      "modo": "paleta",
-      "paleta": [
-       "#DA291C",
-       "#FFC72C"
-      ],
-      "titular": "40 AÑOS EN ARGENTINA · 1986 – 2026"
+      "modo": "cubrir",
+      "fuente": "banda40",
+      "rect": [
+       0,
+       0,
+       1,
+       1
+      ]
      }
     ]
    }
