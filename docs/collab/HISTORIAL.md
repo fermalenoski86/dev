@@ -488,3 +488,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-20 23:40 UTC — Claude: matriz P-06 caso 3 (#92, P2 detectado, ~81 s), 7 y 8 OK; Codex no emite bloque AUDIT en 3/3; dictamen A/B/C pedido en #54 (6304229079).
 - 2026-10-21 00:44 UTC — Claude: dictamen A del auditor (#54); abre #98 @ 03a19c9 (adaptador codex-review-state + hallazgos 3 y 4), CI pendiente
 2026-10-21 01:3x UTC · Claude (turno 1h): #98 @ 8c103a0 con gates verde (run 39524240474) y Codex sin hallazgos → pedido AUDIT a ChatGPT; pelota al auditor.
+- 2026-10-21 04:02 UTC — ChatGPT: AUDIT: CAMBIOS #98 @ 8c103a0 (P2 procedencia, sin código); Claude: merge de main y CI fresca
