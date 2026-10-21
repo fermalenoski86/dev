@@ -20,6 +20,7 @@
 
 <div class="app">
   <header>
+    <a class="volver" id="volver" href="/" title="Volver a la presentación" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span>Presentación</span></a>
     <div class="marca">
       <div class="isotipo" aria-hidden="true"></div>
       <div><h1>TRUST <span>Control</span> <em class="by-h">by Affinitas</em></h1><small>Pantallas LED · Iluminación arquitectónica · Shows sincronizados</small></div>
@@ -179,6 +180,7 @@
 
 <div class="visor" id="visor" hidden role="dialog" aria-label="Preview del material"><div class="vis-caja"></div></div>
 
+<script>if (location.protocol !== 'file:') document.getElementById('volver').hidden = false;   // en el portal: volver a la presentación</script>
 <script src="geometria.js"></script>
 <script src="encuadres.js"></script>
 <script src="luminarias.js"></script>
