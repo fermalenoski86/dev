@@ -573,9 +573,13 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
     const d = await r.json().catch(() => ({})); if (!r.ok) throw new Error(d.error || `Error ${r.status}`); return d;
   };
   const espera = (ms) => new Promise((r) => setTimeout(r, ms));
-  async function esperarFal(trabajo) {
-    for (let i = 0; i < 150; i++) { const s = await post('/api/estado', trabajo); if (s.listo) return s.url; if (s.error) throw new Error(s.error); await espera(3000); }
-    throw new Error('fal tardó demasiado');
+  async function esperarFal(trabajo, maxSeg) {   // espera con tope de tiempo; un corte de red momentáneo no corta todo
+    const fin = Date.now() + (maxSeg || 120) * 1000; let fallas = 0;
+    while (Date.now() < fin) {
+      let s; try { s = await post('/api/estado', trabajo); fallas = 0; } catch (e) { if (++fallas > 3) throw e; await espera(3000); continue; }
+      if (s.listo) return s.url; if (s.error) throw new Error(s.error); await espera(2500);
+    }
+    throw new Error('tardó más de lo previsto');
   }
   const pasos = $('progreso'); let actual = null;
   function paso(txt) {
@@ -584,14 +588,16 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
   }
   async function actualizarGasto() { try { const g = await (await fetch('/api/gasto')).json(); $('gasto').textContent = g.usd >= g.tope ? 'Se alcanzó el límite de creación de hoy; mañana se puede seguir.' : ''; $('gasto').hidden = !(g.usd >= g.tope); } catch (e) { /* sin dato; el gasto no se muestra, solo el aviso si se llegó al tope diario */ } }
   const NOMBRES = { corrientes: 'Corrientes', pellegrini: 'Pellegrini', media: 'la banda media' };
-  async function pantalla(pid, prompt, semilla) {   // hasta 2 intentos: solo se rehace si el control encuentra algo grave
+  async function pantalla(pid, prompt, semilla) {   // hasta 2 intentos: solo se rehace si el control encuentra algo grave; nunca se queda colgada
     const s = paso(`Imagen para ${NOMBRES[pid]}…`);
-    let url = await esperarFal(await post('/api/imagen', { pantalla: pid, prompt, seed: semilla }));
-    let qc = await post('/api/control', { url, pantalla: pid });
+    let url = await esperarFal(await post('/api/imagen', { pantalla: pid, prompt, seed: semilla }), 120);
+    let qc = { ok: true }; try { qc = await post('/api/control', { url, pantalla: pid }); } catch (e) { /* sin control: queda la primera */ }
     if (!qc.ok) {
       s.ok(`Imagen para ${NOMBRES[pid]}: ajustando${qc.motivo ? ` (${qc.motivo.replace(/\.$/, '')})` : ''}…`); s.activo();
-      url = await esperarFal(await post('/api/imagen', { pantalla: pid, prompt: prompt + ' ' + (qc.correccion || ''), seed: semilla + 7 }));
-      qc = await post('/api/control', { url, pantalla: pid });
+      try {
+        const u2 = await esperarFal(await post('/api/imagen', { pantalla: pid, prompt: prompt + ' ' + (qc.correccion || ''), seed: semilla + 7 }), 100);
+        const q2 = await post('/api/control', { url: u2, pantalla: pid }).catch(() => ({ ok: true })); url = u2; qc = q2;
+      } catch (e) { /* el segundo intento tardó: queda la primera */ }
     }
     s.ok(`Imagen para ${NOMBRES[pid]}: ${qc.ok ? 'lista' : 'lista, conviene revisarla'}`);
     return url;
@@ -604,9 +610,10 @@ footer { padding: 24px clamp(16px, 4vw, 56px) 40px; color: #5E6E88; font-size: 1
       const plan = await post('/api/plan', { brief, video: $('con-video').checked });
       s0.ok(`«${plan.titulo}». ${plan.concepto || ''}`);
       const semilla = Math.floor(Math.random() * 1e6), urls = {};
-      for (const pid of ['corrientes', 'pellegrini', 'media']) urls[pid] = await pantalla(pid, plan[pid].prompt, semilla);
+      const PIDS = ['corrientes', 'pellegrini', 'media'], hechas = await Promise.all(PIDS.map((pid) => pantalla(pid, plan[pid].prompt, semilla)));   // las tres a la vez: ~3 veces más rápido
+      PIDS.forEach((pid, k) => { urls[pid] = hechas[k]; });
       const v = plan.video || {};
-      if ($('con-video').checked && urls[v.pantalla]) { const s = paso(`Video de 5 segundos para ${NOMBRES[v.pantalla]}…`); urls[v.pantalla + '_video'] = await esperarFal(await post('/api/video', { imagen: urls[v.pantalla], movimiento: v.movimiento })); s.ok(`Video para ${NOMBRES[v.pantalla]}: listo`); }
+      if ($('con-video').checked && urls[v.pantalla]) { const s = paso(`Video de 5 segundos para ${NOMBRES[v.pantalla]}…`); try { urls[v.pantalla + '_video'] = await esperarFal(await post('/api/video', { imagen: urls[v.pantalla], movimiento: v.movimiento }), 240); s.ok(`Video para ${NOMBRES[v.pantalla]}: listo`); } catch (e) { s.ok('El video tardó demasiado: la pieza se guarda con las imágenes'); } }
       const sg = paso('Guardando…');
       const meta = await post('/api/guardar', { titulo: plan.titulo, concepto: plan.concepto, brief, ficha: plan.ficha, pantallas: urls });
       sg.ok('Pieza guardada');
