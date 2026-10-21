@@ -86,6 +86,24 @@
     256
    ],
    "nombre": "Combo Cuarto de Libra"
+  },
+  "mcflurry_oreo": {
+   "archivo": "mcflurry-oreo.png",
+   "que": "McFlurry Oreo (producto oficial, fondo transparente)",
+   "px": [
+    408,
+    492
+   ],
+   "nombre": "McFlurry Oreo"
+  },
+  "mcflurry_kitkat": {
+   "archivo": "mcflurry-kitkat.png",
+   "que": "McFlurry KitKat (producto oficial, fondo transparente)",
+   "px": [
+    414,
+    495
+   ],
+   "nombre": "McFlurry KitKat"
   }
  },
  "piezas": [
@@ -1229,6 +1247,128 @@
        "#FFC72C"
       ],
       "titular": "40 AÑOS EN ARGENTINA · 1986 – 2026"
+     }
+    ]
+   }
+  },
+  {
+   "id": "mcflurry",
+   "titulo": "McFlurry · Oreo y KitKat",
+   "creada": "2026-10-21T17:10:00-03:00",
+   "concepto": "Los dos McFlurry con los productos oficiales: Oreo en Corrientes sobre azul y KitKat en Pellegrini sobre rojo; en la banda, los dos juntos. La fachada acompaña en blanco frío y rojo.",
+   "ficha": {
+    "efecto": "degrade",
+    "paleta": [
+     "#1E4FB5",
+     "#FFFFFF",
+     "#C8102E"
+    ],
+    "velocidad": 1,
+    "titular": ""
+   },
+   "miniatura": {
+    "fuente": "mcflurry_oreo",
+    "rect": [
+     0,
+     0.05,
+     1,
+     0.4
+    ]
+   },
+   "pistas": {
+    "corrientes": [
+     {
+      "desde": 2.2,
+      "hasta": 12.9,
+      "modo": "contener",
+      "fuente": "mcflurry_oreo",
+      "rect": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "fondo": "#1E4FB5",
+      "escala": 0.97,
+      "entra": "izq",
+      "kb": {
+       "z": [
+        0.96,
+        1.04
+       ]
+      }
+     }
+    ],
+    "pellegrini": [
+     {
+      "desde": 2.6,
+      "hasta": 12.9,
+      "modo": "contener",
+      "fuente": "mcflurry_kitkat",
+      "rect": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "fondo": "#C8102E",
+      "escala": 0.97,
+      "entra": "der",
+      "kb": {
+       "z": [
+        0.96,
+        1.04
+       ]
+      }
+     }
+    ],
+    "media": [
+     {
+      "desde": 2.2,
+      "hasta": 12.9,
+      "modo": "paleta",
+      "paleta": [
+       "#1E4FB5",
+       "#C8102E"
+      ],
+      "titular": ""
+     },
+     {
+      "desde": 2.2,
+      "hasta": 12.9,
+      "modo": "contener",
+      "fuente": "mcflurry_oreo",
+      "rect": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "fondo": "#1E4FB5",
+      "escala": 0.92,
+      "caja": [
+       0,
+       0.12
+      ]
+     },
+     {
+      "desde": 2.2,
+      "hasta": 12.9,
+      "modo": "contener",
+      "fuente": "mcflurry_kitkat",
+      "rect": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "fondo": "#C8102E",
+      "escala": 0.92,
+      "caja": [
+       0.88,
+       0.12
+      ],
+      "titular": "McFLURRY OREO · McFLURRY KITKAT"
      }
     ]
    }
