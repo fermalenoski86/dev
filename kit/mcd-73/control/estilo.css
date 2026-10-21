@@ -364,7 +364,7 @@ body.vitrina .guion, body.vitrina .chip-modo, body.vitrina .diag, body.vitrina .
 .marca h1 .by-h { font-style: normal; font-size: 12px; font-weight: 500; color: var(--texto-3); letter-spacing: .08em; margin-left: 6px; }
 
 /* ---------- celular: una columna, el edificio arriba y los controles debajo, con scroll ---------- */
-@media (max-width: 760px) {
+@media (max-width: 1100px) {
   body { overflow: auto; overflow-x: hidden; }
   .app { height: auto; min-height: 100vh; grid-template-rows: auto auto auto auto; }
   header { flex-wrap: wrap; gap: 8px 12px; padding: 10px 14px; }
@@ -424,3 +424,4 @@ body.vitrina { overflow: hidden !important; }
 body.vitrina .app { height: 100vh !important; min-height: 0 !important; }
 body.vitrina main { height: 100vh !important; padding: 0 !important; }
 body.vitrina .escenario { height: 100vh !important; }
+@media (max-width: 1100px) { .shows-lista { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); } }

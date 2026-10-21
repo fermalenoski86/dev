@@ -11,6 +11,8 @@
 (function () {
   'use strict';
   const G = window.GEOMETRIA, L = window.LUMINARIAS, M = window.MOTOR;
+  // Reproducir algo siempre quita el BLACKOUT: si quedó activo (botón o tecla «b»), los shows corrían «en negro» y parecía que el simulador no andaba.
+  (function () { const play0 = M.play; M.play = function () { if (M.estado().blackout) M.setBlackout(false); return play0.apply(M, arguments); }; })();
   const $ = (id) => document.getElementById(id);
   // ---------- encuadres (encuadres.js) ----------
   // «completo»: la MISMA toma entera (planta baja y calle). La foto base calibrada ocupa el rectángulo rect: toda la geometría
