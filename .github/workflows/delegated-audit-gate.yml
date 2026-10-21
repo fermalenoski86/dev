@@ -31,10 +31,12 @@ on:
   # comentario con el marcador codex-review-state:v1. Sin este disparador, un marcador que
   # llega después de `gates`/`riesgo` no re-evaluaba nunca (Codex #98, P1). `issue_comment`
   # carga SIEMPRE el YAML de la rama por defecto (main), como `push`/`workflow_run`: el PR no
-  # aporta código. El `if:` del job es solo un filtro de costo (bot + marcador); la autoridad
+  # aporta código. El `if:` del job es solo un filtro de costo (comentario del bot); la autoridad
   # sigue en la allowlist de main y en la relectura por API.
+  # `deleted` y el filtro solo por autor (Codex #98, P2): borrar el marcador, o editarlo para
+  # quitarlo, también re-evalúa; si no, un PASS viejo quedaba a la vista.
   issue_comment:
-    types: [created, edited]
+    types: [created, edited, deleted]
 permissions:
   contents: read
   pull-requests: read
@@ -42,7 +44,7 @@ permissions:
   checks: write
 jobs:
   evaluar:
-    if: github.event_name != 'issue_comment' || (github.event.issue.pull_request && github.event.comment.user.id == 199175422 && contains(github.event.comment.body, 'codex-review-state:v1'))
+    if: github.event_name != 'issue_comment' || (github.event.issue.pull_request && github.event.comment.user.id == 199175422)
     # carril serial a nivel JOB, no de workflow: un issue_comment ajeno queda con el job
     # salteado y no entra al grupo, así no desplaza a un pendiente real del carril
     concurrency:

@@ -101,8 +101,28 @@ describe('P-06 · adaptador A (#54, 2026-10-20): marcador codex-review-state + b
   });
   it('3 · el marcador declara hallazgos aunque estén resueltos, o security_review con hallazgos o sin terminar → fail', () => {
     expect(motivos({ comentarios: [marcador({ has_any_findings: true })] }).m).toContain('has_any_findings');
-    expect(motivos({ comentarios: [marcador({}, { commit_sha: HEAD, status: 'in_progress', has_any_findings: null, has_unresolved_findings: null })] }).m).toContain('security_review in_progress');
+    expect(motivos({ comentarios: [marcador({}, { commit_sha: HEAD, status: 'in_progress', has_any_findings: null, has_unresolved_findings: null })] }).m).toMatch(/security_review en un estado no aceptado .*in_progress/);
     expect(motivos({ comentarios: [marcador({}, { commit_sha: HEAD, status: 'completed', has_any_findings: true, has_unresolved_findings: true })] }).m).toContain('security_review');
+  });
+  it.each([
+    ['booleano como string (repro de Codex #98)', { commit_sha: HEAD, status: 'completed', has_any_findings: 'true', has_unresolved_findings: false }],
+    ['objeto vacío', {}],
+    ['campo de más', { commit_sha: null, status: null, has_any_findings: null, has_unresolved_findings: null, extra: 1 }],
+    ['completed sin sha', { commit_sha: null, status: 'completed', has_any_findings: false, has_unresolved_findings: false }],
+    ['mezcla de null y valores', { commit_sha: null, status: 'completed', has_any_findings: null, has_unresolved_findings: null }],
+    ['un array', []],
+  ])('3b · security_review mal formado: %s → fail (Codex #98, P2)', (_n, sr) => {
+    const r = motivos({ comentarios: [marcador({}, sr as Record<string, unknown>)] });
+    expect(r.v).toBe('fail');
+    expect(r.m).toContain('security_review');
+  });
+  it('3c · security_review completed limpia: del HEAD → pass; de otro commit → fail; sin correr (todo null o ausente) → pass', () => {
+    expect(motivos({ comentarios: [marcador({}, { commit_sha: HEAD, status: 'completed', has_any_findings: false, has_unresolved_findings: false })] }).v).toBe('pass');
+    expect(motivos({ comentarios: [marcador({}, { commit_sha: VIEJO, status: 'completed', has_any_findings: false, has_unresolved_findings: false })] }).m).toContain('security_review del commit');
+    expect(motivos().v).toBe('pass');
+    const sinClave = { ...marcador(), body: marcador().body.replace(/,"security_review":\{[^}]*\}/, '') };
+    expect(sinClave.body).not.toContain('security_review');
+    expect(motivos({ comentarios: [sinClave] }).v).toBe('pass');
   });
   it('4 · SHA viejo: el marcador es de un commit anterior (push después de la review) → fail', () => {
     const r = motivos({ comentarios: [marcador({ commit_sha: VIEJO })] });
@@ -269,11 +289,12 @@ describe('P-06 · publicación y workflows', () => {
   });
   it('un marcador de Codex que llega después de gates/riesgo re-evalúa: issue_comment created/edited filtrado por bot + marcador (Codex #98, P1)', () => {
     const y = readFileSync(path.join(ROOT, '.github/workflows/delegated-audit-gate.yml'), 'utf8').replace(/^\s*#.*$/gm, '');
-    expect(y).toMatch(/issue_comment:\s*\n\s*types: \[created, edited\]/);
+    // `deleted` y sin filtro por contenido: borrar el marcador o quitarlo al editar también re-evalúa (Codex #98, P2)
+    expect(y).toMatch(/issue_comment:\s*\n\s*types: \[created, edited, deleted\]/);
     const si = /^\s*if: (.*)$/m.exec(y)?.[1] ?? '';
     expect(si).toContain("github.event_name != 'issue_comment' ||");
     expect(si).toContain(`github.event.comment.user.id == ${CODEX_BOT_IDS[0]}`);
-    expect(si).toContain("contains(github.event.comment.body, 'codex-review-state:v1')");
+    expect(si).not.toContain('contains(');
     expect(si).toContain('github.event.issue.pull_request');
     // el carril serial va en el job: un run salteado no puede desplazar al pendiente real
     expect(y).not.toMatch(/^concurrency:/m);

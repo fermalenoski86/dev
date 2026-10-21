@@ -138,6 +138,7 @@ export const badges = (texto) => [...String(texto ?? '').matchAll(BADGE_RE)].map
  * `code_review` con los cuatro campos y tipos exactos. Cualquier otra cosa → error.
  * @returns {{ ok: true, estado: object } | { ok: false, error: string }}
  */
+const CAMPOS_NULOS = (sr) => Object.values(sr).every((v) => v === null);
 export function parsearMarcador(cuerpo) {
   if (typeof cuerpo !== 'string') return { ok: false, error: 'comentario sin cuerpo' };
   const n = cuerpo.split(MARCADOR).length - 1;
@@ -151,9 +152,19 @@ export function parsearMarcador(cuerpo) {
   if (!esSha(cr.commit_sha)) return { ok: false, error: 'code_review.commit_sha no es un sha de 40' };
   if (typeof cr.status !== 'string') return { ok: false, error: 'code_review.status ilegible' };
   if (typeof cr.has_any_findings !== 'boolean' || typeof cr.has_unresolved_findings !== 'boolean') return { ok: false, error: 'code_review.has_*_findings no son booleanos' };
-  const sr = j.security_review ?? null;
-  if (sr !== null && typeof sr !== 'object') return { ok: false, error: 'security_review ilegible' };
-  return { ok: true, estado: { code_review: cr, security_review: sr } };
+  // security_review (Codex #98, P2): solo dos formas aceptadas, con tipos exactos; cualquier
+  // otra (objeto vacío, strings, campos de más o de menos) es ambigua → error.
+  //   sin correr:  los cuatro campos en null (o la clave ausente)
+  //   completada:  {commit_sha: <sha>, status: 'completed', has_any_findings: false, has_unresolved_findings: false}
+  const sr = j.security_review === undefined ? null : j.security_review;
+  if (sr !== null) {
+    const CAMPOS = ['commit_sha', 'has_any_findings', 'has_unresolved_findings', 'status'];
+    if (typeof sr !== 'object' || Array.isArray(sr) || Object.keys(sr).sort().join() !== CAMPOS.join()) return { ok: false, error: 'security_review ilegible (campos distintos de commit_sha/status/has_*_findings)' };
+    const vacia = CAMPOS.every((k) => sr[k] === null);
+    const limpia = esSha(sr.commit_sha) && sr.status === 'completed' && sr.has_any_findings === false && sr.has_unresolved_findings === false;
+    if (!vacia && !limpia) return { ok: false, error: `security_review en un estado no aceptado (${JSON.stringify(sr).slice(0, 160)}): solo sin correr (todo null) o completed sin hallazgos` };
+  }
+  return { ok: true, estado: { code_review: cr, security_review: sr && CAMPOS_NULOS(sr) ? null : sr } };
 }
 
 /**
@@ -239,8 +250,10 @@ export function evaluar({ repo, pr, reviews, comentarios, hilos, riesgo, main = 
         // estados contradictorios (hallazgos que el marcador da por resueltos sin una review
         // limpia del HEAD) no se interpretan: FAIL
         if (cr.has_any_findings !== false) motivos.push('codex: el marcador declara hallazgos en la review (has_any_findings) → no hay preauditoría limpia');
-        if (sr && (sr.has_unresolved_findings === true || sr.has_any_findings === true || (sr.status !== null && sr.status !== undefined && sr.status !== 'completed'))) {
-          motivos.push(`codex: security_review ${sr.status ?? '—'} con hallazgos o sin terminar`);
+        // el parser ya dejó solo «sin correr» (null) o «completed sin hallazgos»; completada
+        // tiene que ser del HEAD
+        if (sr && sr.commit_sha !== pr.head_sha) {
+          motivos.push(`codex: security_review del commit ${corto(sr.commit_sha)}, no del HEAD`);
         }
       }
     }
