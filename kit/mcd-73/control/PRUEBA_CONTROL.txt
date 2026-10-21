@@ -125,6 +125,6 @@ OK    preview aplicado: Corrientes muestra el clip subido a los 3,4 s ([199, 38,
 OK    Product Hero: el producto del packshot (contenido, sin estirar) al centro de Pellegrini a los 7 s ([193, 114, 43])
 OK    «Quitar media del preview» vuelve al contenido generado
 OK    [remove] quita el adjunto
-OK    0 pedidos de red fuera de file:// (99 pedidos locales)
+OK    0 pedidos de red fuera de file:// (104 pedidos locales)
 OK    0 errores de consola ([])
 Resultado: TODO OK

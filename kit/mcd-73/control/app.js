@@ -1139,8 +1139,35 @@
   }
   // Piezas generadas con IA real (ia/generar.py → ia/empaquetar.py → piezas_ia.js): imágenes/clip por pantalla + ficha de luces.
   // La pieza entra a las 3 pantallas en el tramo 2,2–12,8 s; el titular lo escribe el motor sobre la banda media.
-  (function armarPiezasIA() {
-    const lista = window.PIEZAS_IA || [], caja = $('piezas-ia'); if (!lista.length || !caja) return;
+  (function armarShowsGuardados() {   // tarjeta «Shows guardados»: el takeover base + todas las piezas (material de la marca e IA)
+    const caja = $('shows-lista'); if (!caja) return;
+    const marcar = (el) => caja.querySelectorAll('.show-item').forEach((x) => x.classList.toggle('on', x === el));
+    function tarjeta(titulo, sub, mini, alHacer) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'show-item'; b.setAttribute('role', 'listitem');
+      const m = document.createElement('div'); m.className = 'mini';
+      if (mini && mini.src) {
+        const im = document.createElement('img'); im.alt = ''; im.loading = 'lazy'; im.src = mini.src;
+        if (mini.rect) { const r = mini.rect; im.className = 'recorte'; im.style.width = (100 / r[2]) + '%'; im.style.left = (-r[0] / r[2] * 100) + '%'; im.style.top = (-r[1] / r[3] * 100) + '%'; }
+        m.appendChild(im);
+      }
+      const pl = document.createElement('span'); pl.className = 'play'; m.appendChild(pl); b.appendChild(m);
+      const t = document.createElement('b'); t.textContent = titulo; b.appendChild(t);
+      const s2 = document.createElement('small'); s2.textContent = sub; b.appendChild(s2);
+      b.addEventListener('click', () => { marcar(b); alHacer(); });
+      caja.appendChild(b); return b;
+    }
+    tarjeta("Takeover McDonald's", 'Show base · 15 s', { src: 'fotos/trust-noche.jpg' }, () => { const pg = $('portada'); if (pg) pg.classList.add('fuera'); window.CONTENIDO.setMedia(null); window.CONTENIDO.setCorte(false); M.setEstiloShow('rojo', 1); M.setFicha({}); M.setCreatividad('A'); M.cargarShow(); M.seek(0); M.play(); });
+    for (const pz of window.PIEZAS_IA || []) {
+      let mini = null;
+      if (pz.miniatura && pz.fuentes && pz.fuentes[pz.miniatura.fuente]) mini = { src: pz.fuentes[pz.miniatura.fuente], rect: pz.miniatura.rect };
+      else if (pz.pantallas && (pz.pantallas.pellegrini || pz.pantallas.corrientes)) mini = { src: pz.pantallas.pellegrini || pz.pantallas.corrientes };
+      const b = tarjeta(String(pz.titulo || 'Pieza').replace(/ · propuesta$/, ''), pz.material ? 'Con material de la marca' : 'Pieza creada para las pantallas', mini, () => { const pg = $('portada'); if (pg) pg.classList.add('fuera'); aplicarPiezaIA(pz); });
+      b.dataset.id = pz.id || '';
+    }
+    const id = new URLSearchParams(location.search).get('pieza'); if (id) marcar(caja.querySelector(`[data-id="${CSS.escape(id)}"]`));
+  })();
+  (function armarPiezasIA() {   // (fila vieja de chips: reemplazada por «Shows guardados»)
+    const lista = window.PIEZAS_IA || [], caja = $('piezas-ia'); if (!lista.length || !caja || $('shows-lista')) return;
     caja.hidden = false;
     lista.forEach((pz, n) => {
       const b = document.createElement('button'); b.textContent = pz.material ? `★ ${pz.titulo}` : `${n + 1} · ${pz.titulo}`; b.title = pz.concepto;
