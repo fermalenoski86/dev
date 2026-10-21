@@ -141,7 +141,7 @@ Nuevos capítulos editoriales (revisión P5 y contenido anamórfico, 20/10/2026)
 - **P-115** (p, capítulo de 3D anamórfico): El efecto anamórfico funciona mejor desde ángulos de observación definidos; desde otros lugares puede verse distinto. Por eso se propone validar los encuadres con Previs y realizar pruebas de lectura, contraste y movimiento antes de la producción final. La pantalla P5 aporta definición, pero es el diseño de perspectiva el que genera la ilusión.
 - **P-116** (h2, nuevo capítulo después de la demostración de campaña): Una propuesta para las campañas y los momentos especiales de McDonald's
 - **P-117** (p, capítulo de propuesta comercial): EL TRUST permitiría combinar presencia publicitaria programada con intervenciones especiales de 15 segundos en las que la marca ocupe visualmente las pantallas y acompañe la fachada con iluminación. Es un formato para explorar lanzamientos, promociones, campañas vinculadas con la Selección y otras fechas de alto interés, siempre con piezas y mensajes aprobados por McDonald's.
-- **P-118** (p, capítulo de propuesta comercial): La participación comercial —incluida una posible exclusividad de marca o de categoría— deberá definirse en una propuesta específica. Este portal no fija condiciones, alcance ni métricas de audiencia: muestra el potencial creativo y las herramientas previstas para planificar y revisar la exhibición.
+- **P-118** (retirado): sin texto; párrafo eliminado del portal a pedido de Affinitas.
 
 ## Cómo devolver los cambios
 
