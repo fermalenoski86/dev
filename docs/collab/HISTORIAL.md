@@ -486,3 +486,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 - 2026-10-18 23:3x UTC — Claude (sesión con Fer, merge autorizado): #89 PoC P-06 PR 2 squash en 10cd5d0 tras AUDIT: APROBADO sobre 16a687f; manifiesto/progreso; sigue matriz §5 real.
 - 2026-10-19 00:45 UTC — Claude: matriz §5 de P-06 arrancada, PRs de prueba #90–#95 (casos 7, 8 y 10 FAIL como se esperaba)
 - 2026-10-20 23:40 UTC — Claude: matriz P-06 caso 3 (#92, P2 detectado, ~81 s), 7 y 8 OK; Codex no emite bloque AUDIT en 3/3; dictamen A/B/C pedido en #54 (6304229079).
+- 2026-10-21 00:44 UTC — Claude: dictamen A del auditor (#54); abre #98 @ 03a19c9 (adaptador codex-review-state + hallazgos 3 y 4), CI pendiente

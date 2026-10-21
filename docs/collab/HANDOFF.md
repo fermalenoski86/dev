@@ -3,9 +3,9 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador), **esperando el dictamen del auditor en #54** ([6304229079](https://github.com/fermalenoski86/dev/issues/54#issuecomment-6304229079)): Codex no emite bloque `AUDIT:` en 3/3 muestras. Con hallazgos publica una review con badges; sin hallazgos deja 👍 y el marcador `codex-review-state`. **Acción exacta para ChatGPT:** responder en #54 **A** (adaptador fail-closed sobre `codex-review-state` + badges, delegación solo en riesgo bajo), **B** (cerrar la PoC: gate informativo, firma siempre de ChatGPT) o **C** (otro formato), y decir si el hallazgo 3 (`riesgo` contamina PRs ajenos) entra en el mismo PR o va a BACKLOG. Con el dictamen, Claude abre UN PR (riesgo alto) con (1)/(2) y la deduplicación de checks del gate (hallazgo 4, confirmado), y después re-corre la matriz sobre CI nueva.
+**Pelota en:** Claude (implementador), **esperando CI de #98** @ `03a19c9bfb3032e8ba193f84418107d7cad60581`. Es el PR consolidado de la decisión A del auditor en #54 ([6304451839](https://github.com/fermalenoski86/dev/issues/54#issuecomment-6304451839)): adaptador fail-closed sobre `codex-review-state:v1` + badges, solo riesgo bajo, preauditoría (nunca aprobación); dedupe de checks (hallazgo 4); `riesgo` clasifica solo al PR del evento (hallazgo 3). Riesgo alto. **Próximo turno de Claude:** con `gates` verde sobre ese HEAD, autorrevisión A/B/C, responder lo que haya dejado Codex y pedir `AUDIT:` a ChatGPT en #98 con las 4 decisiones que lista el PR. Después se re-corren los casos 1–3 y 4–13 de la matriz sobre la CI nueva.
 **En auditoría:** ninguno
-**Fase:** PoC P-06, matriz real. Medidos: 1 (falso bloqueo), 2 (P1 ✅), 3 (P2 ✅, ~81 s), 7 y 8 (elegibilidad ✅). Pendientes: 4, 5/6, 9–13 (tras el fix del gate). #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
+**Fase:** PoC P-06, matriz real. Medidos sobre la CI vieja: 1 (falso bloqueo), 2 (P1 ✅), 3 (P2 ✅, ~81 s), 7 y 8 (elegibilidad ✅). Se repiten 1–3 y siguen 4, 5/6 y 9–13 cuando #98 esté en `main`. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
 **Estado:** PR 1 (#88) en `main@c403b6b`; PR 2 (#89) mergeado en `main@10cd5d0` (`AUDIT: APROBADO` [6254481441](https://github.com/fermalenoski86/dev/pull/89#issuecomment-6254481441) sobre `16a687f`; merge en sesión con Fer). Entregable P-06-PR2 en manifiesto + `PROGRESO.md` (`6867d21`). Gate y Action en report-only / solo lectura.
 
 ## PoC P-06 — qué entra (brief + #54, decisión 2026-10-12 18:15)
@@ -28,7 +28,7 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| PoC P-06 matriz | #54 / #90–#95 | #90–#92 listos (Codex revisó), #93–#95 en borrador; no se mergean; tabla en 6304229079 |
+| PoC P-06 matriz | #54 / #90–#95 / #98 | dictamen A recibido; fix en #98 (CI pendiente); #90–#95 no se mergean |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
 | E2E intermitente :17 | #26 / #77 | causa no determinada |
