@@ -223,7 +223,7 @@
     const FW = ENC[encuadre].ancho, FH = ENC[encuadre].alto;
     // Edificio más grande (19/10): en «Edificio completo» la toma se acerca ×1,2 centrada en el edificio (se recorta algo de
     // cielo y de calle); el lienzo queda más grande que el escenario y se desplaza para que el edificio quede al centro.
-    const Z = encuadre === 'completo' ? 1.2 : 1, ANCLA = [0.48, 0.43];
+    const Z = encuadre === 'completo' && !document.body.classList.contains('vitrina') ? 1.2 : 1, ANCLA = [0.48, 0.43];   // embebido (vitrina): el edificio entero, sin recortes
     const k = Math.min(esc.clientWidth / FW, esc.clientHeight / FH) * Z;
     const cssW = Math.floor(FW * k), cssH = Math.round(cssW * FH / FW);   // alto derivado del ancho: proporción exacta al píxel
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5) * ESCALA_RENDER;   // hasta 1,5: nítido en HiDPI; ESCALA_RENDER baja sola si el equipo no llega

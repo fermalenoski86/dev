@@ -418,3 +418,9 @@ body.vitrina #lienzo {
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%), linear-gradient(0deg, transparent 0, #000 10%);
   mask-image: linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%), linear-gradient(0deg, transparent 0, #000 10%);
   -webkit-mask-composite: source-in; mask-composite: intersect; }
+
+/* Vitrina en pantallas angostas (tablet/celular): el escenario ocupa todo el cuadro embebido, no el alto «de celular» */
+body.vitrina { overflow: hidden !important; }
+body.vitrina .app { height: 100vh !important; min-height: 0 !important; }
+body.vitrina main { height: 100vh !important; padding: 0 !important; }
+body.vitrina .escenario { height: 100vh !important; }
