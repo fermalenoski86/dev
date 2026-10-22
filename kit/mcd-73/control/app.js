@@ -1192,6 +1192,7 @@
       fuentes[pan] = el;
       pistas[pan] = [{ desde: 2.2, hasta: 12.8, modo: 'cubrir', fuente: pan, titular: pan === 'media' && pz.ficha.titular ? String(pz.ficha.titular).toUpperCase() : '' }];
     }
+    if (pz.animacion && pz.animacion.media === 'lluvia-papas' && pistas.media) Object.assign(pistas.media[0], { modo: 'lluvia', lluvia: 'papas' });   // la media no queda fija: fondo rojo vivo + papas cayendo (en vez de la foto)
     const f = pz.ficha || {};
     const fc = validarFicha({ creatividad: 'C', estilo: f.paleta && f.paleta.length ? 'custom' : 'rojo', intensidad: 1,
       paleta: (f.paleta || []).filter((h) => { const n = parseInt(String(h).slice(1), 16); return ((n >> 16) & 255) + ((n >> 8) & 255) + (n & 255) > 90; }),   // las luces no «pintan» negro

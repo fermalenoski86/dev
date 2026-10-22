@@ -362,6 +362,44 @@
       papa(c, x, y, largo, azar(i + 5) * Math.PI + dt * (azar(i + 6) - 0.5) * 3);
     }
   }
+  // Lluvia de papas SOBRE la marquesina media (pieza «Lluvia de papas»): la foto de fondo deja de ser fija; caen papas
+  // en tres planos (atrás chicas y lentas, adelante grandes y rápidas), giran, se balancean y brillan con chispas de sal.
+  // Entran desde arriba al empezar el tramo y siguen en bucle hasta que termina. Se compone «pre-comprimida» (k) como la media.
+  function lluviaMedia(c, w, h, seg, t, k) {
+    const dt = t - seg.desde; if (dt < 0) return;
+    const fi = seg.fundido == null ? 0.35 : seg.fundido, a = sv((seg.hasta - t) / fi);
+    const wa = w * k, PLANOS = [[22, 0.45, 0.6, 0.45, 0.55], [14, 0.72, 0.95, 0.75, 0.85], [7, 1.1, 1.4, 1.1, 1]];   // n, largo min/max (× alto), velocidad (× alto/s), opacidad
+    c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.scale(1 / k, 1); c.globalCompositeOperation = 'source-over'; c.globalAlpha = sv(dt / fi) * a;   // fondo propio, vivo: rojo profundo con dos focos de luz dorada que viajan
+    let g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#5a000c'); g.addColorStop(0.55, '#b3120f'); g.addColorStop(1, '#6e000d');
+    c.fillStyle = g; c.fillRect(0, 0, wa, h); c.globalCompositeOperation = 'lighter';
+    for (let q = 0; q < 2; q++) {
+      const fx = wa * (0.5 + 0.42 * Math.sin(t * (0.33 + q * 0.21) + q * 2.4)), r = h * 1.6;
+      g = c.createRadialGradient(fx, h * 0.55, 0, fx, h * 0.55, r); g.addColorStop(0, 'rgba(255,170,40,0.38)'); g.addColorStop(1, 'rgba(255,120,20,0)');
+      c.fillStyle = g; c.fillRect(0, 0, wa, h);
+    }
+    c.restore();
+    c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.scale(1 / k, 1);
+    let i0 = 0;
+    for (const [n, l0, l1, vel, op] of PLANOS) {
+      for (let j = 0; j < n; j++) {
+        const i = i0 + j, L = h * (l0 + (l1 - l0) * azar(i + 11)), v = h * vel * (0.8 + 0.4 * azar(i + 12));
+        const tramo = h + 2 * L, per = tramo / v, ret = azar(i + 13) * per * 1.1, u = dt - ret; if (u < 0) continue;
+        const y = -L + (u % per) * v, vuelta = Math.floor(u / per);
+        const x = wa * (0.02 + 0.96 * azar(i * 3.7 + vuelta * 1.3)) + Math.sin(u * (0.9 + azar(i + 14)) + i) * L * 0.25;
+        const ang = (azar(i + 15) - 0.5) * 1.6 + u * (azar(i + 16) - 0.5) * 2.4, esc = L / 100;
+        c.globalAlpha = a * op; c.save(); c.translate(x, y); c.scale(esc, esc); papa(c, 0, 0, 100, ang); c.restore();
+      }
+      i0 += n;
+    }
+    c.globalCompositeOperation = 'lighter';   // chispas de sal que titilan
+    for (let i = 0; i < 70; i++) {
+      const ph = t * (1.5 + azar(i + 40) * 2.5) + azar(i + 41) * 6.28, br = Math.max(0, Math.sin(ph)) ** 6; if (br < 0.05) continue;
+      const x = wa * azar(i + 42), y = (h * azar(i + 43) + dt * h * 0.12) % h, r = h * (0.006 + 0.01 * azar(i + 44)) * (0.6 + br);
+      const g = c.createRadialGradient(x, y, 0, x, y, r * 4); g.addColorStop(0, `rgba(255,252,235,${0.95 * br * a})`); g.addColorStop(1, 'rgba(255,230,160,0)');
+      c.globalAlpha = 1; c.fillStyle = g; c.fillRect(x - r * 4, y - r * 4, r * 8, r * 8);
+    }
+    c.restore();
+  }
   function medialuna(c, x, y, a) {   // medialuna dorada (desayuno argentino), forma genérica
     c.save(); c.translate(x, y);
     const g = c.createLinearGradient(0, -a * 0.3, 0, a * 0.3); g.addColorStop(0, '#f3b45a'); g.addColorStop(1, '#9a5214');
@@ -730,6 +768,7 @@
     if (cont.modo === 'show') {
       show(cv, id, vn, cont.t, cr);
       const seg = MEDIA ? capaMedia(cv, id, cont.t) : null;
+      if (seg && seg.lluvia === 'papas') lluviaMedia(c, w, h, seg, cont.t, estiramiento(id));
       if (seg && seg.titular) {   // texto del motor SOBRE la pieza (nítido, ajustado a la pantalla; nunca generado por la IA)
         const r0 = seg.retardo == null ? 0.6 : seg.retardo, sube = seg.retardo == null ? 0.5 : Math.max(0.05, seg.retardo || 0.1);   // «retardo» corto: contadores (p. ej. 1986 → 2026)
         const a = sv((cont.t - seg.desde - r0) / sube) * sv((seg.hasta - cont.t) / (seg.retardo == null ? 0.4 : 0.1));

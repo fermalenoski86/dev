@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
   push:
     branches: [kit/73-mcd]
-    paths: [kit/mcd-73/web/**, kit/mcd-73/control/**, kit/mcd-73/material/material.json, kit/mcd-73/material/privado/**, .github/workflows/kit-web.yml]
+    paths: [kit/mcd-73/web/**, kit/mcd-73/control/**, kit/mcd-73/material/material.json, kit/mcd-73/material/privado/**, kit/mcd-73/web/r2_ajustes.*, .github/workflows/kit-web.yml]
 permissions:
   contents: read
 concurrency:
@@ -62,6 +62,9 @@ jobs:
             printf '%s' "${!n}" | $W secret put "$n" >/tmp/s.log 2>&1 || { echo "::error title=secret $n::$(tail -c 400 /tmp/s.log | tr '\n' ' ')"; exit 1; }
           done
           echo "::notice title=secrets::CLAVE, ANTHROPIC_API_KEY y FAL_KEY cargados"
+      - name: Ajustes a las piezas guardadas (ocultar / renombrar en R2)
+        working-directory: kit/mcd-73/web
+        run: python3 r2_ajustes.py r2_ajustes.json || echo "::warning title=ajustes R2::no se pudieron aplicar (ver log)"
       - name: Material de marca (carpeta oculta, cifrada → R2 privado)
         working-directory: kit/mcd-73/web
         env:

@@ -7,7 +7,7 @@ Los originales (HD, clip de 5 s, plan.json, INFORME.md) están en la rama `ia/73
 | pieza | Corrientes | Pellegrini | Media | clip |
 |---|---|---|---|---|
 | 1 · Verano Celeste | corrida 023d051 | 8af3777 | 8af3777 | — |
-| 2 · Lluvia dorada | recorte 2:1 de Pellegrini 8af3777 | 8af3777 | 8af3777 | — |
+| 2 · Lluvia de papas | recorte 2:1 de Pellegrini 8af3777 | 8af3777 | 8af3777 | — |
 | 3 · Amanecer porteño | 023d051 | 023d051 | 023d051 | — |
 | 4 · Brasa Dorada | 023d051 | 023d051 | 023d051 | Corrientes (Kling 2.5) |
 

@@ -1,0 +1,6 @@
+{
+  "ocultar": ["presentacion"],
+  "renombrar": {
+    "lluvia dorada": { "titulo": "Lluvia de papas", "animacion": { "media": "lluvia-papas" } }
+  }
+}
