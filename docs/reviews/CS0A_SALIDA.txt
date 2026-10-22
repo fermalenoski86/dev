@@ -1,0 +1,29 @@
+### 2026-10-22T21:38:15Z · rama docs/cs0-addendum · base: 6a1f6fb623b5d2da734a94b2464d57d67c7d4d4d + cambios de esta ronda
+### node v22.22.0 · pnpm 10.28.0
+
+$ git diff --check origin/main...HEAD && git diff --check
+exit 0
+
+$ git diff --stat origin/main...HEAD
+ docs/briefs/CS0A_ADDENDUM_PRODUCTO.md | 485 ++++++++++++++++++++++++++++++++++
+ docs/reviews/CS0A.md                  |  34 +++
+ 2 files changed, 519 insertions(+)
+
+$ node scripts/collab/progress.mjs check
+GATE progreso (P-02): manifiesto válido (37 entradas), docs/collab/PROGRESO.md al día
+exit 0
+
+$ node scripts/acceptance/cli.mjs check
+GATE acceptance: 19 puntos, 12 tests etiquetados; navegador 7 tests [E3-N]/[F3A-UI-N]; docs/reviews/M3A1_ACEPTACION.md al día
+exit 0
+
+$ node scripts/collab/risk.mjs calcular origin/main HEAD
+riesgo calculado: medio
+  medio docs/briefs/CS0A_ADDENDUM_PRODUCTO.md — brief, ADR, contrato o doc operativo
+  bajo  docs/reviews/CS0A.md — documentación
+exit 0
+
+### No ejecutados localmente (motivo)
+- pnpm verify (lint + typecheck + tests), PostgreSQL, mutaciones, E2E, media: el PR solo agrega/edita markdown en docs/; CI los corre sobre el HEAD del PR.
+
+### Ronda 2 (a5e89a2 → esta): se quita docs/collab/BACKLOG.md del diff por rechazo del check paralelo (exit 7: archivo de la fase activa #98).
