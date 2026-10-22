@@ -11,7 +11,6 @@
 | Archivo | Qué |
 |---|---|
 | `docs/briefs/CS0A_ADDENDUM_PRODUCTO.md` | Los 14 puntos pedidos: addendum (§1), arquitectura (§2), mapa UX (§3), roles (§4), Command System (§5), Campaign/Variant/Brand Space (§6), qué entra al core (§7), roadmap CS-1…CS-10 (§8), riesgos (§9), qué puede empezar ya (§10), MVP Desktop (§11), MVP Marketing (§12), Mobile/Tablet (§13), criterios medibles + design system (§14); más plugins (§15) y preguntas ❓A–❓F (§16) |
-| `docs/collab/BACKLOG.md` | Una línea en la sección CS que registra el addendum |
 | `docs/reviews/CS0A.md`, `CS0A_SALIDA.txt` | Este reporte y la salida real de los gates |
 
 No hay código, tests, rutas, variables de entorno, CI, `HANDOFF.md` ni partes congeladas en el diff. **No abre implementación.**
@@ -31,4 +30,4 @@ Validación jurídica de guidelines, anamorfosis antes de CS-1b, publicación en
 
 ## Riesgo declarado
 
-`Riesgo: medio` (brief + `BACKLOG.md`, que habilita laterales). Gates: `git diff --check`, `progress:check` y `acceptance:check` verdes en local; `pnpm verify` y el resto corren en CI sobre el HEAD del PR.
+`Riesgo: medio` (brief + salida de gates). La línea de registro en `BACKLOG.md` (sección CS) **no va en este PR**: `BACKLOG.md` lo toca la fase activa #98 (regla P-05, check `paralelo` exit 7); la agrega el titular de la pelota en el próximo turno, con el texto propuesto en el PR. Gates: `git diff --check`, `progress:check` y `acceptance:check` verdes en local; `pnpm verify` y el resto corren en CI sobre el HEAD del PR.
