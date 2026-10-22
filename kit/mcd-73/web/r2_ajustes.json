@@ -1,5 +1,5 @@
 {
-  "ocultar": ["presentacion"],
+  "ocultar": ["sol que se queda"],
   "renombrar": {
     "lluvia dorada": { "titulo": "Lluvia de papas", "animacion": { "media": "lluvia-papas" } }
   }
