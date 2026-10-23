@@ -1,5 +1,7 @@
 # BACKUPS — documento operativo (M3A.1 Fase E1 · master §33)
 
+> Índice: §1 qué proteger · §2 PostgreSQL · resto de secciones abajo.
+
 Interfaces y requisitos, **sin atarse a un proveedor**: cada requisito se puede
 cumplir con PostgreSQL autogestionado, con un servicio administrado o con
 cualquier object storage S3-compatible. Las cifras marcadas *(propuesta)* son
