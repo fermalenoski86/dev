@@ -3,10 +3,10 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador), **bloqueada por dos insumos externos** (no hay PR en auditoría, por eso no pasa formalmente a ChatGPT). Matriz P-06 re-corrida sobre `main@618c488` con casos resembrados de riesgo bajo #101–#103: **1, 2, 3, 4, 5, 6, 7, 8, 10, 11 (gate), 12 (unitario) ✅**. Detalle y latencias en #54 ([6356722174](https://github.com/fermalenoski86/dev/issues/54#issuecomment-6356722174) y [6357391599](https://github.com/fermalenoski86/dev/issues/54#issuecomment-6357391599)).
-- **ChatGPT (auditor), en #54:** decidir **11 lado Action** y **13 rollback**: medir en vivo (gasta token / requiere admin) o darlos por cubiertos con el diseño; y opinar sobre la propuesta de cierre (Codex no corre solo de forma confiable → el puente necesita un `@codex review` explícito una vez por HEAD).
-- **Fer, caso 9:** en #101, borrar a mano el comentario-marcador de Codex (`Codex Review Summary`, id 6354427861: … → Delete). Esperado: gate FAIL "sin marcador".
-- **Claude, cuando estén esos insumos:** medir 9, redactar informe/cierre P-06 en #54 y cerrar #90–#95 y #101–#103 sin merge.
+**Pelota en:** Claude (implementador), **bloqueada solo por Fer (caso 9)**; no hay PR en auditoría. Matriz P-06 sobre `main@618c488` (#101–#103): **1–8, 10, 11 (gate), 12 (unitario) ✅** ([6356722174](https://github.com/fermalenoski86/dev/issues/54#issuecomment-6356722174), [6357391599](https://github.com/fermalenoski86/dev/issues/54#issuecomment-6357391599)).
+- **Auditor decidió en #54 ([6357775327](https://github.com/fermalenoski86/dev/issues/54#issuecomment-6357775327), 05:00 UTC):** 11-Action y 13 rollback cubiertos por diseño, informe los declara "no ejecutado en vivo" (gates obligatorios antes de Action con escritura / enforcement); disparo de Codex: un único `@codex review` idempotente por HEAD final congelado sin marcador `completed` válido, gate FAIL hasta entonces; PoC queda como preauditoría report-only de riesgo bajo, sin enforcement.
+- **Fer, caso 9:** en #101, borrar a mano el comentario-marcador de Codex (`Codex Review Summary`, id 6354427861: … → Delete). Esperado: gate FAIL "sin marcador". Sigue presente a las 05:29 UTC.
+- **Claude, cuando esté el caso 9:** medirlo, redactar informe/cierre P-06 en #54 (con la decisión del auditor) y cerrar #90–#95 y #101–#103 sin merge.
 **En auditoría:** ninguno
 **Fase:** PoC P-06, matriz real sobre el adaptador A (preauditoría report-only, solo riesgo bajo). Hallazgo central: Codex detecta P1 y P2 cuando corre (~90 s), pero la review de apertura de #103 quedó colgada >3 h y "New commits" no re-revisó #101; el gate falla cerrado en ambos casos. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
 **Estado:** #98 mergeado en `main@dbd7846` (`AUDIT: APROBADO` [6354030555](https://github.com/fermalenoski86/dev/pull/98#issuecomment-6354030555) sobre `5b7ad4f`); cierre en `2b52693`. Gate y Action en report-only / solo lectura.
@@ -33,7 +33,7 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| PoC P-06 matriz | #54 / #101–#103 | faltan 9 (Fer), 11-Action y 13 (auditor); #90–#95 y #101–#103 no se mergean |
+| PoC P-06 matriz | #54 / #101–#103 | falta 9 (Fer); 11-Action/13 decididos por el auditor; #90–#95 y #101–#103 no se mergean |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
 | E2E intermitente :17 | #26 / #77 | causa no determinada |
