@@ -44,6 +44,10 @@ Requiere Node 20+ y pnpm 9+ (fijado en `engines`). Corre 100 % offline.
 > la build no es reproducible y dos máquinas pueden resolver versiones distintas
 > de three.js, que es exactamente el tipo de diferencia que aparece recién en el
 > edificio.
+>
+> Para que la CI y los gates con PostgreSQL arranquen sin pasos manuales, copiá
+> tu `.env` local (con las contraseñas reales de tu base) sobre `.env.example`
+> y commitealo: así todos usan la misma configuración.
 
 ## Estado — Milestone 1
 
