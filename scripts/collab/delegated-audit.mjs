@@ -6,10 +6,12 @@
 //   node scripts/collab/delegated-audit.mjs ci              → evalúa TODOS los PR abiertos hacia main
 //                                                             y publica el check sobre cada HEAD
 //
-// Fuente de autoridad: API de GitHub (PR, reviews, runs de gates.yml, padres del merge
-// probado) + `risk.mjs verificar` de ESTE árbol (en CI: el checkout de main) sobre el diff
-// contra el main fijado y el cuerpo del PR (solo para su declaración de riesgo: se lee como
-// texto, nunca se ejecuta). Nunca un issue_comment ni archivos del PR.
+// Fuente de autoridad: API de GitHub (PR, reviews, comentarios e hilos del bot allowlisted,
+// runs de gates.yml, padres del merge probado) + `risk.mjs verificar` de ESTE árbol (en CI:
+// el checkout de main) sobre el diff contra el main fijado y el cuerpo del PR (solo para su
+// declaración de riesgo: se lee como texto, nunca se ejecuta). Nunca archivos del PR. El
+// único issue_comment que cuenta es el marcador del bot por user.id (adaptador A, #54).
+// PASS = preauditoría Codex limpia en riesgo bajo; nunca aprobación formal.
 // Tupla (AUDIT: CAMBIOS @ 9332156): main se fija al empezar y todo se relee al terminar;
 // y la revisión en ejecución tiene que ser ese main (AUDIT: CAMBIOS @ f097a29).
 // REPORT-ONLY: el check sale siempre `neutral` y el comando termina 0 aunque el veredicto
@@ -56,21 +58,13 @@ function mainActual() {
 // TODOS los PR abiertos (cualquier base): el HEAD compartido se mira contra todos (ADR-065)
 const listarAbiertos = () => apiLista(`repos/${REPO}/pulls?state=open&per_page=100`).map((p) => ({ number: p.number, head_sha: p.head?.sha, base_ref: p.base?.ref }));
 
-// GraphQL: lastEditedAt por review (REST no expone edición). Falta de dato → null (fail).
-function edicionesDe(n) {
-  const [owner, name] = REPO.split('/');
-  const q = 'query($owner:String!,$name:String!,$n:Int!){repository(owner:$owner,name:$name){pullRequest(number:$n){reviews(first:100){pageInfo{hasNextPage} nodes{fullDatabaseId lastEditedAt}}}}}';
-  const r = JSON.parse(run('gh', ['api', 'graphql', '-f', `query=${q}`, '-F', `owner=${owner}`, '-F', `name=${name}`, '-F', `n=${n}`]));
-  const rv = r?.data?.repository?.pullRequest?.reviews;
-  if (!rv || rv.pageInfo?.hasNextPage) return null; // más de 100 reviews: no se puede verificar → fail
-  return new Map(rv.nodes.map((x) => [String(x.fullDatabaseId), x.lastEditedAt !== null]));
-}
-
-function leerReviews(n) {
-  const rs = apiLista(`repos/${REPO}/pulls/${n}/reviews?per_page=100`);
-  const ed = intentar(() => edicionesDe(n));
-  return rs.map((r) => ({ ...r, editada: ed && ed.has(String(r.id)) ? ed.get(String(r.id)) : null }));
-}
+// Adaptador A (#54, 2026-10-20): reviews, comentarios del PR (marcador codex-review-state:v1)
+// y comentarios en línea (badges P0–P2), TODAS las páginas (--paginate): si una página falla,
+// gh sale ≠ 0 → excepción → null en evaluarPrCon → FAIL. Solo se leen; la identidad la
+// decide user.id contra la allowlist de main. Sin GraphQL.
+const leerReviews = (n) => apiLista(`repos/${REPO}/pulls/${n}/reviews?per_page=100`).map((r) => ({ id: r.id, user: r.user, state: r.state, commit_id: r.commit_id, body: r.body, submitted_at: r.submitted_at }));
+const leerComentarios = (n) => apiLista(`repos/${REPO}/issues/${n}/comments?per_page=100`).map((c) => ({ id: c.id, user: c.user, body: c.body }));
+const leerHilos = (n) => apiLista(`repos/${REPO}/pulls/${n}/comments?per_page=100`).map((c) => ({ id: c.id, user: c.user, body: c.body, commit_id: c.commit_id, original_commit_id: c.original_commit_id, path: c.path, line: c.line }));
 
 // Riesgo EFECTIVO: risk.mjs verificar <main fijado> <head> <cuerpo> (exit 0 OK, 2 rechazo
 // con motivos, 1 sin veredicto → null). Mismo contrato que el job `riesgo` (P-03).
@@ -100,7 +94,7 @@ function leerGates(head) {
   const dos = Array.isArray(padres) && padres.length === 2;
   return {
     id: ult.id, attempt: ult.run_attempt, head_sha: ult.head_sha, event: ult.event, status: ult.status, conclusion: ult.conclusion,
-    jobs: jobs.map((j) => ({ name: j.name, conclusion: j.conclusion })),
+    jobs: jobs.map((j) => ({ id: j.id, name: j.name, status: j.status, conclusion: j.conclusion })),
     probado, base_probada: dos ? padres[0] : null, head_probado: dos ? padres[1] : null,
   };
 }
@@ -109,7 +103,7 @@ const evaluarPr = (n) => evaluarPrCon(n, {
   repo: REPO,
   ejecutada: EJECUTADA,
   ejecutadaAhora: revisionEjecutada,
-  mainActual, leerPr, leerReviews, verificarRiesgo, leerGates,
+  mainActual, leerPr, leerReviews, leerComentarios, leerHilos, verificarRiesgo, leerGates,
   // gates.yml de la revisión ejecutada (no del árbol de trabajo)
   gatesYml: () => run('git', ['show', `${EJECUTADA}:.github/workflows/gates.yml`], { cwd: RAIZ }),
 });

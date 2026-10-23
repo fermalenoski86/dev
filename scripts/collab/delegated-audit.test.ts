@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error módulo .mjs sin tipos (script de CI, sin build)
-import { CODEX_BOT_IDS, MAX_RONDAS, checkRun, cicloCi, compartidos, confirmarPass, evaluar, evaluarPrCon, jobsDeGates, parsearBloque, riesgoDeSalida, shaProbado, sinVeredicto } from './delegated-audit.lib.mjs';
+import { CODEX_BOT_IDS, MAX_RONDAS, checkRun, cicloCi, compartidos, confirmarPass, estadoJobs, evaluar, evaluarPrCon, jobsDeGates, parsearBloque, riesgoDeSalida, shaProbado, sinVeredicto } from './delegated-audit.lib.mjs';
 // @ts-expect-error módulo .mjs sin tipos (script de CI, sin build)
 import { clasificarRuta, gatesDesdeParalelo, raicesWorkspace, verificar } from './risk.lib.mjs';
 
@@ -23,7 +23,7 @@ const RUN = 4242;
 const MAIN = 'c'.repeat(40); // main evaluado (C)
 const MAIN_B = 'e'.repeat(40); // main anterior (B)
 const MERGE = 'd'.repeat(40); // merge sintético que ejecutó el run
-const BODY = 'Riesgo: medio';
+const BODY = 'Riesgo: bajo';
 
 const bloque = (o: Record<string, string> = {}) => [
   o.veredicto ?? 'AUDIT: APROBADO',
@@ -36,11 +36,21 @@ const bloque = (o: Record<string, string> = {}) => [
   o.noEjecutado ?? 'no-ejecutado: nada',
 ].join('\n');
 const cuerpo = (b = bloque()) => `<!-- codex-review-receipt:v1 -->\n### Codex Review\nRevisé el diff.\n\n\`\`\`\n${b}\n\`\`\`\n\n<details>About Codex</details>\n`;
-const review = (o: Record<string, unknown> = {}) => ({ id: 100, user: CODEX, state: 'COMMENTED', commit_id: HEAD, body: cuerpo(), submitted_at: '2026-10-17T10:00:00Z', editada: false, ...o });
+const badge = (p: string) => `**<sub><sub>![${p} Badge](https://img.shields.io/badge/${p}-orange?style=flat)</sub></sub>  Hallazgo sembrado**`;
+// review de Codex CON sugerencias (la única forma en que publica review)
+const review = (o: Record<string, unknown> = {}) => ({ id: 100, user: CODEX, state: 'COMMENTED', commit_id: HEAD, body: '<!-- codex-review-receipt:v1 -->\n### 💡 Codex Review\nHere are some automated review suggestions.', submitted_at: '2026-10-17T10:00:00Z', ...o });
+const hilo = (p: string, o: Record<string, unknown> = {}) => ({ id: 4000, user: CODEX, body: `${badge(p)}\n\nrepro…\n\n<!-- codex-code-review-finding:v1 -->`, commit_id: HEAD, original_commit_id: HEAD, path: 'packages/timeline/src/index.ts', line: 73, ...o });
+// comentario de resumen de Codex con el marcador (forma real de #90, comentario 6303180728)
+const mk = (cr: Record<string, unknown> = {}, sr: Record<string, unknown> | null = null, id = 900, user: Record<string, unknown> = CODEX) => ({
+  id,
+  user,
+  body: `<!-- codex-pull-request-review-summary -->\n<!-- codex-review-state:v1 ${JSON.stringify({ code_review: { commit_sha: HEAD, has_any_findings: false, has_unresolved_findings: false, status: 'completed', ...cr }, security_review: sr ?? { commit_sha: null, has_any_findings: null, has_unresolved_findings: null, status: null } })} -->\n\n## Codex Review Summary\n`,
+});
+const marcador = mk;
 const gatesOk = (o: Record<string, unknown> = {}) => ({ id: RUN, attempt: 1, head_sha: HEAD, event: 'pull_request', status: 'completed', conclusion: 'success', jobs: JOBS.map((name: string) => ({ name, conclusion: 'success' })), probado: MERGE, base_probada: MAIN, head_probado: HEAD, ...o });
 const riesgo = (nivel: string, o: Record<string, unknown> = {}) => ({ nivel, calculado: nivel, declarado: nivel, errores: [], ...o });
 const estable = (o: Record<string, unknown> = {}) => ({ main: MAIN, head: HEAD, base_ref: 'main', body: BODY, ejecutada: MAIN, ...o });
-const base = (o: Record<string, unknown> = {}) => ({ repo: REPO, pr: { number: 7, head_sha: HEAD, base_ref: 'main', state: 'open', body: BODY }, main: MAIN, ejecutada: MAIN, estabilidad: estable(), reviews: [review()], riesgo: riesgo('medio'), gates: gatesOk(), jobsEsperados: JOBS, ...o });
+const base = (o: Record<string, unknown> = {}) => ({ repo: REPO, pr: { number: 7, head_sha: HEAD, base_ref: 'main', state: 'open', body: BODY }, main: MAIN, ejecutada: MAIN, estabilidad: estable(), reviews: [], comentarios: [marcador()], hilos: [], riesgo: riesgo('bajo'), gates: gatesOk(), jobsEsperados: JOBS, ...o });
 const motivos = (o: Record<string, unknown> = {}) => { const v = evaluar(base(o)); return { v: v.veredicto, m: v.motivos.join(' | ') }; };
 
 describe('P-06 · parser estricto del bloque (§2)', () => {
@@ -65,48 +75,76 @@ describe('P-06 · parser estricto del bloque (§2)', () => {
   });
 });
 
-describe('P-06 · delegated-audit-gate (matriz §5, report-only)', () => {
-  it('1 · PR elegible con review real de Codex, bloque APROBADO y gates verdes → pass', () => {
+describe('P-06 · adaptador A (#54, 2026-10-20): marcador codex-review-state + badges, report-only', () => {
+  it('1 · caso limpio SIN objeto review: marcador del HEAD completed, sin hallazgos, riesgo bajo, gates verdes → pass', () => {
     const v = evaluar(base());
     expect(v.motivos).toEqual([]);
-    expect(v).toMatchObject({ veredicto: 'pass', review_id: 100, author_id: CODEX_BOT_IDS[0], sha: HEAD, riesgo: 'medio', run: RUN, attempt: 1 });
+    expect(v).toMatchObject({ veredicto: 'pass', marcador_id: 900, author_id: CODEX_BOT_IDS[0], sha: HEAD, riesgo: 'bajo', run: RUN, attempt: 1 });
   });
-  it('2 · AUDIT: CAMBIOS con P1 → fail', () => {
-    expect(motivos({ reviews: [review({ body: cuerpo(bloque({ veredicto: 'AUDIT: CAMBIOS', hallazgos: 'hallazgos: P0 0 · P1 1 · P2 0' })) })] }).m).toContain('AUDIT: CAMBIOS');
+  it('2 · P1 por marcador (has_unresolved_findings) y por badge en review + hilo sobre el HEAD → fail', () => {
+    const r = motivos({ comentarios: [marcador({ has_any_findings: true, has_unresolved_findings: true })], reviews: [review()], hilos: [hilo('P1')] });
+    expect(r.v).toBe('fail');
+    expect(r.m).toContain('hallazgos sin resolver');
+    expect(r.m).toContain('review 100 (COMMENTED) sobre el HEAD');
+    expect(r.m).toContain('hilo 4000 con P1');
   });
-  it('2b · INSUFICIENTE_EVIDENCIA → fail', () => {
-    expect(motivos({ reviews: [review({ body: cuerpo(bloque({ veredicto: 'AUDIT: INSUFICIENTE_EVIDENCIA' })) })] }).v).toBe('fail');
+  it.each([['P0'], ['P1'], ['P2']])('2b · solo el badge %s en un hilo del bot sobre el HEAD (marcador limpio) → fail', (p) => {
+    expect(motivos({ hilos: [hilo(p)] }).m).toContain(`hilo 4000 con ${p}`);
+  });
+  it('2c · cualquier review del bot sobre el HEAD es un hallazgo (Codex no publica review limpia), con cualquier estado', () => {
+    for (const state of ['COMMENTED', 'APPROVED', 'DISMISSED', 'CHANGES_REQUESTED']) expect(motivos({ reviews: [review({ state })] }).m).toContain(`(${state}) sobre el HEAD`);
+  });
+  it('2d · hilo con badge cuyo commit original es el HEAD (o vigente en el HEAD) cuenta; uno de un sha viejo y ya desplazado no', () => {
+    expect(motivos({ hilos: [hilo('P2', { commit_id: VIEJO, original_commit_id: HEAD })] }).v).toBe('fail');
+    expect(motivos({ hilos: [hilo('P2', { commit_id: HEAD, original_commit_id: VIEJO })] }).v).toBe('fail');
+    expect(motivos({ hilos: [hilo('P2', { commit_id: VIEJO, original_commit_id: VIEJO })], reviews: [review({ commit_id: VIEJO })] }).v).toBe('pass');
+  });
+  it('3 · el marcador declara hallazgos aunque estén resueltos, o security_review con hallazgos o sin terminar → fail', () => {
+    expect(motivos({ comentarios: [marcador({ has_any_findings: true })] }).m).toContain('has_any_findings');
+    expect(motivos({ comentarios: [marcador({}, { commit_sha: HEAD, status: 'in_progress', has_any_findings: null, has_unresolved_findings: null })] }).m).toMatch(/security_review en un estado no aceptado .*in_progress/);
+    expect(motivos({ comentarios: [marcador({}, { commit_sha: HEAD, status: 'completed', has_any_findings: true, has_unresolved_findings: true })] }).m).toContain('security_review');
   });
   it.each([
-    ['P2 abierto', { hallazgos: 'hallazgos: P0 0 · P1 0 · P2 1' }, 'P2 1'],
-    ['P0 abierto', { hallazgos: 'hallazgos: P0 1 · P1 0 · P2 0' }, 'P0 1'],
-    ['A/B/C incompleto', { abc: 'abc: A sí · B no · C sí' }, 'A/B/C'],
-    ['algo no ejecutado', { noEjecutado: 'no-ejecutado: media (sin ffmpeg)' }, 'no-ejecutado'],
-    ['criterios parciales', { brief: 'brief: x · criterios: 4/5 revisados' }, 'criterios 4/5'],
-    ['gates parciales en el bloque', { gates: `gates: run ${RUN} attempt 1 · 6/7 sobre ${HEAD}` }, 'gates 6/7'],
-    ['bloque con head viejo', { repo: `repo: ${REPO} · pr: #7 · head: ${VIEJO}` }, 'bloque: head'],
-    ['bloque de otro PR', { repo: `repo: ${REPO} · pr: #8 · head: ${HEAD}` }, 'pr #8'],
-    ['bloque de otro repo', { repo: `repo: otro/dev · pr: #7 · head: ${HEAD}` }, 'repo otro/dev'],
-    ['cita un run que no es el último del HEAD', { gates: `gates: run 999 attempt 1 · 7/7 sobre ${HEAD}` }, 'cita run 999'],
-    ['cita un attempt anterior', { gates: `gates: run ${RUN} attempt 1 · 7/7 sobre ${HEAD}` }, null],
-  ])('3 · APROBADO con %s → fail', (_n, o, esperado) => {
-    if (esperado === null) {
-      expect(motivos({ gates: gatesOk({ attempt: 2 }) }).m).toContain('attempt 1');
-      return;
-    }
-    const r = motivos({ reviews: [review({ body: cuerpo(bloque(o)) })] });
+    ['booleano como string (repro de Codex #98)', { commit_sha: HEAD, status: 'completed', has_any_findings: 'true', has_unresolved_findings: false }],
+    ['objeto vacío', {}],
+    ['campo de más', { commit_sha: null, status: null, has_any_findings: null, has_unresolved_findings: null, extra: 1 }],
+    ['completed sin sha', { commit_sha: null, status: 'completed', has_any_findings: false, has_unresolved_findings: false }],
+    ['mezcla de null y valores', { commit_sha: null, status: 'completed', has_any_findings: null, has_unresolved_findings: null }],
+    ['un array', []],
+  ])('3b · security_review mal formado: %s → fail (Codex #98, P2)', (_n, sr) => {
+    const r = motivos({ comentarios: [marcador({}, sr as Record<string, unknown>)] });
+    expect(r.v).toBe('fail');
+    expect(r.m).toContain('security_review');
+  });
+  it('3c · security_review completed limpia: del HEAD → pass; de otro commit → fail; sin correr (todo null o ausente) → pass', () => {
+    expect(motivos({ comentarios: [marcador({}, { commit_sha: HEAD, status: 'completed', has_any_findings: false, has_unresolved_findings: false })] }).v).toBe('pass');
+    expect(motivos({ comentarios: [marcador({}, { commit_sha: VIEJO, status: 'completed', has_any_findings: false, has_unresolved_findings: false })] }).m).toContain('security_review del commit');
+    expect(motivos().v).toBe('pass');
+    const sinClave = { ...marcador(), body: marcador().body.replace(/,"security_review":\{[^}]*\}/, '') };
+    expect(sinClave.body).not.toContain('security_review');
+    expect(motivos({ comentarios: [sinClave] }).v).toBe('pass');
+  });
+  it('4 · SHA viejo: el marcador es de un commit anterior (push después de la review) → fail', () => {
+    const r = motivos({ comentarios: [marcador({ commit_sha: VIEJO })] });
+    expect(r.v).toBe('fail');
+    expect(r.m).toContain(`no del HEAD ${HEAD.slice(0, 12)}`);
+  });
+  it('4b · review en curso o sin terminar → fail', () => {
+    for (const status of ['in_progress', 'queued', 'failed']) expect(motivos({ comentarios: [marcador({ status })] }).m).toContain(`code_review ${status}`);
+  });
+  it.each([
+    ['sin marcador', [], 'sin comentario con el marcador'],
+    ['dos marcadores del bot (ambiguo)', [mk(), mk({}, null, 901)], 'ambiguo'],
+    ['marcador repetido dentro del cuerpo', [{ ...mk(), body: `${mk().body}\n${mk().body}` }], '2 apariciones'],
+    ['JSON roto', [{ ...mk(), body: '<!-- codex-review-state:v1 {"code_review": --> x' }], 'formato'],
+    ['JSON ilegible', [{ ...mk(), body: '<!-- codex-review-state:v1 {"code_review":{,}} -->' }], 'ilegible'],
+    ['sin code_review', [{ ...mk(), body: '<!-- codex-review-state:v1 {"otra":1} -->' }], 'sin code_review'],
+    ['booleanos como string', [marcador({ has_unresolved_findings: 'false' })], 'no son booleanos'],
+    ['sha corto', [marcador({ commit_sha: 'abc1234' })], 'sha de 40'],
+  ])('5 · ambigüedad: %s → fail', (_n, comentarios, esperado) => {
+    const r = motivos({ comentarios });
     expect(r.v).toBe('fail');
     expect(r.m).toContain(esperado);
-  });
-  it('4 · push después de la review (review sobre sha anterior) → fail', () => {
-    const r = motivos({ reviews: [review({ commit_id: VIEJO })] });
-    expect(r.v).toBe('fail');
-    expect(r.m).toContain('ninguna review de Codex sobre el HEAD');
-  });
-  it('4b · la review más reciente de Codex sobre el HEAD manda: una posterior sin bloque anula la APROBADO', () => {
-    const r = motivos({ reviews: [review(), review({ id: 101, submitted_at: '2026-10-17T11:00:00Z', body: 'Sugerencias automáticas' })] });
-    expect(r.v).toBe('fail');
-    expect(r.m).toContain('review 101');
   });
   it.each([
     ['usuario humano con login parecido', { id: 1, login: 'chatgpt-codex-connector', type: 'User' }],
@@ -114,16 +152,19 @@ describe('P-06 · delegated-audit-gate (matriz §5, report-only)', () => {
     ['bot con login idéntico pero otro id', { id: 123, login: 'chatgpt-codex-connector[bot]', type: 'Bot' }],
     ['id allowlisted pero tipo User', { id: CODEX_BOT_IDS[0], login: 'x', type: 'User' }],
     ['id como string', { id: String(CODEX_BOT_IDS[0]), login: 'chatgpt-codex-connector[bot]', type: 'Bot' }],
-  ])('5 · AUDIT: APROBADO de %s → fail (identidad)', (_n, user) => {
-    const v = evaluar(base({ reviews: [review({ user })] }));
+  ])('6 · marcador limpio de %s → no existe para el gate → fail (identidad)', (_n, user) => {
+    const v = evaluar(base({ comentarios: [marcador({}, null, 900, user)] }));
     expect(v.veredicto).toBe('fail');
-    expect(v.motivos.join(' | ')).toContain('ninguna review de Codex');
+    expect(v.motivos.join(' | ')).toContain('sin comentario con el marcador');
     if (typeof user.id === 'number' && user.type !== 'Bot') expect(v.ignoradas.join(' ')).toContain('identidad no allowlisted');
   });
-  it('6 · AUDIT: APROBADO en issue_comment → no existe para el gate (solo lee reviews) → fail', () => {
-    expect(motivos({ reviews: [] }).m).toContain('ninguna review de Codex');
+  it('6b · un impostor no tapa al bot real: el marcador real con hallazgos manda', () => {
+    const r = motivos({ comentarios: [marcador({}, null, 1, { id: 1, login: 'x', type: 'User' }), marcador({ has_unresolved_findings: true, has_any_findings: true })] });
+    expect(r.v).toBe('fail');
+    expect(r.m).toContain('hallazgos sin resolver');
   });
-  it('7 · riesgo alto o sin clasificación → fail "requiere auditoría formal"', () => {
+  it('7 · solo riesgo bajo: medio, alto o sin clasificación → fail "requiere auditoría formal"', () => {
+    expect(motivos({ riesgo: riesgo('medio') }).m).toContain('el adaptador solo cubre riesgo bajo');
     expect(motivos({ riesgo: riesgo('alto') }).m).toContain('requiere auditoría formal');
     expect(motivos({ riesgo: null }).m).toContain('sin clasificación');
     expect(motivos({ riesgo: riesgo('bajito') }).v).toBe('fail');
@@ -135,12 +176,16 @@ describe('P-06 · delegated-audit-gate (matriz §5, report-only)', () => {
       expect(clasificarRuta(r, g).nivel, r).toBe('alto');
     }
   });
-  it.each([['DISMISSED'], ['PENDING'], ['CHANGES_REQUESTED']])('9 · review %s → fail', (state) => {
-    expect(motivos({ reviews: [review({ state })] }).m).toContain(`estado ${state}`);
+  it('8 · paginación incompleta (cualquiera de las tres lecturas en null) → fail', () => {
+    expect(motivos({ comentarios: null }).m).toContain('comentarios del PR');
+    expect(motivos({ hilos: null }).m).toContain('comentarios de review');
+    expect(motivos({ reviews: null }).m).toContain('no se pudieron leer completas');
   });
-  it('9b · review editada, o sin poder verificar la edición → fail', () => {
-    expect(motivos({ reviews: [review({ editada: true })] }).m).toContain('editada después de emitida');
-    expect(motivos({ reviews: [review({ editada: null })] }).m).toContain('no se pudo verificar');
+  it('8b · el CLI lee las tres listas con --paginate (una página que falla → excepción → null), sin GraphQL', () => {
+    const cli = readFileSync(path.join(ROOT, 'scripts/collab/delegated-audit.mjs'), 'utf8');
+    expect(cli).toMatch(/const apiLista = .*'--paginate'/);
+    for (const r of ['pulls/${n}/reviews', 'issues/${n}/comments', 'pulls/${n}/comments']) expect(cli).toContain(`apiLista(\`repos/\${REPO}/${r}?per_page=100\`)`);
+    expect(cli).not.toMatch(/'graphql'/);
   });
   it.each([
     ['sin run', null, 'sin run de gates'],
@@ -157,10 +202,10 @@ describe('P-06 · delegated-audit-gate (matriz §5, report-only)', () => {
   it('10b · sin la lista de jobs de gates.yml de main → fail', () => {
     expect(motivos({ jobsEsperados: [] }).m).toContain('lista de jobs');
   });
-  it(`12 · ${MAX_RONDAS} rondas pasan; la ${MAX_RONDAS + 1}.ª → fail + bridge-paused`, () => {
-    const previas = (k: number) => Array.from({ length: k }, (_, i) => review({ id: 10 + i, commit_id: VIEJO, submitted_at: `2026-10-1${i}T00:00:00Z`, body: cuerpo(bloque({ veredicto: 'AUDIT: CAMBIOS' })) }));
-    expect(motivos({ reviews: [...previas(MAX_RONDAS - 1), review()] }).v).toBe('pass');
-    const r = motivos({ reviews: [...previas(MAX_RONDAS), review()] });
+  it(`12 · ${MAX_RONDAS} commits revisados por Codex pasan; el ${MAX_RONDAS + 1}.º → fail + bridge-paused`, () => {
+    const previas = (k: number) => Array.from({ length: k }, (_, i) => review({ id: 10 + i, commit_id: String(i).repeat(40), submitted_at: `2026-10-1${i}T00:00:00Z` }));
+    expect(motivos({ reviews: previas(MAX_RONDAS) }).v).toBe('pass');
+    const r = motivos({ reviews: previas(MAX_RONDAS + 1) });
     expect(r.v).toBe('fail');
     expect(r.m).toContain('bridge-paused');
   });
@@ -168,7 +213,55 @@ describe('P-06 · delegated-audit-gate (matriz §5, report-only)', () => {
     expect(motivos({ pr: { number: 7, head_sha: HEAD, base_ref: 'fase/x', state: 'open', body: BODY } }).m).toContain('≠ main');
     expect(motivos({ pr: { number: 7, head_sha: HEAD, base_ref: 'main', state: 'closed', body: BODY } }).m).toContain('no abierto');
     expect(motivos({ pr: { number: 7, head_sha: 'zz', base_ref: 'main', state: 'open', body: BODY } }).m).toContain('ilegible');
-    expect(motivos({ reviews: null }).m).toContain('no se pudieron leer');
+  });
+});
+
+/**
+ * Hallazgo 4 (#54): la API de jobs del run de gates devuelve también los check-runs publicados
+ * por API sobre el mismo commit (este gate, `riesgo`, `paralelo`) con todo su historial. Repro
+ * con la forma real del run 39181224827 (#95): ~180 motivos "job extra".
+ */
+describe('P-06 · hallazgo 4: deduplicación de checks por nombre y autoexclusión', () => {
+  const reales = () => JOBS.map((name: string, i: number) => ({ id: 1000 + i, name, status: 'completed', conclusion: 'success' }));
+  const historial = [
+    { id: 2001, name: 'delegated-audit-gate', status: 'completed', conclusion: 'neutral' },
+    { id: 2002, name: 'paralelo', status: 'in_progress', conclusion: null },
+    { id: 2003, name: 'paralelo', status: 'completed', conclusion: 'success' },
+    { id: 2004, name: 'riesgo', status: 'in_progress', conclusion: null },
+    { id: 2005, name: 'riesgo', status: 'completed', conclusion: 'failure' },
+    { id: 2006, name: 'riesgo', status: 'in_progress', conclusion: null },
+    { id: 2007, name: 'riesgo', status: 'completed', conclusion: 'success' },
+    { id: 2008, name: 'delegated-audit-gate', status: 'completed', conclusion: 'neutral' },
+    { id: 2009, name: 'delegated-audit-gate', status: 'in_progress', conclusion: null },
+  ];
+  it('repro: historial republicado de gate/riesgo/paralelo con los 7 jobs verdes → pass (antes: "job extra …")', () => {
+    const v = evaluar(base({ gates: gatesOk({ jobs: [...reales(), ...historial] }) }));
+    expect(v.motivos).toEqual([]);
+    expect(v.veredicto).toBe('pass');
+  });
+  it('autoexclusión: el check propio nunca cuenta, ni siquiera un failure', () => {
+    const v = evaluar(base({ gates: gatesOk({ jobs: [...reales(), { id: 3000, name: 'delegated-audit-gate', status: 'completed', conclusion: 'failure' }] }) }));
+    expect(v.veredicto).toBe('pass');
+  });
+  it('el último resultado terminal manda: riesgo success → failure → fail; failure → success → pass', () => {
+    const sec = (cs: string[]) => cs.map((conclusion, i) => ({ id: 5000 + i, name: 'riesgo', status: 'completed', conclusion }));
+    expect(motivos({ gates: gatesOk({ jobs: [...reales(), ...sec(['success', 'failure'])] }) }).m).toContain('job extra riesgo → failure');
+    expect(motivos({ gates: gatesOk({ jobs: [...reales(), ...sec(['failure', 'success'])] }) }).v).toBe('pass');
+    // el orden lo da el id (creciente), no la posición en la lista
+    expect(motivos({ gates: gatesOk({ jobs: [...reales(), ...sec(['success', 'failure']).reverse()] }) }).m).toContain('job extra riesgo → failure');
+  });
+  it('un job esperado con una entrada pendiente más nueva que su terminal → fail (pendiente)', () => {
+    const jobs = [...reales(), { id: 6000, name: JOBS[0], status: 'in_progress', conclusion: null }];
+    expect(motivos({ gates: gatesOk({ jobs }) }).m).toContain(`job ${JOBS[0]} → pendiente`);
+  });
+  it('un job esperado cuyo último terminal es failure → fail aunque haya un success anterior', () => {
+    const jobs = [...reales(), { id: 6001, name: JOBS[1], status: 'completed', conclusion: 'failure' }];
+    expect(motivos({ gates: gatesOk({ jobs }) }).m).toContain(`job ${JOBS[1]} → failure`);
+  });
+  it('estadoJobs: entrada sin nombre → null (fail-closed)', () => {
+    expect(estadoJobs([{ id: 1 }])).toBeNull();
+    expect(motivos({ gates: gatesOk({ jobs: [{ id: 1 }] }) }).m).toContain('ilegible');
+    expect(estadoJobs(null)).toBeNull();
   });
 });
 
@@ -176,7 +269,7 @@ describe('P-06 · publicación y workflows', () => {
   it('jobsDeGates lee los 7 jobs de gates.yml', () => {
     expect(JOBS).toEqual(['verify-build', 'postgres', 'compose-smoke', 'media', 'e2e-m2c', 'e2e-platform', 'mutations']);
   });
-  it('el check es siempre neutral (report-only) y lleva review_id, author_id, sha, riesgo y run/attempt', () => {
+  it('el check es siempre neutral (report-only) y lleva marcador_id, author_id, sha, riesgo y run/attempt', () => {
     for (const o of [{}, { riesgo: riesgo('alto') }]) {
       const c = checkRun(evaluar(base(o)));
       expect(c).toMatchObject({ name: 'delegated-audit-gate', head_sha: HEAD, status: 'completed', conclusion: 'neutral' });
@@ -193,6 +286,19 @@ describe('P-06 · publicación y workflows', () => {
     expect(y).toMatch(/workflow_run:\s*\n\s*workflows: \[gates, delegated-audit-senal, riesgo\]/);
     expect(y).toContain('persist-credentials: false');
     expect(y).toContain('git checkout -q --detach origin/main');
+  });
+  it('un marcador de Codex que llega después de gates/riesgo re-evalúa: issue_comment created/edited filtrado por bot + marcador (Codex #98, P1)', () => {
+    const y = readFileSync(path.join(ROOT, '.github/workflows/delegated-audit-gate.yml'), 'utf8').replace(/^\s*#.*$/gm, '');
+    // `deleted` y sin filtro por contenido: borrar el marcador o quitarlo al editar también re-evalúa (Codex #98, P2)
+    expect(y).toMatch(/issue_comment:\s*\n\s*types: \[created, edited, deleted\]/);
+    const si = /^\s*if: (.*)$/m.exec(y)?.[1] ?? '';
+    expect(si).toContain("github.event_name != 'issue_comment' ||");
+    expect(si).toContain(`github.event.comment.user.id == ${CODEX_BOT_IDS[0]}`);
+    expect(si).not.toContain('contains(');
+    expect(si).toContain('github.event.issue.pull_request');
+    // el carril serial va en el job: un run salteado no puede desplazar al pendiente real
+    expect(y).not.toMatch(/^concurrency:/m);
+    expect(y).toMatch(/^ {4}concurrency:\s*\n\s+group: delegated-audit-gate\s*\n\s+cancel-in-progress: false/m);
   });
   it('un retarget hacia main re-evalúa: escucha el fin de `riesgo`, que corre con pull_request_target edited (Codex #88, P2)', () => {
     const r = readFileSync(path.join(ROOT, '.github/workflows/riesgo.yml'), 'utf8').replace(/^\s*#.*$/gm, '');
@@ -285,7 +391,7 @@ describe('P-06 · P2 2: los gates tienen que haber probado ESTE HEAD contra ESTE
     expect(r.m).toContain(`gates probados contra main ${MAIN_B.slice(0, 12)} ≠ main evaluado ${MAIN.slice(0, 12)}`);
   });
   it('un re-run (attempt 2) del merge viejo sigue siendo base B → fail: no alcanza un timestamp posterior', () => {
-    const r = motivos({ gates: gatesOk({ attempt: 2, base_probada: MAIN_B }), reviews: [review({ body: cuerpo(bloque({ gates: `gates: run ${RUN} attempt 2 · 7/7 sobre ${HEAD}` })) })] });
+    const r = motivos({ gates: gatesOk({ attempt: 2, base_probada: MAIN_B }) });
     expect(r.v).toBe('fail');
     expect(r.m).toContain('gates probados contra main');
   });
@@ -389,7 +495,9 @@ describe('P-06 · P2 (AUDIT: CAMBIOS @ f097a29): la política ejecutada tiene qu
       ejecutadaAhora: o.ahora ?? (() => ejecutada),
       mainActual: () => (mains.length > 1 ? mains.shift() : mains[0]),
       leerPr: () => ({ number: 7, head_sha: HEAD, base_ref: 'main', state: 'open', body: 'Riesgo: bajo' }),
-      leerReviews: () => [review()],
+      leerReviews: () => [],
+      leerComentarios: () => [marcador()],
+      leerHilos: () => [],
       // el riesgo lo calcula el risk.mjs del checkout EJECUTADO, no el del main evaluado
       verificarRiesgo: () => clasificador(String(ejecutada)),
       leerGates: () => gatesOk({ base_probada: B }),
@@ -422,7 +530,7 @@ describe('P-06 · P2 (AUDIT: CAMBIOS @ f097a29): la política ejecutada tiene qu
         ...base_,
         mainActual: () => mains.shift(),
         leerPr: () => ({ number: n, head_sha: n === 7 ? HEAD : VIEJO, base_ref: 'main', state: 'open', body: 'Riesgo: bajo' }),
-        leerReviews: () => [review(n === 7 ? {} : { commit_id: VIEJO, body: cuerpo(bloque({ repo: `repo: ${REPO} · pr: #8 · head: ${VIEJO}`, gates: `gates: run ${RUN} attempt 1 · 7/7 sobre ${VIEJO}` })) })],
+        leerComentarios: () => [n === 7 ? marcador() : marcador({ commit_sha: VIEJO })],
         leerGates: () => gatesOk(n === 7 ? { base_probada: A } : { head_sha: VIEJO, head_probado: VIEJO, base_probada: B }),
       }),
       publicar: (v: { pr: number; veredicto: string; motivos: string[] }) => { pub.push({ pr: v.pr, v: v.veredicto, m: v.motivos.join(' | ') }); return 'u'; },

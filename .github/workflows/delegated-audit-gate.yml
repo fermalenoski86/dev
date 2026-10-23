@@ -1,5 +1,6 @@
-# P-06 · PoC de firma delegada — check `delegated-audit-gate` (REPORT-ONLY).
-# Brief: docs/briefs/P06_BRIDGE_POC.md §3; decisión de #54 (2026-10-12 18:15).
+# P-06 · PoC — check `delegated-audit-gate` (REPORT-ONLY). Desde la decisión A de #54
+# (2026-10-20): adaptador de preauditoría sobre el marcador codex-review-state:v1 + badges,
+# solo riesgo bajo; nunca aprobación formal. Brief: docs/briefs/P06_BRIDGE_POC.md §3.
 #
 # Modelo de confianza: este workflow NUNCA corre con YAML ni código del PR.
 #   - `workflow_run` y `push` a main cargan SIEMPRE el YAML de la rama por defecto (main).
@@ -9,7 +10,8 @@
 #     no se toma ningún dato: cada corrida re-evalúa TODOS los PR abiertos hacia main.
 #   - Checkout de la revisión actual de main, sin credenciales persistidas; el PR aporta
 #     solo número y sha (API). Su diff se lee con git (risk.mjs de main), no se ejecuta.
-# Disparadores: fin de `gates` (CI del HEAD), fin de la señal de review, fin de `riesgo`
+# Disparadores: fin de `gates` (CI del HEAD), fin de la señal de review, marcador de Codex
+# (issue_comment del bot, ver abajo), fin de `riesgo`
 # (corre con pull_request_target `edited`/`reopened`: cubre el retarget de un PR hacia main,
 # que `gates` no escucha — Codex #88, P2) y push a main (cambio de política). Un carril serial; si GitHub descarta un pendiente, el que corre
 # cubre a todos.
@@ -25,16 +27,29 @@ on:
   workflow_run:
     workflows: [gates, delegated-audit-senal, riesgo]
     types: [completed]
+  # Adaptador A (#54): una corrida limpia de Codex NO publica review; solo crea/edita el
+  # comentario con el marcador codex-review-state:v1. Sin este disparador, un marcador que
+  # llega después de `gates`/`riesgo` no re-evaluaba nunca (Codex #98, P1). `issue_comment`
+  # carga SIEMPRE el YAML de la rama por defecto (main), como `push`/`workflow_run`: el PR no
+  # aporta código. El `if:` del job es solo un filtro de costo (comentario del bot); la autoridad
+  # sigue en la allowlist de main y en la relectura por API.
+  # `deleted` y el filtro solo por autor (Codex #98, P2): borrar el marcador, o editarlo para
+  # quitarlo, también re-evalúa; si no, un PASS viejo quedaba a la vista.
+  issue_comment:
+    types: [created, edited, deleted]
 permissions:
   contents: read
   pull-requests: read
   actions: read
   checks: write
-concurrency:
-  group: delegated-audit-gate
-  cancel-in-progress: false
 jobs:
   evaluar:
+    if: github.event_name != 'issue_comment' || (github.event.issue.pull_request && github.event.comment.user.id == 199175422)
+    # carril serial a nivel JOB, no de workflow: un issue_comment ajeno queda con el job
+    # salteado y no entra al grupo, así no desplaza a un pendiente real del carril
+    concurrency:
+      group: delegated-audit-gate
+      cancel-in-progress: false
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

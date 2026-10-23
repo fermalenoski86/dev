@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -358,6 +358,9 @@ describe('P-03 · riesgo-ci.sh: pendiente → final → revalidación (Codex #82
   sh(`git config user.email t@t && git config user.name t && mkdir -p scripts/collab docs && cp ${ROOT}/scripts/collab/{risk.mjs,risk.lib.mjs,paralelo.sh,riesgo-ci.sh} scripts/collab/ && cp ${ROOT}/pnpm-workspace.yaml . && echo a > docs/a.md && git add -A && git commit -qm base && git remote add origin ../remoto.git && git push -q origin main`, clon);
   sh('git checkout -qb pr && echo b >> docs/a.md && git commit -qam pr && git push -q origin pr:refs/pull/7/head pr:refs/pull/8/head main:refs/heads/fase && git checkout -q main', clon);
   const HEAD_PR = sh('git rev-parse pr', clon).trim();
+  // segundo PR con otro HEAD (hallazgo 3 de #54): #9 rechazado no puede decidir el exit de #7
+  sh('git checkout -qb pr9 main && echo c >> docs/a.md && git commit -qam pr9 && git push -q origin pr9:refs/pull/9/head && git checkout -q main', clon);
+  const HEAD_9 = sh('git rev-parse pr9', clon).trim();
   // gh falso: cada `api repos/R/pulls/7` devuelve el cuerpo N de la secuencia; POST check-runs se registra
   mkdirSync(path.join(dir, 'bin'));
   writeFileSync(
@@ -380,7 +383,9 @@ pr=\${2##*/}; if [ -f "$D/cuerpo_$pr" ]; then
   # secuencia de bases por foto (retarget durante el lote; AUDIT: CAMBIOS @ 9a7170b, P2)
   if [ -f "$D/bases_$pr" ]; then k=$(cat "$D/nb_$pr" 2>/dev/null || echo 0); k=$((k+1)); echo $k > "$D/nb_$pr"
     base=$(sed -n "\${k}p" "$D/bases_$pr"); [ -n "$base" ] || base=$(tail -n1 "$D/bases_$pr"); fi
-  jq -n --arg h "${HEAD_PR}" --arg base "$base" --rawfile b "$D/cuerpo_$pr" '{state:"open", head:{sha:$h}, base:{ref:$base}, body:$b}'; exit 0; fi
+  # HEAD por PR (dos PR con HEAD distinto; hallazgo 3 de #54)
+  hp=$(cat "$D/head_$pr" 2>/dev/null || echo "${HEAD_PR}")
+  jq -n --arg h "$hp" --arg base "$base" --rawfile b "$D/cuerpo_$pr" '{state:"open", head:{sha:$h}, base:{ref:$base}, body:$b}'; exit 0; fi
 n=$(cat "$D/n" 2>/dev/null || echo 0); n=$((n+1)); echo $n > "$D/n"
 cuerpo=$(sed -n "\${n}p" "$D/cuerpos"); [ -n "$cuerpo" ] || cuerpo=$(tail -n1 "$D/cuerpos")
 [ "$cuerpo" != "__falla__" ] || { echo "HTTP 502" >&2; exit 1; }
@@ -391,7 +396,7 @@ jq -n --arg h "$h" --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{ref:"m
   );
   let ultimosShas: string[] = [];
   let ultimos: { name: string; head_sha: string; status: string; conclusion?: string }[] = [];
-  const correr = (cuerpos: string[], extra: { lista?: string; postfalla?: number; listafalla?: number; args?: string[]; sinMain?: boolean } = {}) => {
+  const correr = (cuerpos: string[], extra: { lista?: string; postfalla?: number; listafalla?: number; args?: string[]; sinMain?: boolean; env?: Record<string, string> } = {}) => {
     writeFileSync(path.join(dir, 'lista'), extra.lista ?? `7 ${HEAD_PR}\n`);
     writeFileSync(path.join(dir, 'listafalla'), String(extra.listafalla ?? 0));
     writeFileSync(path.join(dir, 'postfalla'), String(extra.postfalla ?? 0));
@@ -401,11 +406,12 @@ jq -n --arg h "$h" --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{ref:"m
     rmSync(path.join(dir, 'checks.log'), { force: true });
     let rc = 0;
     try {
-      execFileSync('bash', ['scripts/collab/riesgo-ci.sh', ...(extra.args ?? ['7'])], { cwd: clon, env: { ...process.env, PATH: `${dir}/bin:${process.env.PATH}`, GITHUB_REPOSITORY: 'o/r', GH_TOKEN: 'x', RIESGO_GLOBAL: '1' }, stdio: 'pipe' });
+      execFileSync('bash', ['scripts/collab/riesgo-ci.sh', ...(extra.args ?? ['7'])], { cwd: clon, env: { ...process.env, PATH: `${dir}/bin:${process.env.PATH}`, GITHUB_REPOSITORY: 'o/r', GH_TOKEN: 'x', RIESGO_GLOBAL: '1', ...extra.env }, stdio: 'pipe' });
     } catch (e) {
       rc = (e as { status: number }).status;
     }
-    const checks = readFileSync(path.join(dir, 'checks.log'), 'utf8').trim().split('\n\n').map((j) => JSON.parse(j));
+    const log = existsSync(path.join(dir, 'checks.log')) ? readFileSync(path.join(dir, 'checks.log'), 'utf8').trim() : '';
+    const checks = log ? log.split('\n\n').map((j) => JSON.parse(j)) : [];
     ultimosShas = checks.map((c: { head_sha: string }) => c.head_sha);
     ultimos = checks;
     return { rc, checks: checks.map((c: { status: string; conclusion?: string; output: { title: string } }) => c.conclusion ?? c.status) };
@@ -631,6 +637,44 @@ jq -n --arg h "$h" --arg b "$cuerpo" '{state:"open", head:{sha:$h}, base:{ref:"m
       for (const f of ['cuerpo_7', 'cuerpo_8']) rmSync(path.join(dir, f), { force: true });
     }
   });
+  // Hallazgo 3 (#54, repro de la matriz: `riesgo` evaluó #95 y pintó de rojo el job del evento
+  // de #90/#91). #7 bien declarado, #9 (otro HEAD) sin declaración. Sin objetivo el exit es el
+  // agregado (comportamiento anterior); con RIESGO_OBJETIVO solo clasifica el PR del evento.
+  describe('hallazgo 3 (#54): cada ejecución clasifica solo al PR objetivo', () => {
+    const conDos = (env?: Record<string, string>) => {
+      writeFileSync(path.join(dir, 'cuerpo_7'), 'Riesgo: bajo\n');
+      writeFileSync(path.join(dir, 'cuerpo_9'), 'nada\n');
+      writeFileSync(path.join(dir, 'head_9'), HEAD_9);
+      try {
+        const r = correr(['Riesgo: bajo'], { lista: `7 ${HEAD_PR}\n9 ${HEAD_9}\n`, args: [`7:${HEAD_PR}`, `9:${HEAD_9}`], env });
+        const ult = (h: string) => ultimos.filter((c) => c.head_sha === h).at(-1)?.conclusion;
+        return { rc: r.rc, h7: ult(HEAD_PR), h9: ult(HEAD_9) };
+      } finally {
+        for (const f of ['cuerpo_7', 'cuerpo_9', 'head_9']) rmSync(path.join(dir, f), { force: true });
+      }
+    };
+    it('los veredictos por HEAD no cambian: #7 success, #9 failure (cada uno en su check-run)', () => {
+      expect(conDos({ RIESGO_OBJETIVO: '7' })).toMatchObject({ h7: 'success', h9: 'failure' });
+    });
+    it('evento de #7: el rechazo de #9 no pinta de rojo la ejecución (antes: rc 1)', () => {
+      expect(conDos({ RIESGO_OBJETIVO: '7' }).rc).toBe(0);
+    });
+    it('evento de #9: la ejecución sí queda en rojo (su propio rechazo)', () => {
+      expect(conDos({ RIESGO_OBJETIVO: '9' }).rc).toBe(1);
+    });
+    it('sin PR objetivo (push a main, closed): ningún PR decide el exit', () => {
+      expect(conDos({ RIESGO_OBJETIVO: '' }).rc).toBe(0);
+    });
+    it('sin RIESGO_OBJETIVO (uso a mano): exit agregado como antes', () => {
+      expect(conDos().rc).toBe(1);
+    });
+    it('un POST que falla siempre sigue dando rojo aunque el objetivo pase (puede quedar un verde viejo)', () => {
+      writeFileSync(path.join(dir, 'cuerpo_7'), 'Riesgo: bajo\n');
+      try {
+        expect(correr(['Riesgo: bajo'], { postfalla: 99, env: { RIESGO_OBJETIVO: '' } }).rc).toBe(1);
+      } finally { rmSync(path.join(dir, 'cuerpo_7'), { force: true }); }
+    });
+  });
 });
 
 // AUDIT: CAMBIOS @ cbe79d1, P2: la corrida tiene que dispararse al cerrar un PR. Se ejecuta el
@@ -657,11 +701,12 @@ describe('P-03 · riesgo.yml: cierre de un PR (AUDIT: CAMBIOS @ cbe79d1, P2)', (
   mkdirSync(path.join(dir, 'bin'));
   mkdirSync(path.join(dir, 'scripts/collab'), { recursive: true });
   writeFileSync(path.join(dir, 'bin/gh'), `#!/usr/bin/env bash\ncase "$*" in *'pulls?state=open'*) cat "${dir}/lista"; exit 0 ;; esac\necho "$*" >> "${dir}/posts"; exit 0\n`, { mode: 0o755 });
-  writeFileSync(path.join(dir, 'scripts/collab/riesgo-ci.sh'), `#!/usr/bin/env bash\necho "$*" > "${dir}/args"\n`, { mode: 0o755 });
+  writeFileSync(path.join(dir, 'scripts/collab/riesgo-ci.sh'), `#!/usr/bin/env bash\necho "$*" > "${dir}/args"\necho "\${RIESGO_OBJETIVO-__sin__}" > "${dir}/objetivo"\n`, { mode: 0o755 });
   const correrPaso = (accion: string, wfViejo: '0' | '1') => {
     writeFileSync(path.join(dir, 'lista'), `8:${H8}\n`); // #7 ya cerrado: la API lista solo #8
     rmSync(path.join(dir, 'args'), { force: true });
     rmSync(path.join(dir, 'posts'), { force: true });
+    rmSync(path.join(dir, 'objetivo'), { force: true });
     const env = { ...process.env, PATH: `${dir}/bin:${process.env.PATH}`, GITHUB_REPOSITORY: 'o/r', GH_TOKEN: 'x', RUNNER_TEMP: dir, PR_EVT: '7', HEAD_EVT: H7, EVT_ACTION: accion, WF_VIEJO: wfViejo, RIESGO_GLOBAL: '1' };
     execFileSync('bash', ['-e', '-c', paso('Riesgo declarado vs calculado')], { cwd: dir, env, stdio: 'pipe' });
     return readFileSync(path.join(dir, 'args'), 'utf8').trim();
@@ -672,6 +717,16 @@ describe('P-03 · riesgo.yml: cierre de un PR (AUDIT: CAMBIOS @ cbe79d1, P2)', (
   });
   it('al cerrar #7 la re-evaluación cubre solo los abiertos (#8), sin agregar el PR cerrado', () => {
     expect(correrPaso('closed', '0')).toBe(`8:${H8}`);
+  });
+  it('hallazgo 3 (#54): el paso pasa como objetivo solo al PR del evento; ninguno con `closed` o workflow viejo', () => {
+    const obj = () => readFileSync(path.join(dir, 'objetivo'), 'utf8').trim();
+    correrPaso('synchronize', '0');
+    expect(obj()).toBe('7');
+    correrPaso('closed', '0');
+    expect(obj()).toBe('');
+    // con el workflow viejo el paso termina en rojo a propósito (RC=1): lo que importa es el objetivo
+    expect(() => correrPaso('synchronize', '1')).toThrow();
+    expect(obj()).toBe('');
   });
   it('en otros eventos el PR del evento fuera de la lista se sigue agregando como `:otra`', () => {
     expect(correrPaso('synchronize', '0')).toBe(`8:${H8} 7:${H7}:otra`);
