@@ -84,7 +84,7 @@ Respuestas a las auditorías en `docs/reviews/`.
 
 | Acción | Salida |
 |---|---|
-| PAUSE global | `hold` — frame congelado |
+| PAUSE global | `black` — pantallas apagadas hasta reanudar |
 | STOP global | `black` — el show no está al aire |
 | SAFE MODE | `black` + iluminación segura |
 
