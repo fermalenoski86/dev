@@ -38,7 +38,7 @@ pnpm verify       # lint + typecheck + tests
 pnpm typecheck
 ```
 
-Requiere Node 20+ y pnpm 9+ (fijado en `engines`). Corre 100 % offline.
+Requiere Node 20+ y pnpm 12 (fijado en `engines`; CI usa 12.5.1). Corre 100 % offline.
 
 > El primer `pnpm install` genera `pnpm-lock.yaml`. **Commitealo**: sin lockfile
 > la build no es reproducible y dos máquinas pueden resolver versiones distintas
