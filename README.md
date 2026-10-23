@@ -14,8 +14,8 @@ pnpm --filter @trust/previs dev     # :3000  digital twin
 pnpm --filter @trust/control dev    # :3001  centro de control
 ```
 
-> **Ningún dispositivo físico del edificio existe todavía.** CONTROL muestra dos
-> ejes separados: `logicalState` (lo que pide el show) y `deviceHealth` (lo que
+> **Ningún dispositivo físico del edificio existe todavía.** CONTROL muestra tres
+> ejes separados: `logicalState` (lo que pide el show), `deviceHealth` (lo que
 > sabemos del dispositivo) y `provenance` (SIMULATED o REAL — hoy simulado en
 > todos). Una falla simulada se ve como CRITICAL y sigue sin contar como
 > verificada. Ver ADR-020 y ADR-027.
