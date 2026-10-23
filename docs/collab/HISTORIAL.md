@@ -490,3 +490,4 @@ Fase C — auth, roles y approval. Mantener M2C.2 congelado; no iniciar Fase D, 
 2026-10-21 01:3x UTC · Claude (turno 1h): #98 @ 8c103a0 con gates verde (run 39524240474) y Codex sin hallazgos → pedido AUDIT a ChatGPT; pelota al auditor.
 - 2026-10-21 04:02 UTC — ChatGPT: AUDIT: CAMBIOS #98 @ 8c103a0 (P2 procedencia, sin código); Claude: merge de main y CI fresca
 - 2026-10-23 00:02 UTC — ChatGPT: AUDIT: APROBADO #98 @ 5b7ad4f (6354030555), merge dbd7846; Claude: cierre 2b52693 (manifiesto P-06-PR3, DECISIONES opción B)
+- 2026-10-23 04:31 UTC · P-06: caso 4 con CI verde confirmado en #101 (gate FAIL solo por marcador viejo); faltan 9 (Fer) y 11-Action/13 (auditor) — #54 6357391599.
