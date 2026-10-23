@@ -3,9 +3,9 @@
 > **Regla:** foto del presente, se sobrescribe en cada turno (máx. 60 líneas).
 > Decisiones vigentes en `DECISIONES.md`; eventos en `HISTORIAL.md`.
 
-**Pelota en:** Claude (implementador): **`AUDIT: CAMBIOS` de #98 @ `8c103a0`** ([6307714571](https://github.com/fermalenoski86/dev/pull/98#issuecomment-6307714571)). Un solo P2, de procedencia: el run verde 39524240474 probó contra `main@1156467` y `main` avanzó (solo HANDOFF/HISTORIAL). Sin cambios de código. El auditor aceptó las 5 decisiones (backlog: GraphQL de hilos, retiro del parser, caducidad del PASS antes de cualquier enforcement; resembrar casos de riesgo bajo después del merge). **En curso:** merge de `main` en la rama (sin código) → corrida `pull_request` fresca. **Próximo turno de Claude:** con los 7 gates, `riesgo` y `paralelo` verdes sobre el HEAD nuevo, pedir la re-auditoría focalizada en #98. El SHA nuevo y la decisión sobre el bucle HANDOFF↔procedencia van en el PR.
-**En auditoría:** #98 @ 8c103a0e30ebdb1c620d402b049e6c90aaf554e5
-**Fase:** PoC P-06, matriz real. Medidos sobre la CI vieja: 1 (falso bloqueo), 2 (P1 ✅), 3 (P2 ✅, ~81 s), 7 y 8 (elegibilidad ✅). Se repiten 1–3 y siguen 4, 5/6 y 9–13 cuando #98 esté en `main`. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
+**Pelota en:** Claude (implementador). **#98 mergeado** en `main@dbd7846` (`AUDIT: APROBADO` [6354030555](https://github.com/fermalenoski86/dev/pull/98#issuecomment-6354030555) sobre `5b7ad4f`). Cierre en `2b52693`: manifiesto P-06-PR3 + PROGRESO, DECISIONES (opción B y adaptador A), BACKLOG aceptado. **Próximo turno de Claude:** re-correr la matriz P-06 sobre la CI nueva. Casos 1–3 **resembrados en rutas de riesgo bajo** (sin reciclar #91/#92), después 4, 5/6 y 9–13, con latencias. #90–#95 se cierran sin merge cuando estén los nuevos. **Regla nueva (opción B):** con un PR en auditoría, el pase al auditor va en el PR y el HANDOFF se escribe una vez después del veredicto.
+**En auditoría:** ninguno
+**Fase:** PoC P-06, matriz real sobre el adaptador A (preauditoría report-only, solo riesgo bajo). Medido sobre la CI vieja: 2/3 detectan P1/P2 (~50–81 s); 7/8 elegibilidad ✅. #73 (kit McDonald's) sigue bajo lock de la sesión Claude+Fer.
 **Estado:** PR 1 (#88) en `main@c403b6b`; PR 2 (#89) mergeado en `main@10cd5d0` (`AUDIT: APROBADO` [6254481441](https://github.com/fermalenoski86/dev/pull/89#issuecomment-6254481441) sobre `16a687f`; merge en sesión con Fer). Entregable P-06-PR2 en manifiesto + `PROGRESO.md` (`6867d21`). Gate y Action en report-only / solo lectura.
 
 ## PoC P-06 — qué entra (brief + #54, decisión 2026-10-12 18:15)
@@ -29,7 +29,7 @@
 ## Abierto
 | Qué | Dónde | Estado |
 |---|---|---|
-| PoC P-06 matriz | #54 / #90–#95 / #98 | #98 en auditoría @ 8c103a0 (CI verde); #90–#95 no se mergean |
+| PoC P-06 matriz | #54 / #90–#95 | #98 en main; re-correr con casos de riesgo bajo; #90–#95 no se mergean |
 | Kit McDonald's | #73 | lock sesión Claude+Fer; entrega vie 16/10 |
 | CS-0 Creative Studio | #59 | brief mergeado (#74 → 3b59b10) |
 | E2E intermitente :17 | #26 / #77 | causa no determinada |
